@@ -1,0 +1,28 @@
+{
+  "name": "samuel",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "db:build": "python3 scripts/build-database/build_database.py",
+    "db:build:force": "python3 scripts/build-database/build_database.py --force",
+    "dev": "yarn db:build && vite",
+    "build": "yarn db:build && vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "benchmark:morse": "tsx scripts/benchmark-morse/benchmark.ts"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@types/sql.js": "^1.4.11",
+    "svelte": "^5.57.0",
+    "svelte-check": "^4.7.6",
+    "tsx": "^4.23.13",
+    "typescript": "~5.7.3",
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "sql.js": "^1.14.2"
+  },
+  "packageManager": "yarn@4.18.0+sha512.fcb8716fe7cd0eece141ffc18b92193a9df9204c1ba83189c288835223fc0bbe64af473bab0d5e9927a7daeb5caf2bb07eb2787cc9338ca040ea125f2a1f2f7e"
+}
