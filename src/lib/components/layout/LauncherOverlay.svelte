@@ -2,6 +2,8 @@
   import { MODULES } from '../../types';
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
+  import ModuleIcon from '../ui/ModuleIcon.svelte';
+  import { ArrowLeft, X } from 'phosphor-svelte';
 
   function handleSelect(id: string) {
     settings.vibrate(25);
@@ -21,10 +23,11 @@
     <div class="sheet" onclick={(e) => e.stopPropagation()}>
       <div class="sheet-header">
         <button class="sheet-back-btn" onclick={handleBackToDashboard}>
-          ← Všechny pomůcky
+          <ArrowLeft size={16} weight="bold" />
+          <span>Všechny pomůcky</span>
         </button>
-        <button class="sheet-close-btn" onclick={() => navigation.closeLauncher()}>
-          ✕
+        <button class="sheet-close-btn" aria-label="Zavřít rozcestník" onclick={() => navigation.closeLauncher()}>
+          <X size={20} weight="bold" />
         </button>
       </div>
 
@@ -37,7 +40,9 @@
               class:is-system={mod.isSystem}
               onclick={() => handleSelect(mod.id)}
             >
-              <span class="icon">{mod.icon}</span>
+              <span class="icon">
+                <ModuleIcon id={mod.id} weight="duotone" />
+              </span>
               <span class="name">{mod.name}</span>
             </button>
           {/each}
@@ -82,6 +87,9 @@
     font-weight: 600;
     color: var(--color-accent-primary);
     padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .sheet-close-btn {
@@ -135,6 +143,10 @@
 
   .icon {
     font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent-primary);
   }
 
   .name {

@@ -1,5 +1,4 @@
 import {
-  REVERSE_MORSE_TABLE,
   REVERSE_MORSE_LETTERS,
   REVERSE_MORSE_DIGITS,
   REVERSE_MORSE_OTHER,
@@ -9,6 +8,7 @@ import {
 import { scoreCandidate } from '../../data/markovModel';
 import { CIPHER_KEYWORDS } from '../../data/cipherKeywords';
 import { ensureNgramLoaded, getNgramLogProb } from '../../data/ngramModel';
+import { removeDiacritics } from '../../utils/search';
 
 export interface DecodeMorseOptions {
   parseCH?: boolean;
@@ -45,21 +45,19 @@ export interface BruteforceResult {
 export function normalizeMorse(raw: string): string {
   if (!raw) return '';
 
-  let normalized = raw
+  let s = raw
     .replace(/[•*·]/g, '.')
     .replace(/[—–_]/g, '-')
     .replace(/[|]/g, '/');
 
-  // Convert multiple spaces or combinations of spaces and slashes
-  normalized = normalized.replace(/\s*\/\s*\/\s*/g, ' // ');
-  normalized = normalized.replace(/\s*\/\s*/g, ' / ');
-  normalized = normalized.replace(/\s{2,}/g, ' // ');
-  normalized = normalized.replace(/\s+/g, ' / ');
+  // Multi-delimiter / word separator (2+ slashes or 2+ whitespace) -> marker
+  s = s.replace(/\s*\/{2,}\s*|\s{2,}/g, '\u0000');
+  // Single slash or single whitespace -> letter delimiter
+  s = s.replace(/\s*\/\s*|\s+/g, ' / ');
+  // Restore canonical word separator
+  s = s.replace(/\s*\u0000\s*/g, ' // ');
 
-  // Clean up consecutive slashes: more than 2 slashes becomes 2
-  normalized = normalized.replace(/\/(\s*\/)+/g, '//');
-
-  return normalized.trim();
+  return s.trim();
 }
 
 /**
@@ -96,8 +94,7 @@ export function decodeMorse(
     return letters
       .map((code) => {
         if (code === '----') {
-          if (!parseCH) return 'OOOO';
-          return 'CH';
+          return parseCH ? 'CH' : '?';
         }
         if (code in REVERSE_MORSE_LETTERS) {
           return REVERSE_MORSE_LETTERS[code];
@@ -113,31 +110,21 @@ export function decodeMorse(
       .join('');
   });
 
-  return decodedWords.join(' ');
+  return decodedWords.filter(Boolean).join(' ');
 }
 
 /**
  * Encodes plain text to Morse code with '/' between letters and '//' between words.
+ * Digraph CH is correctly encoded as '----'. Diacritics are removed.
  */
-export function encodeMorse(text: string): string {
-  if (!text.trim()) return '';
+export function textToMorse(
+  text: string,
+  letterSep = ' / ',
+  wordSep = ' // '
+): string {
+  if (!text || !text.trim()) return '';
 
-  const clean = text
-    .toUpperCase()
-    .replace(/Á/g, 'A')
-    .replace(/Č/g, 'C')
-    .replace(/Ď/g, 'D')
-    .replace(/É|Ě/g, 'E')
-    .replace(/Í/g, 'I')
-    .replace(/Ň/g, 'N')
-    .replace(/Ó/g, 'O')
-    .replace(/Ř/g, 'R')
-    .replace(/Š/g, 'S')
-    .replace(/Ť/g, 'T')
-    .replace(/Ú|Ů/g, 'U')
-    .replace(/Ý/g, 'Y')
-    .replace(/Ž/g, 'Z');
-
+  const clean = removeDiacritics(text).toUpperCase();
   const words = clean.split(/\s+/).filter(Boolean);
 
   return words
@@ -156,10 +143,13 @@ export function encodeMorse(text: string): string {
           i++;
         }
       }
-      return letters.join(' / ');
+      return letters.join(letterSep);
     })
-    .join(' // ');
+    .join(wordSep);
 }
+
+// Backwards compatibility alias for encodeMorse
+export const encodeMorse = textToMorse;
 
 /**
  * Calculates a plausibility score (0 to 100) for decoded Czech text using the precalculated Markov chain.
@@ -240,24 +230,31 @@ export function getPermutations(
       transformed += p.fn(morse[i]);
     }
     const decoded = decodeMorse(transformed, optionsOrParseCH, parseDigits, parseOther);
-    const score = scoreDecodedText(decoded);
     return {
       id: p.id,
       name: p.name,
       mapping: p.mapping,
       transformedMorse: transformed,
       decodedText: decoded,
-      score,
+      score: 0,
       isValid: !decoded.includes('?') && decoded.trim().length > 0
     };
   });
 
-  // Add Reverse
-  const reversedMorse = morse
-    .split(/\s*\/\s*/)
-    .map((letter) => letter.split('').reverse().join(''))
+  // Add Reverse - preserve word and letter structures
+  const words = morse.trim().split(/\s*\/\/\s*|\s{2,}/);
+  const reversedMorse = words
+    .filter(Boolean)
     .reverse()
-    .join(' / ');
+    .map((w) =>
+      w
+        .split(/[\/\s]+/)
+        .filter(Boolean)
+        .reverse()
+        .map((letter) => letter.split('').reverse().join(''))
+        .join(' / ')
+    )
+    .join(' // ');
   const reversedDecoded = decodeMorse(reversedMorse, optionsOrParseCH, parseDigits, parseOther);
 
   results.push({
@@ -266,7 +263,7 @@ export function getPermutations(
     mapping: 'Obrácený směr čtení',
     transformedMorse: reversedMorse,
     decodedText: reversedDecoded,
-    score: scoreDecodedText(reversedDecoded),
+    score: 0,
     isValid: !reversedDecoded.includes('?') && reversedDecoded.trim().length > 0
   });
 
@@ -315,7 +312,6 @@ export interface LexiconItem {
   word: string;
   morse: string;
   len: number;
-  boost: number;
   freq: number;
   isCipher: boolean;
   isRuian: boolean;
@@ -323,25 +319,17 @@ export interface LexiconItem {
 
 export function buildLexiconItems(
   rawWords: { word: string; isCipher: boolean; isRuian: boolean; freq?: number }[],
-  weights: MorseSolverWeights = DEFAULT_SOLVER_WEIGHTS
+  _weights: MorseSolverWeights = DEFAULT_SOLVER_WEIGHTS
 ): LexiconItem[] {
   const items: LexiconItem[] = [];
-  const singleGrammar = new Set(['A', 'I', 'O', 'U', 'K']);
 
   for (const item of rawWords) {
     const m = wordToMorse(item.word);
     if (m) {
-      let boost = 1.0;
-      if (item.isCipher || CIPHER_KEYWORDS.has(item.word)) {
-        boost = singleGrammar.has(item.word) ? weights.singleGrammarBoost : weights.cipherBoost;
-      } else if (item.isRuian) {
-        boost = weights.ruianBoost;
-      }
       items.push({
         word: item.word,
         morse: m,
         len: m.length,
-        boost,
         freq: item.freq || 0,
         isCipher: item.isCipher,
         isRuian: item.isRuian
@@ -379,22 +367,30 @@ function decodeMorseWith4gram(
       dp[pos].length = beamWidth;
     }
 
+    // Precompute valid transitions at this position once instead of in the state loop
+    const transitions: { sub: string; ch: string; len: number }[] = [];
+    for (let len = 1; len <= 4; len++) {
+      if (pos + len <= n) {
+        const sub = morseCode.slice(pos, pos + len);
+        const ch = REVERSE_MORSE_LETTERS[sub];
+        if (ch) {
+          transitions.push({ sub, ch, len });
+        }
+      }
+    }
+
+    if (transitions.length === 0) continue;
+
     const cur = dp[pos];
     for (const st of cur) {
-      for (let len = 1; len <= 4; len++) {
-        if (pos + len <= n) {
-          const sub = morseCode.slice(pos, pos + len);
-          const ch = REVERSE_MORSE_LETTERS[sub];
-          if (ch) {
-            const lp = getNgramLogProb(st.hist, ch);
-            dp[pos + len].push({
-              text: st.text + ch,
-              spaced: [...st.spaced, sub],
-              logProb: st.logProb + lp,
-              hist: (st.hist + ch).slice(-3)
-            });
-          }
-        }
+      for (const tr of transitions) {
+        const lp = getNgramLogProb(st.hist, tr.ch);
+        dp[pos + tr.len].push({
+          text: st.text + tr.ch,
+          spaced: [...st.spaced, tr.sub],
+          logProb: st.logProb + lp,
+          hist: (st.hist + tr.ch).slice(-3)
+        });
       }
     }
   }
@@ -435,20 +431,48 @@ export async function solveMorseWithoutSpaces(
   const clean = code.replace(/[^.-]/g, '');
   if (clean.length < 4) return { candidates: [], totalFound: 0 };
 
+  // Ensure 4-gram language model is loaded for character beam search fallbacks
+  await ensureNgramLoaded();
+
   const n = clean.length;
   const candidatesMap = new Map<
     string,
     { text: string; spacedMorse: string; score: number; rawScore: number }
   >();
 
-  // 1. Filter dictionary words present as substrings in input
-  const matching = prefilteredMatching ?? lexicon.filter((m) => clean.includes(m.morse));
+  // 1. Filter dictionary words present as substrings in input (and at most input length)
+  const matching = prefilteredMatching ?? lexicon.filter((m) => m.len <= n && clean.includes(m.morse));
+
+  // Precalculate invariant edge scores once per word instead of in the hot DAG loop
+  const singleGrammar = new Set(['A', 'I', 'O', 'U', 'K']);
+  const scoredMatching = matching.map((m) => {
+    let boost = 1.0;
+    if (m.isCipher) {
+      boost = singleGrammar.has(m.word) ? weights.singleGrammarBoost : weights.cipherBoost;
+    } else if (m.isRuian) {
+      boost = weights.ruianBoost;
+    }
+    if (weights.freqWeight > 0 && m.freq > 0) {
+      boost *= (1 + weights.freqWeight * Math.log10(m.freq + 1));
+    }
+    const wScore = Math.pow(m.len, weights.lengthExponent) * boost;
+    const isKnown = (m.isCipher || m.isRuian) ? 1 : 0;
+    return {
+      word: m.word,
+      morse: m.morse,
+      len: m.len,
+      wScore,
+      isKnown
+    };
+  });
+
+  const matchingDot = scoredMatching.filter((m) => m.morse[0] === '.');
+  const matchingDash = scoredMatching.filter((m) => m.morse[0] === '-');
 
   type Path = { score: number; words: string[]; cipherCount: number };
   const dpWord: Path[][] = Array.from({ length: n + 1 }, () => []);
   dpWord[0].push({ score: 0, words: [], cipherCount: 0 });
 
-  const singleGrammar = new Set(['A', 'I', 'O', 'U', 'K']);
   const K_DAG = weights.beamWidth || 250;
   for (let i = 0; i < n; i++) {
     if (dpWord[i].length === 0) continue;
@@ -458,25 +482,15 @@ export async function solveMorseWithoutSpaces(
     }
 
     const cur = dpWord[i];
-    for (const m of matching) {
-      if (i + m.len <= n && clean.startsWith(m.morse, i)) {
-        let boost = 1.0;
-        if (m.isCipher) {
-          boost = singleGrammar.has(m.word) ? weights.singleGrammarBoost : weights.cipherBoost;
-        } else if (m.isRuian) {
-          boost = weights.ruianBoost;
-        }
-        if (weights.freqWeight > 0 && m.freq > 0) {
-          boost *= (1 + weights.freqWeight * Math.log10(m.freq + 1));
-        }
-        const wScore = Math.pow(m.len, weights.lengthExponent) * boost;
-        const isKnown = (m.isCipher || m.isRuian) ? 1 : 0;
+    const candidateWords = clean[i] === '.' ? matchingDot : matchingDash;
 
+    for (const m of candidateWords) {
+      if (i + m.len <= n && clean.startsWith(m.morse, i)) {
         for (const p of cur) {
           dpWord[i + m.len].push({
-            score: p.score + wScore,
+            score: p.score + m.wScore,
             words: [...p.words, m.word],
-            cipherCount: p.cipherCount + isKnown
+            cipherCount: p.cipherCount + m.isKnown
           });
         }
       }
@@ -506,15 +520,7 @@ export async function solveMorseWithoutSpaces(
 
   for (const p of dpWord[n]) {
     const formatted = p.words.join(' ');
-    const spaced = p.words
-      .map((w) =>
-        w
-          .split('')
-          .map((c) => MORSE_LETTERS[c] || '')
-          .filter(Boolean)
-          .join(' / ')
-      )
-      .join(' // ');
+    const spaced = textToMorse(formatted);
 
     const pct = Math.min(100, Math.max(15, Math.round((p.score / topRawScore) * 100)));
 
@@ -545,15 +551,7 @@ export async function solveMorseWithoutSpaces(
       const recognized = bestPath.words.join(' ');
       const lastWord = bestPath.words[bestPath.words.length - 1];
       const unsolvedMorse = clean.slice(bestReach);
-      const recognizedSpaced = bestPath.words
-        .map((w) =>
-          w
-            .split('')
-            .map((c) => MORSE_LETTERS[c] || '')
-            .filter(Boolean)
-            .join(' / ')
-        )
-        .join(' // ');
+      const recognizedSpaced = textToMorse(recognized);
 
       const suffixCands = decodeMorseWith4gram(unsolvedMorse, lastWord);
       for (const sc of suffixCands) {

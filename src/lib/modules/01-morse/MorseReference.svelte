@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { CZECH_MNEMONICS, type MorseEntry } from './morseData';
-  import { settings } from '../../state/settings.svelte';
-  import { matchesSearch } from '../../utils/search';
+  import { CZECH_MNEMONICS, type MorseEntry } from "./morseData";
+  import { settings } from "../../state/settings.svelte";
+  import { matchesSearch } from "../../utils/search";
+  import { MagnifyingGlass, X } from "phosphor-svelte";
 
-  let activeTab = $state<'list' | 'tree'>('list');
-  let searchQuery = $state('');
+  let activeTab = $state<"list" | "tree">("list");
+  let searchQuery = $state("");
 
   let filteredEntries = $derived.by(() => {
     if (!searchQuery.trim()) return CZECH_MNEMONICS;
     return CZECH_MNEMONICS.filter((e) =>
-      matchesSearch([e.char, e.code, e.mnemonic], searchQuery)
+      matchesSearch([e.char, e.code, e.mnemonic], searchQuery),
     );
   });
 
@@ -23,58 +24,54 @@
     {
       level: 1,
       nodes: [
-        { char: 'E', code: '.', dir: 'L' },
-        { char: 'T', code: '-', dir: 'R' }
-      ]
+        { char: "E", code: ".", dir: "L" },
+        { char: "T", code: "-", dir: "R" },
+      ],
     },
     {
       level: 2,
       nodes: [
-        { char: 'I', code: '..', dir: 'L' },
-        { char: 'A', code: '.-', dir: 'R' },
-        { char: 'N', code: '-.', dir: 'L' },
-        { char: 'M', code: '--', dir: 'R' }
-      ]
+        { char: "I", code: "..", dir: "L" },
+        { char: "A", code: ".-", dir: "R" },
+        { char: "N", code: "-.", dir: "L" },
+        { char: "M", code: "--", dir: "R" },
+      ],
     },
     {
       level: 3,
       nodes: [
-        { char: 'S', code: '...', dir: 'L' },
-        { char: 'U', code: '..-', dir: 'R' },
-        { char: 'R', code: '.-.', dir: 'L' },
-        { char: 'W', code: '.--', dir: 'R' },
-        { char: 'D', code: '-..', dir: 'L' },
-        { char: 'K', code: '-.-', dir: 'R' },
-        { char: 'G', code: '--.', dir: 'L' },
-        { char: 'O', code: '---', dir: 'R' }
-      ]
+        { char: "S", code: "...", dir: "L" },
+        { char: "U", code: "..-", dir: "R" },
+        { char: "R", code: ".-.", dir: "L" },
+        { char: "W", code: ".--", dir: "R" },
+        { char: "D", code: "-..", dir: "L" },
+        { char: "K", code: "-.-", dir: "R" },
+        { char: "G", code: "--.", dir: "L" },
+        { char: "O", code: "---", dir: "R" },
+      ],
     },
     {
       level: 4,
       nodes: [
-        { char: 'H', code: '....', dir: 'L' },
-        { char: 'V', code: '...-', dir: 'R' },
-        { char: 'F', code: '..-.', dir: 'L' },
-        { char: '', code: '..--', dir: 'R' },
-        { char: 'L', code: '.-..', dir: 'L' },
-        { char: '', code: '.-.-', dir: 'R' },
-        { char: 'P', code: '.--.', dir: 'L' },
-        { char: 'J', code: '.---', dir: 'R' },
-        { char: 'B', code: '-...', dir: 'L' },
-        { char: 'X', code: '-..-', dir: 'R' },
-        { char: 'C', code: '-.-.', dir: 'L' },
-        { char: 'Y', code: '-.--', dir: 'R' },
-        { char: 'Z', code: '--..', dir: 'L' },
-        { char: 'Q', code: '--.-', dir: 'R' },
-        { char: '', code: '---.', dir: 'L' },
-        { char: 'CH', code: '----', dir: 'R' }
-      ]
-    }
+        { char: "H", code: "....", dir: "L" },
+        { char: "V", code: "...-", dir: "R" },
+        { char: "F", code: "..-.", dir: "L" },
+        { char: "", code: "..--", dir: "R" },
+        { char: "L", code: ".-..", dir: "L" },
+        { char: "", code: ".-.-", dir: "R" },
+        { char: "P", code: ".--.", dir: "L" },
+        { char: "J", code: ".---", dir: "R" },
+        { char: "B", code: "-...", dir: "L" },
+        { char: "X", code: "-..-", dir: "R" },
+        { char: "C", code: "-.-.", dir: "L" },
+        { char: "Y", code: "-.--", dir: "R" },
+        { char: "Z", code: "--..", dir: "L" },
+        { char: "Q", code: "--.-", dir: "R" },
+        { char: "", code: "---.", dir: "L" },
+        { char: "CH", code: "----", dir: "R" },
+      ],
+    },
   ];
-
-  function handleSelectEntry(entry: MorseEntry) {
-    settings.vibrate(20);
-  }
 </script>
 
 <div class="ref-container">
@@ -82,37 +79,45 @@
   <div class="tab-bar">
     <button
       class="tab-btn"
-      class:active={activeTab === 'list'}
+      class:active={activeTab === "list"}
       onclick={() => {
         settings.vibrate(20);
-        activeTab = 'list';
+        activeTab = "list";
       }}
     >
       Přehled znaků ({CZECH_MNEMONICS.length})
     </button>
     <button
       class="tab-btn"
-      class:active={activeTab === 'tree'}
+      class:active={activeTab === "tree"}
       onclick={() => {
         settings.vibrate(20);
-        activeTab = 'tree';
+        activeTab = "tree";
       }}
     >
       Morseův strom
     </button>
   </div>
 
-  {#if activeTab === 'list'}
+  {#if activeTab === "list"}
     <!-- Search filter -->
     <div class="search-box">
-      <span class="search-icon">🔍</span>
+      <span class="search-icon"
+        ><MagnifyingGlass size={16} weight="bold" /></span
+      >
       <input
         type="search"
         placeholder="Hledat písmeno, kód nebo slovo..."
         bind:value={searchQuery}
       />
       {#if searchQuery}
-        <button class="clear-search" onclick={() => (searchQuery = '')}>✕</button>
+        <button
+          class="clear-search"
+          aria-label="Vymazat hledání"
+          onclick={() => (searchQuery = "")}
+        >
+          <X size={14} weight="bold" />
+        </button>
       {/if}
     </div>
 
@@ -128,7 +133,9 @@
             </div>
           </div>
         {:else}
-          <div class="empty-state">Nenalezen žádný znak odpovídající „{searchQuery}“.</div>
+          <div class="empty-state">
+            Nenalezen žádný znak odpovídající „{searchQuery}“.
+          </div>
         {/each}
       </div>
     </div>
@@ -142,12 +149,19 @@
         </div>
 
         {#each treeLevels as lvl}
-          <div class="tree-row" style="grid-template-columns: repeat({lvl.nodes.length}, 1fr)">
+          <div
+            class="tree-row"
+            style="grid-template-columns: repeat({lvl.nodes.length}, 1fr)"
+          >
             {#each lvl.nodes as node}
               {#if node.char}
-                <div class="tree-node" class:is-dot={node.dir === 'L'} class:is-dash={node.dir === 'R'}>
+                <div
+                  class="tree-node"
+                  class:is-dot={node.dir === "L"}
+                  class:is-dash={node.dir === "R"}
+                >
                   <span class="node-char">{node.char}</span>
-                  <span class="node-sym">{node.dir === 'L' ? '•' : '—'}</span>
+                  <span class="node-sym">{node.dir === "L" ? "•" : "—"}</span>
                 </div>
               {:else}
                 <div class="tree-node is-empty" aria-hidden="true"></div>
@@ -186,7 +200,9 @@
     color: var(--color-text-secondary);
     border-radius: 4px;
     text-align: center;
-    transition: background-color 0.15s, color 0.15s;
+    transition:
+      background-color 0.15s,
+      color 0.15s;
   }
 
   .tab-btn.active {
@@ -216,10 +232,19 @@
     font-family: inherit;
   }
 
+  .search-icon {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-secondary);
+  }
+
   .clear-search {
     font-size: 14px;
     color: var(--color-text-muted);
     padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .table-scroll {
@@ -330,7 +355,9 @@
     min-width: 44px;
     white-space: nowrap;
     user-select: none;
-    transition: background-color 0.15s, border-color 0.15s;
+    transition:
+      background-color 0.15s,
+      border-color 0.15s;
   }
 
   .tree-node.is-empty {

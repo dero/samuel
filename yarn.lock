@@ -397,7 +397,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/estree@npm:^1.0.5, @types/estree@npm:^1.0.6":
+"@types/estree@npm:^1.0.0, @types/estree@npm:^1.0.5, @types/estree@npm:^1.0.6":
   version: 1.0.9
   resolution: "@types/estree@npm:1.0.9"
   checksum: 10c0/3ad3286ca2988cd550dafb8f2ad599c8474868e954fa601a36655bdfefd8039f7c714b8c1c7f2ae219ffbd58bd4660e66fa7479a0120fc02d4777057d4865387
@@ -614,6 +614,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"estree-walker@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "estree-walker@npm:3.0.3"
+  dependencies:
+    "@types/estree": "npm:^1.0.0"
+  checksum: 10c0/c12e3c2b2642d2bcae7d5aa495c60fa2f299160946535763969a1c83fc74518ffa9c2cd3a8b69ac56aea547df6a8aac25f729a342992ef0bbac5f1c73e78995d
+  languageName: node
+  linkType: hard
+
 "exponential-backoff@npm:^3.1.1":
   version: 3.1.3
   resolution: "exponential-backoff@npm:3.1.3"
@@ -802,7 +811,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"magic-string@npm:^0.30.11":
+"magic-string@npm:^0.30.11, magic-string@npm:^0.30.13":
   version: 0.30.21
   resolution: "magic-string@npm:0.30.21"
   dependencies:
@@ -887,6 +896,22 @@ __metadata:
   version: 2.2.1
   resolution: "obug@npm:2.2.1"
   checksum: 10c0/8a7c001847d880fa6ba83c7bbee6a80fd271ee628439cd508c8647d53b217abb1759e2d5e4aaeb09a35d0a274bdb225a0a5a78eded3213d63e656153cf411b63
+  languageName: node
+  linkType: hard
+
+"phosphor-svelte@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "phosphor-svelte@npm:3.1.0"
+  dependencies:
+    estree-walker: "npm:^3.0.3"
+    magic-string: "npm:^0.30.13"
+  peerDependencies:
+    svelte: ^5.0.0 || ^5.0.0-next.96
+    vite: ">=5"
+  peerDependenciesMeta:
+    vite:
+      optional: true
+  checksum: 10c0/fd13ca013cf8707e43a0baedbc6a92903bace47a159441268fe8a88a8af7e208bdaaf32fae94dbbcc06d318798541ecd21c3c98d3941b61d7555be1f2ca73ecd
   languageName: node
   linkType: hard
 
@@ -1002,6 +1027,7 @@ __metadata:
   dependencies:
     "@sveltejs/vite-plugin-svelte": "npm:^7.3.0"
     "@types/sql.js": "npm:^1.4.11"
+    phosphor-svelte: "npm:^3.1.0"
     sql.js: "npm:^1.14.2"
     svelte: "npm:^5.57.0"
     svelte-check: "npm:^4.7.6"

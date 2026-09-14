@@ -5,6 +5,7 @@
  */
 
 import { dbState, getLexiconWords } from '../../db/database.svelte';
+import { ensureNgramLoaded } from '../../data/ngramModel';
 import {
   buildLexiconItems,
   solveMorseWithoutSpaces,
@@ -30,10 +31,10 @@ class MorseService {
   }
 
   /**
-   * Ensures lexicon items are loaded into RAM.
+   * Ensures lexicon items and n-gram language model are loaded into RAM.
    * Revalidates automatically if SQLite dbHash changed (e.g. after DB update).
    */
-  async ensureLexiconLoaded(weights: MorseSolverWeights = DEFAULT_SOLVER_WEIGHTS): Promise<LexiconItem[]> {
+  async ensureLexiconLoaded(): Promise<LexiconItem[]> {
     const currentDbHash = dbState.meta?.dbHash ?? null;
 
     if (this.cachedLexicon && this.cachedDbHash === currentDbHash) {
@@ -50,8 +51,11 @@ class MorseService {
       this.isLoading = true;
       this.loadPromise = (async () => {
         try {
-          const rawWords = await getLexiconWords();
-          const items = buildLexiconItems(rawWords, weights);
+          const [rawWords] = await Promise.all([
+            getLexiconWords(),
+            ensureNgramLoaded()
+          ]);
+          const items = buildLexiconItems(rawWords);
           this.cachedLexicon = items;
           return items;
         } finally {
@@ -72,7 +76,7 @@ class MorseService {
     customWeights?: Partial<MorseSolverWeights>
   ): Promise<BruteforceResult> {
     const weights: MorseSolverWeights = { ...DEFAULT_SOLVER_WEIGHTS, ...customWeights };
-    const lexicon = await this.ensureLexiconLoaded(weights);
+    const lexicon = await this.ensureLexiconLoaded();
     return solveMorseWithoutSpaces(code, maxResults, weights, lexicon);
   }
 }

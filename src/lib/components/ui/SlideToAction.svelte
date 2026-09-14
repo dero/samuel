@@ -1,5 +1,6 @@
 <script lang="ts">
   import { settings } from "../../state/settings.svelte";
+  import { Trash, Check } from "phosphor-svelte";
 
   interface Props {
     onAction: () => void;
@@ -18,7 +19,7 @@
     disabled = false,
     label = "Vymazat",
     confirmedLabel = "Smazáno",
-    icon = "🗑️",
+    icon,
     ariaLabel,
     threshold = 0.85,
     holdDuration = 400,
@@ -281,7 +282,15 @@
     class:is-confirmed={isConfirmed}
     style:transform="translateX({currentX}px)"
   >
-    <span class="thumb-icon">{isConfirmed ? "✓" : icon}</span>
+    <span class="thumb-icon">
+      {#if isConfirmed}
+        <Check size={18} weight="bold" />
+      {:else if !icon || icon === "🗑️" || icon === "trash"}
+        <Trash size={18} weight="duotone" />
+      {:else}
+        {icon}
+      {/if}
+    </span>
   </div>
 </div>
 

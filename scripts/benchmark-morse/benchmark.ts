@@ -447,7 +447,7 @@ async function main() {
 
   console.log('Loading SQLite vocabulary database...');
   const tDb = performance.now();
-  const rawWords = loadLexiconRawWords();
+  const rawWords = await loadLexiconRawWords();
   console.log(`Loaded ${rawWords.length} vocabulary words in ${(performance.now() - tDb).toFixed(1)} ms.`);
 
   if (targetIdx !== -1 && args[targetIdx + 1]) {

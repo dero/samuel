@@ -3,6 +3,8 @@
   import { settings } from '../../state/settings.svelte';
   import { APP_NAME } from '../../constants';
   import { dbState } from '../../db/database.svelte';
+  import ModuleIcon from '../ui/ModuleIcon.svelte';
+  import { List, BookOpen, CaretDown, FlagBanner } from 'phosphor-svelte';
 
   let active = $derived(navigation.activeModule);
   let isDashboard = $derived(!navigation.activeModuleId);
@@ -25,7 +27,7 @@
           navigation.openMenu();
         }}
       >
-        <span class="icon">☰</span>
+        <span class="icon"><List size={22} weight="bold" /></span>
         {#if dbState.updateAvailable}
           <span class="update-dot"></span>
         {/if}
@@ -40,7 +42,13 @@
         navigation.toggleLauncher();
       }}
     >
-      <span class="module-icon">{active?.icon ?? '🚩'}</span>
+      <span class="module-icon">
+        {#if active}
+          <ModuleIcon id={active.id} weight="duotone" />
+        {:else}
+          <FlagBanner size="1em" weight="duotone" />
+        {/if}
+      </span>
     </button>
 
     <div class="title-zone">
@@ -52,7 +60,7 @@
         }}
       >
         <span class="title-text">{active?.name ?? ''}</span>
-        <span class="chevron">▾</span>
+        <span class="chevron"><CaretDown size={14} weight="bold" /></span>
       </button>
     </div>
 
@@ -67,7 +75,7 @@
             navigation.openRef();
           }}
         >
-          <span class="icon">📖</span>
+          <span class="icon"><BookOpen size={20} weight="duotone" /></span>
         </button>
       {/if}
 
@@ -80,7 +88,7 @@
           navigation.openMenu();
         }}
       >
-        <span class="icon">☰</span>
+        <span class="icon"><List size={22} weight="bold" /></span>
         {#if dbState.updateAvailable}
           <span class="update-dot"></span>
         {/if}
@@ -145,6 +153,10 @@
 
   .module-icon {
     font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent-primary);
   }
 
   .title-zone {
@@ -180,6 +192,8 @@
   .chevron {
     font-size: 14px;
     color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
   }
 
   .header-actions {
@@ -203,6 +217,9 @@
 
   .icon {
     font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .db-sync-bar {

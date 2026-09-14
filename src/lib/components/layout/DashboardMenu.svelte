@@ -3,6 +3,7 @@
   import { settings } from '../../state/settings.svelte';
   import { APP_NAME, APP_VERSION } from '../../constants';
   import { dbState } from '../../db/database.svelte';
+  import { Gear, Question, CaretRight, X } from 'phosphor-svelte';
 
   function handleOpenModule(id: 'settings' | 'help') {
     settings.vibrate(25);
@@ -21,7 +22,7 @@
           class="close-btn"
           aria-label="Zavřít menu"
           onclick={() => navigation.closeSubView()}
-        >✕</button>
+        ><X size={20} weight="bold" /></button>
       </div>
 
       <div class="menu-body">
@@ -30,7 +31,7 @@
             class="nav-card"
             onclick={() => handleOpenModule('settings')}
           >
-            <div class="card-icon">⚙️</div>
+            <div class="card-icon"><Gear size={28} weight="duotone" /></div>
             <div class="card-content">
               <div class="card-title-row">
                 <span class="card-title">Nastavení</span>
@@ -40,19 +41,19 @@
               </div>
               <span class="card-desc">Vibrace, zhasínání displeje, správa abeced</span>
             </div>
-            <div class="card-arrow">›</div>
+            <div class="card-arrow"><CaretRight size={18} weight="bold" /></div>
           </button>
 
           <button
             class="nav-card"
             onclick={() => handleOpenModule('help')}
           >
-            <div class="card-icon">❓</div>
+            <div class="card-icon"><Question size={28} weight="duotone" /></div>
             <div class="card-content">
               <span class="card-title">Nápověda</span>
               <span class="card-desc">Popis modulů, tipy a ovládání aplikace</span>
             </div>
-            <div class="card-arrow">›</div>
+            <div class="card-arrow"><CaretRight size={18} weight="bold" /></div>
           </button>
         </div>
 
@@ -174,6 +175,7 @@
     width: 36px;
     height: 36px;
     flex-shrink: 0;
+    color: var(--color-accent-primary);
   }
 
   .card-content {

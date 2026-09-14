@@ -4,6 +4,7 @@
   import { toast } from '../../state/toast.svelte';
   import { APP_NAME, APP_VERSION } from '../../constants';
   import { dbState, getDatabase, findAnagrams, clearDbCache, checkUpdatesOnInit } from '../../db/database.svelte';
+  import { MagnifyingGlass, Lightning, ArrowsClockwise, RocketLaunch, SpinnerGap, Check } from 'phosphor-svelte';
 
   let newLayoutName = $state('');
   let isCreatingLayout = $state(false);
@@ -187,7 +188,10 @@
           {#if dbState.status === 'ready'}
             <span class="badge-online">● Připraveno ({dbState.totalRows.toLocaleString('cs-CZ')} záznamů)</span>
           {:else if dbState.status === 'loading'}
-            <span class="badge-loading">⏳ Stahování / načítání ({dbState.progress}%)</span>
+            <span class="badge-loading">
+              <SpinnerGap size={13} class="spin" />
+              <span>Stahování / načítání ({dbState.progress}%)</span>
+            </span>
           {:else if dbState.status === 'error'}
             <span class="badge-error">✕ Chyba ({dbState.error})</span>
           {:else}
@@ -231,7 +235,10 @@
             {:else if !dbState.meta}
               <span class="badge-idle">○ Databáze dosud nestažena</span>
             {:else}
-              <span class="badge-loading">⚡ K dispozici nová verze</span>
+              <span class="badge-loading">
+                <Lightning size={13} weight="duotone" />
+                <span>K dispozici nová verze</span>
+              </span>
             {/if}
           </div>
         {/if}
@@ -240,7 +247,10 @@
       {#if dbState.updateAvailable}
         <div class="update-banner">
           <div class="update-banner-info">
-            <div class="update-title">🚀 K dispozici je aktualizace</div>
+            <div class="update-title">
+              <RocketLaunch size={18} weight="duotone" />
+              <span>K dispozici je aktualizace</span>
+            </div>
             <div class="update-subtitle">
               {#if dbState.dbUpdateAvailable && dbState.remoteVersion}
                 Nová verze slovníku: <code>{dbState.remoteVersion.dbVersion}</code> ({(dbState.remoteVersion.dbSizeBytes / (1024 * 1024)).toFixed(1)} MB). Aktualizujte pouze při stabilním připojení (např. na Wi-Fi).
@@ -294,7 +304,8 @@
             }
           }}
         >
-          🔍 Zkontrolovat dostupnost aktualizací
+          <MagnifyingGlass size={16} weight="bold" />
+          <span>Zkontrolovat dostupnost aktualizací</span>
         </button>
 
         <button
@@ -311,7 +322,13 @@
             }
           }}
         >
-          {dbState.status === 'ready' ? '✓ Databáze aktivní (otestovat přesmyčku)' : '⚡ Inicializovat databázi do paměti'}
+          {#if dbState.status === 'ready'}
+            <Check size={16} weight="bold" />
+            <span>Databáze aktivní (otestovat přesmyčku)</span>
+          {:else}
+            <Lightning size={16} weight="duotone" />
+            <span>Inicializovat databázi do paměti</span>
+          {/if}
         </button>
 
         <button
@@ -328,7 +345,8 @@
             }
           }}
         >
-          🔄 Znovu stáhnout databázi (vymazat cache)
+          <ArrowsClockwise size={16} weight="bold" />
+          <span>Znovu stáhnout databázi (vymazat cache)</span>
         </button>
       </div>
     </section>
@@ -609,6 +627,18 @@
   .badge-loading {
     color: var(--color-accent-warning);
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  :global(.spin) {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
   .badge-error {
@@ -637,6 +667,13 @@
     margin-top: 4px;
   }
 
+  .db-actions .secondary-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
   .update-banner {
     display: flex;
     align-items: center;
@@ -658,6 +695,9 @@
     font-size: 14px;
     font-weight: 700;
     color: var(--color-accent-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .update-subtitle {

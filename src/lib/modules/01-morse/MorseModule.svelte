@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import MorseReference from './MorseReference.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
@@ -14,6 +15,7 @@
   import { copyToClipboard } from '../../utils/clipboard';
   import { toast } from '../../state/toast.svelte';
   import { STORAGE_KEYS } from '../../constants';
+  import { ArrowsLeftRight, Lightning, Backspace, Copy, X } from 'phosphor-svelte';
 
   // Persistence keys
   const STORAGE_KEY_INPUT = `${STORAGE_KEYS.SETTINGS}_morse_input`;
@@ -51,41 +53,20 @@
   let cleanMorse = $derived(inputMorse.replace(/[^.-]/g, ''));
   let isEligibleForBruteforce = $derived(cleanMorse.length >= 4);
 
-  // Auto-save input
+  // Consolidated persistence
   $effect(() => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_INPUT, inputMorse);
-    }
-  });
-
-  // Auto-save parseCH
-  $effect(() => {
-    if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_CH, String(parseCH));
-    }
-  });
-
-  // Auto-save parseDigits
-  $effect(() => {
-    if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_DIGITS, String(parseDigits));
-    }
-  });
-
-  // Auto-save parseOther
-  $effect(() => {
-    if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_OTHER, String(parseOther));
     }
   });
 
-  function autoScrollTextarea() {
+  async function autoScrollTextarea() {
+    await tick();
     if (textareaEl) {
-      setTimeout(() => {
-        if (textareaEl) {
-          textareaEl.scrollTop = textareaEl.scrollHeight;
-        }
-      }, 0);
+      textareaEl.scrollTop = textareaEl.scrollHeight;
     }
   }
 
@@ -124,18 +105,10 @@
   }
 
   function handleClear() {
-    const prevMorse = inputMorse;
     settings.vibrate(30);
     inputMorse = '';
     bruteforceResults = [];
     totalFoundCandidates = 0;
-    toast.show('Zadání vymazáno', {
-      type: 'info',
-      undoAction: () => {
-        inputMorse = prevMorse;
-      },
-      undoLabel: 'Vrátit zpět'
-    });
     autoScrollTextarea();
   }
 
@@ -151,9 +124,11 @@
     isSolving = true;
     isBruteforceOpen = true;
 
+    // Yield to let browser render bottom sheet & spinner before heavy computation
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
     try {
-      const target = cleanMorse.length >= 4 ? cleanMorse : inputMorse.trim();
-      const res = await morseService.solveWithoutSpaces(target, 50);
+      const res = await morseService.solveWithoutSpaces(cleanMorse, 50);
       bruteforceResults = res.candidates;
       totalFoundCandidates = res.totalFound;
       if (bruteforceResults.length > 0) {
@@ -190,8 +165,7 @@
     settings.vibrate(25);
     inputMorse = candidate.spacedMorse;
     isBruteforceOpen = false;
-    copyToClipboard(candidate.text);
-    toast.show(`Použito řešení: ${candidate.text}`, 'success');
+    copyToClipboard(candidate.text, `Použito řešení: ${candidate.text}`);
     autoScrollTextarea();
   }
 
@@ -232,7 +206,7 @@
               <span class="badge">{wordCount} {wordCount === 1 ? 'slovo' : wordCount < 5 ? 'slova' : 'slov'}</span>
             {/if}
             {#if decodedText.trim().length > 0}
-              <span class="copy-hint">📋 Kopírovat</span>
+              <span class="copy-hint"><Copy size={13} weight="bold" /> Kopírovat</span>
             {/if}
           </div>
         </div>
@@ -254,7 +228,7 @@
           onclick={openPermutations}
           title="Zobrazit permutace a zrcadlení kódu"
         >
-          <span class="floating-icon">⇄</span>
+          <span class="floating-icon"><ArrowsLeftRight size={15} weight="bold" /></span>
           <span>Permutace</span>
         </button>
 
@@ -265,7 +239,7 @@
             onclick={runBruteforce}
             title="Rozluštit morseovku bez mezer pomocí slovníku a jazykového modelu"
           >
-            <span class="floating-icon">⚡</span>
+            <span class="floating-icon"><Lightning size={15} weight="duotone" /></span>
             <span>Vyřešit bez mezer</span>
           </button>
         {/if}
@@ -291,7 +265,6 @@
           disabled={!inputMorse}
           onAction={handleClear}
           label="Vymazat"
-          icon="🗑️"
           ariaLabel="Vymazat celý kód tažením"
         />
 
@@ -301,7 +274,7 @@
           onclick={handleBackspace}
           title="Smazat poslední znak nebo oddělovač"
         >
-          <span class="btn-icon">⌫</span>
+          <span class="btn-icon"><Backspace size={18} weight="duotone" /></span>
           <span class="btn-label">Backspace</span>
         </button>
       </div>
@@ -369,12 +342,15 @@
     <div class="sheet-panel" onclick={(e) => e.stopPropagation()}>
       <div class="sheet-header">
         <span class="sheet-title">
-          <span>⇄ Permutace symbolů</span>
+          <span class="sheet-title-icon"><ArrowsLeftRight size={18} weight="bold" /></span>
+          <span>Permutace symbolů</span>
           {#if permutations.length > 0}
             <span class="badge">{permutations.length} variant</span>
           {/if}
         </span>
-        <button class="sheet-close-btn" onclick={() => (isPermutationsOpen = false)}>✕</button>
+        <button class="sheet-close-btn" aria-label="Zavřít" onclick={() => (isPermutationsOpen = false)}>
+          <X size={20} weight="bold" />
+        </button>
       </div>
 
       <div class="sheet-body">
@@ -411,12 +387,15 @@
     <div class="sheet-panel" onclick={(e) => e.stopPropagation()}>
       <div class="sheet-header">
         <span class="sheet-title">
-          <span>⚡ Řešení bez mezer</span>
+          <span class="sheet-title-icon"><Lightning size={18} weight="duotone" /></span>
+          <span>Řešení bez mezer</span>
           {#if bruteforceResults.length > 0}
             <span class="badge">{bruteforceResults.length}{totalFoundCandidates > bruteforceResults.length ? ` z ${totalFoundCandidates}` : ''}</span>
           {/if}
         </span>
-        <button class="sheet-close-btn" onclick={() => (isBruteforceOpen = false)}>✕</button>
+        <button class="sheet-close-btn" aria-label="Zavřít" onclick={() => (isBruteforceOpen = false)}>
+          <X size={20} weight="bold" />
+        </button>
       </div>
 
       <div class="sheet-body">
@@ -651,11 +630,13 @@
 
   .utility-btn {
     height: 42px;
+    padding: 0 12px;
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: 600;
+    line-height: 1;
     color: var(--color-text-primary);
     display: flex;
     align-items: center;
@@ -679,10 +660,21 @@
   }
 
   .btn-icon {
-    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .btn-icon :global(svg) {
+    display: block;
   }
 
   .btn-label {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
     letter-spacing: 0.2px;
   }
 
@@ -811,6 +803,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  .sheet-title-icon {
+    display: flex;
+    align-items: center;
+    color: var(--color-accent-primary);
   }
 
   .sheet-close-btn {

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { MODULES } from '../../types';
   import { APP_NAME, APP_VERSION } from '../../constants';
+  import ModuleIcon from '../../components/ui/ModuleIcon.svelte';
+  import { List, BookOpen } from 'phosphor-svelte';
 </script>
 
 <div class="help-scroll">
@@ -21,10 +23,10 @@
           <strong>Kopírování jedním klepnutím (One-tap Copy):</strong> Klepnutím na jakýkoliv dekódovaný text nebo výsledkový řádek se obsah automaticky zkopíruje do schránky.
         </li>
         <li>
-          <strong>Menu modulu [ ☰ ]:</strong> Obsahuje rychlé volby specifické pro daný nástroj, výběr abecedy a bezpečné tlačítko pro vyčištění modulu.
+          <strong>Menu modulu:</strong> Tlačítko se symbolem <span class="inline-icon"><List size={14} weight="bold" /></span> v záhlaví obsahuje rychlé volby specifické pro daný nástroj, výběr abecedy a bezpečné tlačítko pro vyčištění modulu.
         </li>
         <li>
-          <strong>Reference a taháky [ 📖 ]:</strong> Ikona knihy v záhlaví okamžitě otevře tahák a tabulky daného modulu.
+          <strong>Reference a taháky:</strong> Tlačítko <span class="inline-icon"><BookOpen size={14} weight="duotone" /></span> v záhlaví okamžitě otevře tahák a tabulky daného modulu.
         </li>
       </ul>
     </section>
@@ -34,7 +36,9 @@
       <div class="tools-overview">
         {#each MODULES as mod}
           <div class="tool-item">
-            <span class="tool-icon">{mod.icon}</span>
+            <span class="tool-icon">
+              <ModuleIcon id={mod.id} weight="duotone" />
+            </span>
             <span class="tool-name">{mod.name}</span>
           </div>
         {/each}
@@ -122,6 +126,18 @@
 
   .tool-icon {
     font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent-primary);
+  }
+
+  .inline-icon {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: -2px;
+    margin: 0 2px;
+    color: var(--color-accent-primary);
   }
 
   .note {

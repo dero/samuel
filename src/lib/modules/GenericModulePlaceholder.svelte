@@ -2,6 +2,7 @@
   import ModuleShell from '../components/layout/ModuleShell.svelte';
   import type { ModuleMeta } from '../types';
   import { copyToClipboard } from '../utils/clipboard';
+  import ModuleIcon from '../components/ui/ModuleIcon.svelte';
 
   interface Props {
     module: ModuleMeta;
@@ -46,7 +47,9 @@
     <div class="input-container">
       <div class="stub-keypad">
         <div class="stub-info">
-          <span class="stub-icon">{module.icon}</span>
+          <span class="stub-icon">
+            <ModuleIcon id={module.id} size={40} weight="duotone" />
+          </span>
           <span class="stub-name">{module.name}</span>
           <span class="stub-badge">Připraveno ke specifikaci</span>
         </div>
@@ -129,7 +132,11 @@
   }
 
   .stub-icon {
-    font-size: 32px;
+    font-size: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent-primary);
   }
 
   .stub-name {

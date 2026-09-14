@@ -2,6 +2,7 @@
   import { CIPHER_MODULES } from '../../types';
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
+  import ModuleIcon from '../ui/ModuleIcon.svelte';
 
   function handleCardClick(id: string) {
     settings.vibrate(25);
@@ -16,7 +17,9 @@
         class="module-tile"
         onclick={() => handleCardClick(mod.id)}
       >
-        <span class="tile-icon">{mod.icon}</span>
+        <span class="tile-icon">
+          <ModuleIcon id={mod.id} weight="duotone" />
+        </span>
         <span class="tile-name">{mod.name}</span>
       </button>
     {/each}
@@ -69,8 +72,12 @@
   }
 
   .tile-icon {
-    font-size: clamp(24px, 4vh, 34px);
+    font-size: clamp(26px, 4.2vh, 34px);
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent-primary);
   }
 
   .tile-name {

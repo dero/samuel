@@ -3,6 +3,7 @@
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { pasteFromClipboard } from '../../utils/clipboard';
+  import { ClipboardText, Trash, X, CaretDown, CaretUp } from 'phosphor-svelte';
 
   interface Props {
     hasAlphabet?: boolean;
@@ -13,30 +14,30 @@
 
   let { hasAlphabet = false, onReset, onPaste, children }: Props = $props();
 
-  let isAlphabetPickerOpen = $state(false);
   let isConfirmingReset = $state(false);
-  let resetTimeout: any = null;
+  let resetTimeout: ReturnType<typeof setTimeout> | null = null;
+  let isAlphabetPickerOpen = $state(false);
 
   function handleResetClick() {
-    settings.vibrate(40);
+    settings.vibrate(25);
     if (!isConfirmingReset) {
       isConfirmingReset = true;
       resetTimeout = setTimeout(() => {
         isConfirmingReset = false;
-      }, 3500);
+      }, 3000);
     } else {
-      clearTimeout(resetTimeout);
+      if (resetTimeout) clearTimeout(resetTimeout);
       isConfirmingReset = false;
-      settings.vibrate([40, 40, 40]);
-      onReset?.();
+      if (onReset) onReset();
       navigation.closeSubView();
     }
   }
 
   async function handlePasteClick() {
+    settings.vibrate(25);
     const text = await pasteFromClipboard();
-    if (text) {
-      onPaste?.(text);
+    if (text && onPaste) {
+      onPaste(text);
       navigation.closeSubView();
     }
   }
@@ -49,7 +50,9 @@
     <div class="menu-panel" onclick={(e) => e.stopPropagation()}>
       <div class="menu-header">
         <span class="menu-title">Menu modulu</span>
-        <button class="close-btn" onclick={() => navigation.closeSubView()}>✕</button>
+        <button class="close-btn" aria-label="Zavřít menu" onclick={() => navigation.closeSubView()}>
+          <X size={20} weight="bold" />
+        </button>
       </div>
 
       <div class="menu-body">
@@ -64,7 +67,13 @@
               }}
             >
               <span class="btn-text">{alphabet.currentLayout.name}</span>
-              <span class="chevron">{isAlphabetPickerOpen ? '▴' : '▾'}</span>
+              <span class="chevron">
+                {#if isAlphabetPickerOpen}
+                  <CaretUp size={14} weight="bold" />
+                {:else}
+                  <CaretDown size={14} weight="bold" />
+                {/if}
+              </span>
             </button>
 
             {#if isAlphabetPickerOpen}
@@ -100,7 +109,7 @@
         <div class="section actions">
           <div class="section-label">Rychlé akce</div>
           <button class="action-btn" onclick={handlePasteClick}>
-            <span class="btn-icon">📋</span>
+            <span class="btn-icon"><ClipboardText size={20} weight="duotone" /></span>
             <span>Vložit ze schránky</span>
           </button>
 
@@ -109,7 +118,7 @@
             class:confirming={isConfirmingReset}
             onclick={handleResetClick}
           >
-            <span class="btn-icon">🗑️</span>
+            <span class="btn-icon"><Trash size={20} weight="duotone" /></span>
             <span>{isConfirmingReset ? 'Opravdu vymazat modul?' : 'Vyčistit modul'}</span>
           </button>
         </div>
@@ -302,7 +311,16 @@
     to { opacity: 1; }
   }
 
+  .chevron {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-secondary);
+  }
+
   .btn-icon {
     font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 </style>

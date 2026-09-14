@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { sveltePhosphorOptimize } from 'phosphor-svelte/vite';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -9,6 +10,7 @@ const buildTime = Date.now();
 export default defineConfig({
   plugins: [
     svelte(),
+    sveltePhosphorOptimize(),
     {
       name: 'update-version-json',
       buildStart() {
