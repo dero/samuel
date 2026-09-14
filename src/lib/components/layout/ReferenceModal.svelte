@@ -16,7 +16,7 @@
     <div class="ref-panel" onclick={(e) => e.stopPropagation()}>
       <div class="ref-header">
         <span class="ref-title">{title ?? (navigation.activeModule?.name ? `Reference: ${navigation.activeModule.name}` : 'Reference')}</span>
-        <button class="close-btn" onclick={() => navigation.closeSubView()}>✕</button>
+        <button class="close-btn" onclick={() => navigation.closeSubView()} aria-label="Zavřít">✕</button>
       </div>
 
       <div class="ref-content">
@@ -36,26 +36,52 @@
   .ref-backdrop {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     z-index: 210;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    padding: 12px;
+  }
+
+  @media (min-width: 600px) {
+    .ref-backdrop {
+      align-items: center;
+      padding: 20px;
+    }
   }
 
   .ref-panel {
     background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     width: 100%;
-    max-width: 600px;
-    height: 85vh;
+    max-width: 680px;
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8);
+    animation: sheetSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
+  }
+
+  @media (min-width: 600px) {
+    .ref-panel {
+      border-radius: var(--radius-lg);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+    }
+  }
+
+  @keyframes sheetSlideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0.8;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   .ref-header {
@@ -65,12 +91,16 @@
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--color-border-subtle);
+    flex-shrink: 0;
   }
 
   .ref-title {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
-    color: var(--color-accent-primary);
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .close-btn {
@@ -81,6 +111,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: color 0.12s, background-color 0.12s;
+  }
+
+  .close-btn:active {
+    color: #ffffff;
+    background-color: var(--color-surface-active);
   }
 
   .ref-content {
@@ -88,6 +125,9 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   .empty-ref {

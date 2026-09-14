@@ -1,18 +1,15 @@
 <script lang="ts">
   import { CZECH_MNEMONICS, type MorseEntry } from './morseData';
   import { settings } from '../../state/settings.svelte';
+  import { matchesSearch } from '../../utils/search';
 
   let activeTab = $state<'list' | 'tree'>('list');
   let searchQuery = $state('');
 
   let filteredEntries = $derived.by(() => {
-    const q = searchQuery.trim().toUpperCase();
-    if (!q) return CZECH_MNEMONICS;
-    return CZECH_MNEMONICS.filter(
-      (e) =>
-        e.char.includes(q) ||
-        e.code.includes(q) ||
-        e.mnemonic.toUpperCase().includes(q)
+    if (!searchQuery.trim()) return CZECH_MNEMONICS;
+    return CZECH_MNEMONICS.filter((e) =>
+      matchesSearch([e.char, e.code, e.mnemonic], searchQuery)
     );
   });
 
@@ -58,9 +55,9 @@
         { char: 'H', code: '....', dir: 'L' },
         { char: 'V', code: '...-', dir: 'R' },
         { char: 'F', code: '..-.', dir: 'L' },
-        { char: 'Ü', code: '..--', dir: 'R' },
+        { char: '', code: '..--', dir: 'R' },
         { char: 'L', code: '.-..', dir: 'L' },
-        { char: 'Ä', code: '.-.-', dir: 'R' },
+        { char: '', code: '.-.-', dir: 'R' },
         { char: 'P', code: '.--.', dir: 'L' },
         { char: 'J', code: '.---', dir: 'R' },
         { char: 'B', code: '-...', dir: 'L' },
@@ -69,8 +66,8 @@
         { char: 'Y', code: '-.--', dir: 'R' },
         { char: 'Z', code: '--..', dir: 'L' },
         { char: 'Q', code: '--.-', dir: 'R' },
-        { char: 'CH', code: '----', dir: 'L' },
-        { char: 'Š', code: '----.', dir: 'R' }
+        { char: '', code: '---.', dir: 'L' },
+        { char: 'CH', code: '----', dir: 'R' }
       ]
     }
   ];
@@ -91,7 +88,7 @@
         activeTab = 'list';
       }}
     >
-      Pomocná slova ({CZECH_MNEMONICS.length})
+      Přehled znaků ({CZECH_MNEMONICS.length})
     </button>
     <button
       class="tab-btn"
@@ -128,21 +125,16 @@
             <div class="entry-code">{entry.code}</div>
             <div class="entry-mnemonic">
               <span class="word">{entry.mnemonic}</span>
-              {#if entry.syllables && !entry.isDigit}
-                <span class="syllables">({entry.syllables})</span>
-              {/if}
             </div>
           </div>
+        {:else}
+          <div class="empty-state">Nenalezen žádný znak odpovídající „{searchQuery}“.</div>
         {/each}
       </div>
     </div>
   {:else}
     <!-- Tree View -->
     <div class="tree-scroll">
-      <div class="tree-explanation">
-        Vlevo = tečka (<b>•</b>), Vpravo = čárka (<b>—</b>)
-      </div>
-
       <div class="tree-container">
         <!-- Root node -->
         <div class="tree-row root-row">
@@ -150,13 +142,16 @@
         </div>
 
         {#each treeLevels as lvl}
-          <div class="tree-level-label">Délka {lvl.level}</div>
           <div class="tree-row" style="grid-template-columns: repeat({lvl.nodes.length}, 1fr)">
             {#each lvl.nodes as node}
-              <div class="tree-node" class:is-dot={node.dir === 'L'} class:is-dash={node.dir === 'R'}>
-                <span class="node-char">{node.char}</span>
-                <span class="node-code">{node.code}</span>
-              </div>
+              {#if node.char}
+                <div class="tree-node" class:is-dot={node.dir === 'L'} class:is-dash={node.dir === 'R'}>
+                  <span class="node-char">{node.char}</span>
+                  <span class="node-sym">{node.dir === 'L' ? '•' : '—'}</span>
+                </div>
+              {:else}
+                <div class="tree-node is-empty" aria-hidden="true"></div>
+              {/if}
             {/each}
           </div>
         {/each}
@@ -234,19 +229,28 @@
   }
 
   .entries-grid {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: max-content max-content 1fr;
     gap: 4px;
   }
 
   .entry-row {
-    display: flex;
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
     align-items: center;
-    padding: 8px 12px;
+    padding: 8px 14px;
     background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    gap: 12px;
+    gap: 14px;
+  }
+
+  @supports not (grid-template-columns: subgrid) {
+    .entry-row {
+      display: grid;
+      grid-template-columns: auto auto 1fr;
+    }
   }
 
   .entry-char {
@@ -254,8 +258,7 @@
     font-size: 18px;
     font-weight: 700;
     color: var(--color-accent-primary);
-    width: 36px;
-    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .entry-code {
@@ -264,15 +267,12 @@
     font-weight: 700;
     letter-spacing: 2px;
     color: #ffffff;
-    width: 70px;
-    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .entry-mnemonic {
     display: flex;
     align-items: baseline;
-    gap: 6px;
-    flex: 1;
     min-width: 0;
   }
 
@@ -280,11 +280,15 @@
     font-size: 14px;
     font-weight: 600;
     color: var(--color-text-primary);
+    word-break: break-word;
   }
 
-  .entry-mnemonic .syllables {
-    font-size: 12px;
-    color: var(--color-text-secondary);
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 24px 16px;
+    font-size: 14px;
   }
 
   /* Tree View */
@@ -292,35 +296,20 @@
     flex: 1;
     overflow: auto;
     overscroll-behavior: contain;
-    padding: 4px;
-  }
-
-  .tree-explanation {
-    text-align: center;
-    font-size: 13px;
-    color: var(--color-text-secondary);
-    padding: 6px 0 12px 0;
+    padding: 8px 4px 16px 4px;
   }
 
   .tree-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    min-width: 640px;
-  }
-
-  .tree-level-label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--color-text-muted);
-    margin-top: 4px;
+    gap: 14px;
+    min-width: 860px;
+    padding-bottom: 16px;
   }
 
   .tree-row {
     display: grid;
-    gap: 4px;
+    gap: 6px;
   }
 
   .root-row {
@@ -333,38 +322,74 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 6px 2px;
+    padding: 6px 4px 8px 4px;
+    gap: 2px;
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    min-width: 0;
+    min-width: 44px;
+    white-space: nowrap;
+    user-select: none;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+
+  .tree-node.is-empty {
+    visibility: hidden;
+    border: none;
+    background: none;
+    pointer-events: none;
   }
 
   .tree-node.is-dot {
-    border-left: 2px solid var(--color-accent-primary);
+    background-color: rgba(0, 210, 255, 0.16);
+    border: 1px solid rgba(0, 210, 255, 0.45);
+  }
+
+  .tree-node.is-dot .node-char {
+    color: #67e8f9;
+  }
+
+  .tree-node.is-dot .node-sym {
+    color: #a5f3fc;
   }
 
   .tree-node.is-dash {
-    border-right: 2px solid var(--color-accent-warning);
+    background-color: rgba(245, 158, 11, 0.16);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+  }
+
+  .tree-node.is-dash .node-char {
+    color: #fcd34d;
+  }
+
+  .tree-node.is-dash .node-sym {
+    color: #fde68a;
   }
 
   .root-node {
-    padding: 6px 24px;
+    padding: 8px 36px;
     font-weight: 700;
-    color: var(--color-accent-primary);
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--color-text-primary);
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
   }
 
   .node-char {
     font-family: var(--font-condensed);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--color-text-primary);
+    white-space: nowrap;
+    line-height: 1.1;
   }
 
-  .node-code {
+  .node-sym {
     font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--color-text-secondary);
-    letter-spacing: 1px;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
   }
 </style>

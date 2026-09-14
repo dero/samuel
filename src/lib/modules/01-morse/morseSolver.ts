@@ -1,7 +1,20 @@
-import { REVERSE_MORSE_TABLE, MORSE_TABLE } from './morseData';
+import {
+  REVERSE_MORSE_TABLE,
+  REVERSE_MORSE_LETTERS,
+  REVERSE_MORSE_DIGITS,
+  REVERSE_MORSE_OTHER,
+  MORSE_TABLE,
+  MORSE_LETTERS
+} from './morseData';
 import { scoreCandidate } from '../../data/markovModel';
 import { CIPHER_KEYWORDS } from '../../data/cipherKeywords';
 import { ensureNgramLoaded, getNgramLogProb } from '../../data/ngramModel';
+
+export interface DecodeMorseOptions {
+  parseCH?: boolean;
+  parseDigits?: boolean;
+  parseOther?: boolean;
+}
 
 export interface PermutationResult {
   id: string;
@@ -52,8 +65,27 @@ export function normalizeMorse(raw: string): string {
 /**
  * Decodes normalized Morse code to readable uppercase text.
  */
-export function decodeMorse(morse: string, parseCH = true): string {
+export function decodeMorse(
+  morse: string,
+  optionsOrParseCH: boolean | DecodeMorseOptions = true,
+  parseDigits = true,
+  parseOther = true
+): string {
   if (!morse.trim()) return '';
+
+  let parseCH = true;
+  let digits = true;
+  let other = true;
+
+  if (typeof optionsOrParseCH === 'object' && optionsOrParseCH !== null) {
+    parseCH = optionsOrParseCH.parseCH ?? true;
+    digits = optionsOrParseCH.parseDigits ?? true;
+    other = optionsOrParseCH.parseOther ?? true;
+  } else {
+    parseCH = optionsOrParseCH ?? true;
+    digits = parseDigits;
+    other = parseOther;
+  }
 
   // Words are separated by '//' or double spaces
   const words = morse.split(/\s*\/\/\s*|\s{2,}/);
@@ -63,8 +95,20 @@ export function decodeMorse(morse: string, parseCH = true): string {
     const letters = word.split(/[\/\s]+/).filter(Boolean);
     return letters
       .map((code) => {
-        if (!parseCH && code === '----') return 'OOOO';
-        return REVERSE_MORSE_TABLE[code] ?? '?';
+        if (code === '----') {
+          if (!parseCH) return 'OOOO';
+          return 'CH';
+        }
+        if (code in REVERSE_MORSE_LETTERS) {
+          return REVERSE_MORSE_LETTERS[code];
+        }
+        if (code in REVERSE_MORSE_DIGITS) {
+          return digits ? REVERSE_MORSE_DIGITS[code] : '?';
+        }
+        if (code in REVERSE_MORSE_OTHER) {
+          return other ? REVERSE_MORSE_OTHER[code] : '?';
+        }
+        return '?';
       })
       .join('');
   });
@@ -143,7 +187,12 @@ export function scoreDecodedText(text: string): number {
 /**
  * Generates all 6 symbol permutations (3!) plus reverse reading.
  */
-export function getPermutations(morse: string): PermutationResult[] {
+export function getPermutations(
+  morse: string,
+  optionsOrParseCH: boolean | DecodeMorseOptions = true,
+  parseDigits = true,
+  parseOther = true
+): PermutationResult[] {
   if (!morse.trim()) return [];
 
   const perms = [
@@ -190,7 +239,7 @@ export function getPermutations(morse: string): PermutationResult[] {
     for (let i = 0; i < morse.length; i++) {
       transformed += p.fn(morse[i]);
     }
-    const decoded = decodeMorse(transformed);
+    const decoded = decodeMorse(transformed, optionsOrParseCH, parseDigits, parseOther);
     const score = scoreDecodedText(decoded);
     return {
       id: p.id,
@@ -209,7 +258,7 @@ export function getPermutations(morse: string): PermutationResult[] {
     .map((letter) => letter.split('').reverse().join(''))
     .reverse()
     .join(' / ');
-  const reversedDecoded = decodeMorse(reversedMorse);
+  const reversedDecoded = decodeMorse(reversedMorse, optionsOrParseCH, parseDigits, parseOther);
 
   results.push({
     id: 'reverse',
@@ -229,11 +278,11 @@ export function wordToMorse(w: string): string {
   let i = 0;
   while (i < w.length) {
     if (w.slice(i, i + 2) === 'CH') {
-      m += MORSE_TABLE['CH'] || '----';
+      m += MORSE_LETTERS['CH'] || '----';
       i += 2;
     } else {
       const c = w[i];
-      if (MORSE_TABLE[c]) m += MORSE_TABLE[c];
+      if (MORSE_LETTERS[c]) m += MORSE_LETTERS[c];
       i++;
     }
   }
@@ -335,7 +384,7 @@ function decodeMorseWith4gram(
       for (let len = 1; len <= 4; len++) {
         if (pos + len <= n) {
           const sub = morseCode.slice(pos, pos + len);
-          const ch = REVERSE_MORSE_TABLE[sub];
+          const ch = REVERSE_MORSE_LETTERS[sub];
           if (ch) {
             const lp = getNgramLogProb(st.hist, ch);
             dp[pos + len].push({
@@ -461,7 +510,7 @@ export async function solveMorseWithoutSpaces(
       .map((w) =>
         w
           .split('')
-          .map((c) => MORSE_TABLE[c] || '')
+          .map((c) => MORSE_LETTERS[c] || '')
           .filter(Boolean)
           .join(' / ')
       )
@@ -500,7 +549,7 @@ export async function solveMorseWithoutSpaces(
         .map((w) =>
           w
             .split('')
-            .map((c) => MORSE_TABLE[c] || '')
+            .map((c) => MORSE_LETTERS[c] || '')
             .filter(Boolean)
             .join(' / ')
         )

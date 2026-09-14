@@ -1,6 +1,7 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import MorseReference from './MorseReference.svelte';
+  import SlideToAction from '../../components/ui/SlideToAction.svelte';
   import {
     decodeMorse,
     normalizeMorse,
@@ -17,12 +18,20 @@
   // Persistence keys
   const STORAGE_KEY_INPUT = `${STORAGE_KEYS.SETTINGS}_morse_input`;
   const STORAGE_KEY_CH = `${STORAGE_KEYS.SETTINGS}_morse_parse_ch`;
+  const STORAGE_KEY_DIGITS = `${STORAGE_KEYS.SETTINGS}_morse_parse_digits`;
+  const STORAGE_KEY_OTHER = `${STORAGE_KEYS.SETTINGS}_morse_parse_other`;
 
   let inputMorse = $state<string>(
     typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY_INPUT) || '' : ''
   );
   let parseCH = $state<boolean>(
     typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY_CH) !== 'false' : true
+  );
+  let parseDigits = $state<boolean>(
+    typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY_DIGITS) !== 'false' : true
+  );
+  let parseOther = $state<boolean>(
+    typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY_OTHER) !== 'false' : true
   );
 
   let isPermutationsOpen = $state(false);
@@ -33,8 +42,10 @@
   let textareaEl = $state<HTMLTextAreaElement | null>(null);
 
   // Derived decoding & metadata
-  let decodedText = $derived(decodeMorse(inputMorse, parseCH));
-  let permutations = $derived(isPermutationsOpen ? getPermutations(inputMorse) : []);
+  let decodedText = $derived(decodeMorse(inputMorse, { parseCH, parseDigits, parseOther }));
+  let permutations = $derived(
+    isPermutationsOpen ? getPermutations(inputMorse, { parseCH, parseDigits, parseOther }) : []
+  );
   let charCount = $derived(decodedText.replace(/\s+/g, '').length);
   let wordCount = $derived(decodedText.trim() ? decodedText.trim().split(/\s+/).length : 0);
   let cleanMorse = $derived(inputMorse.replace(/[^.-]/g, ''));
@@ -51,6 +62,20 @@
   $effect(() => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_CH, String(parseCH));
+    }
+  });
+
+  // Auto-save parseDigits
+  $effect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_DIGITS, String(parseDigits));
+    }
+  });
+
+  // Auto-save parseOther
+  $effect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_OTHER, String(parseOther));
     }
   });
 
@@ -99,11 +124,18 @@
   }
 
   function handleClear() {
+    const prevMorse = inputMorse;
     settings.vibrate(30);
     inputMorse = '';
     bruteforceResults = [];
     totalFoundCandidates = 0;
-    toast.show('Zadání vymazáno', 'info');
+    toast.show('Zadání vymazáno', {
+      type: 'info',
+      undoAction: () => {
+        inputMorse = prevMorse;
+      },
+      undoLabel: 'Vrátit zpět'
+    });
     autoScrollTextarea();
   }
 
@@ -253,17 +285,15 @@
         ></textarea>
       </div>
 
-      <!-- Utility Row: Vymazat and Backspace -->
+      <!-- Utility Row: Slide to Clear and Backspace -->
       <div class="keypad-utility-row">
-        <button
-          class="utility-btn clear-btn"
+        <SlideToAction
           disabled={!inputMorse}
-          onclick={handleClear}
-          title="Vymazat celý kód"
-        >
-          <span class="btn-icon">🗑️</span>
-          <span class="btn-label">Vymazat</span>
-        </button>
+          onAction={handleClear}
+          label="Vymazat"
+          icon="🗑️"
+          ariaLabel="Vymazat celý kód tažením"
+        />
 
         <button
           class="utility-btn backspace-btn"
@@ -310,6 +340,18 @@
       <label class="checkbox-label">
         <input type="checkbox" bind:checked={parseCH} />
         <span class="label-text">Rozpoznávat písmeno CH (----)</span>
+      </label>
+    </div>
+    <div class="menu-option">
+      <label class="checkbox-label">
+        <input type="checkbox" bind:checked={parseDigits} />
+        <span class="label-text">Rozpoznávat číslice (0–9)</span>
+      </label>
+    </div>
+    <div class="menu-option">
+      <label class="checkbox-label">
+        <input type="checkbox" bind:checked={parseOther} />
+        <span class="label-text">Rozpoznávat ostatní znaky (.,?!...)</span>
       </label>
     </div>
   {/snippet}
@@ -598,12 +640,13 @@
     letter-spacing: normal;
   }
 
-  /* Keypad Utility Row: Vymazat and Backspace */
+  /* Keypad Utility Row: Slide to Clear and Backspace */
   .keypad-utility-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.15fr 0.85fr;
     gap: 8px;
     width: 100%;
+    align-items: center;
   }
 
   .utility-btn {
@@ -629,16 +672,6 @@
   .utility-btn:disabled {
     opacity: 0.35;
     cursor: not-allowed;
-  }
-
-  .utility-btn.clear-btn {
-    color: var(--color-accent-danger);
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-
-  .utility-btn.clear-btn:active:not(:disabled) {
-    background-color: rgba(239, 68, 68, 0.15);
-    border-color: var(--color-accent-danger);
   }
 
   .utility-btn.backspace-btn {
