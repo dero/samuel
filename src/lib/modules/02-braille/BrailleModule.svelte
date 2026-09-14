@@ -182,7 +182,6 @@
     settings.vibrate(35);
     inputLetters = '';
     activeDots = [];
-    toast.show('Text byl vymazán', 'info');
   }
 
   async function handleCopy() {
@@ -295,7 +294,7 @@
         <SlideToAction
           disabled={!inputLetters && activeDots.length === 0}
           onAction={handleClearAll}
-          label="Vymazat text"
+          label="Vymazat"
           ariaLabel="Vymazat celý text tažením"
         />
 

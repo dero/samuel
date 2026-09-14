@@ -8,6 +8,7 @@
   import HelpModule from './lib/modules/help/HelpModule.svelte';
   import MorseModule from './lib/modules/01-morse/MorseModule.svelte';
   import BrailleModule from './lib/modules/02-braille/BrailleModule.svelte';
+  import SemaphoreModule from './lib/modules/03-semaphore/SemaphoreModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -27,6 +28,8 @@
     <MorseModule />
   {:else if navigation.activeModuleId === 'braille'}
     <BrailleModule />
+  {:else if navigation.activeModuleId === 'semaphore'}
+    <SemaphoreModule />
   {:else if navigation.activeModuleId === 'settings'}
     <SettingsModule />
   {:else if navigation.activeModuleId === 'help'}
