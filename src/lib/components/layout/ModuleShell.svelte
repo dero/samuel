@@ -6,6 +6,7 @@
     hasAlphabet?: boolean;
     onReset?: () => void;
     onPaste?: (text: string) => void;
+    layoutMode?: 'default' | 'compact-output';
     output?: import('svelte').Snippet;
     input?: import('svelte').Snippet;
     menuOptions?: import('svelte').Snippet;
@@ -16,6 +17,7 @@
     hasAlphabet = false,
     onReset,
     onPaste,
+    layoutMode = 'default',
     output,
     input,
     menuOptions,
@@ -23,7 +25,7 @@
   }: Props = $props();
 </script>
 
-<div class="module-shell">
+<div class="module-shell" class:compact-output={layoutMode === 'compact-output'}>
   <!-- Top: Output & State Zone -->
   <div class="zone-output">
     {#if output}
@@ -81,5 +83,18 @@
     flex-direction: column;
     background-color: var(--color-surface-1);
     border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .compact-output .zone-output {
+    flex: 0 0 auto;
+    padding: 10px 12px 6px 12px;
+  }
+
+  .compact-output .zone-input {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 </style>

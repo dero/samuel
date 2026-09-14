@@ -7,6 +7,7 @@
   import SettingsModule from './lib/modules/settings/SettingsModule.svelte';
   import HelpModule from './lib/modules/help/HelpModule.svelte';
   import MorseModule from './lib/modules/01-morse/MorseModule.svelte';
+  import BrailleModule from './lib/modules/02-braille/BrailleModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -24,6 +25,8 @@
     <Dashboard />
   {:else if navigation.activeModuleId === 'morse'}
     <MorseModule />
+  {:else if navigation.activeModuleId === 'braille'}
+    <BrailleModule />
   {:else if navigation.activeModuleId === 'settings'}
     <SettingsModule />
   {:else if navigation.activeModuleId === 'help'}
