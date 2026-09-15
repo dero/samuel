@@ -1,44 +1,21 @@
 <script lang="ts">
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
-  import { APP_NAME } from '../../constants';
   import { dbState } from '../../db/database.svelte';
   import ModuleIcon from '../ui/ModuleIcon.svelte';
   import { List, BookOpen, CaretDown, FlagBanner } from 'phosphor-svelte';
 
   let active = $derived(navigation.activeModule);
-  let isDashboard = $derived(!navigation.activeModuleId);
 </script>
-
-<header class="header" class:is-dashboard={isDashboard}>
-  {#if isDashboard}
-    <div class="dash-title-zone">
-      <span class="app-icon">▲</span>
-      <span class="app-title">{APP_NAME}</span>
-    </div>
-
-    <div class="header-actions">
-      <button
-        class="header-btn menu-btn"
-        aria-label="Hlavní menu"
-        title={dbState.updateAvailable ? "Menu (K dispozici je aktualizace)" : "Menu"}
-        onclick={() => {
-          settings.vibrate(25);
-          navigation.openMenu();
-        }}
-      >
-        <span class="icon"><List size={22} weight="bold" /></span>
-        {#if dbState.updateAvailable}
-          <span class="update-dot"></span>
-        {/if}
-      </button>
-    </div>
-  {:else}
+<header class="header">
+  <div class="title-zone">
     <button
-      class="module-icon-btn"
-      aria-label="Rychlý rozcestník pomůcek"
+      type="button"
+      class="launcher-btn"
+      aria-label="Výběr pomůcky"
+      title="Kliknutím otevřete výběr pomůcek"
       onclick={() => {
-        settings.vibrate(25);
+        settings.vibrate(20);
         navigation.toggleLauncher();
       }}
     >
@@ -49,52 +26,43 @@
           <FlagBanner size="1em" weight="duotone" />
         {/if}
       </span>
+      <span class="title-text">{active?.name ?? ''}</span>
+      <span class="chevron"><CaretDown size={14} weight="bold" /></span>
     </button>
+  </div>
 
-    <div class="title-zone">
+  <div class="header-actions">
+    {#if !active?.isSystem}
       <button
-        class="title-btn"
+        type="button"
+        class="header-btn"
+        aria-label="Reference a tahák"
+        title="Reference a tahák"
         onclick={() => {
-          settings.vibrate(25);
-          navigation.toggleLauncher();
+          settings.vibrate(20);
+          navigation.openRef();
         }}
       >
-        <span class="title-text">{active?.name ?? ''}</span>
-        <span class="chevron"><CaretDown size={14} weight="bold" /></span>
+        <span class="icon"><BookOpen size={20} weight="duotone" /></span>
       </button>
-    </div>
+    {/if}
 
-    <div class="header-actions">
-      {#if !active?.isSystem}
-        <button
-          class="header-btn"
-          aria-label="Reference a tahák"
-          title="Reference"
-          onclick={() => {
-            settings.vibrate(25);
-            navigation.openRef();
-          }}
-        >
-          <span class="icon"><BookOpen size={20} weight="duotone" /></span>
-        </button>
+    <button
+      type="button"
+      class="header-btn menu-btn"
+      aria-label="Menu modulu"
+      title={dbState.updateAvailable ? "Menu (K dispozici je aktualizace)" : "Menu modulu"}
+      onclick={() => {
+        settings.vibrate(20);
+        navigation.openMenu();
+      }}
+    >
+      <span class="icon"><List size={22} weight="bold" /></span>
+      {#if dbState.updateAvailable}
+        <span class="update-dot"></span>
       {/if}
-
-      <button
-        class="header-btn menu-btn"
-        aria-label="Menu modulu"
-        title={dbState.updateAvailable ? "Menu (K dispozici je aktualizace)" : "Menu"}
-        onclick={() => {
-          settings.vibrate(25);
-          navigation.openMenu();
-        }}
-      >
-        <span class="icon"><List size={22} weight="bold" /></span>
-        {#if dbState.updateAvailable}
-          <span class="update-dot"></span>
-        {/if}
-      </button>
-    </div>
-  {/if}
+    </button>
+  </div>
 
   {#if dbState.status === 'loading'}
     <div class="db-sync-bar" title="Stahování slovníkové databáze ({dbState.progress}%)">
@@ -112,42 +80,32 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 8px;
+    padding: 0 var(--space-sm);
     z-index: 100;
     position: relative;
     user-select: none;
+    box-sizing: border-box;
   }
 
-  .dash-title-zone {
+  .title-zone {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 0 6px;
+    min-width: 0;
+    overflow: hidden;
   }
 
-  .app-icon {
-    font-size: 16px;
-    color: var(--color-accent-primary);
-  }
-
-  .app-title {
-    font-family: var(--font-condensed);
-    font-size: 21px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    color: var(--color-text-primary);
-  }
-
-  .module-icon-btn {
-    width: var(--tap-min-size);
+  .launcher-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
     height: var(--tap-min-size);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 0 var(--space-sm);
     border-radius: var(--radius-sm);
-    transition: background-color 0.15s;
+    max-width: 100%;
+    transition: background-color 0.12s ease;
   }
-  .module-icon-btn:active {
+  .launcher-btn:active {
     background-color: var(--color-surface-active);
   }
 
@@ -157,36 +115,18 @@
     align-items: center;
     justify-content: center;
     color: var(--color-accent-primary);
-  }
-
-  .title-zone {
-    flex: 1;
-    display: flex;
-    justify-content: flex-start;
-    padding: 0 4px;
-    overflow: hidden;
-  }
-
-  .title-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 8px;
-    border-radius: var(--radius-sm);
-    max-width: 100%;
-  }
-  .title-btn:active {
-    background-color: var(--color-surface-active);
+    flex-shrink: 0;
   }
 
   .title-text {
     font-family: var(--font-condensed);
-    font-size: 20px;
+    font-size: var(--text-xl);
     font-weight: 700;
     letter-spacing: 0.3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--color-text-primary);
   }
 
   .chevron {
@@ -194,6 +134,7 @@
     color: var(--color-text-secondary);
     display: flex;
     align-items: center;
+    flex-shrink: 0;
   }
 
   .header-actions {
@@ -209,7 +150,8 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
-    transition: background-color 0.15s;
+    transition: background-color 0.12s ease;
+    color: var(--color-text-primary);
   }
   .header-btn:active {
     background-color: var(--color-surface-active);
@@ -245,8 +187,8 @@
 
   .update-dot {
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 8px;
+    right: 8px;
     width: 8px;
     height: 8px;
     border-radius: 50%;

@@ -1,4 +1,4 @@
-import { STORAGE_KEYS } from '../constants';
+import { localSettingsService } from '../services/localSettingsService';
 
 export interface AlphabetLayout {
   id: string;
@@ -43,27 +43,21 @@ class AlphabetState {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      const storedActive = localStorage.getItem(STORAGE_KEYS.ALPHABET_ACTIVE);
-      const storedLayouts = localStorage.getItem(STORAGE_KEYS.ALPHABET_LAYOUTS);
+      const alphaScope = localSettingsService.forSection('alphabet');
+      const storedActive = alphaScope.getString('activeId');
+      const storedLayouts = alphaScope.getJSON<AlphabetLayout[] | null>('layouts', null);
 
       if (storedActive) {
         this.activeId = storedActive;
       }
-      if (storedLayouts) {
-        try {
-          const parsed = JSON.parse(storedLayouts);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            this.layouts = parsed;
-          }
-        } catch {
-          // ignore corrupted data
-        }
+      if (Array.isArray(storedLayouts) && storedLayouts.length > 0) {
+        this.layouts = storedLayouts;
       }
 
       $effect.root(() => {
         $effect(() => {
-          localStorage.setItem(STORAGE_KEYS.ALPHABET_ACTIVE, this.activeId);
-          localStorage.setItem(STORAGE_KEYS.ALPHABET_LAYOUTS, JSON.stringify(this.layouts));
+          alphaScope.setString('activeId', this.activeId);
+          alphaScope.setJSON('layouts', this.layouts);
         });
       });
     }

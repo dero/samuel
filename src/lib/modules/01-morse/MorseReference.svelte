@@ -179,6 +179,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
     overflow: hidden;
     gap: 10px;
   }
@@ -235,7 +236,9 @@
   .search-icon {
     display: flex;
     align-items: center;
+    justify-content: center;
     color: var(--color-text-secondary);
+    flex-shrink: 0;
   }
 
   .clear-search {

@@ -14,10 +14,10 @@
       <h2 class="card-title">Základní ovládání & Ergonomie</h2>
       <ul class="help-list">
         <li>
-          <strong>Rychlá navigace:</strong> Klepnutím na ikonu modulu vlevo v záhlaví otevřete rychlý launcher pro okamžitý skok do jiného nástroje bez nutnosti návratu na úvodní obrazovku.
+          <strong>Rychlá navigace:</strong> Klepnutím na ikonu nebo název pomůcky v záhlaví otevřete rychlý výběr pro okamžitý skok do libovolného nástroje na 1 kliknutí.
         </li>
         <li>
-          <strong>Tlačítko Zpět:</strong> Systémové tlačítko Zpět v telefonu vás vždy spolehlivě vrátí z menu do modulu, z modulu na Dashboard a z Dashboardu nabídne ukončení.
+          <strong>Tlačítko Zpět:</strong> Systémové tlačítko Zpět v telefonu vás vždy spolehlivě vrátí z menu, reference či výběru pomůcek zpět do rozluštěného modulu.
         </li>
         <li>
           <strong>Kopírování jedním klepnutím (One-tap Copy):</strong> Klepnutím na jakýkoliv dekódovaný text nebo výsledkový řádek se obsah automaticky zkopíruje do schránky.

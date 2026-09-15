@@ -69,25 +69,28 @@
 
   .zone-output {
     flex: 1;
-    min-height: 0;
+    min-height: var(--output-min-height);
     display: flex;
     flex-direction: column;
-    padding: 12px;
+    padding: var(--space-md) var(--space-md) var(--space-xs) var(--space-md);
     overflow: hidden;
+    box-sizing: border-box;
   }
 
   .zone-input {
     flex-shrink: 0;
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding: var(--space-xs) var(--space-md) calc(var(--space-lg) + env(safe-area-inset-bottom, 0px)) var(--space-md);
     display: flex;
     flex-direction: column;
+    gap: var(--space-sm);
     background-color: var(--color-surface-1);
     border-top: 1px solid var(--color-border-subtle);
+    box-sizing: border-box;
   }
 
   .compact-output .zone-output {
     flex: 0 0 auto;
-    padding: 10px 12px 6px 12px;
+    padding: var(--space-sm) var(--space-md) var(--space-xs) var(--space-md);
   }
 
   .compact-output .zone-input {

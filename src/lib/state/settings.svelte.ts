@@ -1,4 +1,4 @@
-import { STORAGE_KEYS } from '../constants';
+import { localSettingsService } from '../services/localSettingsService';
 
 class SettingsState {
   hapticsEnabled = $state<boolean>(true);
@@ -9,28 +9,16 @@ class SettingsState {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (typeof parsed.hapticsEnabled === 'boolean') this.hapticsEnabled = parsed.hapticsEnabled;
-          if (typeof parsed.wakeLockEnabled === 'boolean') this.wakeLockEnabled = parsed.wakeLockEnabled;
-          if (typeof parsed.devToolsEnabled === 'boolean') this.devToolsEnabled = parsed.devToolsEnabled;
-        } catch {
-          // ignore
-        }
-      }
+      const appScope = localSettingsService.forSection('app');
+      this.hapticsEnabled = appScope.getBoolean('hapticsEnabled', true);
+      this.wakeLockEnabled = appScope.getBoolean('wakeLockEnabled', true);
+      this.devToolsEnabled = appScope.getBoolean('devToolsEnabled', false);
 
       $effect.root(() => {
         $effect(() => {
-          localStorage.setItem(
-            STORAGE_KEYS.SETTINGS,
-            JSON.stringify({
-              hapticsEnabled: this.hapticsEnabled,
-              wakeLockEnabled: this.wakeLockEnabled,
-              devToolsEnabled: this.devToolsEnabled
-            })
-          );
+          appScope.setBoolean('hapticsEnabled', this.hapticsEnabled);
+          appScope.setBoolean('wakeLockEnabled', this.wakeLockEnabled);
+          appScope.setBoolean('devToolsEnabled', this.devToolsEnabled);
         });
 
         $effect(() => {

@@ -3,7 +3,8 @@
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { pasteFromClipboard } from '../../utils/clipboard';
-  import { ClipboardText, Trash, X, CaretDown, CaretUp } from 'phosphor-svelte';
+  import BottomSheet from '../ui/BottomSheet.svelte';
+  import { ClipboardText, Trash, CaretDown, CaretUp, List } from 'phosphor-svelte';
 
   interface Props {
     hasAlphabet?: boolean;
@@ -43,191 +44,93 @@
   }
 </script>
 
-{#if navigation.subView === 'menu'}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="menu-backdrop" onclick={() => navigation.closeSubView()}>
-    <div class="menu-panel" onclick={(e) => e.stopPropagation()}>
-      <div class="menu-header">
-        <span class="menu-title">Menu modulu</span>
-        <button class="close-btn" aria-label="Zavřít menu" onclick={() => navigation.closeSubView()}>
-          <X size={20} weight="bold" />
-        </button>
-      </div>
+<BottomSheet
+  open={navigation.subView === 'menu' && !!navigation.activeModuleId}
+  title="Menu modulu"
+  icon={List}
+  maxWidth="480px"
+  onClose={() => navigation.closeSubView()}
+>
+  {#if hasAlphabet}
+    <div class="menu-section">
+      <div class="section-label">Aktivní abeceda</div>
+      <button
+        type="button"
+        class="alphabet-btn"
+        onclick={() => {
+          settings.vibrate(20);
+          isAlphabetPickerOpen = !isAlphabetPickerOpen;
+        }}
+      >
+        <span class="btn-text">{alphabet.currentLayout.name}</span>
+        <span class="chevron">
+          {#if isAlphabetPickerOpen}
+            <CaretUp size={14} weight="bold" />
+          {:else}
+            <CaretDown size={14} weight="bold" />
+          {/if}
+        </span>
+      </button>
 
-      <div class="menu-body">
-        {#if hasAlphabet}
-          <div class="section">
-            <div class="section-label">Aktivní abeceda</div>
+      {#if isAlphabetPickerOpen}
+        <div class="alphabet-list">
+          {#each alphabet.layouts as layout}
             <button
-              class="alphabet-btn"
+              type="button"
+              class="alphabet-item"
+              class:selected={layout.id === alphabet.activeId}
               onclick={() => {
-                settings.vibrate(25);
-                isAlphabetPickerOpen = !isAlphabetPickerOpen;
+                settings.vibrate(20);
+                alphabet.setActiveLayout(layout.id);
+                isAlphabetPickerOpen = false;
               }}
             >
-              <span class="btn-text">{alphabet.currentLayout.name}</span>
-              <span class="chevron">
-                {#if isAlphabetPickerOpen}
-                  <CaretUp size={14} weight="bold" />
-                {:else}
-                  <CaretDown size={14} weight="bold" />
-                {/if}
-              </span>
+              <span>{layout.name}</span>
+              {#if layout.id === alphabet.activeId}
+                <span class="check">✓</span>
+              {/if}
             </button>
-
-            {#if isAlphabetPickerOpen}
-              <div class="alphabet-list">
-                {#each alphabet.layouts as layout}
-                  <button
-                    class="alphabet-item"
-                    class:selected={layout.id === alphabet.activeId}
-                    onclick={() => {
-                      settings.vibrate(25);
-                      alphabet.setActiveLayout(layout.id);
-                      isAlphabetPickerOpen = false;
-                    }}
-                  >
-                    <span>{layout.name}</span>
-                    {#if layout.id === alphabet.activeId}
-                      <span class="check">✓</span>
-                    {/if}
-                  </button>
-                {/each}
-              </div>
-            {/if}
-          </div>
-        {/if}
-
-        {#if children}
-          <div class="section custom-options">
-            <div class="section-label">Lokální nastavení</div>
-            {@render children()}
-          </div>
-        {/if}
-
-        <div class="section actions">
-          <div class="section-label">Rychlé akce</div>
-          <button class="action-btn" onclick={handlePasteClick}>
-            <span class="btn-icon"><ClipboardText size={20} weight="duotone" /></span>
-            <span>Vložit ze schránky</span>
-          </button>
-
-          <button
-            class="action-btn reset-btn"
-            class:confirming={isConfirmingReset}
-            onclick={handleResetClick}
-          >
-            <span class="btn-icon"><Trash size={20} weight="duotone" /></span>
-            <span>{isConfirmingReset ? 'Opravdu vymazat modul?' : 'Vyčistit modul'}</span>
-          </button>
+          {/each}
         </div>
-      </div>
+      {/if}
     </div>
+  {/if}
+
+  {#if children}
+    <div class="menu-section custom-options">
+      <div class="section-label">Lokální nastavení</div>
+      {@render children()}
+    </div>
+  {/if}
+
+  <div class="menu-section actions">
+    <div class="section-label">Rychlé akce</div>
+    <button type="button" class="action-btn" onclick={handlePasteClick}>
+      <span class="btn-icon"><ClipboardText size={20} weight="duotone" /></span>
+      <span>Vložit ze schránky</span>
+    </button>
+
+    <button
+      type="button"
+      class="action-btn reset-btn"
+      class:confirming={isConfirmingReset}
+      onclick={handleResetClick}
+    >
+      <span class="btn-icon"><Trash size={20} weight="duotone" /></span>
+      <span>{isConfirmingReset ? 'Opravdu vymazat modul?' : 'Vyčistit modul'}</span>
+    </button>
   </div>
-{/if}
+</BottomSheet>
 
 <style>
-  .menu-backdrop {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 210;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-
-  @media (min-width: 600px) {
-    .menu-backdrop {
-      align-items: center;
-      padding: 20px;
-    }
-  }
-
-  .menu-panel {
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    width: 100%;
-    max-width: 480px;
-    max-height: 85vh;
+  .menu-section {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    animation: sheetSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
-  }
-
-  @media (min-width: 600px) {
-    .menu-panel {
-      border-radius: var(--radius-lg);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
-    }
-  }
-
-  @keyframes sheetSlideUp {
-    from {
-      transform: translateY(100%);
-      opacity: 0.8;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  .menu-header {
-    height: 52px;
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--color-border-subtle);
-    flex-shrink: 0;
-  }
-
-  .menu-title {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--color-text-primary);
-  }
-
-  .close-btn {
-    width: var(--tap-min-size);
-    height: var(--tap-min-size);
-    font-size: 18px;
-    color: var(--color-text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    transition: color 0.12s, background-color 0.12s;
-  }
-
-  .close-btn:active {
-    color: #ffffff;
-    background-color: var(--color-surface-active);
-  }
-
-  .menu-body {
-    padding: 16px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-  }
-
-  .section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    gap: var(--space-sm);
   }
 
   .section-label {
-    font-size: 12px;
+    font-size: var(--text-xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.6px;
@@ -238,12 +141,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 14px;
+    padding: var(--space-md) var(--space-md);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
-    font-size: 15px;
+    font-size: var(--text-base);
     font-weight: 600;
+    width: 100%;
+    color: var(--color-text-primary);
   }
 
   .alphabet-list {
@@ -253,17 +158,18 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
     overflow: hidden;
-    margin-top: 4px;
+    margin-top: var(--space-xs);
   }
 
   .alphabet-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 14px;
-    font-size: 14px;
+    padding: var(--space-md) var(--space-md);
+    font-size: var(--text-sm);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     text-align: left;
+    color: var(--color-text-primary);
   }
   .alphabet-item:last-child {
     border-bottom: none;
@@ -275,20 +181,22 @@
 
   .check {
     font-weight: bold;
+    color: var(--color-accent-primary);
   }
 
   .action-btn {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
+    gap: var(--space-md);
+    padding: var(--space-md);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
-    font-size: 15px;
+    font-size: var(--text-base);
     font-weight: 600;
-    min-height: 48px;
-    transition: background-color 0.15s, border-color 0.15s;
+    min-height: var(--tap-min-size);
+    color: var(--color-text-primary);
+    transition: background-color 0.12s ease, border-color 0.12s ease;
   }
   .action-btn:active {
     background-color: var(--color-surface-active);
@@ -301,13 +209,13 @@
 
   .reset-btn.confirming {
     background-color: var(--color-accent-danger);
-    color: #FFFFFF;
+    color: #ffffff;
     border-color: var(--color-accent-danger);
     animation: pulse 0.5s infinite alternate;
   }
 
   @keyframes pulse {
-    from { opacity: 0.9; }
+    from { opacity: 0.85; }
     to { opacity: 1; }
   }
 
@@ -318,9 +226,9 @@
   }
 
   .btn-icon {
-    font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
   }
 </style>

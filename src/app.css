@@ -1,32 +1,90 @@
 :root {
+  /* ==========================================================================
+     Samuel Design Tokens
+     ========================================================================== */
+
+  /* Surface & Canvas (Pure black for OLED field power savings) */
   --color-bg-canvas: #000000;
   --color-surface-1: #121214;
-  --color-surface-2: #1e1e24;
-  --color-surface-3: #161820;
+  --color-surface-2: #1c1c22;
+  --color-surface-3: #262630;
+  --color-surface-active: #323240;
+  --color-surface-elevated: #161820;
   --color-surface-system: #161820;
-  --color-surface-active: #2e2e38;
+
+  /* Borders */
   --color-border-subtle: #2a2a34;
+  --color-border-medium: #3a3a48;
+  --color-border-focus: #00d2ff;
   --color-border-system: #2e3042;
-  --color-border-focus: #00D2FF;
-  
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #8E8E9A;
-  --color-text-muted: #5A5A65;
-  
-  --color-accent-primary: #00D2FF;
-  --color-accent-success: #10B981;
-  --color-accent-danger: #EF4444;
-  --color-accent-warning: #F59E0B;
 
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-condensed: var(--font-sans);
-  --font-mono: ui-monospace, "SF Mono", "Roboto Mono", "Cascadia Code", "Courier New", monospace;
+  /* Typography Colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9da0af;
+  --color-text-muted: #626474;
+  --color-text-inverse: #000000;
 
-  --header-height: 52px;
-  --tap-min-size: 48px;
+  /* Semantic Accents & Alpha Tints */
+  --color-accent-primary: #00d2ff;
+  --color-accent-primary-subtle: rgba(0, 210, 255, 0.12);
+  --color-accent-primary-glow: rgba(0, 210, 255, 0.35);
+
+  --color-accent-success: #10b981;
+  --color-accent-success-subtle: rgba(16, 185, 129, 0.12);
+
+  --color-accent-danger: #ef4444;
+  --color-accent-danger-subtle: rgba(239, 68, 68, 0.15);
+
+  --color-accent-warning: #f59e0b;
+  --color-accent-warning-subtle: rgba(245, 158, 11, 0.12);
+
+  /* Spacing Scale */
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+
+  /* Radii Scale */
+  --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Typography Scale & Families */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-condensed: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", "Roboto Mono", "Cascadia Code", monospace;
+
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+
+  /* Layout & Component Budgets */
+  --header-height: 52px;
+  --tap-min-size: 48px;
+  --utility-row-height: 42px;
+  --dominant-key-height: clamp(62px, 9.5vh, 82px);
+  --output-min-height: 84px;
+  --max-app-width: 640px;
+
+  /* Shadows & Glow */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.75);
+  --glow-accent: 0 0 16px rgba(0, 210, 255, 0.45);
+  --glow-accent-strong: 0 0 24px rgba(0, 210, 255, 0.85);
+  --glow-danger: 0 0 16px rgba(239, 68, 68, 0.4);
 }
 
 *, *::before, *::after {
@@ -65,6 +123,7 @@ button {
   border: none;
   cursor: pointer;
   touch-action: manipulation;
+  padding: 0;
 }
 
 textarea, input {
@@ -75,7 +134,35 @@ textarea, input {
   border-radius: var(--radius-sm);
   user-select: text;
 }
+
 textarea:focus, input:focus {
   outline: none;
   border-color: var(--color-border-focus);
+}
+
+/* Common Keypad Layouts */
+.keypad-utility-row {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: var(--space-sm);
+  width: 100%;
+  align-items: center;
+  flex-shrink: 0;
+  height: var(--utility-row-height);
+}
+
+.keypad-dominant-2col {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: var(--space-sm);
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.keypad-dominant-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  width: 100%;
+  flex-shrink: 0;
 }

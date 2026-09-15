@@ -2,115 +2,47 @@
   import { MODULES } from '../../types';
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
+  import BottomSheet from '../ui/BottomSheet.svelte';
   import ModuleIcon from '../ui/ModuleIcon.svelte';
-  import { ArrowLeft, X } from 'phosphor-svelte';
+  import { SquaresFour } from 'phosphor-svelte';
 
   function handleSelect(id: string) {
-    settings.vibrate(25);
+    settings.vibrate(20);
     navigation.openModule(id as any);
-  }
-
-  function handleBackToDashboard() {
-    settings.vibrate(25);
-    navigation.openDashboard();
   }
 </script>
 
-{#if navigation.isLauncherOpen}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="backdrop" onclick={() => navigation.closeLauncher()}>
-    <div class="sheet" onclick={(e) => e.stopPropagation()}>
-      <div class="sheet-header">
-        <button class="sheet-back-btn" onclick={handleBackToDashboard}>
-          <ArrowLeft size={16} weight="bold" />
-          <span>Všechny pomůcky</span>
-        </button>
-        <button class="sheet-close-btn" aria-label="Zavřít rozcestník" onclick={() => navigation.closeLauncher()}>
-          <X size={20} weight="bold" />
-        </button>
-      </div>
-
-      <div class="grid-scroll">
-        <div class="modules-grid">
-          {#each MODULES as mod}
-            <button
-              class="module-btn"
-              class:is-active={navigation.activeModuleId === mod.id}
-              class:is-system={mod.isSystem}
-              onclick={() => handleSelect(mod.id)}
-            >
-              <span class="icon">
-                <ModuleIcon id={mod.id} weight="duotone" />
-              </span>
-              <span class="name">{mod.name}</span>
-            </button>
-          {/each}
-        </div>
-      </div>
-    </div>
+<BottomSheet
+  open={navigation.isLauncherOpen}
+  title="Výběr pomůcky"
+  icon={SquaresFour}
+  onClose={() => navigation.closeLauncher()}
+  maxWidth="640px"
+>
+  <div class="modules-grid">
+    {#each MODULES as mod}
+      <button
+        type="button"
+        class="module-btn"
+        class:is-active={navigation.activeModuleId === mod.id}
+        class:is-system={mod.isSystem}
+        onclick={() => handleSelect(mod.id)}
+      >
+        <span class="icon">
+          <ModuleIcon id={mod.id} weight="duotone" />
+        </span>
+        <span class="name">{mod.name}</span>
+      </button>
+    {/each}
   </div>
-{/if}
+</BottomSheet>
 
 <style>
-  .backdrop {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-  }
-
-  .sheet {
-    background-color: var(--color-surface-1);
-    border-bottom: 1px solid var(--color-border-subtle);
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-  }
-
-  .sheet-header {
-    height: var(--header-height);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
-    border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .sheet-back-btn {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--color-accent-primary);
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .sheet-close-btn {
-    width: var(--tap-min-size);
-    height: var(--tap-min-size);
-    font-size: 20px;
-    color: var(--color-text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .grid-scroll {
-    overflow-y: auto;
-    padding: 12px;
-  }
-
   .modules-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: var(--space-sm);
+    width: 100%;
   }
 
   .module-btn {
@@ -118,22 +50,24 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 12px 6px;
+    padding: var(--space-md) var(--space-xs);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
-    gap: 8px;
-    min-height: 72px;
-    transition: background-color 0.15s, border-color 0.15s;
+    gap: var(--space-sm);
+    min-height: 76px;
+    transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
   }
 
   .module-btn:active {
     background-color: var(--color-surface-active);
+    transform: scale(0.96);
   }
 
   .module-btn.is-active {
     border-color: var(--color-accent-primary);
-    background-color: rgba(0, 210, 255, 0.1);
+    background-color: var(--color-accent-primary-subtle);
+    box-shadow: inset 0 0 0 1px var(--color-accent-primary);
   }
 
   .module-btn.is-system {
@@ -142,7 +76,7 @@
   }
 
   .icon {
-    font-size: 24px;
+    font-size: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -151,11 +85,15 @@
 
   .name {
     font-family: var(--font-condensed);
-    font-size: 13.5px;
+    font-size: var(--text-sm);
     font-weight: 600;
     letter-spacing: 0.2px;
     text-align: center;
     line-height: 1.2;
     color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 95%;
   }
 </style>

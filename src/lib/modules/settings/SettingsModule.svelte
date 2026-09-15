@@ -5,6 +5,7 @@
   import { APP_NAME, APP_VERSION } from '../../constants';
   import { dbState, getDatabase, findAnagrams, clearDbCache, checkUpdatesOnInit } from '../../db/database.svelte';
   import { MagnifyingGlass, Lightning, ArrowsClockwise, RocketLaunch, SpinnerGap, Check } from 'phosphor-svelte';
+  import OptionRow from '../../components/ui/OptionRow.svelte';
 
   let newLayoutName = $state('');
   let isCreatingLayout = $state(false);
@@ -125,54 +126,39 @@
     <section class="card">
       <h2 class="card-title">Předvolby aplikace</h2>
 
-      <div class="toggle-row">
-        <div class="toggle-info">
-          <div class="toggle-title">Haptická odezva</div>
-          <div class="toggle-desc">Vibrace při stisku kláves a potvrzeních v terénu</div>
-        </div>
-        <input
-          type="checkbox"
-          class="custom-switch"
-          checked={settings.hapticsEnabled}
-          onchange={(e) => {
-            settings.hapticsEnabled = (e.target as HTMLInputElement).checked;
-            settings.vibrate(30);
-          }}
-        />
-      </div>
+      <OptionRow
+        label="Haptická odezva"
+        hint="Vibrace při stisku kláves a potvrzeních v terénu"
+        type="switch"
+        checked={settings.hapticsEnabled}
+        onChange={(val) => {
+          settings.hapticsEnabled = val;
+          settings.vibrate(30);
+        }}
+      />
 
-      <div class="toggle-row">
-        <div class="toggle-info">
-          <div class="toggle-title">Zabránit zhasnutí obrazovky (Wake Lock)</div>
-          <div class="toggle-desc">Udržuje displej rozsvícený během luštění šifry</div>
-        </div>
-        <input
-          type="checkbox"
-          class="custom-switch"
-          checked={settings.wakeLockEnabled}
-          onchange={(e) => {
-            settings.wakeLockEnabled = (e.target as HTMLInputElement).checked;
-            settings.vibrate(25);
-          }}
-        />
-      </div>
+      <OptionRow
+        label="Zabránit zhasnutí obrazovky (Wake Lock)"
+        hint="Udržuje displej rozsvícený během luštění šifry"
+        type="switch"
+        checked={settings.wakeLockEnabled}
+        onChange={(val) => {
+          settings.wakeLockEnabled = val;
+          settings.vibrate(25);
+        }}
+      />
 
-      <div class="toggle-row">
-        <div class="toggle-info">
-          <div class="toggle-title">Developer Tools / Expertní režim</div>
-          <div class="toggle-desc">Zpřístupní pokročilou diagnostiku a experimentální funkce</div>
-        </div>
-        <input
-          type="checkbox"
-          class="custom-switch"
-          checked={settings.devToolsEnabled}
-          onchange={(e) => {
-            settings.devToolsEnabled = (e.target as HTMLInputElement).checked;
-            settings.vibrate(25);
-            toast.show(settings.devToolsEnabled ? 'Expertní režim aktivován' : 'Expertní režim vypnut', { type: 'info' });
-          }}
-        />
-      </div>
+      <OptionRow
+        label="Developer Tools / Expertní režim"
+        hint="Zpřístupní pokročilou diagnostiku a experimentální funkce"
+        type="switch"
+        checked={settings.devToolsEnabled}
+        onChange={(val) => {
+          settings.devToolsEnabled = val;
+          settings.vibrate(25);
+          toast.show(settings.devToolsEnabled ? 'Expertní režim aktivován' : 'Expertní režim vypnut', { type: 'info' });
+        }}
+      />
     </section>
 
     <!-- SQLite Dictionary Database Section -->
@@ -542,68 +528,6 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     font-size: 13px;
-  }
-
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  .toggle-row:last-child {
-    border-bottom: none;
-  }
-
-  .toggle-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .toggle-title {
-    font-size: 15px;
-    font-weight: 600;
-  }
-
-  .toggle-desc {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    line-height: 1.3;
-  }
-
-  .custom-switch {
-    width: 44px;
-    height: 24px;
-    appearance: none;
-    background-color: #2a2a34;
-    border-radius: 12px;
-    position: relative;
-    cursor: pointer;
-    outline: none;
-    transition: background-color 0.2s;
-    flex-shrink: 0;
-  }
-
-  .custom-switch::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
-    background-color: #FFFFFF;
-    border-radius: 50%;
-    transition: transform 0.2s;
-  }
-
-  .custom-switch:checked {
-    background-color: var(--color-accent-primary);
-  }
-
-  .custom-switch:checked::after {
-    transform: translateX(20px);
   }
 
   .system-card {

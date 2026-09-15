@@ -1,7 +1,5 @@
 <script lang="ts">
   import Header from './lib/components/layout/Header.svelte';
-  import Dashboard from './lib/components/layout/Dashboard.svelte';
-  import DashboardMenu from './lib/components/layout/DashboardMenu.svelte';
   import LauncherOverlay from './lib/components/layout/LauncherOverlay.svelte';
   import ToastContainer from './lib/components/ui/ToastContainer.svelte';
   import SettingsModule from './lib/modules/settings/SettingsModule.svelte';
@@ -22,9 +20,7 @@
 <Header />
 
 <main class="main-content">
-  {#if !navigation.activeModuleId}
-    <Dashboard />
-  {:else if navigation.activeModuleId === 'morse'}
+  {#if navigation.activeModuleId === 'morse'}
     <MorseModule />
   {:else if navigation.activeModuleId === 'braille'}
     <BrailleModule />
@@ -39,7 +35,6 @@
   {/if}
 </main>
 
-<DashboardMenu />
 <LauncherOverlay />
 <ToastContainer />
 
