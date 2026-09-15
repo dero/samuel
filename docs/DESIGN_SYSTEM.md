@@ -8,9 +8,11 @@
 
 1. **Plátno a barvy:** Pozadí vždy čistě černé `--color-bg-canvas` (`#000000`). Zákaz vlastních hex/rgb barev v komponentách – použij CSS tokeny.
 2. **Žádný scroll celé stránky:** `ModuleShell` má `overflow: hidden`. Scrollovat smí pouze vnitřek `TranslationCard` nebo `.table-scroll`.
-3. **Haptika:** VŽDY volat `settings.vibrate(ms)` z `state/settings.svelte`. **NIKDY nevolat `navigator.vibrate` přímo.**
+3. **Haptika:** VŽDY volat `settings.vibrate(ms)` z `state/settings.svelte`. **NIKDY nevolat `navigator.vibrate` přímo.** Nezdvojovat volání (komponenta tlačítka již haptiku zajišťuje).
 4. **Touch targets:** Všechny interaktivní prvky min. 48 × 48 px (`--tap-min-size`).
-5. **Ničivé akce:** Vymazání vstupu VŽDY přes `SlideToAction` (tažením). Nikdy pouhým kliknutím.
+5. **Multi-touch & okamžitá odezva kláves:** Klávesnice pro zadávání znaků (`DominantButton`, matice, kruh) musí reagovat na `onpointerdown` s `e.preventDefault()`, nikoli čekat na `click` / `touchend`. Kontejnery klávesnic musí mít `touch-action: none`.
+6. **Ničivé akce:** Vymazání vstupu VŽDY přes `SlideToAction` (tažením). Nikdy pouhým kliknutím.
+7. **Toasty & hlášky:** Všechny toasty v aplikaci musí být **max. 30 znaků textu + až 2 emoji**. Delší texty se na mobilu nevzhledně lámou.
 
 ---
 
@@ -49,6 +51,7 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 ├────────────────────────────────────────────────────────┤
 │ ZONE-OUTPUT: <TranslationCard>                         │
 │ - flex: 1, min-height: 84px                            │
+│ - OLED black (#000000), bez rušivých popisků           │
 │ - automatický scroll dolů, 1-tap copy do schránky      │
 ├────────────────────────────────────────────────────────┤
 │ ZONE-INPUT: Klávesnice modulu (flex-shrink: 0)         │
@@ -57,9 +60,10 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 │ 3. .keypad-utility-row (42px, poměr 1.15fr 0.85fr)     │
 │    <SlideToAction> + <BackspaceButton>                 │
 │ 4. .keypad-dominant-2col nebo .keypad-dominant-3col    │
-│    <DominantButton> (clamp 62–82px)                    │
+│    <DominantButton> (clamp 62–82px, touch-action: none)│
 │    - 2 klávesy: poměr 0.85fr 1.15fr (Mezera, Vložit)   │
 │    - 3 klávesy: repeat(3, 1fr) (Tečka, Čárka, /)       │
+│ 5. [Volitelná dekorace / Easter egg, např. Telegraf]   │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -69,16 +73,17 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 
 | Kde | Co tam patří | Příklady |
 | :--- | :--- | :--- |
-| **By Default** | Běžná pravidla šifry (95 % případů v terénu) | Morse s CH, Braille s českou diakritikou, okamžité vložení (auto-insert) |
-| **Module Menu** (ikona List vpravo) | Odchylky konkrétní šifry na stanovišti + akce se stavem | Bez CH, přímá čísla (A=1), zrcadlení, Vložit ze schránky, Vyčistit modul |
-| **Reference Modal** (ikona Knížka) | Statické taháky výhradně pro čtení | Pomocná slova, tabulka Braillových bodů, kruh semaforu |
-| **App Settings** (`/settings`) | Globální předvolby zařízení a dat | Haptika, Wake Lock, správa vlastních abeced, offline SQLite databáze |
+| **By Default** | Běžná pravidla šifry (95 % případů v terénu) | Morse s CH, Braille bez auto-insertu, Semaphore s auto-insertem |
+| **Module Menu** (ikona List vpravo) | Odchylky konkrétní šifry na stanovišti + akce se stavem | Bez CH, přímá čísla (A=1), zrcadlení, přepínač easter eggu |
+| **Reference Modal** (ikona Knížka) | Statické taháky výhradně pro čtení | Pomocná slova morseovky, tabulka Brailla, kruh semaforu, námořní vlajky |
+| **App Settings** (`/settings`) | Globální předvolby zařízení a aktualizace | Evergreen aktualizace aplikace a DB, Haptika, Wake Lock, správa abeced |
 
 ---
 
 ## 5. Rychlý katalog komponent
 
 ### `DominantButton` (spodní velké klávesy)
+- **Implementace:** Využívá `onpointerdown` a `touch-action: none` pro okamžitou odezvu (0ms) a bleskurychlé psaní oběma palci.
 ```svelte
 <DominantButton
   symbol="␣"
@@ -106,11 +111,11 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 ### `OptionRow` (položka v menu nebo nastavení)
 ```svelte
 <OptionRow
-  label="Přímý režim čísel"
-  hint="Čísla 1–0 bez prefixu"
-  type="checkbox"
-  checked={directNums}
-  onChange={(v) => (directNums = v)}
+  label="Zobrazovat telegrafní vedení"
+  hint="Dekorace s animovanými světelnými pulzy"
+  type="switch"
+  checked={showWire}
+  onChange={(v) => (showWire = v)}
 />
 ```
 
@@ -130,15 +135,42 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 </BottomSheet>
 ```
 
-### `Badge` (metadata a štítky)
-```svelte
-<Badge variant="accent">98%</Badge>
-<Badge variant="neutral">24 znaků</Badge>
-```
+### `TranslationCard` (výstupní karta překladu)
+- Čistě minimalistický vzhled: OLED black `#000000`, bez rámečků a zbytečného textu „Překlad“.
+- 1-tap kliknutím zkopíruje celý text do schránky s haptickou odezvou.
 
 ---
 
-## 6. Šablona nového modulu (Blueprint)
+## 6. Easter Eggy & Dekorace
+
+1. **Vzhled:** Monochromatické SVG (`stroke: currentColor`, `opacity: 0.6`).
+2. **Volitelnost:** VŽDY přepínač v `ModuleMenu` (default: zapnuto).
+3. **Neruší vstup:** Klávesy nesmí spouštět easter egg hlášky ani zpožďovat psaní.
+4. **Dvoustupňová interakce:**
+   - *Level 1 (Objev):* ~5 kliků na dekoraci → jemná animace + hláška.
+   - *Level 2 (Finále):* ~60 kliků / 20–30 s → dramatický efekt (potopení lodičky, elektrické přepětí).
+5. **Žádné spoilery:** Pokud prvek vysílá skrytou šifru/zprávu, NIKDY nezobrazovat rozluštěný text v toastu.
+6. **Toast limit:** Max. 30 znaků textu + max. 2 emoji.
+
+---
+
+## 7. Evergreen Verzování & Nastavení
+
+1. **Žádný semver pro uživatele:** Aplikace je evergreen.
+2. **Formát verze:** Vždy čitelné datum a čas (např. `15. 9. 2026, 14:05`) pro aplikaci i DB.
+3. **Pozice & layout:** Karta *Aktualizace* je VŽDY na samém vrcholu `/settings`, jednosloupcová s tlačítkem na celou šířku (100%).
+
+---
+
+## 8. Dotykový výkon & Animace
+
+1. **Multi-touch:** Klávesy řešit přes `onpointerdown` + `e.preventDefault()`. Kontejner i klávesy: `touch-action: none`.
+2. **Žádné 60 FPS smyčky v JS:** Zákaz `requestAnimationFrame` s reaktivním `$state`. Pro křivky výhradně CSS `offset-path: path(...)` na GPU.
+3. **Nezdvojovat haptiku:** Pokud vibruje komponenta (`DominantButton`), nevolat `settings.vibrate()` v obslužné funkci.
+
+---
+
+## 9. Šablona modulu (Blueprint)
 
 ```svelte
 <script lang="ts">
@@ -152,10 +184,7 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 
   const modSettings = localSettingsService.forModule('new_mod');
   let text = $state(modSettings.getString('input', ''));
-
-  $effect(() => {
-    modSettings.setString('input', text);
-  });
+  $effect(() => { modSettings.setString('input', text); });
 </script>
 
 <ModuleShell onReset={() => (text = '')} onPaste={(t) => (text += t)}>
@@ -165,16 +194,10 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 
   {#snippet input()}
     <div class="keypad-zone">
-      <!-- Vstupní widget modulu -->
-      <div class="widget-container">...</div>
-
-      <!-- Řádek utilit -->
       <div class="keypad-utility-row">
         <SlideToAction disabled={!text} onAction={() => (text = '')} />
         <BackspaceButton disabled={!text} onAction={() => (text = text.slice(0, -1))} />
       </div>
-
-      <!-- Dominantní klávesy -->
       <div class="keypad-dominant-2col">
         <DominantButton symbol="␣" name="Mezera" onClick={() => (text += ' ')} />
         <DominantButton symbol="↵" name="Vložit" onClick={() => {}} />
@@ -183,7 +206,7 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
   {/snippet}
 
   {#snippet menuOptions()}
-    <OptionRow label="Možnost modulu" checked={false} onChange={() => {}} />
+    <OptionRow label="Možnost" checked={false} onChange={() => {}} />
   {/snippet}
 </ModuleShell>
 ```
