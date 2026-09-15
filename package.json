@@ -10,7 +10,8 @@
     "build": "yarn db:build && vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "benchmark:morse": "tsx scripts/benchmark-morse/benchmark.ts"
+    "benchmark:morse": "tsx scripts/benchmark-morse/benchmark.ts",
+    "deploy": "bash scripts/deploy.sh"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",

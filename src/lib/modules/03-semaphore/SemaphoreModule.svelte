@@ -404,20 +404,20 @@
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
+    margin-bottom: var(--space-md);
   }
 
   .semaphore-wheel-card {
     position: relative;
     width: 100%;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-lg);
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+    background: transparent;
+    border: none;
+    box-shadow: none;
     box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: clamp(8px, 1.6vh, 14px) var(--space-sm);
+    padding: clamp(4px, 1vh, 10px) var(--space-sm);
   }
 
   /* Strict 1:1 square dial ensures exact circle */
@@ -441,7 +441,9 @@
   }
 
   .svg-center-dot {
-    fill: rgba(255, 255, 255, 0.45);
+    fill: #000000;
+    stroke: var(--color-border-subtle);
+    stroke-width: 1.5;
   }
 
   .svg-beam-active {
@@ -468,8 +470,8 @@
     width: clamp(52px, 7.8vh, 64px);
     height: clamp(52px, 7.8vh, 64px);
     border-radius: var(--radius-full);
-    background-color: var(--color-surface-1);
-    border: 2.5px solid var(--color-border-subtle);
+    background-color: #000000;
+    border: 2px solid var(--color-border-subtle);
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
@@ -532,7 +534,7 @@
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
     }
     100% {
-      background-color: var(--color-surface-1);
+      background-color: #000000;
       border-color: var(--color-border-subtle);
       box-shadow: 0 0 0 rgba(0, 210, 255, 0);
     }

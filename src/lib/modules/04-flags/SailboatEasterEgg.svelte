@@ -12,17 +12,19 @@
     'Ahoj námořníku! ⛵',
     'Vítr do plachet! 🌬️',
     'Kormidlo na pravobok! 🧭',
+    'Kormidlo na levobok! 🧭',
     'Země na obzoru! 🏝️',
-    'Plachty napnout, kurz držen! 🗺️',
+    'Plachty napnout! 🗺️',
     'Pozor na mělčinu! ⚓',
-    'Sedm stop vody pod kýlem! 🌊',
-    'Klidné moře nedělá zkušené námořníky. ⚓',
-    'Na lodi platí slovo kapitána! 👨‍✈️',
+    'Sedm stop pod kýlem! 🌊',
+    'Slovo kapitána platí! 👨‍✈️',
     'Maják na dohled! 🏮',
-    'Černé mraky na obzoru... ⛅',
-    'Plnou parou... vlastně plachtami vpřed! ⛵',
-    'Kotva vytažena, vyplouváme! ⚓',
-    'Moře je klidné, obloha čistá. 🌅'
+    'Mraky na obzoru! ⛅',
+    'Kotva vytažena! ⚓',
+    'Klidné moře a čisté nebe! 🌅',
+    'Vzhůru na palubu! 🚢',
+    'Příznivý vítr! 💨⛵',
+    'Plnou parou vpřed! 🧭⚡'
   ];
 
   function getRandomQuote(): string {
@@ -75,7 +77,7 @@
     clickTimestamps = [];
     // SOS in Morse: ... --- ...
     settings.vibrate([60, 40, 60, 40, 60, 80, 120, 80, 120, 80, 120, 80, 60, 40, 60, 40, 60]);
-    toast.show('Mayday! Lodička šla ke dnu... 🌊🫧', { type: 'warning', duration: 3500 });
+    toast.show('Mayday! Jdeme ke dnu! 🌊🫧', { type: 'warning', duration: 3500 });
 
     // Transition to submerged after sinking animation
     setTimeout(() => {
@@ -87,7 +89,7 @@
 
         setTimeout(() => {
           boatState = 'idle';
-          toast.show('Lodička se znovu vynořila na hladinu! ⛵✨', { type: 'success', duration: 2500 });
+          toast.show('Znovu na hladině! ⛵✨', { type: 'success', duration: 2500 });
         }, 850);
       }, 3200);
     }, 1800);

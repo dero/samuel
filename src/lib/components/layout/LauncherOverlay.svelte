@@ -17,31 +17,41 @@
   title="Výběr pomůcky"
   icon={SquaresFour}
   onClose={() => navigation.closeLauncher()}
-  maxWidth="640px"
+  maxWidth="540px"
+  padding={false}
 >
-  <div class="modules-grid">
-    {#each MODULES as mod}
-      <button
-        type="button"
-        class="module-btn"
-        class:is-active={navigation.activeModuleId === mod.id}
-        class:is-system={mod.isSystem}
-        onclick={() => handleSelect(mod.id)}
-      >
-        <span class="icon">
-          <ModuleIcon id={mod.id} weight="duotone" />
-        </span>
-        <span class="name">{mod.name}</span>
-      </button>
-    {/each}
+  <div class="modules-container">
+    <div class="modules-grid">
+      {#each MODULES as mod, i}
+        <button
+          type="button"
+          class="module-btn"
+          class:is-active={navigation.activeModuleId === mod.id}
+          class:is-system={mod.isSystem}
+          class:is-center-single={i === MODULES.length - 1 && MODULES.length % 3 === 1}
+          onclick={() => handleSelect(mod.id)}
+        >
+          <span class="icon">
+            <ModuleIcon id={mod.id} weight="duotone" />
+          </span>
+          <span class="name">{mod.name}</span>
+        </button>
+      {/each}
+    </div>
   </div>
 </BottomSheet>
 
 <style>
+  .modules-container {
+    padding: var(--space-xs) var(--space-md) var(--space-md) var(--space-md);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .modules-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-    gap: var(--space-sm);
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xs);
     width: 100%;
   }
 
@@ -50,13 +60,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--space-md) var(--space-xs);
+    padding: var(--space-sm) var(--space-xs);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    gap: var(--space-sm);
-    min-height: 76px;
+    border-radius: var(--radius-sm);
+    gap: 4px;
+    min-height: 62px;
     transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
+    touch-action: manipulation;
   }
 
   .module-btn:active {
@@ -75,8 +86,12 @@
     border-color: var(--color-border-system);
   }
 
+  .module-btn.is-center-single {
+    grid-column: 2;
+  }
+
   .icon {
-    font-size: 26px;
+    font-size: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -85,15 +100,15 @@
 
   .name {
     font-family: var(--font-condensed);
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     font-weight: 600;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.15px;
     text-align: center;
-    line-height: 1.2;
+    line-height: 1.15;
     color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 95%;
+    max-width: 96%;
   }
 </style>

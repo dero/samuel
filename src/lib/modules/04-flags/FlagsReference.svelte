@@ -161,7 +161,7 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    overflow: hidden;
+    gap: var(--space-sm);
   }
 
   .pinned-header {
@@ -169,9 +169,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
-    padding: var(--space-md) var(--space-lg) var(--space-xs) var(--space-lg);
-    background-color: var(--color-surface-1);
-    border-bottom: 1px solid var(--color-border-subtle);
   }
 
   .search-box {
@@ -264,31 +261,33 @@
 
   .table-scroll {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding: var(--space-md) var(--space-lg);
+    padding-bottom: var(--space-lg);
+    padding-right: 2px;
   }
 
   .flags-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
   }
 
   .flag-card {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
+    gap: var(--space-sm);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs) var(--space-sm);
   }
 
   .flag-preview-box {
-    width: 52px;
-    height: 52px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -296,8 +295,8 @@
   }
 
   .flag-preview-box.pennant {
-    width: 64px;
-    height: 36px;
+    width: 56px;
+    height: 32px;
   }
 
   .flag-info {

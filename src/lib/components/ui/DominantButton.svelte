@@ -25,10 +25,52 @@
     onClick
   }: Props = $props();
 
-  function handleClick() {
+  let isPressed = $state(false);
+  let handledByPointer = false;
+
+  function handlePointerDown(e: PointerEvent) {
     if (disabled) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    // Prevent multi-touch gesture arbitration and synthetic ghost clicks
+    e.preventDefault();
+    handledByPointer = true;
+    isPressed = true;
     settings.vibrate(haptic);
     onClick();
+  }
+
+  function handlePointerUp() {
+    isPressed = false;
+    setTimeout(() => {
+      handledByPointer = false;
+    }, 120);
+  }
+
+  function handlePointerCancel() {
+    isPressed = false;
+    setTimeout(() => {
+      handledByPointer = false;
+    }, 120);
+  }
+
+  function handleClick(e: MouseEvent) {
+    if (disabled) return;
+    if (handledByPointer) {
+      handledByPointer = false;
+      return;
+    }
+    settings.vibrate(haptic);
+    onClick();
+  }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (disabled) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      settings.vibrate(haptic);
+      onClick();
+    }
   }
 </script>
 
@@ -39,9 +81,15 @@
   class:variant-warning={variant === 'warning'}
   class:variant-secondary={variant === 'secondary'}
   class:is-ready={ready}
+  class:is-pressed={isPressed}
   {disabled}
   title={title || name}
+  onpointerdown={handlePointerDown}
+  onpointerup={handlePointerUp}
+  onpointerleave={handlePointerCancel}
+  onpointercancel={handlePointerCancel}
   onclick={handleClick}
+  onkeydown={handleKeyDown}
 >
   <span class="btn-symbol">{symbol}</span>
   <span class="btn-name">{name}</span>
@@ -59,16 +107,18 @@
     justify-content: center;
     gap: 3px;
     padding: 4px 6px;
-    transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.06s ease, box-shadow 0.1s ease;
+    transition: background-color 0.08s ease, border-color 0.08s ease, transform 0.04s ease, box-shadow 0.08s ease;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    touch-action: none;
     box-sizing: border-box;
     width: 100%;
     cursor: pointer;
   }
 
-  .dominant-btn:active:not(:disabled) {
+  .dominant-btn:active:not(:disabled),
+  .dominant-btn.is-pressed:not(:disabled) {
     background-color: var(--color-surface-active);
     border-color: var(--color-border-focus);
     transform: scale(0.96);
@@ -127,7 +177,8 @@
     color: var(--color-text-primary);
   }
 
-  .dominant-btn.is-ready:active {
+  .dominant-btn.is-ready:active,
+  .dominant-btn.is-ready.is-pressed {
     background: linear-gradient(135deg, rgba(0, 210, 255, 0.35), rgba(0, 160, 255, 0.25));
     box-shadow: var(--glow-accent-strong);
   }

@@ -2,6 +2,7 @@
   import { tick } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import MorseReference from './MorseReference.svelte';
+  import TelegraphWire, { type PulseEvent } from './TelegraphWire.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
@@ -29,6 +30,15 @@
   let parseCH = $state<boolean>(modSettings.getBoolean('parse_ch', true));
   let parseDigits = $state<boolean>(modSettings.getBoolean('parse_digits', true));
   let parseOther = $state<boolean>(modSettings.getBoolean('parse_other', true));
+  let showTelegraphWire = $state<boolean>(modSettings.getBoolean('show_wire', true));
+
+  let currentPulse = $state<PulseEvent | null>(null);
+  let pulseCounter = 0;
+
+  function sendPulse(type: '.' | '-' | '/') {
+    pulseCounter++;
+    currentPulse = { type, id: pulseCounter };
+  }
 
   let isPermutationsOpen = $state(false);
   let bruteforceResults = $state<BruteforceCandidate[]>([]);
@@ -51,23 +61,25 @@
     modSettings.setBoolean('parse_ch', parseCH);
     modSettings.setBoolean('parse_digits', parseDigits);
     modSettings.setBoolean('parse_other', parseOther);
+    modSettings.setBoolean('show_wire', showTelegraphWire);
   });
 
-  async function autoScrollTextarea() {
-    await tick();
-    if (textareaEl) {
-      textareaEl.scrollTop = textareaEl.scrollHeight;
-    }
+  function autoScrollTextarea() {
+    requestAnimationFrame(() => {
+      if (textareaEl) {
+        textareaEl.scrollTop = textareaEl.scrollHeight;
+      }
+    });
   }
 
   function appendSymbol(sym: '.' | '-') {
-    settings.vibrate(20);
+    sendPulse(sym);
     inputMorse += sym;
     autoScrollTextarea();
   }
 
   function appendSlash() {
-    settings.vibrate(20);
+    sendPulse('/');
     const trimmed = inputMorse.trimEnd();
     if (trimmed.endsWith('//')) {
       return;
@@ -176,7 +188,7 @@
   {/snippet}
 
   {#snippet input()}
-    <div class="keypad-zone">
+    <div class="keypad-zone" class:no-wire={!showTelegraphWire}>
       <!-- Small Floating Action Buttons above Textarea -->
       <div class="morse-floating-toolbar">
         <button
@@ -257,10 +269,22 @@
           onClick={appendSlash}
         />
       </div>
+
+      <!-- Animated Telegraph Wire Decoration & Easter Egg -->
+      {#if showTelegraphWire}
+        <TelegraphWire pulse={currentPulse} />
+      {/if}
     </div>
   {/snippet}
 
   {#snippet menuOptions()}
+    <OptionRow
+      label="Zobrazovat telegrafní vedení"
+      hint="Animované sloupy s drátem a světelnými impulsy pod tlačítky"
+      type="switch"
+      checked={showTelegraphWire}
+      onChange={(v) => (showTelegraphWire = v)}
+    />
     <OptionRow
       label="Rozpoznávat písmeno CH (----)"
       checked={parseCH}
@@ -363,6 +387,10 @@
     flex-direction: column;
     gap: var(--space-sm);
     width: 100%;
+  }
+
+  .keypad-zone.no-wire {
+    padding-bottom: clamp(48px, 8vh, 68px);
   }
 
   /* Floating Toolbar above Textarea */

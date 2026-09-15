@@ -18,7 +18,7 @@
   let inputLetters = $state<string>(modSettings.getString('text', ''));
   let czechDiacritics = $state<boolean>(modSettings.getBoolean('czech', true));
   let directNumbers = $state<boolean>(modSettings.getBoolean('direct_nums', false));
-  let autoInsert = $state<boolean>(modSettings.getBoolean('auto_insert', true));
+  let autoInsert = $state<boolean>(modSettings.getBoolean('auto_insert', false));
 
   // Active cell being edited: array of dot numbers [1..6]
   let activeDots = $state<number[]>([]);
@@ -366,11 +366,10 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: clamp(16px, 3.2vh, 32px) clamp(20px, 7vw, 44px);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-lg);
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+    padding: clamp(12px, 2.5vh, 24px) clamp(20px, 7vw, 44px);
+    background: transparent;
+    border: none;
+    box-shadow: none;
     box-sizing: border-box;
   }
 
@@ -385,8 +384,8 @@
     width: clamp(64px, 10.2vh, 84px);
     height: clamp(64px, 10.2vh, 84px);
     border-radius: var(--radius-full);
-    background-color: var(--color-surface-1);
-    border: 2.5px solid var(--color-border-subtle);
+    background-color: #000000;
+    border: 2px solid var(--color-border-subtle);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -424,7 +423,7 @@
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
     }
     100% {
-      background-color: var(--color-surface-1);
+      background-color: #000000;
       border-color: var(--color-border-subtle);
       box-shadow: 0 0 0 rgba(0, 210, 255, 0);
     }

@@ -157,6 +157,7 @@ textarea:focus, input:focus {
   gap: var(--space-sm);
   width: 100%;
   flex-shrink: 0;
+  touch-action: none;
 }
 
 .keypad-dominant-3col {
@@ -165,4 +166,5 @@ textarea:focus, input:focus {
   gap: var(--space-sm);
   width: 100%;
   flex-shrink: 0;
+  touch-action: none;
 }

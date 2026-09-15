@@ -2,13 +2,88 @@
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { APP_NAME, APP_VERSION } from '../../constants';
-  import { dbState, getDatabase, findAnagrams, clearDbCache, checkUpdatesOnInit } from '../../db/database.svelte';
-  import { MagnifyingGlass, Lightning, ArrowsClockwise, RocketLaunch, SpinnerGap, Check } from 'phosphor-svelte';
+  import { APP_BUILD_TIME } from '../../constants';
+  import { dbState, getDatabase, checkUpdatesOnInit } from '../../db/database.svelte';
+  import { ArrowsClockwise, RocketLaunch, SpinnerGap, CheckCircle } from 'phosphor-svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
 
   let newLayoutName = $state('');
   let isCreatingLayout = $state(false);
+  let isCheckingUpdates = $state(false);
+
+  function formatTimestamp(ts: number | string | undefined | null): string {
+    if (!ts) return 'Neznámé';
+    try {
+      if (typeof ts === 'string' && /^\d{4}\.\d{2}\.\d{2}-\d{4}$/.test(ts)) {
+        const [datePart, timePart] = ts.split('-');
+        const [y, m, d] = datePart.split('.');
+        const hh = timePart.slice(0, 2);
+        const mm = timePart.slice(2, 4);
+        return `${Number(d)}. ${Number(m)}. ${y}, ${hh}:${mm}`;
+      }
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return String(ts);
+      return d.toLocaleString('cs-CZ', {
+        day: 'numeric',
+        month: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return String(ts);
+    }
+  }
+
+  let formattedAppVersion = $derived(
+    APP_BUILD_TIME > 0 ? formatTimestamp(APP_BUILD_TIME) : formatTimestamp(Date.now())
+  );
+
+  let formattedDbVersion = $derived(
+    dbState.meta?.dbUpdated
+      ? formatTimestamp(dbState.meta.dbUpdated)
+      : dbState.meta?.dbVersion
+        ? formatTimestamp(dbState.meta.dbVersion)
+        : dbState.remoteVersion?.dbUpdated
+          ? formatTimestamp(dbState.remoteVersion.dbUpdated)
+          : dbState.remoteVersion?.dbVersion
+            ? formatTimestamp(dbState.remoteVersion.dbVersion)
+            : 'Aktuální'
+  );
+
+  async function handleCheckUpdates() {
+    isCheckingUpdates = true;
+    try {
+      settings.vibrate(20);
+      toast.show('Kontroluji dostupnost aktualizací...', { type: 'info', duration: 2000 });
+      await checkUpdatesOnInit();
+      if (!dbState.updateAvailable) {
+        toast.show('Vše je aktuální! Máte nejnovější verzi.', { type: 'success', duration: 2500 });
+      } else {
+        toast.show('Je k dispozici novější verze!', { type: 'warning', duration: 3000 });
+      }
+    } catch (err: any) {
+      toast.show(`Chyba kontroly: ${err?.message}`, { type: 'danger' });
+    } finally {
+      isCheckingUpdates = false;
+    }
+  }
+
+  async function handleApplyUpdate() {
+    try {
+      settings.vibrate(30);
+      if (dbState.dbUpdateAvailable) {
+        toast.show('Stahuji nejnovější data slovníku...', { type: 'info' });
+        await getDatabase({ forceRefresh: true });
+        toast.show('Slovník byl úspěšně aktualizován!', { type: 'success' });
+      } else if (dbState.appUpdateAvailable) {
+        toast.show('Načítám novou verzi aplikace...', { type: 'info' });
+        window.location.reload();
+      }
+    } catch (err: any) {
+      toast.show(`Chyba: ${err?.message}`, { type: 'danger' });
+    }
+  }
 
   function handleCreateLayout() {
     if (!newLayoutName.trim()) {
@@ -43,7 +118,91 @@
   <div class="settings-container">
     <h1 class="page-title">Globální nastavení</h1>
 
-    <!-- Alphabet Configuration Section -->
+    <!-- 1. Aktualizace (Na samém vrcholu) -->
+    <section class="card update-card">
+      <div class="card-header-row">
+        <div>
+          <h2 class="card-title">Aktualizace</h2>
+          <p class="card-desc">
+            Aplikace i data fungují offline. Aktualizace probíhají jednoduše jedním klepnutím.
+          </p>
+        </div>
+        {#if !dbState.updateAvailable && dbState.status !== 'loading'}
+          <span class="badge-status online">
+            <CheckCircle size={14} weight="fill" />
+            <span>Aktuální</span>
+          </span>
+        {:else if dbState.updateAvailable}
+          <span class="badge-status update">
+            <RocketLaunch size={14} weight="fill" />
+            <span>Nová verze!</span>
+          </span>
+        {/if}
+      </div>
+
+      <!-- Banner s výzvou k aktualizaci, pokud je k dispozici -->
+      {#if dbState.updateAvailable}
+        <div class="update-banner">
+          <div class="update-banner-info">
+            <div class="update-title">
+              <RocketLaunch size={18} weight="duotone" />
+              <span>K dispozici je novější verze</span>
+            </div>
+            <div class="update-subtitle">
+              {#if dbState.dbUpdateAvailable && dbState.remoteVersion}
+                Nová verze slovníku ({formatTimestamp(dbState.remoteVersion.dbUpdated || dbState.remoteVersion.dbVersion)}).
+              {:else if dbState.appUpdateAvailable && dbState.remoteVersion}
+                Nové vydání aplikace ({formatTimestamp(dbState.remoteVersion.buildTime)}).
+              {:else}
+                Na serveru je k dispozici novější verze.
+              {/if}
+            </div>
+          </div>
+          <button
+            class="update-action-btn"
+            disabled={isCheckingUpdates || dbState.status === 'loading'}
+            onclick={handleApplyUpdate}
+          >
+            {#if dbState.status === 'loading'}
+              <SpinnerGap size={15} class="spin" />
+              <span>Stahuji...</span>
+            {:else}
+              <RocketLaunch size={16} weight="bold" />
+              <span>Aktualizovat nyní</span>
+            {/if}
+          </button>
+        </div>
+      {/if}
+
+      <!-- Evergreen verze aplikace a databáze (datum, čas) -->
+      <div class="version-box">
+        <div class="sys-row">
+          <span>Verze aplikace</span>
+          <span class="version-badge">{formattedAppVersion}</span>
+        </div>
+        <div class="sys-row">
+          <span>Slovníková data</span>
+          <span class="version-badge">{formattedDbVersion}</span>
+        </div>
+      </div>
+
+      <!-- Tlačítko kontroly aktualizací -->
+      <button
+        class="secondary-btn"
+        disabled={isCheckingUpdates || dbState.status === 'loading'}
+        onclick={handleCheckUpdates}
+      >
+        {#if isCheckingUpdates}
+          <SpinnerGap size={16} class="spin" />
+          <span>Kontroluji aktualizace...</span>
+        {:else}
+          <ArrowsClockwise size={16} weight="bold" />
+          <span>Zkontrolovat aktualizace</span>
+        {/if}
+      </button>
+    </section>
+
+    <!-- 2. Abecedy & Rozložení -->
     <section class="card">
       <h2 class="card-title">Abecedy & Rozložení</h2>
       <p class="card-desc">
@@ -122,7 +281,7 @@
       {/if}
     </section>
 
-    <!-- App Preferences Section -->
+    <!-- 3. Předvolby aplikace -->
     <section class="card">
       <h2 class="card-title">Předvolby aplikace</h2>
 
@@ -159,198 +318,6 @@
           toast.show(settings.devToolsEnabled ? 'Expertní režim aktivován' : 'Expertní režim vypnut', { type: 'info' });
         }}
       />
-    </section>
-
-    <!-- SQLite Dictionary Database Section -->
-    <section class="card">
-      <h2 class="card-title">Slovníková databáze (SQLite WASM)</h2>
-      <p class="card-desc">
-        Lokální offline databáze pro hledání přesmyček, křížovkových vzorů, posunů a automatické luštění šifer.
-      </p>
-
-      <div class="db-status-box">
-        <div class="sys-row">
-          <span>Stav databáze</span>
-          {#if dbState.status === 'ready'}
-            <span class="badge-online">● Připraveno ({dbState.totalRows.toLocaleString('cs-CZ')} záznamů)</span>
-          {:else if dbState.status === 'loading'}
-            <span class="badge-loading">
-              <SpinnerGap size={13} class="spin" />
-              <span>Stahování / načítání ({dbState.progress}%)</span>
-            </span>
-          {:else if dbState.status === 'error'}
-            <span class="badge-error">✕ Chyba ({dbState.error})</span>
-          {:else}
-            <span class="badge-idle">○ Uloženo v paměti zařízení</span>
-          {/if}
-        </div>
-
-        <div class="sys-row">
-          <span>Úložiště</span>
-          <span>SQLite WASM + IndexedDB</span>
-        </div>
-
-        {#if dbState.meta}
-          <div class="sys-row">
-            <span>Verze lokální DB</span>
-            <code>{dbState.meta.dbVersion}</code>
-          </div>
-          <div class="sys-row">
-            <span>Kontrolní hash</span>
-            <code title={dbState.meta.dbHash}>{dbState.meta.dbHash.slice(0, 16)}</code>
-          </div>
-          <div class="sys-row">
-            <span>Velikost v mezipaměti</span>
-            <span>{(dbState.meta.dbSizeBytes / (1024 * 1024)).toFixed(1)} MB</span>
-          </div>
-          <div class="sys-row">
-            <span>Datum databáze</span>
-            <span>{new Date(dbState.meta.dbUpdated).toLocaleString('cs-CZ')}</span>
-          </div>
-        {/if}
-
-        {#if dbState.remoteVersion}
-          <div class="sys-row">
-            <span>Serverová verze DB</span>
-            <code>{dbState.remoteVersion.dbVersion}</code>
-          </div>
-          <div class="sys-row">
-            <span>Synchronizace</span>
-            {#if dbState.meta && dbState.meta.dbHash === dbState.remoteVersion.dbHash}
-              <span class="badge-online">✓ Databáze je aktuální</span>
-            {:else if !dbState.meta}
-              <span class="badge-idle">○ Databáze dosud nestažena</span>
-            {:else}
-              <span class="badge-loading">
-                <Lightning size={13} weight="duotone" />
-                <span>K dispozici nová verze</span>
-              </span>
-            {/if}
-          </div>
-        {/if}
-      </div>
-
-      {#if dbState.updateAvailable}
-        <div class="update-banner">
-          <div class="update-banner-info">
-            <div class="update-title">
-              <RocketLaunch size={18} weight="duotone" />
-              <span>K dispozici je aktualizace</span>
-            </div>
-            <div class="update-subtitle">
-              {#if dbState.dbUpdateAvailable && dbState.remoteVersion}
-                Nová verze slovníku: <code>{dbState.remoteVersion.dbVersion}</code> ({(dbState.remoteVersion.dbSizeBytes / (1024 * 1024)).toFixed(1)} MB). Aktualizujte pouze při stabilním připojení (např. na Wi-Fi).
-              {:else if dbState.appUpdateAvailable && dbState.remoteVersion}
-                K dispozici je nová verze aplikace (v{dbState.remoteVersion.appVersion}).
-              {:else}
-                Na serveru je k dispozici aktualizace.
-              {/if}
-            </div>
-          </div>
-          <button
-            class="update-action-btn"
-            disabled={dbState.status === 'loading'}
-            onclick={async () => {
-              try {
-                if (dbState.dbUpdateAvailable) {
-                  toast.show('Stahuji nejnovější data slovníku...', { type: 'info' });
-                  await getDatabase({ forceRefresh: true });
-                  toast.show('Aktualizace slovníku dokončena!', { type: 'success' });
-                } else if (dbState.appUpdateAvailable) {
-                  toast.show('Načítám novou verzi aplikace...', { type: 'info' });
-                  window.location.reload();
-                }
-              } catch (err: any) {
-                toast.show(`Chyba: ${err?.message}`, { type: 'danger' });
-              }
-            }}
-          >
-            {#if dbState.dbUpdateAvailable}
-              Aktualizovat slovník
-            {:else}
-              Aktualizovat aplikaci
-            {/if}
-          </button>
-        </div>
-      {/if}
-
-      <div class="db-actions">
-        <button
-          class="secondary-btn"
-          disabled={dbState.status === 'loading'}
-          onclick={async () => {
-            try {
-              toast.show('Kontroluji online verzi...', { type: 'info' });
-              await checkUpdatesOnInit();
-              if (!dbState.updateAvailable) {
-                toast.show('Máte nejnovější verzi databáze i aplikace!', { type: 'success' });
-              }
-            } catch (err: any) {
-              toast.show(`Chyba kontroly: ${err?.message}`, { type: 'danger' });
-            }
-          }}
-        >
-          <MagnifyingGlass size={16} weight="bold" />
-          <span>Zkontrolovat dostupnost aktualizací</span>
-        </button>
-
-        <button
-          class="secondary-btn"
-          disabled={dbState.status === 'loading'}
-          onclick={async () => {
-            try {
-              toast.show('Inicializuji SQLite WASM...', { type: 'info' });
-              await getDatabase();
-              const test = await findAnagrams('ceklov');
-              toast.show(`Databáze připravena! Test přesmyčky "ceklov" -> ${test[0]?.word || 'ok'}`, { type: 'success' });
-            } catch (err: any) {
-              toast.show(`Chyba databáze: ${err?.message}`, { type: 'danger' });
-            }
-          }}
-        >
-          {#if dbState.status === 'ready'}
-            <Check size={16} weight="bold" />
-            <span>Databáze aktivní (otestovat přesmyčku)</span>
-          {:else}
-            <Lightning size={16} weight="duotone" />
-            <span>Inicializovat databázi do paměti</span>
-          {/if}
-        </button>
-
-        <button
-          class="secondary-btn btn-danger-subtle"
-          disabled={dbState.status === 'loading'}
-          onclick={async () => {
-            try {
-              toast.show('Vymazávám cache a stahuji nejnovější databázi...', { type: 'info' });
-              await clearDbCache();
-              await getDatabase();
-              toast.show(`Databáze úspěšně obnovena (${dbState.totalRows.toLocaleString('cs-CZ')} slov)!`, { type: 'success' });
-            } catch (err: any) {
-              toast.show(`Chyba při stahování: ${err?.message}`, { type: 'danger' });
-            }
-          }}
-        >
-          <ArrowsClockwise size={16} weight="bold" />
-          <span>Znovu stáhnout databázi (vymazat cache)</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- System Info & Offline Status -->
-    <section class="card system-card">
-      <div class="sys-row">
-        <span>Aplikace</span>
-        <strong>{APP_NAME}</strong>
-      </div>
-      <div class="sys-row">
-        <span>Režim</span>
-        <span class="badge-online">100% Offline PWA</span>
-      </div>
-      <div class="sys-row">
-        <span>Verze klientského kódu</span>
-        <code>{APP_VERSION}</code>
-      </div>
     </section>
   </div>
 </div>
@@ -389,6 +356,13 @@
     gap: 14px;
   }
 
+  .card-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
   .card-title {
     font-size: 16px;
     font-weight: 700;
@@ -398,8 +372,108 @@
   .card-desc {
     font-size: 13px;
     color: var(--color-text-secondary);
-    margin: 0;
+    margin: 3px 0 0 0;
     line-height: 1.4;
+  }
+
+  .badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .badge-status.online {
+    background-color: rgba(34, 197, 94, 0.15);
+    color: var(--color-accent-success);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  .badge-status.update {
+    background-color: rgba(64, 150, 255, 0.18);
+    color: var(--color-accent-primary);
+    border: 1px solid var(--color-accent-primary);
+  }
+
+  .version-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: var(--color-surface-2);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-subtle);
+  }
+
+  .version-badge {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .update-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    background-color: rgba(64, 150, 255, 0.12);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+
+  .update-banner-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .update-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-accent-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .update-subtitle {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.35;
+  }
+
+  .update-action-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background-color: var(--color-accent-primary);
+    color: #000;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    transition: opacity 0.15s ease, transform 0.05s ease;
+  }
+
+  .update-action-btn:active:not(:disabled) {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .update-action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   .layouts-list {
@@ -495,6 +569,20 @@
     font-weight: 600;
     color: var(--color-accent-primary);
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .secondary-btn:active:not(:disabled) {
+    background-color: var(--color-surface-active);
+  }
+
+  .secondary-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .new-layout-form {
@@ -530,30 +618,12 @@
     font-size: 13px;
   }
 
-  .system-card {
-    background-color: #101014;
-    gap: 8px;
-  }
-
   .sys-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 13px;
     color: var(--color-text-secondary);
-  }
-
-  .badge-online {
-    color: var(--color-accent-success);
-    font-weight: 600;
-  }
-
-  .badge-loading {
-    color: var(--color-accent-warning);
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
   }
 
   :global(.spin) {
@@ -563,88 +633,5 @@
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
-  }
-
-  .badge-error {
-    color: var(--color-accent-danger);
-    font-weight: 600;
-  }
-
-  .badge-idle {
-    color: var(--color-text-muted);
-  }
-
-  .db-status-box {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    background-color: var(--color-surface-2);
-    padding: 12px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border-subtle);
-  }
-
-  .db-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 4px;
-  }
-
-  .db-actions .secondary-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .update-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    background-color: rgba(64, 150, 255, 0.12);
-    border: 1px solid var(--color-accent-primary);
-    border-radius: var(--radius-sm);
-    padding: 12px;
-  }
-
-  .update-banner-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .update-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .update-subtitle {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-  }
-
-  .update-action-btn {
-    padding: 8px 14px;
-    background-color: var(--color-accent-primary);
-    color: #000;
-    font-size: 13px;
-    font-weight: 700;
-    border-radius: var(--radius-sm);
-    white-space: nowrap;
-    cursor: pointer;
-    border: none;
-  }
-
-  .btn-danger-subtle {
-    color: var(--color-text-secondary);
-  }
-  .btn-danger-subtle:hover {
-    color: var(--color-accent-danger);
   }
 </style>
