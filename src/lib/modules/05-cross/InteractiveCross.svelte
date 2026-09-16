@@ -292,83 +292,58 @@
 
         <!-- 2x2 Šikmý kříž bez tečky (S, T, U, V) -->
         <div class="sp-cross-x">
-          <svg viewBox="0 0 140 115" class="sp-x-svg">
-            <!-- Wedge Top (S) -->
-            <g
-              class="sp-wedge"
-              role="button"
-              tabindex="0"
-              onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[18])}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onLetterSelect(smallPolishLetters[18]);
-                }
-              }}
-            >
-              <polygon points="0,0 140,0 70,57.5" class="wedge-hitarea" />
-              <g class="sp-wedge-content">
-                <text x="70" y="26" class="sp-wedge-char">{smallPolishLetters[18]}</text>
-              </g>
-            </g>
-            <!-- Wedge Left (T) -->
-            <g
-              class="sp-wedge"
-              role="button"
-              tabindex="0"
-              onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[19])}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onLetterSelect(smallPolishLetters[19]);
-                }
-              }}
-            >
-              <polygon points="0,0 70,57.5 0,115" class="wedge-hitarea" />
-              <g class="sp-wedge-content">
-                <text x="28" y="57.5" class="sp-wedge-char">{smallPolishLetters[19]}</text>
-              </g>
-            </g>
-            <!-- Wedge Right (U) -->
-            <g
-              class="sp-wedge"
-              role="button"
-              tabindex="0"
-              onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[20])}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onLetterSelect(smallPolishLetters[20]);
-                }
-              }}
-            >
-              <polygon points="140,0 140,115 70,57.5" class="wedge-hitarea" />
-              <g class="sp-wedge-content">
-                <text x="112" y="57.5" class="sp-wedge-char">{smallPolishLetters[20]}</text>
-              </g>
-            </g>
-            <!-- Wedge Bottom (V) -->
-            <g
-              class="sp-wedge"
-              role="button"
-              tabindex="0"
-              onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[21])}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onLetterSelect(smallPolishLetters[21]);
-                }
-              }}
-            >
-              <polygon points="0,115 140,115 70,57.5" class="wedge-hitarea" />
-              <g class="sp-wedge-content">
-                <text x="70" y="89" class="sp-wedge-char">{smallPolishLetters[21]}</text>
-              </g>
-            </g>
-            <!-- Diagonal crossing lines -->
+          <svg class="sp-x-lines" viewBox="0 0 140 115" aria-hidden="true">
             <line x1="8" y1="6.5" x2="132" y2="108.5" class="sp-x-line" />
             <line x1="132" y1="6.5" x2="8" y2="108.5" class="sp-x-line" />
           </svg>
+
+          <!-- Wedge Top (S) -->
+          <button
+            type="button"
+            class="sp-wedge wedge-top"
+            oncontextmenu={(e) => e.preventDefault()}
+            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[18])}
+          >
+            <span class="sp-cell-inner">
+              <span class="sp-char">{smallPolishLetters[18]}</span>
+            </span>
+          </button>
+
+          <!-- Wedge Left (T) -->
+          <button
+            type="button"
+            class="sp-wedge wedge-left"
+            oncontextmenu={(e) => e.preventDefault()}
+            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[19])}
+          >
+            <span class="sp-cell-inner">
+              <span class="sp-char">{smallPolishLetters[19]}</span>
+            </span>
+          </button>
+
+          <!-- Wedge Right (U) -->
+          <button
+            type="button"
+            class="sp-wedge wedge-right"
+            oncontextmenu={(e) => e.preventDefault()}
+            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[20])}
+          >
+            <span class="sp-cell-inner">
+              <span class="sp-char">{smallPolishLetters[20]}</span>
+            </span>
+          </button>
+
+          <!-- Wedge Bottom (V) -->
+          <button
+            type="button"
+            class="sp-wedge wedge-bottom"
+            oncontextmenu={(e) => e.preventDefault()}
+            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[21])}
+          >
+            <span class="sp-cell-inner">
+              <span class="sp-char">{smallPolishLetters[21]}</span>
+            </span>
+          </button>
         </div>
       </div>
 
@@ -400,87 +375,62 @@
 
         <!-- 2x2 Šikmý kříž s tečkou (W, X, Y, Z) -->
         <div class="sp-cross-x">
-          <svg viewBox="0 0 140 115" class="sp-x-svg">
-            <!-- Wedge Top (W) -->
-            <g
-              class="sp-wedge"
-              role="button"
-              tabindex="0"
-              onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[22])}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onLetterSelect(smallPolishLetters[22]);
-                }
-              }}
-            >
-              <polygon points="0,0 140,0 70,57.5" class="wedge-hitarea" />
-              <g class="sp-wedge-content">
-                <text x="70" y="22" class="sp-wedge-char">{smallPolishLetters[22]}</text>
-                <circle cx="70" cy="38" r="2.5" class="sp-wedge-dot" />
-              </g>
-            </g>
-            <!-- Wedge Left (X) -->
-            <g
-              class="sp-wedge"
-              role="button"
-              tabindex="0"
-              onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[23])}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onLetterSelect(smallPolishLetters[23]);
-                }
-              }}
-            >
-              <polygon points="0,0 70,57.5 0,115" class="wedge-hitarea" />
-              <g class="sp-wedge-content">
-                <text x="22" y="57.5" class="sp-wedge-char">{smallPolishLetters[23]}</text>
-                <circle cx="42" cy="57.5" r="2.5" class="sp-wedge-dot" />
-              </g>
-            </g>
-            <!-- Wedge Right (Y) -->
-            <g
-              class="sp-wedge"
-              role="button"
-              tabindex="0"
-              onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[24])}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onLetterSelect(smallPolishLetters[24]);
-                }
-              }}
-            >
-              <polygon points="140,0 140,115 70,57.5" class="wedge-hitarea" />
-              <g class="sp-wedge-content">
-                <text x="118" y="57.5" class="sp-wedge-char">{smallPolishLetters[24]}</text>
-                <circle cx="98" cy="57.5" r="2.5" class="sp-wedge-dot" />
-              </g>
-            </g>
-            <!-- Wedge Bottom (Z) -->
-            <g
-              class="sp-wedge"
-              role="button"
-              tabindex="0"
-              onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[25])}
-              onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onLetterSelect(smallPolishLetters[25]);
-                }
-              }}
-            >
-              <polygon points="0,115 140,115 70,57.5" class="wedge-hitarea" />
-              <g class="sp-wedge-content">
-                <text x="70" y="93" class="sp-wedge-char">{smallPolishLetters[25]}</text>
-                <circle cx="70" cy="77" r="2.5" class="sp-wedge-dot" />
-              </g>
-            </g>
-            <!-- Diagonal crossing lines -->
+          <svg class="sp-x-lines" viewBox="0 0 140 115" aria-hidden="true">
             <line x1="8" y1="6.5" x2="132" y2="108.5" class="sp-x-line" />
             <line x1="132" y1="6.5" x2="8" y2="108.5" class="sp-x-line" />
           </svg>
+
+          <!-- Wedge Top (W) -->
+          <button
+            type="button"
+            class="sp-wedge wedge-top"
+            oncontextmenu={(e) => e.preventDefault()}
+            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[22])}
+          >
+            <span class="sp-cell-inner wedge-content-col">
+              <span class="sp-char">{smallPolishLetters[22]}</span>
+              <span class="sp-dot" aria-hidden="true"></span>
+            </span>
+          </button>
+
+          <!-- Wedge Left (X) -->
+          <button
+            type="button"
+            class="sp-wedge wedge-left"
+            oncontextmenu={(e) => e.preventDefault()}
+            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[23])}
+          >
+            <span class="sp-cell-inner wedge-content-row">
+              <span class="sp-char">{smallPolishLetters[23]}</span>
+              <span class="sp-dot" aria-hidden="true"></span>
+            </span>
+          </button>
+
+          <!-- Wedge Right (Y) -->
+          <button
+            type="button"
+            class="sp-wedge wedge-right"
+            oncontextmenu={(e) => e.preventDefault()}
+            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[24])}
+          >
+            <span class="sp-cell-inner wedge-content-row">
+              <span class="sp-dot" aria-hidden="true"></span>
+              <span class="sp-char">{smallPolishLetters[24]}</span>
+            </span>
+          </button>
+
+          <!-- Wedge Bottom (Z) -->
+          <button
+            type="button"
+            class="sp-wedge wedge-bottom"
+            oncontextmenu={(e) => e.preventDefault()}
+            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[25])}
+          >
+            <span class="sp-cell-inner wedge-content-col">
+              <span class="sp-dot" aria-hidden="true"></span>
+              <span class="sp-char">{smallPolishLetters[25]}</span>
+            </span>
+          </button>
         </div>
       </div>
     </div>
@@ -778,68 +728,98 @@
 
   /* 2x2 Šikmý kříž X */
   .sp-cross-x {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
-    touch-action: none;
-  }
-
-  .sp-x-svg {
-    width: 100%;
     max-width: 145px;
     height: clamp(98px, 14.5vh, 115px);
-    overflow: visible;
+    touch-action: none;
     user-select: none;
     -webkit-user-select: none;
   }
 
-  .sp-wedge {
-    cursor: pointer;
-    touch-action: none;
-    outline: none;
-  }
-
-  .wedge-hitarea {
-    fill: transparent;
-    transition: fill 0.08s ease;
-  }
-
-  .sp-wedge:active .wedge-hitarea {
-    fill: var(--color-accent-primary-subtle);
-  }
-
-  .sp-wedge-content {
-    transition: transform 0.08s ease;
-    transform-origin: center;
-    transform-box: fill-box;
+  .sp-x-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
-  }
-
-  .sp-wedge:active .sp-wedge-content {
-    transform: scale(0.92);
-  }
-
-  .sp-wedge-char {
-    font-family: var(--font-mono);
-    font-size: 16px;
-    font-weight: 700;
-    fill: var(--color-text-primary);
-    text-anchor: middle;
-    dominant-baseline: central;
-    pointer-events: none;
-  }
-
-  .sp-wedge-dot {
-    fill: var(--color-accent-primary);
-    pointer-events: none;
+    overflow: visible;
   }
 
   .sp-x-line {
     stroke: var(--color-text-secondary);
     stroke-width: 2.5px;
     stroke-linecap: round;
-    pointer-events: none;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .sp-wedge {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    touch-action: none;
+    display: flex;
+    transition: background-color 0.08s ease;
+    -webkit-tap-highlight-color: transparent;
+    color: var(--color-text-primary);
+  }
+
+  .sp-wedge:active {
+    background-color: var(--color-accent-primary-subtle);
+  }
+
+  .sp-wedge:active .sp-cell-inner {
+    transform: scale(0.92);
+  }
+
+  .wedge-top {
+    clip-path: polygon(0 0, 100% 0, 50% 50%);
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 10px;
+  }
+
+  .wedge-bottom {
+    clip-path: polygon(0 100%, 50% 50%, 100% 100%);
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 10px;
+  }
+
+  .wedge-left {
+    clip-path: polygon(0 0, 50% 50%, 0 100%);
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 14px;
+  }
+
+  .wedge-right {
+    clip-path: polygon(100% 0, 100% 100%, 50% 50%);
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 14px;
+  }
+
+  .wedge-content-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .wedge-content-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
   }
 
   /* --- Mobilní klávesnice 3x4 (100% šířka) --- */
