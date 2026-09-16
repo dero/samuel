@@ -3,7 +3,6 @@ import { localSettingsService } from '../services/localSettingsService';
 class SettingsState {
   hapticsEnabled = $state<boolean>(true);
   wakeLockEnabled = $state<boolean>(true);
-  devToolsEnabled = $state<boolean>(false);
 
   private wakeLockSentinel: any = null;
 
@@ -12,13 +11,11 @@ class SettingsState {
       const appScope = localSettingsService.forSection('app');
       this.hapticsEnabled = appScope.getBoolean('hapticsEnabled', true);
       this.wakeLockEnabled = appScope.getBoolean('wakeLockEnabled', true);
-      this.devToolsEnabled = appScope.getBoolean('devToolsEnabled', false);
 
       $effect.root(() => {
         $effect(() => {
           appScope.setBoolean('hapticsEnabled', this.hapticsEnabled);
           appScope.setBoolean('wakeLockEnabled', this.wakeLockEnabled);
-          appScope.setBoolean('devToolsEnabled', this.devToolsEnabled);
         });
 
         $effect(() => {
@@ -32,12 +29,16 @@ class SettingsState {
     }
   }
 
-  vibrate(pattern: number | number[] = 25) {
+  vibrate(pattern: number | number[] = 35) {
     if (!this.hapticsEnabled || typeof navigator === 'undefined' || !navigator.vibrate) {
       return;
     }
     try {
-      navigator.vibrate(pattern);
+      if (typeof pattern === 'number') {
+        navigator.vibrate(Math.max(pattern, 30));
+      } else if (Array.isArray(pattern)) {
+        navigator.vibrate(pattern.map((p, idx) => (idx % 2 === 0 ? Math.max(p, 30) : p)));
+      }
     } catch {
       // ignore
     }

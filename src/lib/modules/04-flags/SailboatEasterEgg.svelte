@@ -103,6 +103,7 @@
   class:is-sinking={boatState === 'sinking'}
   class:is-submerged={boatState === 'submerged'}
   class:is-resurfacing={boatState === 'resurfacing'}
+  oncontextmenu={(e) => e.preventDefault()}
   onclick={handleClick}
   aria-label="Lodička na vlnách"
   title="Lodička na vlnách"

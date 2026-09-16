@@ -85,24 +85,35 @@
     }
   }
 
+  let inspectedLayoutId = $state<string>(alphabet.layouts[0]?.id ?? 'english-26');
+
+  let inspectedLayout = $derived(
+    alphabet.getLayout(inspectedLayoutId) ?? alphabet.layouts[0]
+  );
+
   function handleCreateLayout() {
     if (!newLayoutName.trim()) {
       toast.show('Zadejte název abecedy', { type: 'danger' });
       return;
     }
-    const id = alphabet.addCustomLayout(newLayoutName.trim(), [...alphabet.currentLetters]);
+    const id = alphabet.addCustomLayout(
+      newLayoutName.trim(),
+      [...inspectedLayout.letters],
+      'Vlastní abeceda'
+    );
+    inspectedLayoutId = id;
     newLayoutName = '';
     isCreatingLayout = false;
     toast.show('Vlastní abeceda vytvořena', { type: 'success' });
   }
 
   function toggleLetter(char: string) {
-    if (alphabet.currentLayout.isBuiltin) {
-      toast.show('Výchozí abecedy nelze upravovat. Vytvořte si vlastní kopii níže.', { type: 'info' });
+    if (inspectedLayout.isBuiltin) {
+      toast.show('Vestavěné abecedy nelze upravovat. Vytvořte si vlastní kopii níže.', { type: 'info' });
       return;
     }
     settings.vibrate(25);
-    const letters = alphabet.currentLetters;
+    const letters = inspectedLayout.letters;
     const idx = letters.indexOf(char);
     let updated: string[];
     if (idx >= 0) {
@@ -110,14 +121,12 @@
     } else {
       updated = [...letters, char].sort();
     }
-    alphabet.currentLayout.letters = updated;
+    alphabet.updateCustomLayout(inspectedLayoutId, updated);
   }
 </script>
 
 <div class="settings-scroll">
   <div class="settings-container">
-    <h1 class="page-title">Globální nastavení</h1>
-
     <!-- 1. Aktualizace (Na samém vrcholu) -->
     <section class="card update-card">
       <div class="card-header-row">
@@ -131,11 +140,6 @@
           <span class="badge-status online">
             <CheckCircle size={14} weight="fill" />
             <span>Aktuální</span>
-          </span>
-        {:else if dbState.updateAvailable}
-          <span class="badge-status update">
-            <RocketLaunch size={14} weight="fill" />
-            <span>Nová verze!</span>
           </span>
         {/if}
       </div>
@@ -202,34 +206,46 @@
       </button>
     </section>
 
-    <!-- 2. Abecedy & Rozložení -->
+    <!-- 2. Správa abeced -->
     <section class="card">
-      <h2 class="card-title">Abecedy & Rozložení</h2>
+      <h2 class="card-title">Správa abeced</h2>
       <p class="card-desc">
-        Nastavení globální abecedy pro Kříže, Čísla písmen, Posuny a Substituci.
+        Přehled vestavěných abeced a tvorba vlastních sad znaků pro šifrovací nástroje. Volba konkrétní abecedy se provádí přímo v menu jednotlivých nástrojů.
       </p>
 
       <div class="layouts-list">
-        {#each alphabet.layouts as layout}
-          <div class="layout-row" class:active={layout.id === alphabet.activeId}>
+        {#each alphabet.layouts as layout (layout.id)}
+          {@const isInspected = layout.id === inspectedLayoutId}
+          <div class="layout-row" class:active={isInspected}>
             <button
+              type="button"
               class="layout-select-btn"
               onclick={() => {
-                settings.vibrate(25);
-                alphabet.setActiveLayout(layout.id);
+                settings.vibrate(20);
+                inspectedLayoutId = layout.id;
               }}
             >
-              <span class="radio-circle">{layout.id === alphabet.activeId ? '●' : '○'}</span>
               <span class="layout-name">{layout.name}</span>
               <span class="layout-count">({layout.letters.length} znaků)</span>
+              {#if layout.isBuiltin}
+                <span class="builtin-badge">Vestavěná</span>
+              {:else}
+                <span class="custom-badge">Vlastní</span>
+              {/if}
             </button>
 
             {#if !layout.isBuiltin}
               <button
+                type="button"
                 class="delete-btn"
+                title="Smazat vlastní abecedu"
                 onclick={() => {
                   settings.vibrate(35);
                   alphabet.deleteCustomLayout(layout.id);
+                  if (inspectedLayoutId === layout.id) {
+                    inspectedLayoutId = alphabet.layouts[0]?.id ?? 'english-26';
+                  }
+                  toast.show('Abeceda smazána', { type: 'info' });
                 }}
               >
                 ✕
@@ -239,43 +255,55 @@
         {/each}
       </div>
 
-      <!-- Letters grid for active layout -->
+      <!-- Letters grid for inspected layout -->
       <div class="letters-preview">
-        <div class="preview-label">Znaky aktivní abecedy ({alphabet.length}):</div>
+        <div class="preview-label">
+          Znaky: <strong>{inspectedLayout.name}</strong> ({inspectedLayout.letters.length}):
+        </div>
+        {#if inspectedLayout.description}
+          <div class="preview-desc">{inspectedLayout.description}</div>
+        {/if}
         <div class="letters-chips">
-          {#each alphabet.currentLetters as letter}
+          {#each inspectedLayout.letters as letter}
             <button
+              type="button"
               class="letter-chip"
-              class:disabled-edit={alphabet.currentLayout.isBuiltin}
+              class:disabled-edit={inspectedLayout.isBuiltin}
               onclick={() => toggleLetter(letter)}
             >
               {letter}
             </button>
           {/each}
         </div>
+        {#if inspectedLayout.isBuiltin}
+          <div class="preview-hint">
+            Vestavěné abecedy jsou chráněné proti úpravám. Chcete-li znaky měnit, vytvořte si kopii tlačítkem níže.
+          </div>
+        {/if}
       </div>
 
       <!-- Create Custom Layout -->
       {#if !isCreatingLayout}
         <button
+          type="button"
           class="secondary-btn"
           onclick={() => {
             settings.vibrate(25);
             isCreatingLayout = true;
           }}
         >
-          + Vytvořit vlastní abecedu (kopie aktivní)
+          + Vytvořit vlastní abecedu (kopie: {inspectedLayout.name})
         </button>
       {:else}
         <div class="new-layout-form">
           <input
             type="text"
-            placeholder="Název abecedy (např. S heslem KOS)"
+            placeholder="Název nové abecedy (např. S heslem KOS)"
             bind:value={newLayoutName}
           />
           <div class="form-actions">
-            <button class="save-btn" onclick={handleCreateLayout}>Uložit</button>
-            <button class="cancel-btn" onclick={() => (isCreatingLayout = false)}>Zrušit</button>
+            <button type="button" class="save-btn" onclick={handleCreateLayout}>Uložit</button>
+            <button type="button" class="cancel-btn" onclick={() => (isCreatingLayout = false)}>Zrušit</button>
           </div>
         </div>
       {/if}
@@ -292,7 +320,6 @@
         checked={settings.hapticsEnabled}
         onChange={(val) => {
           settings.hapticsEnabled = val;
-          settings.vibrate(30);
         }}
       />
 
@@ -303,19 +330,6 @@
         checked={settings.wakeLockEnabled}
         onChange={(val) => {
           settings.wakeLockEnabled = val;
-          settings.vibrate(25);
-        }}
-      />
-
-      <OptionRow
-        label="Developer Tools / Expertní režim"
-        hint="Zpřístupní pokročilou diagnostiku a experimentální funkce"
-        type="switch"
-        checked={settings.devToolsEnabled}
-        onChange={(val) => {
-          settings.devToolsEnabled = val;
-          settings.vibrate(25);
-          toast.show(settings.devToolsEnabled ? 'Expertní režim aktivován' : 'Expertní režim vypnut', { type: 'info' });
         }}
       />
     </section>
@@ -338,12 +352,6 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-  }
-
-  .page-title {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0 0 4px 0;
   }
 
   .card {
@@ -391,12 +399,6 @@
     background-color: rgba(34, 197, 94, 0.15);
     color: var(--color-accent-success);
     border: 1px solid rgba(34, 197, 94, 0.3);
-  }
-
-  .badge-status.update {
-    background-color: rgba(64, 150, 255, 0.18);
-    color: var(--color-accent-primary);
-    border: 1px solid var(--color-accent-primary);
   }
 
   .version-box {
@@ -498,15 +500,10 @@
   .layout-select-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex: 1;
     text-align: left;
     padding: 6px 0;
-  }
-
-  .radio-circle {
-    font-size: 16px;
-    color: var(--color-accent-primary);
   }
 
   .layout-name {
@@ -519,6 +516,28 @@
     color: var(--color-text-secondary);
   }
 
+  .builtin-badge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 1px 6px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface-active);
+    color: var(--color-text-secondary);
+  }
+
+  .custom-badge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 1px 6px;
+    border-radius: var(--radius-full);
+    background-color: rgba(0, 210, 255, 0.12);
+    color: var(--color-accent-primary);
+  }
+
   .delete-btn {
     padding: 6px 10px;
     color: var(--color-accent-danger);
@@ -529,15 +548,30 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 10px;
+    padding: 12px;
     background-color: rgba(0, 0, 0, 0.4);
     border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-subtle);
   }
 
   .preview-label {
     font-size: 12px;
     font-weight: 600;
     color: var(--color-text-secondary);
+  }
+
+  .preview-desc {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    line-height: 1.35;
+  }
+
+  .preview-hint {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-style: italic;
+    line-height: 1.35;
+    margin-top: 4px;
   }
 
   .letters-chips {

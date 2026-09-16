@@ -251,6 +251,7 @@
   onpointermove={handlePointerMove}
   onpointerup={handlePointerUp}
   onpointercancel={handlePointerCancel}
+  oncontextmenu={(e) => e.preventDefault()}
   onkeydown={handleKeyDown}
 >
   <!-- Background progress fill -->

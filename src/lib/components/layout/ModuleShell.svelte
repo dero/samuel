@@ -4,6 +4,7 @@
 
   interface Props {
     hasAlphabet?: boolean;
+    alphabetHint?: string;
     onReset?: () => void;
     onPaste?: (text: string) => void;
     layoutMode?: 'default' | 'compact-output';
@@ -15,6 +16,7 @@
 
   let {
     hasAlphabet = false,
+    alphabetHint,
     onReset,
     onPaste,
     layoutMode = 'default',
@@ -41,7 +43,7 @@
   </div>
 
   <!-- Contextual Menu -->
-  <ModuleMenu {hasAlphabet} {onReset} {onPaste}>
+  <ModuleMenu {hasAlphabet} {alphabetHint} {onReset} {onPaste}>
     {#if menuOptions}
       {@render menuOptions()}
     {/if}

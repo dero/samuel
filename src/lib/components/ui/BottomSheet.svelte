@@ -11,6 +11,7 @@
     height?: string;
     scrollable?: boolean;
     padding?: boolean;
+    zIndex?: number;
     onClose: () => void;
     children?: import('svelte').Snippet;
     headerActions?: import('svelte').Snippet;
@@ -25,6 +26,7 @@
     height,
     scrollable = true,
     padding = true,
+    zIndex = 210,
     onClose,
     children,
     headerActions
@@ -54,7 +56,7 @@
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="sheet-backdrop" onclick={handleBackdropClick}>
+  <div class="sheet-backdrop" style:z-index={zIndex} onclick={handleBackdropClick}>
     <div
       class="sheet-panel"
       style:max-width={maxWidth}
@@ -82,6 +84,7 @@
             type="button"
             class="sheet-close-btn"
             aria-label="Zavřít panel"
+            oncontextmenu={(e) => e.preventDefault()}
             onclick={handleCloseClick}
           >
             <X size={20} weight="bold" />
@@ -93,6 +96,7 @@
         class="sheet-body"
         class:is-scrollable={scrollable}
         class:has-padding={padding}
+        data-allow-copy
       >
         {#if children}
           {@render children()}
@@ -227,6 +231,9 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    user-select: text;
+    -webkit-user-select: text;
+    -webkit-touch-callout: default;
   }
 
   .sheet-body.is-scrollable {

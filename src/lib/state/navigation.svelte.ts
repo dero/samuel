@@ -8,6 +8,7 @@ class NavigationState {
   activeModuleId = $state<ModuleId>(DEFAULT_FIRST_MODULE);
   subView = $state<SubView>('none');
   isLauncherOpen = $state<boolean>(false);
+  hasMenuWarning = $state<boolean>(false);
 
   activeModule = $derived(
     MODULES.find((m) => m.id === this.activeModuleId) ?? MODULES.find((m) => m.id === DEFAULT_FIRST_MODULE)!
@@ -50,6 +51,9 @@ class NavigationState {
     const sub = (parts[1] as SubView) || 'none';
 
     if (MODULES.some((m) => m.id === modId)) {
+      if (this.activeModuleId !== modId) {
+        this.hasMenuWarning = false;
+      }
       this.activeModuleId = modId;
       this.subView = sub === 'menu' || sub === 'ref' ? sub : 'none';
       this.persistModule(modId);
@@ -110,6 +114,10 @@ class NavigationState {
 
   closeLauncher() {
     this.isLauncherOpen = false;
+  }
+
+  setMenuWarning(hasWarning: boolean) {
+    this.hasMenuWarning = hasWarning;
   }
 }
 

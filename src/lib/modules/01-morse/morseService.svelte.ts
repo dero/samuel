@@ -1,83 +1,99 @@
 /**
  * Morse Application Service (Module 01)
- * Manages reactive integration with Samuel database, caching, and version invalidation.
- * Pure algorithmic solving logic is delegated to morseSolver.ts.
+ * Manages background Web Worker execution for heavy Morse unspaced solving.
  */
 
-import { dbState, getLexiconWords } from '../../db/database.svelte';
-import { ensureNgramLoaded } from '../../data/ngramModel';
-import {
-  buildLexiconItems,
-  solveMorseWithoutSpaces,
-  DEFAULT_SOLVER_WEIGHTS,
-  type LexiconItem,
-  type MorseSolverWeights,
-  type BruteforceResult
+import MorseWorker from './morse.worker.ts?worker';
+import type {
+  MorseSolverWeights,
+  BruteforceResult,
+  BruteforceCandidate
 } from './morseSolver';
 
 class MorseService {
-  private cachedLexicon: LexiconItem[] | null = null;
-  private cachedDbHash: string | null = null;
-  private loadPromise: Promise<LexiconItem[]> | null = null;
+  private worker: Worker | null = null;
+  private reqId = 0;
+  private pendingCallbacks = new Map<
+    number,
+    { resolve: (res: BruteforceResult) => void; reject: (err: any) => void }
+  >();
 
   isLoading = $state(false);
 
-  get isLoaded(): boolean {
-    return this.cachedLexicon !== null && this.cachedDbHash === (dbState.meta?.dbHash ?? null);
-  }
+  private initWorker(): Worker | null {
+    if (typeof window === 'undefined') return null;
+    if (this.worker) return this.worker;
 
-  get lexiconSize(): number {
-    return this.cachedLexicon?.length ?? 0;
-  }
+    try {
+      this.worker = new MorseWorker();
+      this.worker.onmessage = (e: MessageEvent) => {
+        const { id, type, candidates, totalFound, error } = e.data;
+        if (this.pendingCallbacks.has(id)) {
+          const cb = this.pendingCallbacks.get(id)!;
+          this.pendingCallbacks.delete(id);
+          this.isLoading = this.pendingCallbacks.size > 0;
 
-  /**
-   * Ensures lexicon items and n-gram language model are loaded into RAM.
-   * Revalidates automatically if SQLite dbHash changed (e.g. after DB update).
-   */
-  async ensureLexiconLoaded(): Promise<LexiconItem[]> {
-    const currentDbHash = dbState.meta?.dbHash ?? null;
-
-    if (this.cachedLexicon && this.cachedDbHash === currentDbHash) {
-      return this.cachedLexicon;
-    }
-
-    if (this.cachedDbHash !== currentDbHash) {
-      this.cachedLexicon = null;
-      this.loadPromise = null;
-      this.cachedDbHash = currentDbHash;
-    }
-
-    if (!this.loadPromise) {
-      this.isLoading = true;
-      this.loadPromise = (async () => {
-        try {
-          const [rawWords] = await Promise.all([
-            getLexiconWords(),
-            ensureNgramLoaded()
-          ]);
-          const items = buildLexiconItems(rawWords);
-          this.cachedLexicon = items;
-          return items;
-        } finally {
-          this.isLoading = false;
+          if (type === 'result') {
+            cb.resolve({ candidates: candidates || [], totalFound: totalFound || 0 });
+          } else if (type === 'error') {
+            cb.reject(new Error(error || 'Worker solve failed'));
+          }
         }
-      })();
-    }
+      };
 
-    return this.loadPromise;
+      this.worker.onerror = (err) => {
+        console.error('Morse worker error:', err);
+        this.isLoading = false;
+      };
+
+      this.worker.postMessage({ id: 0, type: 'init' });
+    } catch (err) {
+      console.warn('Failed to initialize Morse worker:', err);
+      this.worker = null;
+    }
+    return this.worker;
   }
 
   /**
-   * Solves unspaced Morse code against the cached lexicon.
+   * Solves unspaced Morse code against the lexicon in a background worker.
    */
   async solveWithoutSpaces(
     code: string,
     maxResults = 50,
     customWeights?: Partial<MorseSolverWeights>
   ): Promise<BruteforceResult> {
-    const weights: MorseSolverWeights = { ...DEFAULT_SOLVER_WEIGHTS, ...customWeights };
-    const lexicon = await this.ensureLexiconLoaded();
-    return solveMorseWithoutSpaces(code, maxResults, weights, lexicon);
+    const clean = code.replace(/[^.-]/g, '');
+    if (clean.length < 4) {
+      return { candidates: [], totalFound: 0 };
+    }
+
+    const worker = this.initWorker();
+    if (!worker) {
+      return { candidates: [], totalFound: 0 };
+    }
+
+    const id = ++this.reqId;
+    this.isLoading = true;
+
+    return new Promise((resolve, reject) => {
+      this.pendingCallbacks.set(id, { resolve, reject });
+      worker.postMessage({
+        id,
+        type: 'solve',
+        code: clean,
+        maxResults,
+        weights: customWeights
+      });
+    });
+  }
+
+  terminate() {
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+      this.pendingCallbacks.clear();
+      this.isLoading = false;
+    }
   }
 }
 

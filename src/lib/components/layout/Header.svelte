@@ -49,18 +49,21 @@
 
     <button
       type="button"
-      class="header-btn menu-btn"
-      aria-label="Menu modulu"
-      title={dbState.updateAvailable ? "Menu (K dispozici je aktualizace)" : "Menu modulu"}
+      class="header-btn"
+      class:has-warning={navigation.hasMenuWarning}
+      aria-label={navigation.hasMenuWarning ? "Menu modulu (nestandardní abeceda)" : "Menu modulu"}
+      title={navigation.hasMenuWarning ? "Menu modulu (upozornění: nestandardní abeceda)" : "Menu modulu"}
       onclick={() => {
         settings.vibrate(20);
         navigation.openMenu();
       }}
     >
-      <span class="icon"><List size={22} weight="bold" /></span>
-      {#if dbState.updateAvailable}
-        <span class="update-dot"></span>
-      {/if}
+      <span class="icon-wrapper">
+        <span class="icon"><List size={22} weight="bold" /></span>
+        {#if navigation.hasMenuWarning}
+          <span class="warning-dot" aria-hidden="true"></span>
+        {/if}
+      </span>
     </button>
   </div>
 
@@ -157,6 +160,26 @@
     background-color: var(--color-surface-active);
   }
 
+  .icon-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .warning-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-accent-warning);
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+    border: 1.5px solid var(--color-surface-1);
+    pointer-events: none;
+  }
+
   .icon {
     font-size: 20px;
     display: flex;
@@ -179,20 +202,5 @@
     height: 100%;
     background-color: var(--color-accent-primary);
     transition: width 0.2s ease-out;
-  }
-
-  .menu-btn {
-    position: relative;
-  }
-
-  .update-dot {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--color-accent-primary);
-    box-shadow: 0 0 6px var(--color-accent-primary);
   }
 </style>

@@ -8,6 +8,7 @@
   import BrailleModule from './lib/modules/02-braille/BrailleModule.svelte';
   import SemaphoreModule from './lib/modules/03-semaphore/SemaphoreModule.svelte';
   import FlagsModule from './lib/modules/04-flags/FlagsModule.svelte';
+  import CrossModule from './lib/modules/05-cross/CrossModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -16,7 +17,46 @@
   onMount(() => {
     checkUpdatesOnInit();
   });
+
+  function handleGlobalContextMenu(e: MouseEvent) {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+
+    // 1. Text inputs, textareas, and editable areas must allow context menu
+    if (target.closest('input, textarea, [contenteditable="true"]')) {
+      return;
+    }
+
+    // 2. Translation card (output field) must allow context menu for text selection / copying
+    if (
+      target.closest(
+        '.translation-card, .output-container, .result-card, .result-text, [data-allow-contextmenu]'
+      )
+    ) {
+      return;
+    }
+
+    // 3. Reference screens and bottom sheets must allow context menu for copying text/tables
+    // (except on interactive buttons inside them, e.g. close button)
+    if (
+      target.closest(
+        '.bottom-sheet, .bottom-sheet-content, .sheet-body, .reference-content, .ref-wrapper, .modal-content, [data-allow-copy]'
+      )
+    ) {
+      if (target.closest('button, [role="button"]')) {
+        e.preventDefault();
+        return;
+      }
+      return;
+    }
+
+    // 4. In all other places (buttons, keypads, interactive touch areas, dials, headers, etc.),
+    // prevent right-click / context menu so long-press doesn't trigger native context menu
+    e.preventDefault();
+  }
 </script>
+
+<svelte:window oncontextmenu={handleGlobalContextMenu} />
 
 <Header />
 
@@ -29,6 +69,8 @@
     <SemaphoreModule />
   {:else if navigation.activeModuleId === 'flags'}
     <FlagsModule />
+  {:else if navigation.activeModuleId === 'cross'}
+    <CrossModule />
   {:else if navigation.activeModuleId === 'settings'}
     <SettingsModule />
   {:else if navigation.activeModuleId === 'help'}

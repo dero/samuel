@@ -26,15 +26,13 @@
   }: Props = $props();
 
   let isPressed = $state(false);
-  let handledByPointer = false;
 
   function handlePointerDown(e: PointerEvent) {
     if (disabled) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
-    // Prevent multi-touch gesture arbitration and synthetic ghost clicks
+    // Prevent multi-touch gesture arbitration and trigger immediate tactile action
     e.preventDefault();
-    handledByPointer = true;
     isPressed = true;
     settings.vibrate(haptic);
     onClick();
@@ -42,26 +40,20 @@
 
   function handlePointerUp() {
     isPressed = false;
-    setTimeout(() => {
-      handledByPointer = false;
-    }, 120);
   }
 
   function handlePointerCancel() {
     isPressed = false;
-    setTimeout(() => {
-      handledByPointer = false;
-    }, 120);
   }
 
   function handleClick(e: MouseEvent) {
     if (disabled) return;
-    if (handledByPointer) {
-      handledByPointer = false;
-      return;
+    // W3C UI Events spec: detail === 0 indicates non-pointer triggers (keyboard/screen readers).
+    // Pointer clicks (detail >= 1) were already executed instantly at pointerdown.
+    if (e.detail === 0) {
+      settings.vibrate(haptic);
+      onClick();
     }
-    settings.vibrate(haptic);
-    onClick();
   }
 
   function handleKeyDown(e: KeyboardEvent) {
@@ -88,6 +80,7 @@
   onpointerup={handlePointerUp}
   onpointerleave={handlePointerCancel}
   onpointercancel={handlePointerCancel}
+  oncontextmenu={(e) => e.preventDefault()}
   onclick={handleClick}
   onkeydown={handleKeyDown}
 >

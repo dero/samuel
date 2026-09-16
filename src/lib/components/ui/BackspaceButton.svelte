@@ -88,6 +88,7 @@
   onpointerup={stopRepeat}
   onpointerleave={stopRepeat}
   onpointercancel={stopRepeat}
+  oncontextmenu={(e) => e.preventDefault()}
   onkeydown={handleKeyDown}
 >
   <span class="btn-icon"><Backspace size={18} weight="duotone" /></span>

@@ -216,6 +216,7 @@
   type="button"
   class="telegraph-strip"
   class:is-overloaded={isOverloaded}
+  oncontextmenu={(e) => e.preventDefault()}
   onclick={handleWireClick}
   aria-label="Telegrafní vedení s drátem"
   title="Telegrafní vedení – klikněte pro vysílání"

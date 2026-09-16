@@ -31,11 +31,14 @@
 
   async function handleCopy() {
     if (!text.trim()) return;
+    // Don't copy whole text if the user was highlighting/selecting a specific substring
+    const selection = window.getSelection()?.toString();
+    if (selection && selection.length > 0) return;
     await copyToClipboard(text);
   }
 </script>
 
-<div class="output-container {customClass}">
+<div class="translation-card output-container {customClass}" data-allow-contextmenu>
   <!-- Decoded Text Card (Click-to-copy, OLED black, minimal) -->
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -78,6 +81,8 @@
     overflow: hidden;
     transition: opacity 0.15s ease;
     user-select: text;
+    -webkit-user-select: text;
+    -webkit-touch-callout: default;
     box-sizing: border-box;
   }
 
@@ -98,6 +103,9 @@
     overflow-y: auto;
     word-break: break-word;
     flex: 1;
+    user-select: text;
+    -webkit-user-select: text;
+    -webkit-touch-callout: default;
   }
 
   .result-text.empty {

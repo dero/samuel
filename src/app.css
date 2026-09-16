@@ -151,6 +151,14 @@ textarea:focus, input:focus {
   height: var(--utility-row-height);
 }
 
+.keypad-dominant-1col {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  flex-shrink: 0;
+  touch-action: none;
+}
+
 .keypad-dominant-2col {
   display: grid;
   grid-template-columns: 0.85fr 1.15fr;
@@ -168,3 +176,41 @@ textarea:focus, input:focus {
   flex-shrink: 0;
   touch-action: none;
 }
+
+/* Touch interaction & context-menu prevention on controls */
+button,
+[role="button"],
+.keypad-zone,
+.keypad-utility-row,
+.keypad-dominant-1col,
+.keypad-dominant-2col,
+.keypad-dominant-3col,
+.slide-track,
+.interactive-cross-container,
+.semaphore-wheel-container,
+.braille-matrix-wrapper,
+.flags-grid,
+.phone-keypad-grid-3x4,
+.polish-grid-3x3,
+.small-polish-container {
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Allow text selection and native callout on output, inputs, and references */
+.translation-card,
+.result-card,
+.result-text,
+.sheet-body,
+.reference-content,
+.ref-wrapper,
+.selectable-text,
+input,
+textarea {
+  -webkit-touch-callout: default;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+

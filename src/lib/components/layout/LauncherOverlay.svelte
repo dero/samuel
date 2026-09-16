@@ -2,6 +2,7 @@
   import { MODULES } from '../../types';
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
+  import { dbState } from '../../db/database.svelte';
   import BottomSheet from '../ui/BottomSheet.svelte';
   import ModuleIcon from '../ui/ModuleIcon.svelte';
   import { SquaresFour } from 'phosphor-svelte';
@@ -35,6 +36,9 @@
             <ModuleIcon id={mod.id} weight="duotone" />
           </span>
           <span class="name">{mod.name}</span>
+          {#if mod.id === 'settings' && dbState.updateAvailable}
+            <span class="update-dot" title="K dispozici je aktualizace"></span>
+          {/if}
         </button>
       {/each}
     </div>
@@ -56,6 +60,7 @@
   }
 
   .module-btn {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -88,6 +93,17 @@
 
   .module-btn.is-center-single {
     grid-column: 2;
+  }
+
+  .update-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-accent-primary);
+    box-shadow: 0 0 6px var(--color-accent-primary);
   }
 
   .icon {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { onDestroy, tick } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import MorseReference from './MorseReference.svelte';
   import TelegraphWire, { type PulseEvent } from './TelegraphWire.svelte';
@@ -119,21 +119,21 @@
     isPermutationsOpen = true;
   }
 
+  onDestroy(() => {
+    morseService.terminate();
+  });
+
   async function runBruteforce() {
     if (!isEligibleForBruteforce) return;
     isPermutationsOpen = false;
     isSolving = true;
     isBruteforceOpen = true;
 
-    // Yield to let browser render bottom sheet & spinner before heavy computation
-    await new Promise((resolve) => setTimeout(resolve, 30));
-
     try {
       const res = await morseService.solveWithoutSpaces(cleanMorse, 50);
       bruteforceResults = res.candidates;
       totalFoundCandidates = res.totalFound;
       if (bruteforceResults.length > 0) {
-        settings.vibrate([30, 40, 30]);
         toast.show(
           `Nalezeno ${totalFoundCandidates} možností (zobrazeno top ${bruteforceResults.length})`,
           'success'
