@@ -9,6 +9,7 @@
   import SemaphoreModule from './lib/modules/03-semaphore/SemaphoreModule.svelte';
   import FlagsModule from './lib/modules/04-flags/FlagsModule.svelte';
   import CrossModule from './lib/modules/05-cross/CrossModule.svelte';
+  import NumbersModule from './lib/modules/06-numbers/NumbersModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -71,6 +72,8 @@
     <FlagsModule />
   {:else if navigation.activeModuleId === 'cross'}
     <CrossModule />
+  {:else if navigation.activeModuleId === 'numbers'}
+    <NumbersModule />
   {:else if navigation.activeModuleId === 'settings'}
     <SettingsModule />
   {:else if navigation.activeModuleId === 'help'}

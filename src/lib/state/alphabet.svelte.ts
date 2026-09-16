@@ -24,27 +24,40 @@ const DEFAULT_CZECH_42 = [
   'S', 'Š', 'T', 'Ť', 'U', 'Ú', 'Ů', 'V', 'W', 'X', 'Y', 'Ý', 'Z', 'Ž'
 ];
 
+const DEFAULT_ALPHANUMERIC_36 = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+];
+
 export const BUILTIN_LAYOUTS: AlphabetLayout[] = [
   {
     id: 'english-26',
     name: 'Anglická (26)',
     letters: DEFAULT_ENGLISH_26,
     isBuiltin: true,
-    description: 'Základní 26znakový standard A–Z (bez CH)'
+    description: 'Písmena A–Z, bez CH'
   },
   {
     id: 'english-ch-27',
     name: 'Anglická + CH (27)',
     letters: DEFAULT_ENGLISH_CH_27,
     isBuiltin: true,
-    description: 'Standard pro 3×3×3 mřížku: A–H, CH, I–Z (27 znaků)'
+    description: 'Písmena A–Z, přidáno CH'
+  },
+  {
+    id: 'alphanumeric-36',
+    name: 'Alfanumerická (36)',
+    letters: DEFAULT_ALPHANUMERIC_36,
+    isBuiltin: true,
+    description: 'Písmena A–Z a číslice 0–9'
   },
   {
     id: 'czech-42',
     name: 'Česká (42)',
     letters: DEFAULT_CZECH_42,
     isBuiltin: true,
-    description: 'Kompletní česká abeceda s diakritikou (42 znaků)'
+    description: 'Česká abeceda s diakritikou'
   }
 ];
 

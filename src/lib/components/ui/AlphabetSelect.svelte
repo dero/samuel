@@ -111,12 +111,22 @@
           <div class="card-title-group">
             <span class="radio-dot" class:is-checked={isSelected}>
               {#if isSelected}
-                <Check size={13} weight="bold" />
+                <Check size={15} weight="bold" />
               {/if}
             </span>
             <span class="card-title">{layout.name}</span>
           </div>
+        </div>
 
+        {#if layout.description}
+          <div class="card-desc">{layout.description}</div>
+        {/if}
+
+        <div class="card-preview" aria-hidden="true">
+          {layout.letters.join(' ')}
+        </div>
+
+        <div class="card-footer">
           <div class="card-badges">
             {#if isDefault}
               <span class="badge badge-default">Výchozí</span>
@@ -130,14 +140,6 @@
             {/if}
             <span class="badge badge-count">{layout.letters.length} znaků</span>
           </div>
-        </div>
-
-        {#if layout.description}
-          <div class="card-desc">{layout.description}</div>
-        {/if}
-
-        <div class="card-preview" aria-hidden="true">
-          {layout.letters.join(' ')}
         </div>
       </button>
     {/each}
@@ -299,20 +301,20 @@
   .card-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-sm);
+    width: 100%;
   }
 
   .card-title-group {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: var(--space-md);
     min-width: 0;
+    flex: 1;
   }
 
   .radio-dot {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     border: 1.5px solid var(--color-border-default);
     display: flex;
@@ -335,11 +337,38 @@
     color: var(--color-text-primary);
   }
 
+  .card-desc {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    padding-left: 36px;
+  }
+
+  .card-preview {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted);
+    padding-left: 36px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-left: 36px;
+    margin-top: 2px;
+  }
+
   .card-badges {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 6px;
-    flex-shrink: 0;
+    flex-wrap: wrap;
   }
 
   .badge {
@@ -375,23 +404,5 @@
     background-color: var(--color-surface-1);
     color: var(--color-text-secondary);
     border: 1px solid var(--color-border-subtle);
-  }
-
-  .card-desc {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    line-height: 1.4;
-    padding-left: 28px;
-  }
-
-  .card-preview {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.5px;
-    color: var(--color-text-muted);
-    padding-left: 28px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 </style>

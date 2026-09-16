@@ -12,7 +12,10 @@
     selectedAxis3: number | null;
     pendingKey?: string | null;
     pendingTapIndex?: number;
+    polybiusSize?: number;
+    polybiusCoordLabels?: 'numbers' | 'letters';
     onLetterSelect: (char: string) => void;
+    onCoordSelect?: (axis: 1 | 2, val: number) => void;
     onPhoneKeyTap?: (keyId: string) => void;
     onPhoneKeyLongPress?: (keyId: string) => void;
   }
@@ -25,10 +28,29 @@
     selectedAxis3,
     pendingKey = null,
     pendingTapIndex = 0,
+    polybiusSize = 5,
+    polybiusCoordLabels = 'numbers',
     onLetterSelect,
+    onCoordSelect,
     onPhoneKeyTap,
     onPhoneKeyLongPress
   }: Props = $props();
+
+  const polybiusIndices = $derived(Array.from({ length: polybiusSize }, (_, i) => i + 1));
+
+  function getCoordLabel(index: number): string {
+    if (polybiusCoordLabels === 'letters') {
+      return String.fromCharCode(65 + index - 1);
+    }
+    return String(index);
+  }
+
+  function handleCoordPointerDown(e: PointerEvent, axis: 1 | 2, val: number) {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    e.preventDefault();
+    settings.vibrate(18);
+    onCoordSelect?.(axis, val);
+  }
 
   const smallPolishLetters = $derived.by(() => {
     if (letters.length >= 26) {
@@ -65,7 +87,7 @@
 
   function triggerEnclosureAnimation(target: HTMLElement | SVGElement) {
     const cell = target.closest(
-      '.polish-cell, .mini-cell, .sp-cell, .sp-wedge, .phone-key-btn, .pigpen-cell'
+      '.polish-cell, .mini-cell, .sp-cell, .sp-wedge, .phone-key-btn, .pigpen-cell, .polybius-cell, .polybius-char-btn, .polybius-header-btn'
     ) as HTMLElement | SVGElement | null;
     if (!cell) return;
 
@@ -114,6 +136,21 @@
             [
               { backgroundColor: 'var(--color-accent-primary)', color: '#000000', transform: 'scale(1.22)', boxShadow: '0 0 16px rgba(0, 210, 255, 0.9)' },
               { backgroundColor: 'transparent', color: 'var(--color-text-primary)', transform: 'scale(1)', boxShadow: 'none' }
+            ],
+            { duration: 520, easing: 'ease-out' }
+          );
+        }
+      }
+    } else if (crossType === 'polybius') {
+      const cell = containerEl.querySelector(`.polybius-cell.r-${a1}.c-${a2}`) as HTMLElement | null;
+      if (cell) {
+        triggerEnclosureAnimation(cell);
+        const btn = cell.querySelector('.polybius-char-btn') as HTMLElement | null;
+        if (btn) {
+          btn.animate(
+            [
+              { backgroundColor: 'var(--color-accent-primary)', color: '#000000', transform: 'scale(1.2)', boxShadow: '0 0 16px rgba(0, 210, 255, 0.9)' },
+              { backgroundColor: 'var(--color-surface-2)', color: 'var(--color-text-primary)', transform: 'scale(1)', boxShadow: 'none' }
             ],
             { duration: 520, easing: 'ease-out' }
           );
@@ -587,6 +624,71 @@
         </button>
       {/each}
     </div>
+
+  {:else if crossType === 'polybius'}
+    <!-- Polybiův čtverec (5×5 nebo 6×6 s interaktivními souřadnicovými tlačítky v záhlaví) -->
+    <div class="polybius-board-wrapper" class:size-6={polybiusSize === 6}>
+      <div
+        class="polybius-grid"
+        style:grid-template-columns="32px repeat({polybiusSize}, 1fr)"
+      >
+        <!-- Top header row: empty corner cell + interactive col header buttons -->
+        <div class="polybius-corner-cell" aria-hidden="true"></div>
+        {#each polybiusIndices as c}
+          {@const isColActive = selectedAxis2 === c}
+          <button
+            type="button"
+            class="polybius-header-btn col-header-btn"
+            class:is-active={isColActive}
+            onpointerdown={(e) => handleCoordPointerDown(e, 2, c)}
+            aria-label={`Sloupec ${getCoordLabel(c)}`}
+          >
+            <span>{getCoordLabel(c)}</span>
+          </button>
+        {/each}
+
+        <!-- Grid rows: interactive row header button + letter cells -->
+        {#each polybiusIndices as r}
+          {@const isRowActive = selectedAxis1 === r}
+          <button
+            type="button"
+            class="polybius-header-btn row-header-btn"
+            class:is-active={isRowActive}
+            onpointerdown={(e) => handleCoordPointerDown(e, 1, r)}
+            aria-label={`Řádek ${getCoordLabel(r)}`}
+          >
+            <span>{getCoordLabel(r)}</span>
+          </button>
+          {#each polybiusIndices as c}
+            {@const idx = (r - 1) * polybiusSize + (c - 1)}
+            {@const char = letters[idx] ?? ''}
+            {@const isExact = selectedAxis1 === r && selectedAxis2 === c}
+            {@const isHighlighted = (selectedAxis1 === r || selectedAxis2 === c) && (selectedAxis1 !== null || selectedAxis2 !== null)}
+            <div
+              class="polybius-cell r-{r} c-{c}"
+              class:is-row-matched={selectedAxis1 === r}
+              class:is-col-matched={selectedAxis2 === c}
+              class:is-exact-matched={isExact}
+            >
+              {#if char}
+                <button
+                  type="button"
+                  class="polybius-char-btn"
+                  class:is-highlighted={isHighlighted}
+                  class:is-exact={isExact}
+                  onpointerdown={(e) => handleLetterPointerDown(e, char)}
+                  aria-label={`Písmeno ${char}, řádek ${getCoordLabel(r)}, sloupec ${getCoordLabel(c)}`}
+                >
+                  <span class="polybius-char">{char}</span>
+                </button>
+              {:else}
+                <div class="polybius-empty-cell"></div>
+              {/if}
+            </div>
+          {/each}
+        {/each}
+      </div>
+    </div>
   {/if}
 </div>
 
@@ -900,5 +1002,130 @@
     border-radius: var(--radius-xs);
     transform: scale(1.15);
     box-shadow: 0 0 6px rgba(0, 210, 255, 0.8);
+  }
+
+  /* Polybiův čtverec */
+  .polybius-board-wrapper {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+    padding: 0 4px;
+    box-sizing: border-box;
+  }
+
+  .polybius-board-wrapper.size-6 {
+    max-width: 390px;
+  }
+
+  .polybius-grid {
+    display: grid;
+    gap: 3px;
+    width: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+
+  .polybius-header-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface-1);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xs);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    touch-action: none;
+    transition: all 0.12s ease;
+    padding: 0;
+  }
+
+  .polybius-header-btn:active {
+    transform: scale(0.92);
+  }
+
+  .polybius-header-btn.col-header-btn {
+    min-height: 32px;
+    height: 32px;
+    margin-bottom: 2px;
+  }
+
+  .polybius-header-btn.row-header-btn {
+    min-width: 32px;
+    width: 32px;
+    height: 100%;
+    margin-right: 2px;
+  }
+
+  .polybius-header-btn.is-active {
+    background: var(--color-accent-primary);
+    color: #000000;
+    border-color: var(--color-accent-primary);
+    font-weight: 800;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+  }
+
+  .polybius-cell {
+    display: flex;
+    aspect-ratio: 1 / 1;
+    min-width: 0;
+    min-height: 0;
+    border-radius: var(--radius-xs);
+    transition: all 0.15s ease;
+  }
+
+  .polybius-cell.is-row-matched,
+  .polybius-cell.is-col-matched {
+    background: rgba(0, 210, 255, 0.06);
+  }
+
+  .polybius-cell.is-exact-matched {
+    background: rgba(0, 210, 255, 0.16);
+  }
+
+  .polybius-char-btn {
+    width: 100%;
+    height: 100%;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xs);
+    color: var(--color-text-primary);
+    font-size: clamp(14px, 2.3vh, 18px);
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: none;
+    transition: all 0.15s ease;
+    padding: 0;
+  }
+
+  .polybius-char-btn:active {
+    transform: scale(0.92);
+  }
+
+  .polybius-char-btn.is-highlighted {
+    border-color: rgba(0, 210, 255, 0.45);
+    color: var(--color-text-primary);
+  }
+
+  .polybius-char-btn.is-exact {
+    background: rgba(0, 210, 255, 0.22);
+    border-color: var(--color-accent-primary);
+    color: var(--color-accent-primary);
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+  }
+
+  .polybius-empty-cell {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-xs);
+    background: rgba(255, 255, 255, 0.02);
   }
 </style>

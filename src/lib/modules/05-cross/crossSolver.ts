@@ -38,7 +38,8 @@ export function coordinatesToIndex(
   type: CrossType,
   a1: number,
   a2: number,
-  a3: number = 1
+  a3: number = 1,
+  size: number = 5
 ): number | null {
   if (type === 'large-polish') {
     // a1: Row (1..3), a2: Col (1..3), a3: Pos/Dot (1..3)
@@ -55,6 +56,12 @@ export function coordinatesToIndex(
     return tableOffset + cellIdx;
   }
 
+  if (type === 'polybius') {
+    // a1: Row (1..size), a2: Col (1..size)
+    if (a1 < 1 || a1 > size || a2 < 1 || a2 > size) return null;
+    return (a1 - 1) * size + (a2 - 1);
+  }
+
   return null;
 }
 
@@ -66,7 +73,8 @@ export function coordinatesToChar(
   a1: number,
   a2: number,
   a3: number | null,
-  letters: string[]
+  letters: string[],
+  polybiusSize: number = 5
 ): string | null {
   if (type === 'mobile-keypad') {
     // a1: Key (2..9, 0), a2: Position (1..5)
@@ -79,7 +87,7 @@ export function coordinatesToChar(
   }
 
   const validA3 = a3 ?? 1;
-  const idx = coordinatesToIndex(type, a1, a2, validA3);
+  const idx = coordinatesToIndex(type, a1, a2, validA3, polybiusSize);
   if (idx === null) return null;
 
   // Ad-hoc cipher rule: in 26-letter alphabet, 27th position in large polish cross is Space (' ')
@@ -99,7 +107,8 @@ export function formatCoordinatesPreview(
   a1: number | null,
   a2: number | null,
   a3: number | null,
-  letters: string[]
+  letters: string[],
+  polybiusSize: number = 5
 ): { text: string; char: string | null } {
   const parts: string[] = [];
 
@@ -114,6 +123,9 @@ export function formatCoordinatesPreview(
   } else if (type === 'mobile-keypad') {
     if (a1 !== null) parts.push(a1 === 0 ? 'Klávesa: 0 (Mezera)' : `Klávesa: ${a1}`);
     if (a2 !== null) parts.push(`Stisk: ${a2}`);
+  } else if (type === 'polybius') {
+    if (a1 !== null) parts.push(`Ř: ${a1}`);
+    if (a2 !== null) parts.push(`S: ${a2}`);
   }
 
   const rawChar =
@@ -121,9 +133,13 @@ export function formatCoordinatesPreview(
       ? a1 !== null && a2 !== null
         ? coordinatesToChar(type, a1, a2, null, letters)
         : null
-      : a1 !== null && a2 !== null && a3 !== null
-        ? coordinatesToChar(type, a1, a2, a3, letters)
-        : null;
+      : type === 'polybius'
+        ? a1 !== null && a2 !== null
+          ? coordinatesToChar(type, a1, a2, null, letters, polybiusSize)
+          : null
+        : a1 !== null && a2 !== null && a3 !== null
+          ? coordinatesToChar(type, a1, a2, a3, letters)
+          : null;
 
   const char = rawChar === ' ' ? '␣' : rawChar;
   const text = parts.length > 0 ? parts.join('  •  ') : '';

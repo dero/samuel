@@ -9,7 +9,14 @@
   import InteractiveCross from './InteractiveCross.svelte';
   import CoordinateKeypad from './CoordinateKeypad.svelte';
   import CrossReference from './CrossReference.svelte';
-  import { CROSS_TYPES, type CrossType, type CrossTypeConfig } from './crossData';
+  import PolybiusOmissionModal from './PolybiusOmissionModal.svelte';
+  import {
+    CROSS_TYPES,
+    type CrossType,
+    type CrossTypeConfig,
+    type PolybiusSize,
+    type PolybiusCoordLabel
+  } from './crossData';
   import { coordinatesToChar, getPhoneKeyLetters } from './crossSolver';
   import { getFallbackT9Word } from './t9Solver';
   import { t9Service } from './t9Service';
@@ -37,10 +44,35 @@
     { id: 't9', label: 'T9' }
   ];
 
+  // Polybius configuration state
+  let polybiusSize = $state<PolybiusSize>(
+    (modSettings.getString('polybius:size', '5x5') as PolybiusSize) || '5x5'
+  );
+  let polybiusCoordLabels = $state<PolybiusCoordLabel>(
+    (modSettings.getString('polybius:coordLabels', 'numbers') as PolybiusCoordLabel) || 'numbers'
+  );
+
+  const polybiusSizeOptions: SegmentOption<PolybiusSize>[] = [
+    { id: '5x5', label: '5×5 (25)' },
+    { id: '6x6', label: '6×6 (36)' }
+  ];
+
+  const polybiusCoordOptions = $derived<SegmentOption<PolybiusCoordLabel>[]>([
+    { id: 'numbers', label: polybiusSize === '6x6' ? '1–6' : '1–5' },
+    { id: 'letters', label: polybiusSize === '6x6' ? 'A–F' : 'A–E' }
+  ]);
+
+  const polybiusSizeNum = $derived<number>(polybiusSize === '6x6' ? 6 : 5);
+  const polybiusCapacity = $derived<number>(polybiusSize === '6x6' ? 36 : 25);
+  const polybiusIndices = $derived<number[]>(
+    Array.from({ length: polybiusSizeNum }, (_, i) => i + 1)
+  );
+
   // Per-tool alphabet configuration
   let toolAlphabetMap = $state<Record<string, string>>({
     'large-polish': modSettings.getString('alphabet:large-polish', 'english-ch-27'),
-    'small-polish': modSettings.getString('alphabet:small-polish', 'english-26')
+    'small-polish': modSettings.getString('alphabet:small-polish', 'english-26'),
+    'polybius': modSettings.getString('alphabet:polybius', 'english-26')
   });
 
   function setToolAlphabet(toolId: string, alphabetId: string) {
@@ -74,11 +106,25 @@
     modSettings.setString('text', inputLetters);
     modSettings.setString('type', crossTypeId);
     modSettings.setString('phoneMode', phoneInputMode);
+    modSettings.setString('polybius:size', polybiusSize);
+    modSettings.setString('polybius:coordLabels', polybiusCoordLabels);
   });
 
-  const activeConfig = $derived<CrossTypeConfig>(
-    CROSS_TYPES.find((c) => c.id === crossTypeId) ?? CROSS_TYPES[0]
-  );
+  const activeConfig = $derived.by<CrossTypeConfig>(() => {
+    const base = CROSS_TYPES.find((c) => c.id === crossTypeId) ?? CROSS_TYPES[0];
+    if (crossTypeId === 'polybius') {
+      return {
+        ...base,
+        capacity: polybiusCapacity,
+        defaultAlphabetId: polybiusSize === '6x6' ? 'alphanumeric-36' : 'english-26',
+        standardAlphabetIds:
+          polybiusSize === '6x6'
+            ? ['alphanumeric-36', 'english-26']
+            : ['english-26', 'alphanumeric-36']
+      };
+    }
+    return base;
+  });
 
   const currentAlphabetId = $derived<string>(
     toolAlphabetMap[crossTypeId] ?? activeConfig.defaultAlphabetId ?? 'english-26'
@@ -106,8 +152,108 @@
     };
   });
 
+  // Polybius omitted letters storage key
+  const omissionStorageKey = $derived(
+    `polybius:omitted:${polybiusSize}:${currentAlphabetId}`
+  );
+
+  let isOmissionModalOpen = $state<boolean>(false);
+  let omittedLetters = $state<string[]>([]);
+
+  $effect(() => {
+    if (crossTypeId !== 'polybius') return;
+    const cap = polybiusCapacity;
+    const rawLetters = currentLayout.letters;
+    const key = omissionStorageKey;
+    const stored = modSettings.getJSON<string[] | null>(key, null);
+
+    if (stored !== null) {
+      omittedLetters = stored;
+    } else {
+      // Ad-hoc pravidlo: pokud má abeceda přesně N+1 znaků a obsahuje Q, vynech Q
+      if (rawLetters.length === cap + 1 && rawLetters.includes('Q')) {
+        omittedLetters = ['Q'];
+        modSettings.setJSON(key, ['Q']);
+      } else if (rawLetters.length <= cap) {
+        omittedLetters = [];
+        modSettings.setJSON(key, []);
+      } else {
+        omittedLetters = [];
+        isOmissionModalOpen = true;
+      }
+    }
+  });
+
+  const omittedPillText = $derived.by(() => {
+    if (omittedLetters.length === 0) return '(žádné)';
+    if (omittedLetters.length <= 3) return omittedLetters.join(', ');
+    return omittedLetters.slice(0, 3).join(', ') + '... (+' + (omittedLetters.length - 3) + ')';
+  });
+
+  function handleSaveOmitted(newOmitted: string[]) {
+    omittedLetters = newOmitted;
+    modSettings.setJSON(omissionStorageKey, newOmitted);
+    isOmissionModalOpen = false;
+    toast.show('Vynechaná písmena uložena', 'success');
+  }
+
+  function handlePolybiusSizeChange(newSize: PolybiusSize) {
+    if (polybiusSize === newSize) return;
+    settings.vibrate(25);
+    polybiusSize = newSize;
+    modSettings.setString('polybius:size', newSize);
+    selectedAxis1 = null;
+    selectedAxis2 = null;
+
+    if (newSize === '6x6' && toolAlphabetMap['polybius'] === 'english-26') {
+      setToolAlphabet('polybius', 'alphanumeric-36');
+    } else if (newSize === '5x5' && toolAlphabetMap['polybius'] === 'alphanumeric-36') {
+      setToolAlphabet('polybius', 'english-26');
+    }
+  }
+
+  function handlePolybiusCoordChange(newMode: PolybiusCoordLabel) {
+    if (polybiusCoordLabels === newMode) return;
+    settings.vibrate(20);
+    polybiusCoordLabels = newMode;
+    modSettings.setString('polybius:coordLabels', newMode);
+  }
+
+  function handlePolybiusCoordSelect(axis: 1 | 2, val: number) {
+    const nextA1 = axis === 1 ? (selectedAxis1 === val ? null : val) : selectedAxis1;
+    const nextA2 = axis === 2 ? (selectedAxis2 === val ? null : val) : selectedAxis2;
+
+    selectedAxis1 = nextA1;
+    selectedAxis2 = nextA2;
+
+    if (nextA1 !== null && nextA2 !== null) {
+      const char = coordinatesToChar('polybius', nextA1, nextA2, null, activeLetters, polybiusSizeNum);
+      if (char) {
+        settings.vibrate(28);
+        inputLetters += char;
+        interactiveCrossComponent?.flashCoordinate(nextA1, nextA2);
+        selectedAxis1 = null;
+        selectedAxis2 = null;
+      }
+    }
+  }
+
   // Resolves letters for current tool (sequential first X, padded with space if fewer)
   const activeLetters = $derived.by(() => {
+    if (crossTypeId === 'polybius') {
+      const cap = polybiusCapacity;
+      const filtered = currentLayout.letters.filter((ch) => !omittedLetters.includes(ch));
+      const sliced = filtered.slice(0, cap);
+      if (sliced.length < cap) {
+        const padded = [...sliced];
+        while (padded.length < cap) {
+          padded.push(' ');
+        }
+        return padded;
+      }
+      return sliced;
+    }
+
     const cap = activeConfig.capacity;
     if (!cap) return currentLayout.letters;
     const sliced = currentLayout.letters.slice(0, cap);
@@ -469,6 +615,45 @@
         />
       </div>
     {/if}
+
+    {#if crossTypeId === 'polybius'}
+      <div class="menu-group">
+        <div class="menu-group-title">Velikost mřížky</div>
+        <SegmentedControl
+          options={polybiusSizeOptions}
+          value={polybiusSize}
+          ariaLabel="Velikost mřížky Polybiova čtverce"
+          onChange={handlePolybiusSizeChange}
+        />
+      </div>
+
+      <div class="menu-group">
+        <div class="menu-group-title">Popisky os / souřadnic</div>
+        <SegmentedControl
+          options={polybiusCoordOptions}
+          value={polybiusCoordLabels}
+          ariaLabel="Popisky os Polybiova čtverce"
+          onChange={handlePolybiusCoordChange}
+        />
+      </div>
+
+      {#if currentLayout.letters.length > polybiusCapacity}
+        <div class="menu-group">
+          <div class="menu-group-title">Vynechaná písmena</div>
+          <button
+            type="button"
+            class="menu-action-pill-btn"
+            onclick={() => {
+              settings.vibrate(20);
+              isOmissionModalOpen = true;
+            }}
+          >
+            <span class="btn-primary-text">Upravit vynechaná písmena</span>
+            <span class="btn-subtext">{omittedPillText}</span>
+          </button>
+        </div>
+      {/if}
+    {/if}
   {/snippet}
 
   {#snippet output()}
@@ -533,9 +718,12 @@
           {selectedAxis1}
           {selectedAxis2}
           {selectedAxis3}
+          polybiusSize={polybiusSizeNum}
+          {polybiusCoordLabels}
           pendingKey={phoneInputMode === 'multitap' ? pendingKey : null}
           pendingTapIndex={phoneInputMode === 'multitap' ? pendingTapIndex : 0}
           onLetterSelect={handleDirectLetterSelect}
+          onCoordSelect={handlePolybiusCoordSelect}
           onPhoneKeyTap={handlePhoneKeyTap}
           onPhoneKeyLongPress={handlePhoneKeyLongPress}
         />
@@ -576,7 +764,7 @@
         />
       </div>
 
-      <!-- Dominant Row: Mezera (␣) & Enter (↵) for Large Polish; Mezera (␣) for Small Polish -->
+      <!-- Dominant Row: Mezera (␣) & Enter (↵) for Large Polish; Mezera (␣) for Small Polish & Polybius -->
       {#if crossTypeId === 'large-polish'}
         <div class="keypad-dominant-2col">
           <DominantButton
@@ -596,7 +784,7 @@
             onClick={handleEnter}
           />
         </div>
-      {:else if crossTypeId === 'small-polish'}
+      {:else if crossTypeId === 'small-polish' || crossTypeId === 'polybius'}
         <div class="keypad-dominant-1col">
           <DominantButton
             symbol="␣"
@@ -614,6 +802,16 @@
     <CrossReference />
   {/snippet}
 </ModuleShell>
+
+<PolybiusOmissionModal
+  open={isOmissionModalOpen}
+  alphabetName={currentLayout.name}
+  allLetters={currentLayout.letters}
+  initialOmitted={omittedLetters}
+  targetCapacity={polybiusCapacity}
+  onConfirm={handleSaveOmitted}
+  onClose={() => (isOmissionModalOpen = false)}
+/>
 
 <style>
   .cross-module-content {
@@ -880,5 +1078,32 @@
 
   .banner-reset-btn:active {
     background-color: rgba(245, 158, 11, 0.25);
+  }
+
+
+  .menu-action-pill-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .menu-action-pill-btn:active {
+    background: var(--color-surface-3);
+  }
+
+  .menu-action-pill-btn .btn-subtext {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--color-accent-primary);
+    font-size: var(--text-xs);
   }
 </style>

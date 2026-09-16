@@ -101,6 +101,20 @@
         <div class="notation-item"><strong>Podržení klávesy:</strong> Zapíše přímo číslici (např. podržení <code>2</code> = <code>2</code>, <code>0</code> = <code>0</code>).</div>
       </div>
     </section>
+
+    <!-- Section 4: Polybiův čtverec -->
+    <section class="ref-section">
+      <h3 class="ref-heading">4. Polybiův čtverec (5×5 / 6×6)</h3>
+      <p class="ref-text">
+        Klasická šifra starověkého Řecka. Znaky jsou uspořádány do čtvercové mřížky a každý znak se kóduje jako dvojice souřadnic <strong>(Řádek, Sloupec)</strong>:
+      </p>
+      <div class="notation-box">
+        <div class="notation-item"><strong>Čtverec 5×5 (25 polí):</strong> Z 26 písmen se obvykle 1 písmeno vynechá (typicky <code>Q</code>, občas <code>W</code> či <code>J</code>).</div>
+        <div class="notation-item"><strong>Čtverec 6×6 (36 polí):</strong> Pojme všech 26 písmen <code>A–Z</code> i 10 číslic <code>0–9</code>.</div>
+        <div class="notation-item"><strong>Číselné souřadnice:</strong> <code>13</code> = řádek 1, sloupec 3 (<code>C</code>), <code>32</code> = řádek 3, sloupec 2 (<code>M</code>).</div>
+        <div class="notation-item"><strong>Písmenné souřadnice (ADFGX / ADFGVX):</strong> Historická německá polní šifra z 1. sv. války nahrazuje čísla 1–5 písmeny <code>A, D, F, G, X</code> (resp. 1–6 písmeny <code>A, D, F, G, V, X</code>). Princip mřížky je totožný.</div>
+      </div>
+    </section>
   </div>
 
 <style>

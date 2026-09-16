@@ -1,4 +1,7 @@
-export type CrossType = 'large-polish' | 'small-polish' | 'mobile-keypad';
+export type CrossType = 'large-polish' | 'small-polish' | 'mobile-keypad' | 'polybius';
+
+export type PolybiusSize = '5x5' | '6x6';
+export type PolybiusCoordLabel = 'numbers' | 'letters';
 
 export interface CrossTypeConfig {
   id: CrossType;
@@ -103,6 +106,34 @@ export const CROSS_TYPES: CrossTypeConfig[] = [
       { value: 3, label: '3', sub: '3. znak' },
       { value: 4, label: '4', sub: '4. znak' },
       { value: 5, label: '5', sub: '5. znak' }
+    ]
+  },
+  {
+    id: 'polybius',
+    name: 'Polybiův čtverec',
+    shortName: '5×5 / 6×6',
+    description: 'Souřadnicová mřížka (Řádek × Sloupec)',
+    hasAlphabet: true,
+    capacity: 25,
+    defaultAlphabetId: 'english-26',
+    standardAlphabetIds: ['english-26', 'alphanumeric-36'],
+    axis1Label: 'Řádek',
+    axis1Short: 'Ř',
+    axis1Options: [
+      { value: 1, label: '1', sub: 'A' },
+      { value: 2, label: '2', sub: 'B' },
+      { value: 3, label: '3', sub: 'C' },
+      { value: 4, label: '4', sub: 'D' },
+      { value: 5, label: '5', sub: 'E' }
+    ],
+    axis2Label: 'Sloupec',
+    axis2Short: 'S',
+    axis2Options: [
+      { value: 1, label: '1', sub: 'A' },
+      { value: 2, label: '2', sub: 'B' },
+      { value: 3, label: '3', sub: 'C' },
+      { value: 4, label: '4', sub: 'D' },
+      { value: 5, label: '5', sub: 'E' }
     ]
   }
 ];
