@@ -47,9 +47,9 @@ export const CROSS_TYPES: CrossTypeConfig[] = [
     axis3Label: 'Pozice',
     axis3Short: 'P',
     axis3Options: [
-      { value: 1, label: '1', sub: '1 tečka (•)' },
-      { value: 2, label: '2', sub: '2 tečky (••)' },
-      { value: 3, label: '3', sub: '3 tečky (•••)' }
+      { value: 1, label: '1', sub: '1 tečka' },
+      { value: 2, label: '2', sub: '2 tečky' },
+      { value: 3, label: '3', sub: '3 tečky' }
     ]
   },
   {

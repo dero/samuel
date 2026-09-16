@@ -53,23 +53,38 @@
     }
   }
 
-  function triggerEnclosureAnimation(target: HTMLElement) {
+  let activePigpenChar = $state<string | null>(null);
+  let pigpenClearTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function clearPigpenTimeout() {
+    if (pigpenClearTimeout) {
+      clearTimeout(pigpenClearTimeout);
+      pigpenClearTimeout = null;
+    }
+  }
+
+  function triggerEnclosureAnimation(target: HTMLElement | SVGElement) {
     const cell = target.closest(
-      '.polish-cell, .mini-cell, .sp-cell, .sp-wedge, .phone-key-btn'
-    ) as HTMLElement | null;
+      '.polish-cell, .mini-cell, .sp-cell, .sp-wedge, .phone-key-btn, .pigpen-cell'
+    ) as HTMLElement | SVGElement | null;
     if (!cell) return;
 
-    cell.animate(
-      [
-        { borderColor: 'var(--color-text-secondary)', filter: 'none' },
-        { borderColor: 'var(--color-accent-primary)', filter: 'drop-shadow(0 0 6px rgba(0, 210, 255, 0.6))', offset: 0.35 },
-        { borderColor: 'var(--color-text-secondary)', filter: 'none' }
-      ],
-      {
-        duration: 400,
-        easing: 'ease-in-out'
-      }
-    );
+    const keyframes = cell instanceof SVGElement
+      ? [
+          { filter: 'none' },
+          { filter: 'drop-shadow(0 0 6px rgba(0, 210, 255, 0.6))', offset: 0.35 },
+          { filter: 'none' }
+        ]
+      : [
+          { borderColor: 'var(--color-text-secondary)', filter: 'none' },
+          { borderColor: 'var(--color-accent-primary)', filter: 'drop-shadow(0 0 6px rgba(0, 210, 255, 0.6))', offset: 0.35 },
+          { borderColor: 'var(--color-text-secondary)', filter: 'none' }
+        ];
+
+    cell.animate(keyframes, {
+      duration: 400,
+      easing: 'ease-in-out'
+    });
   }
 
   export function flashCoordinate(a1: number, a2: number, a3: number = 1) {
@@ -111,8 +126,26 @@
     if (e.button !== 0 && e.pointerType === 'mouse') return;
     e.preventDefault();
     settings.vibrate(18);
-    triggerEnclosureAnimation(e.currentTarget as HTMLElement);
+    activePigpenChar = char;
+    clearPigpenTimeout();
+    pigpenClearTimeout = setTimeout(() => {
+      activePigpenChar = null;
+    }, 140);
+    triggerEnclosureAnimation(e.currentTarget as HTMLElement | SVGElement);
     onLetterSelect(char);
+  }
+
+  function handleLetterPointerUp() {
+    activePigpenChar = null;
+    clearPigpenTimeout();
+  }
+
+  function handleLetterKeyDown(e: KeyboardEvent, char: string) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      settings.vibrate(18);
+      onLetterSelect(char);
+    }
   }
 
   function handlePhonePointerDown(e: PointerEvent, keyId: string) {
@@ -206,6 +239,7 @@
 
   onDestroy(() => {
     clearPhonePressTimer();
+    clearPigpenTimeout();
   });
 </script>
 
@@ -264,175 +298,248 @@
     </div>
 
   {:else if crossType === 'small-polish'}
-    <!-- Malý polský kříž: 2 sloupce (Bez tečky | S tečkou), každý má 3×3 mřížku a 2×2 šikmý kříž -->
-    <div class="small-polish-container">
-      <!-- Sloupec 1: Bez tečky -->
-      <div class="sp-column">
+    <!-- Pigpen (Malý polský kříž): Sjednocené SVG plátno pro 3×3 mřížky i 2×2 šikmé kříže -->
+    <div class="pigpen-board-wrapper">
+      <!-- Hlavička sloupců: Bez tečky | S tečkou -->
+      <div class="sp-headers-row">
         <div class="sp-col-header">
           <span class="sp-col-title">Bez tečky</span>
         </div>
-
-        <!-- 3x3 Mřížka bez tečky (A–I) -->
-        <div class="sp-grid-3x3">
-          {#each [1, 2, 3] as r}
-            {#each [1, 2, 3] as c}
-              {@const char = smallPolishLetters[(r - 1) * 3 + (c - 1)]}
-              <button
-                type="button"
-                class="sp-cell r-{r} c-{c}"
-                onpointerdown={(e) => handleLetterPointerDown(e, char)}
-              >
-                <span class="sp-cell-inner">
-                  <span class="sp-char">{char}</span>
-                </span>
-              </button>
-            {/each}
-          {/each}
-        </div>
-
-        <!-- 2x2 Šikmý kříž bez tečky (S, T, U, V) -->
-        <div class="sp-cross-x">
-          <svg class="sp-x-lines" viewBox="0 0 140 115" aria-hidden="true">
-            <line x1="8" y1="6.5" x2="132" y2="108.5" class="sp-x-line" />
-            <line x1="132" y1="6.5" x2="8" y2="108.5" class="sp-x-line" />
-          </svg>
-
-          <!-- Wedge Top (S) -->
-          <button
-            type="button"
-            class="sp-wedge wedge-top"
-            oncontextmenu={(e) => e.preventDefault()}
-            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[18])}
-          >
-            <span class="sp-cell-inner">
-              <span class="sp-char">{smallPolishLetters[18]}</span>
-            </span>
-          </button>
-
-          <!-- Wedge Left (T) -->
-          <button
-            type="button"
-            class="sp-wedge wedge-left"
-            oncontextmenu={(e) => e.preventDefault()}
-            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[19])}
-          >
-            <span class="sp-cell-inner">
-              <span class="sp-char">{smallPolishLetters[19]}</span>
-            </span>
-          </button>
-
-          <!-- Wedge Right (U) -->
-          <button
-            type="button"
-            class="sp-wedge wedge-right"
-            oncontextmenu={(e) => e.preventDefault()}
-            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[20])}
-          >
-            <span class="sp-cell-inner">
-              <span class="sp-char">{smallPolishLetters[20]}</span>
-            </span>
-          </button>
-
-          <!-- Wedge Bottom (V) -->
-          <button
-            type="button"
-            class="sp-wedge wedge-bottom"
-            oncontextmenu={(e) => e.preventDefault()}
-            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[21])}
-          >
-            <span class="sp-cell-inner">
-              <span class="sp-char">{smallPolishLetters[21]}</span>
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Sloupec 2: S tečkou -->
-      <div class="sp-column">
         <div class="sp-col-header">
           <span class="sp-col-title">S tečkou</span>
           <span class="sp-dot-badge" aria-hidden="true"></span>
         </div>
-
-        <!-- 3x3 Mřížka s tečkou (J–R) -->
-        <div class="sp-grid-3x3">
-          {#each [1, 2, 3] as r}
-            {#each [1, 2, 3] as c}
-              {@const char = smallPolishLetters[9 + (r - 1) * 3 + (c - 1)]}
-              <button
-                type="button"
-                class="sp-cell r-{r} c-{c} has-dot"
-                onpointerdown={(e) => handleLetterPointerDown(e, char)}
-              >
-                <span class="sp-cell-inner">
-                  <span class="sp-char">{char}</span>
-                  <span class="sp-dot" aria-hidden="true"></span>
-                </span>
-              </button>
-            {/each}
-          {/each}
-        </div>
-
-        <!-- 2x2 Šikmý kříž s tečkou (W, X, Y, Z) -->
-        <div class="sp-cross-x">
-          <svg class="sp-x-lines" viewBox="0 0 140 115" aria-hidden="true">
-            <line x1="8" y1="6.5" x2="132" y2="108.5" class="sp-x-line" />
-            <line x1="132" y1="6.5" x2="8" y2="108.5" class="sp-x-line" />
-          </svg>
-
-          <!-- Wedge Top (W) -->
-          <button
-            type="button"
-            class="sp-wedge wedge-top"
-            oncontextmenu={(e) => e.preventDefault()}
-            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[22])}
-          >
-            <span class="sp-cell-inner wedge-content-col">
-              <span class="sp-char">{smallPolishLetters[22]}</span>
-              <span class="sp-dot" aria-hidden="true"></span>
-            </span>
-          </button>
-
-          <!-- Wedge Left (X) -->
-          <button
-            type="button"
-            class="sp-wedge wedge-left"
-            oncontextmenu={(e) => e.preventDefault()}
-            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[23])}
-          >
-            <span class="sp-cell-inner wedge-content-row">
-              <span class="sp-char">{smallPolishLetters[23]}</span>
-              <span class="sp-dot" aria-hidden="true"></span>
-            </span>
-          </button>
-
-          <!-- Wedge Right (Y) -->
-          <button
-            type="button"
-            class="sp-wedge wedge-right"
-            oncontextmenu={(e) => e.preventDefault()}
-            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[24])}
-          >
-            <span class="sp-cell-inner wedge-content-row">
-              <span class="sp-dot" aria-hidden="true"></span>
-              <span class="sp-char">{smallPolishLetters[24]}</span>
-            </span>
-          </button>
-
-          <!-- Wedge Bottom (Z) -->
-          <button
-            type="button"
-            class="sp-wedge wedge-bottom"
-            oncontextmenu={(e) => e.preventDefault()}
-            onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[25])}
-          >
-            <span class="sp-cell-inner wedge-content-col">
-              <span class="sp-dot" aria-hidden="true"></span>
-              <span class="sp-char">{smallPolishLetters[25]}</span>
-            </span>
-          </button>
-        </div>
       </div>
+
+      <!-- Sjednocené SVG plátno (identické měřítko teček r=2.5 a nulové přesahy) -->
+      <svg
+        class="pigpen-board-svg"
+        viewBox="0 0 312 266"
+        role="group"
+        aria-label="Pigpen šifrovací kříže"
+        oncontextmenu={(e) => e.preventDefault()}
+        onpointerup={handleLetterPointerUp}
+        onpointercancel={handleLetterPointerUp}
+        onpointerleave={handleLetterPointerUp}
+      >
+        <!-- ==================== 1. HITAREAS & OBSAH (BUŇKY) ==================== -->
+
+        <!-- --- 3x3 Mřížka Col 1 (A–I, bez tečky) --- -->
+        {#each [0, 1, 2] as r}
+          {#each [0, 1, 2] as c}
+            {@const char = smallPolishLetters[r * 3 + c]}
+            {@const x = 4 + c * 48}
+            {@const y = 4 + r * 48}
+            {@const cx = x + 24}
+            {@const cy = y + 24}
+            <g
+              class="pigpen-cell"
+              class:is-active={activePigpenChar === char}
+              role="button"
+              tabindex="0"
+              aria-label={`Písmeno ${char}`}
+              onpointerdown={(e) => handleLetterPointerDown(e, char)}
+              onkeydown={(e) => handleLetterKeyDown(e, char)}
+              oncontextmenu={(e) => e.preventDefault()}
+            >
+              <rect {x} {y} width="48" height="48" class="cell-hitarea" />
+              <g class="cell-content" style="transform-origin: {cx}px {cy}px;">
+                <text x={cx} y={cy} class="cell-char">{char}</text>
+              </g>
+            </g>
+          {/each}
+        {/each}
+
+        <!-- --- 3x3 Mřížka Col 2 (J–R, s tečkou) --- -->
+        {#each [0, 1, 2] as r}
+          {#each [0, 1, 2] as c}
+            {@const char = smallPolishLetters[9 + r * 3 + c]}
+            {@const x = 164 + c * 48}
+            {@const y = 4 + r * 48}
+            {@const cx = x + 24}
+            {@const cy = y + 24}
+            <g
+              class="pigpen-cell"
+              class:is-active={activePigpenChar === char}
+              role="button"
+              tabindex="0"
+              aria-label={`Písmeno ${char}`}
+              onpointerdown={(e) => handleLetterPointerDown(e, char)}
+              onkeydown={(e) => handleLetterKeyDown(e, char)}
+              oncontextmenu={(e) => e.preventDefault()}
+            >
+              <rect {x} {y} width="48" height="48" class="cell-hitarea" />
+              <g class="cell-content" style="transform-origin: {cx}px {cy}px;">
+                <text x={cx - 5.5} y={cy} class="cell-char">{char}</text>
+                <circle cx={cx + 8.5} cy={cy} r="2.5" class="cell-dot" />
+              </g>
+            </g>
+          {/each}
+        {/each}
+
+        <!-- --- 2x2 Šikmý kříž Col 1 (S–V, bez tečky) --- -->
+        <!-- Wedge Top (S) -->
+        <g
+          class="pigpen-cell"
+          class:is-active={activePigpenChar === smallPolishLetters[18]}
+          role="button"
+          tabindex="0"
+          aria-label={`Písmeno ${smallPolishLetters[18]}`}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[18])}
+          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[18])}
+          oncontextmenu={(e) => e.preventDefault()}
+        >
+          <polygon points="28,164 124,164 76,212" class="cell-hitarea" />
+          <g class="cell-content" style="transform-origin: 76px 188px;">
+            <text x="76" y="188" class="cell-char">{smallPolishLetters[18]}</text>
+          </g>
+        </g>
+
+        <!-- Wedge Left (T) -->
+        <g
+          class="pigpen-cell"
+          class:is-active={activePigpenChar === smallPolishLetters[19]}
+          role="button"
+          tabindex="0"
+          aria-label={`Písmeno ${smallPolishLetters[19]}`}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[19])}
+          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[19])}
+          oncontextmenu={(e) => e.preventDefault()}
+        >
+          <polygon points="28,164 76,212 28,260" class="cell-hitarea" />
+          <g class="cell-content" style="transform-origin: 52px 212px;">
+            <text x="52" y="212" class="cell-char">{smallPolishLetters[19]}</text>
+          </g>
+        </g>
+
+        <!-- Wedge Right (U) -->
+        <g
+          class="pigpen-cell"
+          class:is-active={activePigpenChar === smallPolishLetters[20]}
+          role="button"
+          tabindex="0"
+          aria-label={`Písmeno ${smallPolishLetters[20]}`}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[20])}
+          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[20])}
+          oncontextmenu={(e) => e.preventDefault()}
+        >
+          <polygon points="124,164 76,212 124,260" class="cell-hitarea" />
+          <g class="cell-content" style="transform-origin: 100px 212px;">
+            <text x="100" y="212" class="cell-char">{smallPolishLetters[20]}</text>
+          </g>
+        </g>
+
+        <!-- Wedge Bottom (V) -->
+        <g
+          class="pigpen-cell"
+          class:is-active={activePigpenChar === smallPolishLetters[21]}
+          role="button"
+          tabindex="0"
+          aria-label={`Písmeno ${smallPolishLetters[21]}`}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[21])}
+          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[21])}
+          oncontextmenu={(e) => e.preventDefault()}
+        >
+          <polygon points="28,260 76,212 124,260" class="cell-hitarea" />
+          <g class="cell-content" style="transform-origin: 76px 236px;">
+            <text x="76" y="236" class="cell-char">{smallPolishLetters[21]}</text>
+          </g>
+        </g>
+
+        <!-- --- 2x2 Šikmý kříž Col 2 (W–Z, s tečkou) --- -->
+        <!-- Wedge Top (W) -->
+        <g
+          class="pigpen-cell"
+          class:is-active={activePigpenChar === smallPolishLetters[22]}
+          role="button"
+          tabindex="0"
+          aria-label={`Písmeno ${smallPolishLetters[22]}`}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[22])}
+          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[22])}
+          oncontextmenu={(e) => e.preventDefault()}
+        >
+          <polygon points="188,164 284,164 236,212" class="cell-hitarea" />
+          <g class="cell-content" style="transform-origin: 236px 188px;">
+            <text x="236" y="182" class="cell-char">{smallPolishLetters[22]}</text>
+            <circle cx="236" cy="197" r="2.5" class="cell-dot" />
+          </g>
+        </g>
+
+        <!-- Wedge Left (X) -->
+        <g
+          class="pigpen-cell"
+          class:is-active={activePigpenChar === smallPolishLetters[23]}
+          role="button"
+          tabindex="0"
+          aria-label={`Písmeno ${smallPolishLetters[23]}`}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[23])}
+          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[23])}
+          oncontextmenu={(e) => e.preventDefault()}
+        >
+          <polygon points="188,164 236,212 188,260" class="cell-hitarea" />
+          <g class="cell-content" style="transform-origin: 212px 212px;">
+            <text x="206" y="212" class="cell-char">{smallPolishLetters[23]}</text>
+            <circle cx="221" cy="212" r="2.5" class="cell-dot" />
+          </g>
+        </g>
+
+        <!-- Wedge Right (Y) -->
+        <g
+          class="pigpen-cell"
+          class:is-active={activePigpenChar === smallPolishLetters[24]}
+          role="button"
+          tabindex="0"
+          aria-label={`Písmeno ${smallPolishLetters[24]}`}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[24])}
+          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[24])}
+          oncontextmenu={(e) => e.preventDefault()}
+        >
+          <polygon points="284,164 236,212 284,260" class="cell-hitarea" />
+          <g class="cell-content" style="transform-origin: 260px 212px;">
+            <circle cx="251" cy="212" r="2.5" class="cell-dot" />
+            <text x="266" y="212" class="cell-char">{smallPolishLetters[24]}</text>
+          </g>
+        </g>
+
+        <!-- Wedge Bottom (Z) -->
+        <g
+          class="pigpen-cell"
+          class:is-active={activePigpenChar === smallPolishLetters[25]}
+          role="button"
+          tabindex="0"
+          aria-label={`Písmeno ${smallPolishLetters[25]}`}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[25])}
+          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[25])}
+          oncontextmenu={(e) => e.preventDefault()}
+        >
+          <polygon points="188,260 236,212 284,260" class="cell-hitarea" />
+          <g class="cell-content" style="transform-origin: 236px 236px;">
+            <circle cx="236" cy="227" r="2.5" class="cell-dot" />
+            <text x="236" y="242" class="cell-char">{smallPolishLetters[25]}</text>
+          </g>
+        </g>
+
+        <!-- ==================== 2. DĚLICÍ ČÁRY (KRESLENÉ NAHOŘE) ==================== -->
+        <!-- 3x3 Mřížka Col 1 -->
+        <line x1="52" y1="4" x2="52" y2="148" class="pigpen-line" />
+        <line x1="100" y1="4" x2="100" y2="148" class="pigpen-line" />
+        <line x1="4" y1="52" x2="148" y2="52" class="pigpen-line" />
+        <line x1="4" y1="100" x2="148" y2="100" class="pigpen-line" />
+
+        <!-- 3x3 Mřížka Col 2 -->
+        <line x1="212" y1="4" x2="212" y2="148" class="pigpen-line" />
+        <line x1="260" y1="4" x2="260" y2="148" class="pigpen-line" />
+        <line x1="164" y1="52" x2="308" y2="52" class="pigpen-line" />
+        <line x1="164" y1="100" x2="308" y2="100" class="pigpen-line" />
+
+        <!-- 2x2 Šikmý kříž Col 1 -->
+        <line x1="28" y1="164" x2="124" y2="260" class="pigpen-line" />
+        <line x1="124" y1="164" x2="28" y2="260" class="pigpen-line" />
+
+        <!-- 2x2 Šikmý kříž Col 2 -->
+        <line x1="188" y1="164" x2="284" y2="260" class="pigpen-line" />
+        <line x1="284" y1="164" x2="188" y2="260" class="pigpen-line" />
+      </svg>
     </div>
 
   {:else if crossType === 'mobile-keypad'}
@@ -519,7 +626,7 @@
     padding: 2px 3px;
     height: 100%;
     box-sizing: border-box;
-    border-radius: var(--radius-xs);
+    border-radius: 0;
     transition: background-color 0.12s ease;
   }
 
@@ -606,32 +713,36 @@
     height: 100%;
   }
 
-  /* --- Malý polský kříž (2 sloupce: Bez tečky | S tečkou) --- */
-  .small-polish-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-md);
-    width: 100%;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
-  }
-
-  .sp-column {
+  /* --- Pigpen (Sjednocené SVG plátno) --- */
+  .pigpen-board-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
     width: 100%;
+    padding: var(--space-lg) 0 var(--space-xl);
+    gap: var(--space-sm);
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+  }
+
+  .sp-headers-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    padding: 0 4px;
+    box-sizing: border-box;
   }
 
   .sp-col-header {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 5px;
     width: 100%;
-    padding: 1px 0;
   }
 
   .sp-col-title {
@@ -651,175 +762,63 @@
     flex-shrink: 0;
   }
 
-  /* 3x3 Mřížka */
-  .sp-grid-3x3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, clamp(44px, 6.2vh, 48px));
-    gap: 4px;
+  .pigpen-board-svg {
     width: 100%;
-    box-sizing: border-box;
+    height: auto;
+    display: block;
     touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 
-  .sp-cell {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    padding: 0;
-    box-sizing: border-box;
-    border: none;
-    color: var(--color-text-primary);
+  .pigpen-cell {
     cursor: pointer;
-    touch-action: none;
-    border-radius: var(--radius-xs);
-    transition: background-color 0.08s ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .sp-cell:active {
-    background-color: var(--color-accent-primary-subtle);
+  .cell-hitarea {
+    fill: rgba(0, 0, 0, 0.001);
+    pointer-events: all;
+    transition: fill 0.08s ease;
   }
 
-  .sp-cell-inner {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
+  .pigpen-cell:active .cell-hitarea,
+  .pigpen-cell.is-active .cell-hitarea {
+    fill: var(--color-accent-primary-subtle);
+  }
+
+  .cell-content {
     transition: transform 0.08s ease;
     pointer-events: none;
   }
 
-  .sp-cell:active .sp-cell-inner {
+  .pigpen-cell:active .cell-content,
+  .pigpen-cell.is-active .cell-content {
     transform: scale(0.92);
   }
 
-  /* Ohrádky mřížky 3x3 */
-  .sp-cell.r-1.c-1 { border-right: 2.5px solid var(--color-text-secondary); border-bottom: 2.5px solid var(--color-text-secondary); }
-  .sp-cell.r-1.c-2 { border-left: 2.5px solid var(--color-text-secondary); border-right: 2.5px solid var(--color-text-secondary); border-bottom: 2.5px solid var(--color-text-secondary); }
-  .sp-cell.r-1.c-3 { border-left: 2.5px solid var(--color-text-secondary); border-bottom: 2.5px solid var(--color-text-secondary); }
-
-  .sp-cell.r-2.c-1 { border-top: 2.5px solid var(--color-text-secondary); border-bottom: 2.5px solid var(--color-text-secondary); border-right: 2.5px solid var(--color-text-secondary); }
-  .sp-cell.r-2.c-2 { border: 2.5px solid var(--color-text-secondary); }
-  .sp-cell.r-2.c-3 { border-top: 2.5px solid var(--color-text-secondary); border-bottom: 2.5px solid var(--color-text-secondary); border-left: 2.5px solid var(--color-text-secondary); }
-
-  .sp-cell.r-3.c-1 { border-top: 2.5px solid var(--color-text-secondary); border-right: 2.5px solid var(--color-text-secondary); }
-  .sp-cell.r-3.c-2 { border-top: 2.5px solid var(--color-text-secondary); border-left: 2.5px solid var(--color-text-secondary); border-right: 2.5px solid var(--color-text-secondary); }
-  .sp-cell.r-3.c-3 { border-top: 2.5px solid var(--color-text-secondary); border-left: 2.5px solid var(--color-text-secondary); }
-
-  .sp-char {
-    font-size: var(--text-base);
+  .cell-char {
+    font-size: 16px;
     font-weight: 700;
     font-family: var(--font-mono);
-    line-height: 1;
+    fill: var(--color-text-primary);
+    text-anchor: middle;
+    dominant-baseline: central;
     pointer-events: none;
   }
 
-  .sp-dot {
-    display: inline-block;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background-color: var(--color-accent-primary);
-    flex-shrink: 0;
+  .cell-dot {
+    fill: var(--color-accent-primary);
     pointer-events: none;
   }
 
-  /* 2x2 Šikmý kříž X */
-  .sp-cross-x {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 145px;
-    height: clamp(98px, 14.5vh, 115px);
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
-  .sp-x-lines {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    overflow: visible;
-  }
-
-  .sp-x-line {
+  .pigpen-line {
     stroke: var(--color-text-secondary);
     stroke-width: 2.5px;
     stroke-linecap: round;
-    vector-effect: non-scaling-stroke;
-  }
-
-  .sp-wedge {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    touch-action: none;
-    display: flex;
-    transition: background-color 0.08s ease;
-    -webkit-tap-highlight-color: transparent;
-    color: var(--color-text-primary);
-  }
-
-  .sp-wedge:active {
-    background-color: var(--color-accent-primary-subtle);
-  }
-
-  .sp-wedge:active .sp-cell-inner {
-    transform: scale(0.92);
-  }
-
-  .wedge-top {
-    clip-path: polygon(0 0, 100% 0, 50% 50%);
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 10px;
-  }
-
-  .wedge-bottom {
-    clip-path: polygon(0 100%, 50% 50%, 100% 100%);
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 10px;
-  }
-
-  .wedge-left {
-    clip-path: polygon(0 0, 50% 50%, 0 100%);
-    align-items: center;
-    justify-content: flex-start;
-    padding-left: 14px;
-  }
-
-  .wedge-right {
-    clip-path: polygon(100% 0, 100% 100%, 50% 50%);
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 14px;
-  }
-
-  .wedge-content-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .wedge-content-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 5px;
+    pointer-events: none;
   }
 
   /* --- Mobilní klávesnice 3x4 (100% šířka) --- */
