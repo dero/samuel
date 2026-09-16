@@ -376,7 +376,7 @@
       <div class="sp-column">
         <div class="sp-col-header">
           <span class="sp-col-title">S tečkou</span>
-          <span class="sp-dot-badge">•</span>
+          <span class="sp-dot-badge" aria-hidden="true"></span>
         </div>
 
         <!-- 3x3 Mřížka s tečkou (J–R) -->
@@ -391,7 +391,7 @@
               >
                 <span class="sp-cell-inner">
                   <span class="sp-char">{char}</span>
-                  <span class="sp-dot">•</span>
+                  <span class="sp-dot" aria-hidden="true"></span>
                 </span>
               </button>
             {/each}
@@ -417,7 +417,7 @@
               <polygon points="0,0 140,0 70,57.5" class="wedge-hitarea" />
               <g class="sp-wedge-content">
                 <text x="70" y="22" class="sp-wedge-char">{smallPolishLetters[22]}</text>
-                <circle cx="70" cy="38" r="3.2" class="sp-wedge-dot" />
+                <circle cx="70" cy="38" r="2.5" class="sp-wedge-dot" />
               </g>
             </g>
             <!-- Wedge Left (X) -->
@@ -436,7 +436,7 @@
               <polygon points="0,0 70,57.5 0,115" class="wedge-hitarea" />
               <g class="sp-wedge-content">
                 <text x="22" y="57.5" class="sp-wedge-char">{smallPolishLetters[23]}</text>
-                <circle cx="42" cy="57.5" r="3.2" class="sp-wedge-dot" />
+                <circle cx="42" cy="57.5" r="2.5" class="sp-wedge-dot" />
               </g>
             </g>
             <!-- Wedge Right (Y) -->
@@ -455,7 +455,7 @@
               <polygon points="140,0 140,115 70,57.5" class="wedge-hitarea" />
               <g class="sp-wedge-content">
                 <text x="118" y="57.5" class="sp-wedge-char">{smallPolishLetters[24]}</text>
-                <circle cx="98" cy="57.5" r="3.2" class="sp-wedge-dot" />
+                <circle cx="98" cy="57.5" r="2.5" class="sp-wedge-dot" />
               </g>
             </g>
             <!-- Wedge Bottom (Z) -->
@@ -474,7 +474,7 @@
               <polygon points="0,115 140,115 70,57.5" class="wedge-hitarea" />
               <g class="sp-wedge-content">
                 <text x="70" y="93" class="sp-wedge-char">{smallPolishLetters[25]}</text>
-                <circle cx="70" cy="77" r="3.2" class="sp-wedge-dot" />
+                <circle cx="70" cy="77" r="2.5" class="sp-wedge-dot" />
               </g>
             </g>
             <!-- Diagonal crossing lines -->
@@ -693,10 +693,12 @@
   }
 
   .sp-dot-badge {
-    font-size: 13px;
-    font-weight: 900;
-    color: var(--color-accent-primary);
-    line-height: 1;
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--color-accent-primary);
+    flex-shrink: 0;
   }
 
   /* 3x3 Mřížka */
@@ -765,12 +767,13 @@
   }
 
   .sp-dot {
-    font-size: 13px;
-    font-weight: 900;
-    color: var(--color-accent-primary);
-    line-height: 1;
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--color-accent-primary);
+    flex-shrink: 0;
     pointer-events: none;
-    margin-left: 1px;
   }
 
   /* 2x2 Šikmý kříž X */
