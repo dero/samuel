@@ -9,7 +9,7 @@
     type BrailleEntry
   } from './brailleData';
   import { matchesSearch } from '../../utils/search';
-  import { MagnifyingGlass, X } from 'phosphor-svelte';
+  import SearchInput from '../../components/ui/SearchInput.svelte';
 
   let searchQuery = $state('');
 
@@ -36,23 +36,10 @@
 
 <div class="ref-container">
   <!-- Search filter -->
-  <div class="search-box">
-    <span class="search-icon"><MagnifyingGlass size={16} weight="bold" /></span>
-    <input
-      type="search"
-      placeholder="Hledat znak, čísla bodů (např. 135)..."
-      bind:value={searchQuery}
-    />
-    {#if searchQuery}
-      <button
-        class="clear-search"
-        aria-label="Vymazat hledání"
-        onclick={() => (searchQuery = '')}
-      >
-        <X size={14} weight="bold" />
-      </button>
-    {/if}
-  </div>
+  <SearchInput
+    bind:value={searchQuery}
+    placeholder="Hledat znak, čísla bodů (např. 135)..."
+  />
 
   <!-- Symbols list -->
   <div class="table-scroll">
@@ -113,42 +100,7 @@
     gap: 10px;
   }
 
-  .search-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    flex-shrink: 0;
-  }
 
-  .search-box input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--color-text-primary);
-    font-size: 14px;
-    font-family: inherit;
-  }
-
-  .search-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-secondary);
-    flex-shrink: 0;
-  }
-
-  .clear-search {
-    color: var(--color-text-muted);
-    padding: 2px 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 
   .table-scroll {
     flex: 1;

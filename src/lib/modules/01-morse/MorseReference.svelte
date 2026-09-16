@@ -1,11 +1,16 @@
 <script lang="ts">
   import { CZECH_MNEMONICS, type MorseEntry } from "./morseData";
-  import { settings } from "../../state/settings.svelte";
   import { matchesSearch } from "../../utils/search";
-  import { MagnifyingGlass, X } from "phosphor-svelte";
+  import SearchInput from "../../components/ui/SearchInput.svelte";
+  import SegmentedControl, { type SegmentOption } from "../../components/ui/SegmentedControl.svelte";
 
   let activeTab = $state<"list" | "tree">("list");
   let searchQuery = $state("");
+
+  const tabs: SegmentOption<"list" | "tree">[] = [
+    { id: "list", label: `Přehled znaků (${CZECH_MNEMONICS.length})` },
+    { id: "tree", label: "Morseův strom" }
+  ];
 
   let filteredEntries = $derived.by(() => {
     if (!searchQuery.trim()) return CZECH_MNEMONICS;
@@ -76,50 +81,18 @@
 
 <div class="ref-container">
   <!-- Sub-Tabs -->
-  <div class="tab-bar">
-    <button
-      class="tab-btn"
-      class:active={activeTab === "list"}
-      onclick={() => {
-        settings.vibrate(20);
-        activeTab = "list";
-      }}
-    >
-      Přehled znaků ({CZECH_MNEMONICS.length})
-    </button>
-    <button
-      class="tab-btn"
-      class:active={activeTab === "tree"}
-      onclick={() => {
-        settings.vibrate(20);
-        activeTab = "tree";
-      }}
-    >
-      Morseův strom
-    </button>
-  </div>
+  <SegmentedControl
+    options={tabs}
+    value={activeTab}
+    onChange={(val) => (activeTab = val)}
+  />
 
   {#if activeTab === "list"}
     <!-- Search filter -->
-    <div class="search-box">
-      <span class="search-icon"
-        ><MagnifyingGlass size={16} weight="bold" /></span
-      >
-      <input
-        type="search"
-        placeholder="Hledat písmeno, kód nebo slovo..."
-        bind:value={searchQuery}
-      />
-      {#if searchQuery}
-        <button
-          class="clear-search"
-          aria-label="Vymazat hledání"
-          onclick={() => (searchQuery = "")}
-        >
-          <X size={14} weight="bold" />
-        </button>
-      {/if}
-    </div>
+    <SearchInput
+      bind:value={searchQuery}
+      placeholder="Hledat písmeno, kód nebo slovo..."
+    />
 
     <!-- Mnemonic table -->
     <div class="table-scroll">
@@ -184,71 +157,7 @@
     gap: 10px;
   }
 
-  .tab-bar {
-    display: flex;
-    background-color: var(--color-surface-2);
-    border-radius: var(--radius-sm);
-    padding: 3px;
-    gap: 4px;
-    flex-shrink: 0;
-  }
 
-  .tab-btn {
-    flex: 1;
-    padding: 8px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    border-radius: 4px;
-    text-align: center;
-    transition:
-      background-color 0.15s,
-      color 0.15s;
-  }
-
-  .tab-btn.active {
-    background-color: var(--color-surface-active);
-    color: var(--color-text-primary);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  }
-
-  .search-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    flex-shrink: 0;
-  }
-
-  .search-box input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--color-text-primary);
-    font-size: 14px;
-    font-family: inherit;
-  }
-
-  .search-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-secondary);
-    flex-shrink: 0;
-  }
-
-  .clear-search {
-    font-size: 14px;
-    color: var(--color-text-muted);
-    padding: 2px 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 
   .table-scroll {
     flex: 1;

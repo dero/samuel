@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { copyToClipboard } from '../../utils/clipboard';
+  import { settings } from '../../state/settings.svelte';
 
   interface Props {
     text: string;
@@ -34,6 +35,7 @@
     // Don't copy whole text if the user was highlighting/selecting a specific substring
     const selection = window.getSelection()?.toString();
     if (selection && selection.length > 0) return;
+    settings.vibrate(35);
     await copyToClipboard(text);
   }
 </script>

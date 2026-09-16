@@ -1,17 +1,4 @@
-<script lang="ts">
-  import BottomSheet from '../../components/ui/BottomSheet.svelte';
-  import { navigation } from '../../state/navigation.svelte';
-  import { BookOpen } from 'phosphor-svelte';
-</script>
-
-<BottomSheet
-  open={navigation.subView === 'ref' && navigation.activeModuleId === 'cross'}
-  title="Tahák – Šifrovací kříže & klávesnice"
-  icon={BookOpen}
-  maxWidth="540px"
-  onClose={() => navigation.closeSubView()}
->
-  <div class="reference-content">
+<div class="reference-content">
     <!-- Section 1: Velký polský kříž -->
     <section class="ref-section">
       <h3 class="ref-heading">1. Velký polský kříž (3×3×3)</h3>
@@ -115,7 +102,6 @@
       </div>
     </section>
   </div>
-</BottomSheet>
 
 <style>
   .reference-content {
@@ -124,6 +110,11 @@
     gap: var(--space-lg);
     color: var(--color-text-primary);
     padding-bottom: var(--space-xl);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
+    min-height: 0;
   }
 
   .ref-section {

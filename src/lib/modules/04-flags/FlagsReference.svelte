@@ -7,7 +7,8 @@
   } from './flagsData';
   import FlagSvg from './FlagSvg.svelte';
   import { matchesSearch } from '../../utils/search';
-  import { MagnifyingGlass, X } from 'phosphor-svelte';
+  import SearchInput from '../../components/ui/SearchInput.svelte';
+  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
 
   let searchQuery = $state('');
   let activeTab = $state<'letters' | 'numbers'>('letters');
@@ -26,6 +27,11 @@
     );
   });
 
+  const tabs = $derived<SegmentOption<'letters' | 'numbers'>[]>([
+    { id: 'letters', label: 'Písmena (A–Z)', badge: filteredLetters.length },
+    { id: 'numbers', label: 'Číslice (0–9)', badge: filteredNumbers.length }
+  ]);
+
   function getColorHex(colorId: string): string {
     return FLAG_COLORS.find((c) => c.id === colorId)?.hex ?? '#888';
   }
@@ -38,45 +44,16 @@
 <div class="ref-container">
   <!-- Pinned Top: Search and Tabs -->
   <div class="pinned-header">
-    <div class="search-box">
-      <span class="search-icon"><MagnifyingGlass size={16} weight="bold" /></span>
-      <input
-        type="search"
-        bind:value={searchQuery}
-        placeholder="Hledat vlajku, písmeno, NATO kód, význam..."
-      />
-      {#if searchQuery}
-        <button
-          type="button"
-          class="clear-search"
-          onclick={() => (searchQuery = '')}
-          aria-label="Vymazat hledání"
-        >
-          <X size={14} weight="bold" />
-        </button>
-      {/if}
-    </div>
+    <SearchInput
+      bind:value={searchQuery}
+      placeholder="Hledat vlajku, písmeno, NATO kód, význam..."
+    />
 
-    <div class="tabs-row">
-      <button
-        type="button"
-        class="tab-btn"
-        class:is-active={activeTab === 'letters'}
-        onclick={() => (activeTab = 'letters')}
-      >
-        Písmena (A–Z)
-        <span class="tab-count">{filteredLetters.length}</span>
-      </button>
-      <button
-        type="button"
-        class="tab-btn"
-        class:is-active={activeTab === 'numbers'}
-        onclick={() => (activeTab = 'numbers')}
-      >
-        Číslice (0–9)
-        <span class="tab-count">{filteredNumbers.length}</span>
-      </button>
-    </div>
+    <SegmentedControl
+      options={tabs}
+      value={activeTab}
+      onChange={(val) => (activeTab = val)}
+    />
   </div>
 
   <!-- Scrollable entries area -->
@@ -171,93 +148,7 @@
     gap: var(--space-xs);
   }
 
-  .search-box {
-    display: flex;
-    align-items: center;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    padding: 0 var(--space-sm);
-    height: 38px;
-    gap: var(--space-sm);
-  }
 
-  .search-box:focus-within {
-    border-color: var(--color-border-focus);
-  }
-
-  .search-icon {
-    display: flex;
-    align-items: center;
-    color: var(--color-text-secondary);
-    flex-shrink: 0;
-  }
-
-  .search-box input {
-    flex: 1;
-    min-width: 0;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--color-text-primary);
-    font-size: var(--text-sm);
-    font-family: var(--font-sans);
-  }
-
-  .clear-search {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-secondary);
-    padding: 4px;
-    border-radius: var(--radius-xs);
-    flex-shrink: 0;
-  }
-  .clear-search:active {
-    color: var(--color-text-primary);
-    background-color: var(--color-surface-active);
-  }
-
-  .tabs-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-xs);
-    background-color: var(--color-surface-2);
-    padding: 3px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border-subtle);
-  }
-
-  .tab-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-xs);
-    padding: 6px var(--space-sm);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    border-radius: var(--radius-xs);
-    transition: background-color 0.12s, color 0.12s;
-  }
-
-  .tab-btn.is-active {
-    background-color: var(--color-surface-3);
-    color: var(--color-accent-primary);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .tab-count {
-    font-size: 10px;
-    padding: 1px 5px;
-    background-color: var(--color-surface-1);
-    border-radius: var(--radius-full);
-    color: var(--color-text-muted);
-  }
-
-  .tab-btn.is-active .tab-count {
-    color: var(--color-accent-primary);
-  }
 
   .table-scroll {
     flex: 1;

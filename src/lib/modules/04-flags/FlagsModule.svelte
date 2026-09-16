@@ -17,25 +17,21 @@
   import { settings } from '../../state/settings.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
 
-  const flagsScope = localSettingsService.forSection('module_flags');
+  const modSettings = localSettingsService.forModule('flags');
 
   // Persisted state
-  let inputLetters = $state(flagsScope.getString('text', ''));
-  let autoResetFilter = $state(flagsScope.getBoolean('auto_reset_filter', false));
-  let showSailboat = $state(flagsScope.getBoolean('show_sailboat', true));
+  let inputLetters = $state(modSettings.getString('text', ''));
+  let autoResetFilter = $state(modSettings.getBoolean('auto_reset_filter', false));
+  let showSailboat = $state(modSettings.getBoolean('show_sailboat', true));
 
   // Selected filter colors
   let selectedColors = $state<FlagColor[]>([]);
 
   // Update storage
   $effect(() => {
-    flagsScope.setString('text', inputLetters);
-  });
-  $effect(() => {
-    flagsScope.setBoolean('auto_reset_filter', autoResetFilter);
-  });
-  $effect(() => {
-    flagsScope.setBoolean('show_sailboat', showSailboat);
+    modSettings.setString('text', inputLetters);
+    modSettings.setBoolean('auto_reset_filter', autoResetFilter);
+    modSettings.setBoolean('show_sailboat', showSailboat);
   });
 
   // Check if a flag matches currently selected colors

@@ -2,6 +2,7 @@
   import ModuleShell from '../components/layout/ModuleShell.svelte';
   import type { ModuleMeta } from '../types';
   import { copyToClipboard } from '../utils/clipboard';
+  import { settings } from '../state/settings.svelte';
   import ModuleIcon from '../components/ui/ModuleIcon.svelte';
 
   interface Props {
@@ -36,7 +37,10 @@
       <div
         class="output-box"
         class:is-empty={!dummyText}
-        onclick={() => copyToClipboard(dummyText || 'Ukázkový text tajenky')}
+        onclick={() => {
+          settings.vibrate(35);
+          copyToClipboard(dummyText || 'Ukázkový text tajenky');
+        }}
       >
         {dummyText || 'Zatím žádný vstup. Modul bude implementován v dalším kroku.'}
       </div>

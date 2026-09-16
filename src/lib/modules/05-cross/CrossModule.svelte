@@ -19,6 +19,7 @@
   import { localSettingsService } from '../../services/localSettingsService';
   import { navigation } from '../../state/navigation.svelte';
   import AlphabetSelect from '../../components/ui/AlphabetSelect.svelte';
+  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
   import { Warning } from 'phosphor-svelte';
 
   const modSettings = localSettingsService.forModule('cross');
@@ -30,6 +31,11 @@
   let phoneInputMode = $state<'multitap' | 't9'>(
     (modSettings.getString('phoneMode', 'multitap') as 'multitap' | 't9') || 'multitap'
   );
+
+  const phoneModeOptions: SegmentOption<'multitap' | 't9'>[] = [
+    { id: 'multitap', label: 'Klasik' },
+    { id: 't9', label: 'T9' }
+  ];
 
   // Per-tool alphabet configuration
   let toolAlphabetMap = $state<Record<string, string>>({
@@ -473,24 +479,12 @@
     <div class="cross-module-content">
       <!-- Mobile Keypad Mode Switcher (Klasické vs T9) -->
       {#if crossTypeId === 'mobile-keypad'}
-        <div class="mobile-mode-switcher" role="tablist" aria-label="Režim mobilní klávesnice">
-          <button
-            type="button"
-            class="mode-switch-btn"
-            class:is-active={phoneInputMode === 'multitap'}
-            onclick={() => handlePhoneModeChange('multitap')}
-          >
-            Klasik
-          </button>
-          <button
-            type="button"
-            class="mode-switch-btn"
-            class:is-active={phoneInputMode === 't9'}
-            onclick={() => handlePhoneModeChange('t9')}
-          >
-            T9
-          </button>
-        </div>
+        <SegmentedControl
+          options={phoneModeOptions}
+          value={phoneInputMode}
+          ariaLabel="Režim mobilní klávesnice"
+          onChange={handlePhoneModeChange}
+        />
 
         <!-- T9 Candidate Suggestion Bar -->
         {#if phoneInputMode === 't9'}
@@ -615,9 +609,11 @@
       {/if}
     </div>
   {/snippet}
-</ModuleShell>
 
-<CrossReference />
+  {#snippet reference()}
+    <CrossReference />
+  {/snippet}
+</ModuleShell>
 
 <style>
   .cross-module-content {
@@ -628,44 +624,7 @@
     align-items: center;
   }
 
-  .mobile-mode-switcher {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
-    width: 100%;
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    padding: 3px;
-    box-sizing: border-box;
-  }
 
-  .mode-switch-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-sm);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    user-select: none;
-  }
-
-  .mode-switch-btn:hover {
-    color: var(--color-text-primary);
-  }
-
-  .mode-switch-btn.is-active {
-    background: var(--color-bg-elevated);
-    color: var(--color-accent-primary);
-    border: 1px solid var(--color-accent-primary);
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.15);
-  }
 
   .t9-candidate-container {
     display: flex;
@@ -831,23 +790,7 @@
     width: 100%;
   }
 
-  .keypad-utility-row {
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: var(--space-sm);
-    width: 100%;
-    height: var(--utility-row-height);
-    align-items: center;
-    box-sizing: border-box;
-  }
 
-  .keypad-dominant-2col {
-    display: grid;
-    grid-template-columns: 0.85fr 1.15fr;
-    gap: var(--space-sm);
-    width: 100%;
-    box-sizing: border-box;
-  }
 
   /* Module menu options & warning banner */
   .menu-group {
