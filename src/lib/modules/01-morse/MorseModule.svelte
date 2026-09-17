@@ -134,12 +134,9 @@
       bruteforceResults = res.candidates;
       totalFoundCandidates = res.totalFound;
       if (bruteforceResults.length > 0) {
-        toast.show(
-          `Nalezeno ${totalFoundCandidates} možností (zobrazeno top ${bruteforceResults.length})`,
-          'success'
-        );
+        toast.show(`Nalezeno ${totalFoundCandidates} možností`, 'success');
       } else {
-        toast.show('Žádný smysluplný rozpad nenalezen', 'warning');
+        toast.show('Žádný rozpad nenalezen', 'warning');
       }
     } catch (err: any) {
       console.error('Bruteforce solve error:', err);
@@ -153,7 +150,7 @@
     settings.vibrate(25);
     inputMorse = perm.transformedMorse;
     isPermutationsOpen = false;
-    toast.show(`Aplikována varianta: ${perm.name}`, 'info');
+    toast.show(`Varianta: ${perm.name}`, 'info');
     autoScrollTextarea();
   }
 
@@ -161,7 +158,7 @@
     settings.vibrate(25);
     inputMorse = candidate.spacedMorse;
     isBruteforceOpen = false;
-    copyToClipboard(candidate.text, `Použito řešení: ${candidate.text}`);
+    copyToClipboard(candidate.text, 'Řešení vloženo');
     autoScrollTextarea();
   }
 
@@ -438,12 +435,12 @@
   }
 
   .floating-icon {
-    font-size: 13px;
+    font-size: var(--text-sm);
     display: flex;
     align-items: center;
   }
 
-  /* 4-line Textarea */
+  /* Compact Textarea for viewport budget */
   .morse-textarea-container {
     width: 100%;
     display: flex;
@@ -451,9 +448,9 @@
 
   .morse-textarea {
     width: 100%;
-    height: 96px;
-    min-height: 96px;
-    max-height: 96px;
+    height: 64px;
+    min-height: 64px;
+    max-height: 64px;
     padding: 10px var(--space-md);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);

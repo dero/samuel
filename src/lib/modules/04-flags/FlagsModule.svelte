@@ -2,6 +2,7 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import SpaceButton from '../../components/ui/SpaceButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
@@ -69,10 +70,8 @@
 
   function handleBackspace() {
     if (selectedColors.length > 0) {
-      settings.vibrate(20);
       selectedColors = [];
     } else if (inputLetters.length > 0) {
-      settings.vibrate(20);
       inputLetters = inputLetters.slice(0, -1);
     }
   }
@@ -80,6 +79,10 @@
   function handleClearAll() {
     inputLetters = '';
     selectedColors = [];
+  }
+
+  function handleSpace() {
+    inputLetters += ' ';
   }
 
   function handlePaste(text: string) {
@@ -127,7 +130,11 @@
               class="flag-tile"
               class:is-dimmed={!isMatching}
               class:is-solo-z={!showSailboat && flag.code === 'Z'}
-              onclick={() => handleFlagClick(flag)}
+              onpointerdown={(e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                handleFlagClick(flag);
+              }}
               aria-label="{flag.code} - {flag.name}"
             >
               <div class="flag-tile-preview">
@@ -138,13 +145,17 @@
           {/each}
         </div>
 
-        <!-- Utility Row: SlideToAction (Vymazat) + Backspace -->
-        <div class="keypad-utility-row">
+        <!-- Utility Row: SlideToAction (Vymazat) + Mezera + Backspace (1.2fr 1fr 1fr) -->
+        <div class="keypad-utility-row-3col">
           <SlideToAction
             disabled={!inputLetters && selectedColors.length === 0}
             onAction={handleClearAll}
             label="Vymazat"
             ariaLabel="Vymazat text tažením"
+          />
+
+          <SpaceButton
+            onAction={handleSpace}
           />
 
           <BackspaceButton
@@ -164,7 +175,11 @@
               type="button"
               class="color-filter-btn"
               class:is-active={isActive}
-              onclick={() => toggleColor(color.id)}
+              onpointerdown={(e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                toggleColor(color.id);
+              }}
               aria-pressed={isActive}
               aria-label="Filtrovat barvu {color.name}"
             >
@@ -292,7 +307,8 @@
 
   .flag-tile.is-dimmed {
     border-color: transparent;
-    background-color: rgba(26, 26, 32, 0.45);
+    background-color: var(--color-surface-1);
+    opacity: 0.45;
   }
 
   .flag-tile-preview {
@@ -382,7 +398,7 @@
     flex-direction: column;
     gap: var(--space-xs);
     padding: var(--space-xs) 0 var(--space-sm);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--color-border-subtle);
   }
 
   .menu-mode-title {

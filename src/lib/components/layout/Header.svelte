@@ -45,26 +45,26 @@
       >
         <span class="icon"><BookOpen size={20} weight="duotone" /></span>
       </button>
-    {/if}
 
-    <button
-      type="button"
-      class="header-btn"
-      class:has-warning={navigation.hasMenuWarning}
-      aria-label={navigation.hasMenuWarning ? "Menu modulu (nestandardní abeceda)" : "Menu modulu"}
-      title={navigation.hasMenuWarning ? "Menu modulu (upozornění: nestandardní abeceda)" : "Menu modulu"}
-      onclick={() => {
-        settings.vibrate(20);
-        navigation.toggleMenu();
-      }}
-    >
-      <span class="icon-wrapper">
-        <span class="icon"><List size={22} weight="bold" /></span>
-        {#if navigation.hasMenuWarning}
-          <span class="warning-dot" aria-hidden="true"></span>
-        {/if}
-      </span>
-    </button>
+      <button
+        type="button"
+        class="header-btn"
+        class:has-warning={navigation.hasMenuWarning}
+        aria-label={navigation.hasMenuWarning ? "Menu modulu (nestandardní abeceda)" : "Menu modulu"}
+        title={navigation.hasMenuWarning ? "Menu modulu (upozornění: nestandardní abeceda)" : "Menu modulu"}
+        onclick={() => {
+          settings.vibrate(20);
+          navigation.toggleMenu();
+        }}
+      >
+        <span class="icon-wrapper">
+          <span class="icon"><List size={22} weight="bold" /></span>
+          {#if navigation.hasMenuWarning}
+            <span class="warning-dot" aria-hidden="true"></span>
+          {/if}
+        </span>
+      </button>
+    {/if}
   </div>
 
   {#if dbState.status === 'loading'}

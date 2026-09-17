@@ -124,7 +124,7 @@
   /* Sequential grid for bases other than 10 */
   .grid-sequential {
     display: grid;
-    gap: 6px;
+    gap: var(--space-sm);
     width: 100%;
   }
 
@@ -138,7 +138,7 @@
 
   .grid-sequential.cols-4 {
     grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
+    gap: var(--space-sm);
   }
 
   /* Base 2: Binary */
@@ -177,7 +177,7 @@
   .grid-dec {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    gap: var(--space-sm);
   }
 
   .key-dec {

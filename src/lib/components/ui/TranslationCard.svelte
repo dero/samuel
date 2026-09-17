@@ -5,9 +5,7 @@
 
   interface Props {
     text: string;
-    label?: string;
     placeholder?: string;
-    showBadges?: boolean;
     class?: string;
   }
 
@@ -72,7 +70,7 @@
   }
 
   .result-card {
-    background-color: var(--color-bg);
+    background-color: var(--color-bg-canvas);
     border: none;
     border-radius: var(--radius-sm);
     padding: var(--space-xs) 0;

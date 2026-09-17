@@ -3,6 +3,7 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import SpaceButton from '../../components/ui/SpaceButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import DominantButton from '../../components/ui/DominantButton.svelte';
   import RadioGroup, { type RadioOption } from '../../components/ui/RadioGroup.svelte';
@@ -484,7 +485,6 @@
   }
 
   function handleBackspace() {
-    settings.vibrate(20);
     if (crossTypeId === 'mobile-keypad') {
       if (phoneInputMode === 't9') {
         if (t9Digits.length > 0) {
@@ -746,13 +746,17 @@
         </div>
       {/if}
 
-      <!-- Utility Row: SlideToAction & BackspaceButton -->
-      <div class="keypad-utility-row">
+      <!-- Utility Row: SlideToAction, SpaceButton & BackspaceButton (1.2fr 1fr 1fr) -->
+      <div class="keypad-utility-row-3col">
         <SlideToAction
           disabled={!inputLetters && !pendingChar && !t9Digits && selectedAxis1 === null && selectedAxis2 === null && selectedAxis3 === null}
           onAction={handleClearAll}
           label="Vymazat"
           ariaLabel="Vymazat text tažením"
+        />
+
+        <SpaceButton
+          onAction={handleSpace}
         />
 
         <BackspaceButton
@@ -764,17 +768,9 @@
         />
       </div>
 
-      <!-- Dominant Row: Mezera (␣) & Enter (↵) for Large Polish; Mezera (␣) for Small Polish & Polybius -->
+      <!-- Dominant Row: Enter (↵) for Large Polish (100% full-width); Small Polish & Polybius don't need dominant row anymore -->
       {#if crossTypeId === 'large-polish'}
-        <div class="keypad-dominant-2col">
-          <DominantButton
-            symbol="␣"
-            name="Mezera"
-            variant="secondary"
-            title="Vložit mezeru"
-            onClick={handleSpace}
-          />
-
+        <div class="keypad-dominant-1col">
           <DominantButton
             symbol={polishSelectedChar || '↵'}
             name={polishSelectedChar ? `Vložit „${polishSelectedChar === ' ' ? 'Mezeru' : polishSelectedChar}“` : 'Vložit znak'}
@@ -782,16 +778,6 @@
             disabled={!polishSelectedChar}
             title="Vložit znak do textu"
             onClick={handleEnter}
-          />
-        </div>
-      {:else if crossTypeId === 'small-polish' || crossTypeId === 'polybius'}
-        <div class="keypad-dominant-1col">
-          <DominantButton
-            symbol="␣"
-            name="Mezera"
-            variant="secondary"
-            title="Vložit mezeru"
-            onClick={handleSpace}
           />
         </div>
       {/if}
@@ -830,7 +816,7 @@
     gap: 8px;
     width: 100%;
     min-height: 38px;
-    background: var(--color-bg-surface);
+    background: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
     padding: 4px 8px;
@@ -840,7 +826,7 @@
 
   .t9-digits-badge {
     font-family: var(--font-mono, monospace);
-    font-size: var(--font-size-xs);
+    font-size: var(--text-xs);
     font-weight: 700;
     color: var(--color-accent-primary);
     background: rgba(0, 210, 255, 0.1);
@@ -851,7 +837,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    transition: all var(--transition-fast);
+    transition: all 0.12s ease;
   }
 
   .t9-digits-badge.is-loading {
@@ -888,16 +874,16 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-bg-elevated);
+    background: var(--color-surface-elevated);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
-    font-size: var(--font-size-xs);
+    font-size: var(--text-xs);
     font-weight: 600;
     padding: 4px 8px;
     cursor: pointer;
     white-space: nowrap;
-    transition: all var(--transition-fast);
+    transition: all 0.12s ease;
     user-select: none;
     flex-shrink: 0;
   }
@@ -908,25 +894,25 @@
 
   .t9-candidate-chip.is-active {
     background: var(--color-accent-primary);
-    color: #000000;
+    color: var(--color-text-inverse);
     border-color: var(--color-accent-primary);
     box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
     font-weight: 700;
   }
 
   .t9-fallback-chip {
-    font-size: var(--font-size-xs);
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--color-text-secondary);
     padding: 4px 6px;
-    background: var(--color-bg-elevated);
+    background: var(--color-surface-elevated);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
   }
 
   .t9-no-match-text {
-    font-size: 11px;
-    color: var(--color-text-tertiary);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
     font-style: italic;
   }
 
@@ -948,7 +934,7 @@
   }
 
   .t9-loading-text {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--color-accent-primary);
     font-weight: 600;
   }
@@ -969,8 +955,8 @@
   }
 
   .t9-hint-text {
-    font-size: 11px;
-    color: var(--color-text-tertiary);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

@@ -3,6 +3,7 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import BrailleReference from './BrailleReference.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import SpaceButton from '../../components/ui/SpaceButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import DominantButton from '../../components/ui/DominantButton.svelte';
@@ -157,7 +158,6 @@
   function commitChar() {
     if (committedFade || activeDots.length === 0) return;
 
-    settings.vibrate([15, 30, 15]);
     const info = currentCharInfo;
     inputLetters += info.char;
     committedFade = true;
@@ -171,7 +171,6 @@
   function handleSpace() {
     const wasFading = committedFade;
     clearFadeTimer();
-    settings.vibrate(25);
     // If dots are selected and not fading, commit them first then add space
     if (!wasFading && activeDots.length > 0) {
       inputLetters += currentCharInfo.char;
@@ -183,7 +182,6 @@
   function handleBackspace() {
     const wasFading = committedFade;
     clearFadeTimer();
-    settings.vibrate(25);
     // 1. If dots are currently selected and not fading, backspace clears only the cell dots
     if (!wasFading && activeDots.length > 0) {
       activeDots = [];
@@ -199,7 +197,6 @@
 
   function handleClearAll() {
     clearFadeTimer();
-    settings.vibrate(35);
     inputLetters = '';
     activeDots = [];
   }
@@ -276,13 +273,17 @@
         </div>
       </div>
 
-      <!-- Utility Row: Slide to Clear and Smart Backspace -->
-      <div class="keypad-utility-row">
+      <!-- Utility Row: Slide to Clear, Mezera and Smart Backspace (1.2fr 1fr 1fr) -->
+      <div class="keypad-utility-row-3col">
         <SlideToAction
           disabled={!inputLetters && activeDots.length === 0}
           onAction={handleClearAll}
           label="Vymazat"
           ariaLabel="Vymazat celý text tažením"
+        />
+
+        <SpaceButton
+          onAction={handleSpace}
         />
 
         <BackspaceButton
@@ -294,25 +295,19 @@
         />
       </div>
 
-      <!-- Dominant Row: Mezera & Vložit znak (standard 0.85fr 1.15fr) -->
-      <div class="keypad-dominant-2col">
-        <DominantButton
-          symbol="␣"
-          name="Mezera"
-          variant="secondary"
-          title="Vložit mezeru"
-          onClick={handleSpace}
-        />
-
-        <DominantButton
-          symbol={activeDots.length > 0 ? currentCharInfo.char : '↵'}
-          name={activeDots.length > 0 ? `Vložit „${currentCharInfo.char}“` : 'Vložit znak'}
-          ready={activeDots.length > 0 && !committedFade}
-          disabled={activeDots.length === 0 || committedFade}
-          title="Vložit znak do textu"
-          onClick={commitChar}
-        />
-      </div>
+      <!-- Dominant Row: Vložit znak (100% width, only when manual confirmation is active) -->
+      {#if !autoInsert}
+        <div class="keypad-dominant-1col">
+          <DominantButton
+            symbol={activeDots.length > 0 ? currentCharInfo.char : '↵'}
+            name={activeDots.length > 0 ? `Vložit „${currentCharInfo.char}“` : 'Vložit znak'}
+            ready={activeDots.length > 0 && !committedFade}
+            disabled={activeDots.length === 0 || committedFade}
+            title="Vložit znak do textu"
+            onClick={commitChar}
+          />
+        </div>
+      {/if}
     </div>
   {/snippet}
 
@@ -384,7 +379,7 @@
     width: clamp(64px, 10.2vh, 84px);
     height: clamp(64px, 10.2vh, 84px);
     border-radius: var(--radius-full);
-    background-color: #000000;
+    background-color: var(--color-bg-canvas);
     border: 2px solid var(--color-border-subtle);
     display: flex;
     align-items: center;
@@ -403,7 +398,7 @@
 
   .matrix-dot-btn.is-active {
     background-color: var(--color-accent-primary);
-    border-color: #ffffff;
+    border-color: var(--color-text-primary);
     box-shadow: var(--glow-accent-strong);
   }
 
@@ -414,16 +409,16 @@
   @keyframes dotFadeOut {
     0% {
       background-color: var(--color-accent-primary);
-      border-color: #ffffff;
+      border-color: var(--color-text-primary);
       box-shadow: 0 0 24px rgba(0, 210, 255, 1);
     }
     25% {
       background-color: var(--color-accent-primary);
-      border-color: #ffffff;
+      border-color: var(--color-text-primary);
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
     }
     100% {
-      background-color: #000000;
+      background-color: var(--color-bg-canvas);
       border-color: var(--color-border-subtle);
       box-shadow: 0 0 0 rgba(0, 210, 255, 0);
     }
@@ -439,7 +434,7 @@
   }
 
   .matrix-dot-btn.is-active .dot-num {
-    color: #000000;
+    color: var(--color-text-inverse);
   }
 
   .matrix-dot-btn.is-active.is-fading .dot-num {
@@ -447,8 +442,8 @@
   }
 
   @keyframes dotNumFadeOut {
-    0% { color: #000000; }
-    25% { color: #000000; }
+    0% { color: var(--color-text-inverse); }
+    25% { color: var(--color-text-inverse); }
     100% { color: var(--color-text-secondary); }
   }
 </style>

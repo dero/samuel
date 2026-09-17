@@ -76,7 +76,7 @@
   .roman-numpad-container {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-sm);
     width: 100%;
     user-select: none;
     -webkit-user-select: none;
@@ -85,7 +85,7 @@
 
   .grid-row {
     display: grid;
-    gap: 6px;
+    gap: var(--space-sm);
     width: 100%;
   }
 

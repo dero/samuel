@@ -1,12 +1,14 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { Backspace } from 'phosphor-svelte';
+  import { Backspace, X } from 'phosphor-svelte';
+  import { settings } from '../../state/settings.svelte';
 
   interface Props {
     onAction: () => void;
     disabled?: boolean;
     hasActiveSelection?: boolean;
     label?: string;
+    showLabel?: boolean;
     cancelLabel?: string;
     title?: string;
     cancelTitle?: string;
@@ -18,6 +20,7 @@
     disabled = false,
     hasActiveSelection = false,
     label = 'Backspace',
+    showLabel = false,
     cancelLabel = 'Zrušit výběr',
     title = 'Smazat poslední znak',
     cancelTitle = 'Zrušit aktivní výběr',
@@ -42,12 +45,14 @@
     if (disabled) return;
     if (e.button !== 0 && e.pointerType === 'mouse') return;
 
+    settings.vibrate(20);
     onAction();
     stopRepeat();
 
     startTimer = setTimeout(() => {
       timer = setInterval(() => {
         if (!disabled) {
+          settings.vibrate(15);
           onAction();
         } else {
           stopRepeat();
@@ -60,6 +65,7 @@
     if (disabled) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
+      settings.vibrate(20);
       onAction();
     }
   }
@@ -84,6 +90,7 @@
   class:has-active={hasActiveSelection}
   {disabled}
   title={displayTitle}
+  aria-label={displayTitle}
   onpointerdown={startRepeat}
   onpointerup={stopRepeat}
   onpointerleave={stopRepeat}
@@ -91,31 +98,41 @@
   oncontextmenu={(e) => e.preventDefault()}
   onkeydown={handleKeyDown}
 >
-  <span class="btn-icon"><Backspace size={18} weight="duotone" /></span>
-  <span class="btn-label">{displayLabel}</span>
+  <span class="btn-icon">
+    {#if hasActiveSelection}
+      <X size={20} weight="bold" />
+    {:else}
+      <Backspace size={20} weight="duotone" />
+    {/if}
+  </span>
+  {#if showLabel}
+    <span class="btn-label">{displayLabel}</span>
+  {/if}
 </button>
 
 <style>
   .utility-btn {
-    height: 42px;
-    padding: 0 12px;
+    height: var(--utility-row-height);
+    padding: 0 var(--space-sm);
     background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--text-sm);
     font-weight: 600;
     line-height: 1;
     color: var(--color-text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
     transition: background-color 0.12s, border-color 0.12s, transform 0.08s;
     box-sizing: border-box;
     width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   .utility-btn:active:not(:disabled) {
@@ -144,5 +161,8 @@
     display: inline-flex;
     align-items: center;
     letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>

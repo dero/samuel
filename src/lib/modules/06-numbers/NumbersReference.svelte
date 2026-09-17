@@ -573,7 +573,7 @@
 
   .ex-arrow {
     color: var(--color-text-muted);
-    font-size: 10px;
+    font-size: var(--text-2xs);
   }
 
   .ex-result {
@@ -581,7 +581,7 @@
   }
 
   .ex-note {
-    font-size: 11px;
+    font-size: var(--text-xs);
     margin-left: auto;
   }
 
@@ -590,7 +590,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 4px 6px;
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--color-text-secondary);
     padding-top: 2px;
   }
@@ -616,7 +616,7 @@
 
   .bp-plus {
     color: var(--color-text-muted);
-    font-size: 10px;
+    font-size: var(--text-2xs);
   }
 
   /* Rules */
@@ -657,18 +657,18 @@
     align-self: flex-start;
     padding: 2px 6px;
     border-radius: var(--radius-xs);
-    font-size: 10px;
+    font-size: var(--text-2xs);
     font-weight: 700;
     text-transform: uppercase;
   }
 
   .rule-badge.is-canonical {
-    background-color: rgba(0, 210, 255, 0.15);
+    background-color: var(--color-accent-primary-subtle);
     color: var(--color-accent-primary);
   }
 
   .rule-badge.is-loose {
-    background-color: rgba(255, 180, 0, 0.15);
-    color: var(--color-accent-warning, #ffb400);
+    background-color: var(--color-accent-warning-subtle);
+    color: var(--color-accent-warning);
   }
 </style>

@@ -2,6 +2,7 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import SpaceButton from '../../components/ui/SpaceButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import DominantButton from '../../components/ui/DominantButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
@@ -472,12 +473,15 @@
         />
       {/if}
 
-      <!-- 3. Keypad Utility Row -->
-      <div class="keypad-utility-row">
+      <!-- 3. Keypad Utility Row: SlideToAction, Mezera and Backspace (1.2fr 1fr 1fr) -->
+      <div class="keypad-utility-row-3col">
         <SlideToAction
           disabled={!decodedText && !buffer}
           onAction={handleClearAll}
-          label="Smazat vše"
+          label="Vymazat"
+        />
+        <SpaceButton
+          onAction={handleSpace}
         />
         <BackspaceButton
           disabled={!decodedText && !buffer}
@@ -485,23 +489,19 @@
         />
       </div>
 
-      <!-- 4. Dominant Button Row -->
-      <div class="keypad-dominant-2col">
-        <DominantButton
-          symbol="␣"
-          name="Mezera"
-          variant="secondary"
-          onClick={handleSpace}
-        />
-        <DominantButton
-          symbol={enterButtonSymbol}
-          name={enterButtonName}
-          ready={isEnterButtonEnabled}
-          disabled={!isEnterButtonEnabled}
-          variant={isAutoEnterActive ? 'secondary' : 'accent'}
-          onClick={handleCommit}
-        />
-      </div>
+      <!-- 4. Dominant Button Row: Enter (100% full-width, hidden when auto-enter is active) -->
+      {#if !isAutoEnterActive}
+        <div class="keypad-dominant-1col">
+          <DominantButton
+            symbol={enterButtonSymbol}
+            name={enterButtonName}
+            ready={isEnterButtonEnabled}
+            disabled={!isEnterButtonEnabled}
+            variant="accent"
+            onClick={handleCommit}
+          />
+        </div>
+      {/if}
     </div>
   {/snippet}
 
@@ -575,7 +575,7 @@
   .keypad-zone {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
     width: 100%;
   }
 
@@ -586,7 +586,6 @@
     align-items: center;
     gap: var(--space-xs);
     width: 100%;
-    margin-bottom: 2px;
   }
 
   .flow-btn {
@@ -616,11 +615,11 @@
 
   .flow-btn.is-error {
     border-color: var(--color-accent-danger);
-    background-color: rgba(255, 68, 68, 0.08);
+    background-color: var(--color-accent-danger-subtle);
   }
 
   .flow-btn-tag {
-    font-size: 10px;
+    font-size: var(--text-2xs);
     font-weight: 700;
     color: var(--color-text-secondary);
     text-transform: uppercase;
@@ -648,7 +647,7 @@
   }
 
   .flow-progress {
-    font-size: 10px;
+    font-size: var(--text-2xs);
     font-family: var(--font-mono, monospace);
     color: var(--color-text-secondary);
   }
@@ -669,14 +668,14 @@
 
   .flow-char-badge.is-valid {
     background-color: var(--color-accent-primary);
-    color: #000;
-    box-shadow: 0 0 6px rgba(0, 210, 255, 0.4);
+    color: var(--color-text-inverse);
+    box-shadow: 0 0 6px var(--color-accent-primary-glow);
   }
 
   .flow-char-badge.is-error {
     background-color: var(--color-accent-danger);
-    color: #fff;
-    font-size: 10px;
+    color: var(--color-text-primary);
+    font-size: var(--text-2xs);
   }
 
   .flow-char-badge.is-empty {
@@ -709,20 +708,6 @@
     background-color: var(--color-surface-active);
     color: var(--color-accent-primary);
     transform: scale(0.92);
-  }
-
-  .keypad-utility-row {
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: var(--space-sm);
-    height: var(--utility-row-height);
-    margin-top: 2px;
-  }
-
-  .keypad-dominant-2col {
-    display: grid;
-    grid-template-columns: 0.85fr 1.15fr;
-    gap: var(--space-sm);
   }
 
   /* Menu styling */

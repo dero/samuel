@@ -316,14 +316,14 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    border: 1.5px solid var(--color-border-default);
+    border: 1.5px solid var(--color-border-subtle);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     transition: all 0.12s ease;
     background-color: var(--color-surface-1);
-    color: #000;
+    color: var(--color-text-inverse);
   }
 
   .radio-dot.is-checked {

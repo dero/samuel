@@ -1,9 +1,8 @@
 <script lang="ts">
   import ModuleShell from '../components/layout/ModuleShell.svelte';
   import type { ModuleMeta } from '../types';
-  import { copyToClipboard } from '../utils/clipboard';
-  import { settings } from '../state/settings.svelte';
   import ModuleIcon from '../components/ui/ModuleIcon.svelte';
+  import TranslationCard from '../components/ui/TranslationCard.svelte';
 
   interface Props {
     module: ModuleMeta;
@@ -28,23 +27,10 @@
   onPaste={handlePaste}
 >
   {#snippet output()}
-    <div class="output-container">
-      <div class="output-header">
-        <span class="output-label">Dekódovaný výstup (Klepnutím zkopírujete)</span>
-      </div>
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="output-box"
-        class:is-empty={!dummyText}
-        onclick={() => {
-          settings.vibrate(35);
-          copyToClipboard(dummyText || 'Ukázkový text tajenky');
-        }}
-      >
-        {dummyText || 'Zatím žádný vstup. Modul bude implementován v dalším kroku.'}
-      </div>
-    </div>
+    <TranslationCard
+      text={dummyText}
+      placeholder="Zatím žádný vstup. Modul bude implementován v dalším kroku."
+    />
   {/snippet}
 
   {#snippet input()}
@@ -72,50 +58,8 @@
 </ModuleShell>
 
 <style>
-  .output-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    gap: 6px;
-  }
-
-  .output-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .output-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-  }
-
-  .output-box {
-    flex: 1;
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    padding: 14px;
-    font-family: var(--font-mono);
-    font-size: 18px;
-    line-height: 1.5;
-    cursor: pointer;
-    overflow-y: auto;
-    transition: border-color 0.2s, background-color 0.2s;
-  }
-  .output-box:active {
-    background-color: var(--color-surface-active);
-  }
-
-  .output-box.is-empty {
-    color: var(--color-text-secondary);
-    font-style: italic;
-    font-size: 14px;
-  }
-
   .input-container {
-    padding: 16px;
+    padding: var(--space-lg);
   }
 
   .stub-keypad {
@@ -132,7 +76,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-sm);
   }
 
   .stub-icon {
@@ -144,12 +88,13 @@
   }
 
   .stub-name {
-    font-size: 16px;
+    font-size: var(--text-base);
     font-weight: 600;
+    color: var(--color-text-primary);
   }
 
   .stub-badge {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--color-accent-primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -159,17 +104,19 @@
   .ref-body {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-md);
   }
+
   .ref-body h3 {
     margin: 0;
     color: var(--color-accent-primary);
   }
+
   .ref-note {
-    padding: 12px;
-    background-color: rgba(255, 255, 255, 0.05);
+    padding: var(--space-md);
+    background-color: var(--color-surface-2);
     border-radius: var(--radius-sm);
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
   }
 </style>

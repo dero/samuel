@@ -3,6 +3,7 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import SemaphoreReference from './SemaphoreReference.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import SpaceButton from '../../components/ui/SpaceButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import DominantButton from '../../components/ui/DominantButton.svelte';
@@ -180,7 +181,6 @@
   function commitChar() {
     if (!currentChar || committedFade) return;
     inputLetters += currentChar;
-    triggerHaptic('commit');
     committedFade = true;
     if (fadeTimeout) clearTimeout(fadeTimeout);
     fadeTimeout = setTimeout(() => {
@@ -197,7 +197,6 @@
       inputLetters += ' ';
     }
     activeDirs = [];
-    triggerHaptic('tap');
   }
 
   function handleBackspace() {
@@ -205,10 +204,8 @@
     if (activeDirs.length > 0) {
       // Cancel active arm selection without touching text
       activeDirs = [];
-      triggerHaptic('tap');
     } else if (inputLetters.length > 0) {
       inputLetters = inputLetters.slice(0, -1);
-      triggerHaptic('tap');
     }
   }
 
@@ -216,7 +213,6 @@
     clearFadeTimer();
     inputLetters = '';
     activeDirs = [];
-    triggerHaptic('clear');
   }
 
   function handleReset() {
@@ -319,13 +315,17 @@
         </div>
       </div>
 
-      <!-- Utility Row: Slide to Clear and Smart Backspace -->
-      <div class="keypad-utility-row">
+      <!-- Utility Row: Slide to Clear, Mezera and Smart Backspace (1.2fr 1fr 1fr) -->
+      <div class="keypad-utility-row-3col">
         <SlideToAction
           disabled={!inputLetters && activeDirs.length === 0}
           onAction={handleClearAll}
           label="Vymazat"
           ariaLabel="Vymazat celý text tažením"
+        />
+
+        <SpaceButton
+          onAction={handleSpace}
         />
 
         <BackspaceButton
@@ -337,25 +337,19 @@
         />
       </div>
 
-      <!-- Dominant Row: Mezera & Vložit znak (standard 0.85fr 1.15fr) -->
-      <div class="keypad-dominant-2col">
-        <DominantButton
-          symbol="␣"
-          name="Mezera"
-          variant="secondary"
-          title="Vložit mezeru"
-          onClick={handleSpace}
-        />
-
-        <DominantButton
-          symbol={currentChar || '↵'}
-          name={currentChar ? `Vložit „${currentChar}“` : activeDirs.length === 1 ? 'Zvolte 2. rameno' : 'Vložit znak'}
-          ready={!!currentChar && !committedFade}
-          disabled={!currentChar || committedFade}
-          title="Vložit znak do textu"
-          onClick={commitChar}
-        />
-      </div>
+      <!-- Dominant Row: Vložit znak (100% width, only when manual confirmation is active) -->
+      {#if !autoInsert}
+        <div class="keypad-dominant-1col">
+          <DominantButton
+            symbol={currentChar || '↵'}
+            name={currentChar ? `Vložit „${currentChar}“` : activeDirs.length === 1 ? 'Zvolte 2. rameno' : 'Vložit znak'}
+            ready={!!currentChar && !committedFade}
+            disabled={!currentChar || committedFade}
+            title="Vložit znak do textu"
+            onClick={commitChar}
+          />
+        </div>
+      {/if}
     </div>
   {/snippet}
 
@@ -441,7 +435,7 @@
   }
 
   .svg-center-dot {
-    fill: #000000;
+    fill: var(--color-bg-canvas);
     stroke: var(--color-border-subtle);
     stroke-width: 1.5;
   }
@@ -470,7 +464,7 @@
     width: clamp(52px, 7.8vh, 64px);
     height: clamp(52px, 7.8vh, 64px);
     border-radius: var(--radius-full);
-    background-color: #000000;
+    background-color: var(--color-bg-canvas);
     border: 2px solid var(--color-border-subtle);
     user-select: none;
     -webkit-user-select: none;
@@ -514,7 +508,7 @@
 
   .wheel-dir-btn.is-active {
     background-color: var(--color-accent-primary);
-    border-color: #ffffff;
+    border-color: var(--color-text-primary);
     box-shadow: var(--glow-accent-strong);
   }
 
@@ -525,16 +519,16 @@
   @keyframes buttonFadeOut {
     0% {
       background-color: var(--color-accent-primary);
-      border-color: #ffffff;
+      border-color: var(--color-text-primary);
       box-shadow: 0 0 24px rgba(0, 210, 255, 1);
     }
     25% {
       background-color: var(--color-accent-primary);
-      border-color: #ffffff;
+      border-color: var(--color-text-primary);
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
     }
     100% {
-      background-color: #000000;
+      background-color: var(--color-bg-canvas);
       border-color: var(--color-border-subtle);
       box-shadow: 0 0 0 rgba(0, 210, 255, 0);
     }

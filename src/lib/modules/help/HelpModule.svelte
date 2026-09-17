@@ -1,6 +1,6 @@
 <script lang="ts">
   import { MODULES } from '../../types';
-  import { APP_NAME, APP_VERSION } from '../../constants';
+  import { APP_NAME } from '../../constants';
   import ModuleIcon from '../../components/ui/ModuleIcon.svelte';
   import { List, BookOpen } from 'phosphor-svelte';
 </script>
@@ -8,7 +8,7 @@
 <div class="help-scroll">
   <div class="help-container">
     <h1 class="page-title">Nápověda k aplikaci</h1>
-    <p class="subtitle">{APP_NAME} v{APP_VERSION} – Nástroj pro terénní šifrovačky</p>
+    <p class="subtitle">{APP_NAME} – Nástroj pro terénní šifrovačky</p>
 
     <section class="card">
       <h2 class="card-title">Základní ovládání & Ergonomie</h2>
@@ -60,22 +60,22 @@
   }
 
   .help-container {
-    max-width: 640px;
+    max-width: var(--max-app-width);
     margin: 0 auto;
-    padding: 16px 14px 40px 14px;
+    padding: var(--space-lg) 14px 40px 14px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-lg);
   }
 
   .page-title {
-    font-size: 22px;
+    font-size: var(--text-2xl);
     font-weight: 700;
     margin: 0 0 2px 0;
   }
 
   .subtitle {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
     margin: 0 0 4px 0;
   }
@@ -84,14 +84,14 @@
     background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
-    padding: 16px;
+    padding: var(--space-lg);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-md);
   }
 
   .card-title {
-    font-size: 16px;
+    font-size: var(--text-base);
     font-weight: 700;
     margin: 0;
     color: var(--color-accent-primary);
@@ -103,24 +103,24 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    font-size: 14px;
+    font-size: var(--text-sm);
     line-height: 1.5;
   }
 
   .tools-overview {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 8px;
+    gap: var(--space-sm);
   }
 
   .tool-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-sm);
     padding: 8px 10px;
     background-color: var(--color-surface-2);
     border-radius: var(--radius-sm);
-    font-size: 13px;
+    font-size: var(--text-sm);
     font-weight: 600;
   }
 
@@ -141,7 +141,7 @@
   }
 
   .note {
-    font-size: 12px;
+    font-size: var(--text-xs);
     color: var(--color-text-secondary);
     font-style: italic;
     margin: 0;

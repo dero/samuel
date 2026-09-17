@@ -56,7 +56,7 @@
   .alphabet-grid {
     display: grid;
     grid-template-columns: repeat(var(--cols, 6), 1fr);
-    gap: 6px;
+    gap: var(--space-sm);
     width: 100%;
     box-sizing: border-box;
   }

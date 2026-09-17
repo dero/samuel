@@ -55,15 +55,15 @@
     isCheckingUpdates = true;
     try {
       settings.vibrate(20);
-      toast.show('Kontroluji dostupnost aktualizací...', { type: 'info', duration: 2000 });
+      toast.show('Kontroluji aktualizace...', { type: 'info', duration: 2000 });
       await checkUpdatesOnInit();
       if (!dbState.updateAvailable) {
-        toast.show('Vše je aktuální! Máte nejnovější verzi.', { type: 'success', duration: 2500 });
+        toast.show('Máte nejnovější verzi', { type: 'success', duration: 2500 });
       } else {
-        toast.show('Je k dispozici novější verze!', { type: 'warning', duration: 3000 });
+        toast.show('Dostupná nová verze!', { type: 'warning', duration: 3000 });
       }
-    } catch (err: any) {
-      toast.show(`Chyba kontroly: ${err?.message}`, { type: 'danger' });
+    } catch {
+      toast.show('Chyba kontroly', { type: 'danger' });
     } finally {
       isCheckingUpdates = false;
     }
@@ -73,15 +73,15 @@
     try {
       settings.vibrate(30);
       if (dbState.dbUpdateAvailable) {
-        toast.show('Stahuji nejnovější data slovníku...', { type: 'info' });
+        toast.show('Stahuji slovník...', { type: 'info' });
         await getDatabase({ forceRefresh: true });
-        toast.show('Slovník byl úspěšně aktualizován!', { type: 'success' });
+        toast.show('Slovník aktualizován', { type: 'success' });
       } else if (dbState.appUpdateAvailable) {
-        toast.show('Načítám novou verzi aplikace...', { type: 'info' });
+        toast.show('Načítám novou verzi...', { type: 'info' });
         window.location.reload();
       }
-    } catch (err: any) {
-      toast.show(`Chyba: ${err?.message}`, { type: 'danger' });
+    } catch {
+      toast.show('Chyba aktualizace', { type: 'danger' });
     }
   }
 
@@ -98,18 +98,17 @@
     }
     const id = alphabet.addCustomLayout(
       newLayoutName.trim(),
-      [...inspectedLayout.letters],
-      'Vlastní abeceda'
+      [...inspectedLayout.letters]
     );
     inspectedLayoutId = id;
     newLayoutName = '';
     isCreatingLayout = false;
-    toast.show('Vlastní abeceda vytvořena', { type: 'success' });
+    toast.show('Abeceda vytvořena', { type: 'success' });
   }
 
   function toggleLetter(char: string) {
     if (inspectedLayout.isBuiltin) {
-      toast.show('Vestavěné abecedy nelze upravovat. Vytvořte si vlastní kopii níže.', { type: 'info' });
+      toast.show('Vestavěné nelze upravit', { type: 'info' });
       return;
     }
     settings.vibrate(25);
@@ -368,17 +367,17 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--space-md);
   }
 
   .card-title {
-    font-size: 16px;
+    font-size: var(--text-base);
     font-weight: 700;
     margin: 0;
   }
 
   .card-desc {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
     margin: 3px 0 0 0;
     line-height: 1.4;
@@ -390,30 +389,30 @@
     gap: 5px;
     padding: 4px 10px;
     border-radius: var(--radius-full);
-    font-size: 12px;
+    font-size: var(--text-xs);
     font-weight: 700;
     flex-shrink: 0;
   }
 
   .badge-status.online {
-    background-color: rgba(34, 197, 94, 0.15);
+    background-color: var(--color-accent-success-subtle);
     color: var(--color-accent-success);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 1px solid rgba(16, 185, 129, 0.3);
   }
 
   .version-box {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-sm);
     background-color: var(--color-surface-2);
-    padding: 12px;
+    padding: var(--space-md);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-subtle);
   }
 
   .version-badge {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--color-text-primary);
   }
@@ -422,21 +421,21 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
-    background-color: rgba(64, 150, 255, 0.12);
+    gap: var(--space-md);
+    background-color: var(--color-accent-primary-subtle);
     border: 1px solid var(--color-accent-primary);
     border-radius: var(--radius-sm);
-    padding: 14px;
+    padding: var(--space-md);
   }
 
   .update-banner-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-xs);
   }
 
   .update-title {
-    font-size: 14px;
+    font-size: var(--text-sm);
     font-weight: 700;
     color: var(--color-accent-primary);
     display: flex;
@@ -445,7 +444,7 @@
   }
 
   .update-subtitle {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
     line-height: 1.35;
   }
@@ -454,8 +453,8 @@
     width: 100%;
     padding: 10px 14px;
     background-color: var(--color-accent-primary);
-    color: #000;
-    font-size: 14px;
+    color: var(--color-text-inverse);
+    font-size: var(--text-sm);
     font-weight: 700;
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -463,7 +462,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--space-sm);
     box-sizing: border-box;
     transition: opacity 0.15s ease, transform 0.05s ease;
   }
@@ -500,24 +499,24 @@
   .layout-select-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-sm);
     flex: 1;
     text-align: left;
     padding: 6px 0;
   }
 
   .layout-name {
-    font-size: 14px;
+    font-size: var(--text-sm);
     font-weight: 600;
   }
 
   .layout-count {
-    font-size: 12px;
+    font-size: var(--text-xs);
     color: var(--color-text-secondary);
   }
 
   .builtin-badge {
-    font-size: 10px;
+    font-size: var(--text-2xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -528,46 +527,46 @@
   }
 
   .custom-badge {
-    font-size: 10px;
+    font-size: var(--text-2xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     padding: 1px 6px;
     border-radius: var(--radius-full);
-    background-color: rgba(0, 210, 255, 0.12);
+    background-color: var(--color-accent-primary-subtle);
     color: var(--color-accent-primary);
   }
 
   .delete-btn {
     padding: 6px 10px;
     color: var(--color-accent-danger);
-    font-size: 14px;
+    font-size: var(--text-sm);
   }
 
   .letters-preview {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px;
-    background-color: rgba(0, 0, 0, 0.4);
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background-color: var(--color-surface-1);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-subtle);
   }
 
   .preview-label {
-    font-size: 12px;
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--color-text-secondary);
   }
 
   .preview-desc {
-    font-size: 12px;
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
     line-height: 1.35;
   }
 
   .preview-hint {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
     font-style: italic;
     line-height: 1.35;
@@ -584,9 +583,9 @@
     padding: 4px 8px;
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: var(--text-sm);
     font-weight: 600;
   }
 
@@ -599,14 +598,14 @@
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    font-size: 14px;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--color-accent-primary);
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--space-sm);
     cursor: pointer;
   }
 
@@ -622,24 +621,24 @@
   .new-layout-form {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-sm);
   }
 
   .new-layout-form input {
     padding: 10px 12px;
-    font-size: 14px;
+    font-size: var(--text-sm);
   }
 
   .form-actions {
     display: flex;
-    gap: 8px;
+    gap: var(--space-sm);
   }
 
   .save-btn {
     flex: 1;
     padding: 10px;
     background-color: var(--color-accent-primary);
-    color: #000;
+    color: var(--color-text-inverse);
     font-weight: 700;
     border-radius: var(--radius-sm);
   }
@@ -649,14 +648,14 @@
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    font-size: 13px;
+    font-size: var(--text-sm);
   }
 
   .sys-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
   }
 

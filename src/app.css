@@ -151,6 +151,17 @@ textarea:focus, input:focus {
   height: var(--utility-row-height);
 }
 
+.keypad-utility-row-3col,
+.keypad-utility-row.has-space {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: var(--space-sm);
+  width: 100%;
+  align-items: center;
+  flex-shrink: 0;
+  height: var(--utility-row-height);
+}
+
 .keypad-dominant-1col {
   display: grid;
   grid-template-columns: 1fr;
@@ -182,6 +193,7 @@ button,
 [role="button"],
 .keypad-zone,
 .keypad-utility-row,
+.keypad-utility-row-3col,
 .keypad-dominant-1col,
 .keypad-dominant-2col,
 .keypad-dominant-3col,

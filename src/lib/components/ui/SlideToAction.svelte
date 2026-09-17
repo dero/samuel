@@ -6,6 +6,7 @@
     onAction: () => void;
     disabled?: boolean;
     label?: string;
+    showLabel?: boolean;
     confirmedLabel?: string;
     icon?: string;
     ariaLabel?: string;
@@ -18,6 +19,7 @@
     onAction,
     disabled = false,
     label = "Vymazat",
+    showLabel = false,
     confirmedLabel = "Smazáno",
     icon,
     ariaLabel,
@@ -264,11 +266,13 @@
 
   <!-- Centered / Offset text guide with static subtle arrows -->
   <div class="slide-label-container" style:opacity={labelOpacity}>
-    <span class="slide-label-text">{label}</span>
-    <span class="slide-chevrons" aria-hidden="true">››</span>
+    {#if showLabel && label}
+      <span class="slide-label-text">{label}</span>
+    {/if}
+    <span class="slide-chevrons" aria-hidden="true">›››</span>
   </div>
 
-  {#if isConfirmed}
+  {#if isConfirmed && showLabel}
     <div class="slide-confirmed-text">
       {confirmedLabel}
     </div>
@@ -298,7 +302,7 @@
 <style>
   .slide-track {
     position: relative;
-    height: 42px;
+    height: var(--utility-row-height);
     width: 100%;
     background-color: var(--color-surface-2);
     border: 1px solid rgba(239, 68, 68, 0.3);
@@ -373,7 +377,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-left: 32px;
+    padding-left: 36px;
     padding-right: 12px;
     gap: 6px;
     color: var(--color-accent-danger);
@@ -390,11 +394,12 @@
   }
 
   .slide-chevrons {
-    display: inline-block;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: -1px;
-    opacity: 0.55;
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    opacity: 0.45;
   }
 
   .slide-confirmed-text {

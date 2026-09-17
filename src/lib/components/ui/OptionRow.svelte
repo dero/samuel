@@ -83,7 +83,7 @@
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--color-border-subtle);
   }
 
   .option-row:last-child {
@@ -136,7 +136,7 @@
     width: 44px;
     height: 24px;
     appearance: none;
-    background-color: #2a2a34;
+    background-color: var(--color-surface-3);
     border-radius: var(--radius-full);
     position: relative;
     cursor: pointer;
@@ -153,7 +153,7 @@
     left: 2px;
     width: 20px;
     height: 20px;
-    background-color: #ffffff;
+    background-color: var(--color-text-primary);
     border-radius: 50%;
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }

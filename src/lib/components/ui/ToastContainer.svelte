@@ -26,12 +26,12 @@
 <style>
   .toast-container {
     position: fixed;
-    bottom: max(16px, env(safe-area-inset-bottom));
+    top: calc(var(--header-height) + var(--space-xs));
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    flex-direction: column-reverse;
-    gap: 8px;
+    flex-direction: column;
+    gap: var(--space-xs);
     z-index: 300;
     pointer-events: none;
     max-width: 90vw;
@@ -42,40 +42,40 @@
     pointer-events: auto;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
+    gap: var(--space-md);
+    padding: 8px var(--space-md);
     border-radius: var(--radius-md);
-    background-color: var(--color-surface-2);
+    background-color: var(--color-surface-elevated);
     border: 1px solid var(--color-border-subtle);
     color: var(--color-text-primary);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-    font-size: 14px;
-    font-weight: 500;
-    animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-lg);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .toast.success {
     border-color: var(--color-accent-success);
-    background-color: #0c281e;
+    color: var(--color-accent-success);
   }
 
   .toast.danger {
     border-color: var(--color-accent-danger);
-    background-color: #2b1114;
+    color: var(--color-accent-danger);
   }
 
   .toast.warning {
     border-color: var(--color-accent-warning);
-    background-color: #2b220e;
+    color: var(--color-accent-warning);
   }
 
   .toast.info {
     border-color: var(--color-accent-primary);
-    background-color: #0b222d;
+    color: var(--color-accent-primary);
   }
 
   .undo-btn {
-    font-size: 13px;
+    font-size: var(--text-xs);
     font-weight: 700;
     color: var(--color-accent-warning);
     text-decoration: underline;
@@ -85,10 +85,10 @@
     opacity: 0.8;
   }
 
-  @keyframes slideUp {
+  @keyframes slideDown {
     from {
       opacity: 0;
-      transform: translateY(12px);
+      transform: translateY(-10px);
     }
     to {
       opacity: 1;
