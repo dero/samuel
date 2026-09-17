@@ -11,6 +11,8 @@
     settings.vibrate(20);
     navigation.openModule(id as any);
   }
+
+  const fillersCount = MODULES.length % 4 === 0 ? 0 : 4 - (MODULES.length % 4);
 </script>
 
 <BottomSheet
@@ -19,86 +21,98 @@
   icon={SquaresFour}
   onClose={() => navigation.closeLauncher()}
   maxWidth="540px"
+  maxHeight="80dvh"
   padding={false}
 >
-  <div class="modules-container">
-    <div class="modules-grid">
-      {#each MODULES as mod, i}
-        <button
-          type="button"
-          class="module-btn"
-          class:is-active={navigation.activeModuleId === mod.id}
-          class:is-system={mod.isSystem}
-          class:is-center-single={i === MODULES.length - 1 && MODULES.length % 3 === 1}
-          onclick={() => handleSelect(mod.id)}
-        >
-          <span class="icon">
-            <ModuleIcon id={mod.id} weight="duotone" />
-          </span>
-          <span class="name">{mod.name}</span>
-          {#if mod.id === 'settings' && dbState.updateAvailable}
-            <span class="update-dot" title="K dispozici je aktualizace"></span>
-          {/if}
-        </button>
-      {/each}
-    </div>
+  <div class="modules-grid">
+    {#each MODULES as mod}
+      <button
+        type="button"
+        class="module-btn"
+        class:is-active={navigation.activeModuleId === mod.id}
+        class:is-system={mod.isSystem}
+        onclick={() => handleSelect(mod.id)}
+      >
+        <span class="icon">
+          <ModuleIcon id={mod.id} weight="duotone" />
+        </span>
+        <span class="name">{mod.name}</span>
+        {#if mod.id === 'settings' && dbState.updateAvailable}
+          <span class="update-dot" title="K dispozici je aktualizace"></span>
+        {/if}
+      </button>
+    {/each}
+    {#each Array(fillersCount) as _}
+      <div class="grid-filler" aria-hidden="true"></div>
+    {/each}
   </div>
 </BottomSheet>
 
 <style>
-  .modules-container {
-    padding: var(--space-xs) var(--space-md) var(--space-md) var(--space-md);
-    width: 100%;
-    box-sizing: border-box;
-  }
-
   .modules-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-xs);
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background-color: var(--color-border-subtle);
     width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
-  .module-btn {
+  .module-btn,
+  .grid-filler {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--space-sm) var(--space-xs);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    gap: 4px;
-    min-height: 62px;
-    transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
+    padding: var(--space-sm) 2px;
+    background-color: var(--color-surface-1);
+    border: none;
+    border-radius: 0;
+    gap: 5px;
+    min-height: 68px;
+    box-sizing: border-box;
+  }
+
+  .module-btn {
+    transition: background-color 0.12s ease;
     touch-action: manipulation;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (hover: hover) {
+    .module-btn:hover {
+      background-color: var(--color-surface-2);
+    }
   }
 
   .module-btn:active {
     background-color: var(--color-surface-active);
-    transform: scale(0.96);
   }
 
   .module-btn.is-active {
-    border-color: var(--color-accent-primary);
     background-color: var(--color-accent-primary-subtle);
-    box-shadow: inset 0 0 0 1px var(--color-accent-primary);
   }
 
-  .module-btn.is-system {
-    background-color: var(--color-surface-system);
-    border-color: var(--color-border-system);
+  .module-btn.is-active .icon {
+    filter: drop-shadow(0 0 6px var(--color-accent-primary-glow));
   }
 
-  .module-btn.is-center-single {
-    grid-column: 2;
+  .module-btn.is-active .name {
+    color: var(--color-accent-primary);
+    font-weight: 700;
+  }
+
+  .module-btn.is-system .icon {
+    color: var(--color-text-secondary);
   }
 
   .update-dot {
     position: absolute;
     top: 6px;
-    right: 6px;
+    right: 8px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -117,14 +131,14 @@
   .name {
     font-family: var(--font-condensed);
     font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: 0.15px;
+    font-weight: 500;
+    letter-spacing: 0.05px;
     text-align: center;
     line-height: 1.15;
     color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 96%;
+    max-width: 98%;
   }
 </style>

@@ -40,7 +40,7 @@
         title="Reference a tahák"
         onclick={() => {
           settings.vibrate(20);
-          navigation.openRef();
+          navigation.toggleRef();
         }}
       >
         <span class="icon"><BookOpen size={20} weight="duotone" /></span>
@@ -55,7 +55,7 @@
       title={navigation.hasMenuWarning ? "Menu modulu (upozornění: nestandardní abeceda)" : "Menu modulu"}
       onclick={() => {
         settings.vibrate(20);
-        navigation.openMenu();
+        navigation.toggleMenu();
       }}
     >
       <span class="icon-wrapper">

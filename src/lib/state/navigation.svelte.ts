@@ -53,6 +53,7 @@ class NavigationState {
     if (MODULES.some((m) => m.id === modId)) {
       if (this.activeModuleId !== modId) {
         this.hasMenuWarning = false;
+        this.isLauncherOpen = false;
       }
       this.activeModuleId = modId;
       this.subView = sub === 'menu' || sub === 'ref' ? sub : 'none';
@@ -62,9 +63,9 @@ class NavigationState {
       const target = this.getPersistedModule();
       this.activeModuleId = target;
       this.subView = 'none';
+      this.isLauncherOpen = false;
       window.location.replace(`#/${target}`);
     }
-    this.isLauncherOpen = false;
   }
 
   /**
@@ -79,7 +80,7 @@ class NavigationState {
       window.history.replaceState(null, '', targetHash);
       this.syncFromHash();
     } else if (this.subView !== 'none') {
-      window.history.back();
+      this.closeSubView();
     }
   }
 
@@ -88,7 +89,22 @@ class NavigationState {
    */
   openMenu() {
     this.isLauncherOpen = false;
-    window.location.hash = `#/${this.activeModuleId}/menu`;
+    this.subView = 'menu';
+    const targetHash = `#/${this.activeModuleId}/menu`;
+    if (window.location.hash !== targetHash) {
+      window.location.hash = targetHash;
+    }
+  }
+
+  /**
+   * Toggle module contextual menu
+   */
+  toggleMenu() {
+    if (this.subView === 'menu') {
+      this.closeSubView();
+    } else {
+      this.openMenu();
+    }
   }
 
   /**
@@ -96,7 +112,22 @@ class NavigationState {
    */
   openRef() {
     this.isLauncherOpen = false;
-    window.location.hash = `#/${this.activeModuleId}/ref`;
+    this.subView = 'ref';
+    const targetHash = `#/${this.activeModuleId}/ref`;
+    if (window.location.hash !== targetHash) {
+      window.location.hash = targetHash;
+    }
+  }
+
+  /**
+   * Toggle module reference cheat sheet
+   */
+  toggleRef() {
+    if (this.subView === 'ref') {
+      this.closeSubView();
+    } else {
+      this.openRef();
+    }
   }
 
   /**
@@ -104,7 +135,11 @@ class NavigationState {
    */
   closeSubView() {
     if (this.subView !== 'none') {
-      window.history.back();
+      this.subView = 'none';
+      const targetHash = `#/${this.activeModuleId}`;
+      if (window.location.hash !== targetHash) {
+        window.history.replaceState(null, '', targetHash);
+      }
     }
   }
 

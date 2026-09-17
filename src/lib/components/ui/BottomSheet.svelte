@@ -8,6 +8,7 @@
     icon?: any;
     badge?: string | number;
     maxWidth?: string;
+    maxHeight?: string;
     height?: string;
     scrollable?: boolean;
     padding?: boolean;
@@ -23,6 +24,7 @@
     icon: IconComponent,
     badge,
     maxWidth = '520px',
+    maxHeight = '80dvh',
     height,
     scrollable = true,
     padding = true,
@@ -31,6 +33,11 @@
     children,
     headerActions
   }: Props = $props();
+
+  let isDragging = $state(false);
+  let dragOffsetY = $state(0);
+  let startY = 0;
+  let startTime = 0;
 
   function handleBackdropClick(e: MouseEvent) {
     if (e.target === e.currentTarget) {
@@ -49,6 +56,108 @@
       onClose();
     }
   }
+
+  function shouldDismiss(): boolean {
+    const elapsed = Math.max(1, Date.now() - startTime);
+    const velocity = dragOffsetY / elapsed; // px/ms
+    return dragOffsetY > 50 || (velocity > 0.25 && dragOffsetY > 12);
+  }
+
+  function dragHeader(node: HTMLElement) {
+    let isTouchActive = false;
+
+    function onTouchStart(e: TouchEvent) {
+      if (e.touches.length !== 1) return;
+      if ((e.target as HTMLElement).closest('button')) return;
+      startY = e.touches[0].clientY;
+      startTime = Date.now();
+      dragOffsetY = 0;
+      isDragging = true;
+      isTouchActive = true;
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      if (!isDragging || !isTouchActive) return;
+      // Guarantee the mobile compositor NEVER initiates kinetic fling scroll momentum
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+      if (e.touches.length === 0) return;
+      const currentY = e.touches[0].clientY;
+      const dy = currentY - startY;
+      dragOffsetY = Math.max(0, dy);
+    }
+
+    function onTouchEnd(e: TouchEvent) {
+      if (!isDragging || !isTouchActive) return;
+      isTouchActive = false;
+      const dismiss = shouldDismiss();
+      isDragging = false;
+      dragOffsetY = 0;
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+      if (dismiss) {
+        settings.vibrate(20);
+        if (typeof window !== 'undefined') {
+          window.scrollTo(0, 0);
+        }
+        onClose();
+      }
+    }
+
+    function onTouchCancel() {
+      isTouchActive = false;
+      isDragging = false;
+      dragOffsetY = 0;
+    }
+
+    function onMouseDown(e: MouseEvent) {
+      if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
+      startY = e.clientY;
+      startTime = Date.now();
+      dragOffsetY = 0;
+      isDragging = true;
+
+      function onMouseMove(ev: MouseEvent) {
+        if (!isDragging) return;
+        const dy = ev.clientY - startY;
+        dragOffsetY = Math.max(0, dy);
+      }
+
+      function onMouseUp() {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        if (!isDragging) return;
+        const dismiss = shouldDismiss();
+        isDragging = false;
+        dragOffsetY = 0;
+        if (dismiss) {
+          settings.vibrate(20);
+          onClose();
+        }
+      }
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+
+    node.addEventListener('touchstart', onTouchStart, { passive: true });
+    node.addEventListener('touchmove', onTouchMove, { passive: false });
+    node.addEventListener('touchend', onTouchEnd, { passive: false });
+    node.addEventListener('touchcancel', onTouchCancel, { passive: true });
+    node.addEventListener('mousedown', onMouseDown);
+
+    return {
+      destroy() {
+        node.removeEventListener('touchstart', onTouchStart);
+        node.removeEventListener('touchmove', onTouchMove);
+        node.removeEventListener('touchend', onTouchEnd);
+        node.removeEventListener('touchcancel', onTouchCancel);
+        node.removeEventListener('mousedown', onMouseDown);
+      }
+    };
+  }
 </script>
 
 <svelte:window onkeydown={handleKeyDown} />
@@ -60,10 +169,18 @@
     <div
       class="sheet-panel"
       style:max-width={maxWidth}
+      style:max-height={maxHeight}
       style:height={height || null}
+      style:transform={isDragging && dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : null}
+      style:transition={isDragging ? 'none' : 'transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)'}
       onclick={(e) => e.stopPropagation()}
     >
-      <header class="sheet-header">
+      <header
+        class="sheet-header"
+        class:is-dragging={isDragging}
+        use:dragHeader
+      >
+        <div class="sheet-drag-handle" aria-hidden="true"></div>
         <div class="sheet-title-group">
           {#if IconComponent}
             <span class="sheet-title-icon">
@@ -117,6 +234,8 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
+    touch-action: none;
+    overscroll-behavior: none;
   }
 
   @media (min-width: 600px) {
@@ -131,12 +250,14 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     width: 100%;
-    max-height: 85vh;
+    max-height: 80vh;
+    max-height: 80dvh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     animation: sheetSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: var(--shadow-sheet);
+    overscroll-behavior: contain;
   }
 
   @media (min-width: 600px) {
@@ -158,6 +279,7 @@
   }
 
   .sheet-header {
+    position: relative;
     height: var(--header-height);
     padding: 0 var(--space-lg);
     display: flex;
@@ -166,6 +288,34 @@
     border-bottom: 1px solid var(--color-border-subtle);
     background-color: var(--color-surface-1);
     flex-shrink: 0;
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .sheet-header.is-dragging {
+    cursor: grabbing;
+  }
+
+  .sheet-drag-handle {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-border-medium);
+    opacity: 0.6;
+    pointer-events: none;
+    transition: opacity 0.15s, background-color 0.15s;
+  }
+
+  .sheet-header:hover .sheet-drag-handle,
+  .sheet-header.is-dragging .sheet-drag-handle {
+    opacity: 1;
+    background-color: var(--color-text-secondary);
   }
 
   .sheet-title-group {
