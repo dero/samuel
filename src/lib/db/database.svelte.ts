@@ -49,6 +49,23 @@ export interface RuianRecord {
   len: number;
 }
 
+export interface WorldFlagRecord {
+  id: number;
+  code: string;
+  code3: string;
+  name_cs: string;
+  name_cs_nodiac: string;
+  name_en: string;
+  capital_cs: string;
+  capital_cs_nodiac: string;
+  capital_en: string;
+  continent: string;
+  colors: string[];
+  features: string[];
+  svg_4x3: string;
+  svg_1x1: string;
+}
+
 // Backward compatibility alias
 export type WordRecord = SubstantiveRecord;
 
@@ -184,6 +201,7 @@ export async function clearDbCache(): Promise<void> {
   dbInstance = null;
   initPromise = null;
   cachedLexiconWords = null;
+  cachedWorldFlags = null;
   dbState.status = 'idle';
   dbState.progress = 0;
   dbState.totalRows = 0;
@@ -302,6 +320,7 @@ export async function getDatabase(options: { forceRefresh?: boolean } = {}): Pro
     dbInstance = null;
     initPromise = null;
     cachedLexiconWords = null;
+    cachedWorldFlags = null;
   }
   if (dbInstance) return dbInstance;
   if (initPromise) return initPromise;
@@ -396,13 +415,14 @@ export async function getDatabase(options: { forceRefresh?: boolean } = {}): Pro
 
       dbInstance = new SQL.Database(new Uint8Array(buffer));
 
-      // Get count across all 4 tables
+      // Get count across all 5 tables
       const countRes = dbInstance.exec(`
         SELECT 
           (SELECT COUNT(*) FROM puzzle_words) +
           (SELECT COUNT(*) FROM cs_substantives) +
           (SELECT COUNT(*) FROM cs_all) +
-          (SELECT COUNT(*) FROM ruian) as cnt
+          (SELECT COUNT(*) FROM ruian) +
+          (SELECT COUNT(*) FROM world_flags) as cnt
       `);
       if (countRes.length > 0 && countRes[0].values.length > 0) {
         dbState.totalRows = Number(countRes[0].values[0][0]);
@@ -669,3 +689,55 @@ export async function getLexiconWords(): Promise<LexiconWordItem[]> {
   cachedLexiconWords = parseLexiconRows(rows, multiRows);
   return cachedLexiconWords;
 }
+
+let cachedWorldFlags: WorldFlagRecord[] | null = null;
+
+/**
+ * Loads all world flags from SQLite words.db.
+ * Cached in memory after first fetch (271 flags).
+ */
+export async function getWorldFlags(): Promise<WorldFlagRecord[]> {
+  if (cachedWorldFlags) return cachedWorldFlags;
+
+  const db = await getDatabase();
+  const res = db.exec(`
+    SELECT id, code, code3, name_cs, name_cs_nodiac, name_en, capital_cs, capital_cs_nodiac, capital_en, continent, colors, features, svg_4x3, svg_1x1
+    FROM world_flags
+    ORDER BY name_cs_nodiac ASC
+  `);
+
+  if (!res.length || !res[0].values.length) {
+    return [];
+  }
+
+  cachedWorldFlags = res[0].values.map((row) => {
+    let parsedColors: string[] = [];
+    let parsedFeatures: string[] = [];
+    try {
+      parsedColors = JSON.parse(String(row[10] || '[]'));
+    } catch {}
+    try {
+      parsedFeatures = JSON.parse(String(row[11] || '[]'));
+    } catch {}
+
+    return {
+      id: Number(row[0]),
+      code: String(row[1]),
+      code3: String(row[2]),
+      name_cs: String(row[3]),
+      name_cs_nodiac: String(row[4]),
+      name_en: String(row[5]),
+      capital_cs: String(row[6]),
+      capital_cs_nodiac: String(row[7]),
+      capital_en: String(row[8]),
+      continent: String(row[9]),
+      colors: parsedColors,
+      features: parsedFeatures,
+      svg_4x3: String(row[12] || ''),
+      svg_1x1: String(row[13] || '')
+    };
+  });
+
+  return cachedWorldFlags;
+}
+

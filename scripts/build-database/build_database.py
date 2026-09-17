@@ -39,7 +39,7 @@ def compute_sha256(file_path: str) -> str:
 
 def get_source_files() -> list:
     """Returns sorted list of all source data files used to build the database."""
-    base_files = ['data/puzzle_words.json', 'data/cs_substantives.csv', 'data/cs_all.csv']
+    base_files = ['data/puzzle_words.json', 'data/cs_substantives.csv', 'data/cs_all.csv', 'data/world_flags.json']
     ruian_files = sorted(glob.glob('data/RUIAN/*.csv'))
     return [f for f in sorted(base_files + ruian_files) if os.path.exists(f)]
 
@@ -304,6 +304,72 @@ def main():
     cur.execute('CREATE INDEX idx_ruian_word_nodiac ON ruian(word_nodiac COLLATE NOCASE)')
     cur.execute('CREATE INDEX idx_ruian_type ON ruian(type)')
     cur.execute('CREATE INDEX idx_ruian_type_nodiac ON ruian(type, word_nodiac COLLATE NOCASE)')
+
+    # =========================================================================
+    # 5. TABLE: world_flags (from data/world_flags.json)
+    # =========================================================================
+    flags_json = 'data/world_flags.json'
+    print(f"\n--- Building table: world_flags ({flags_json}) ---")
+    cur.execute('''
+        CREATE TABLE world_flags (
+            id INTEGER PRIMARY KEY,
+            code TEXT NOT NULL UNIQUE,
+            code3 TEXT NOT NULL,
+            name_cs TEXT NOT NULL,
+            name_cs_nodiac TEXT NOT NULL,
+            name_en TEXT NOT NULL,
+            capital_cs TEXT NOT NULL,
+            capital_cs_nodiac TEXT NOT NULL,
+            capital_en TEXT NOT NULL,
+            continent TEXT NOT NULL,
+            colors TEXT NOT NULL,
+            features TEXT NOT NULL,
+            svg_4x3 TEXT NOT NULL,
+            svg_1x1 TEXT NOT NULL
+        )
+    ''')
+
+    if os.path.exists(flags_json):
+        with open(flags_json, 'r', encoding='utf-8') as f:
+            flags_list = json.load(f)
+
+        flag_entries = []
+        for fl in flags_list:
+            code = fl['code']
+            code3 = fl.get('code3', code.upper())
+            name_cs = fl['name_cs']
+            name_cs_nodiac = remove_diacritics(name_cs).lower()
+            name_en = fl['name_en']
+            capital_cs = fl.get('capital_cs', '')
+            capital_cs_nodiac = remove_diacritics(capital_cs).lower()
+            capital_en = fl.get('capital_en', '')
+            continent = fl.get('continent', 'europe')
+            colors_json = json.dumps(fl.get('colors', []), ensure_ascii=False)
+            features_json = json.dumps(fl.get('features', []), ensure_ascii=False)
+            svg_4x3 = fl.get('svg_4x3', '')
+            svg_1x1 = fl.get('svg_1x1', '')
+
+            flag_entries.append((
+                code, code3, name_cs, name_cs_nodiac, name_en,
+                capital_cs, capital_cs_nodiac, capital_en, continent,
+                colors_json, features_json, svg_4x3, svg_1x1
+            ))
+
+        cur.executemany('''
+            INSERT INTO world_flags (
+                code, code3, name_cs, name_cs_nodiac, name_en,
+                capital_cs, capital_cs_nodiac, capital_en, continent,
+                colors, features, svg_4x3, svg_1x1
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', flag_entries)
+        print(f"Inserted {len(flag_entries)} rows into world_flags")
+    else:
+        print(f"WARNING: {flags_json} not found!")
+
+    cur.execute('CREATE INDEX idx_flags_code ON world_flags(code)')
+    cur.execute('CREATE INDEX idx_flags_code3 ON world_flags(code3)')
+    cur.execute('CREATE INDEX idx_flags_name_nodiac ON world_flags(name_cs_nodiac COLLATE NOCASE)')
+    cur.execute('CREATE INDEX idx_flags_continent ON world_flags(continent)')
 
     # Commit, VACUUM and finalize
     print("\nCommitting and optimizing SQLite DB...")

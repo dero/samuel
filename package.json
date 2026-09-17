@@ -14,6 +14,7 @@
     "deploy": "bash scripts/deploy.sh"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@types/sql.js": "^1.4.11",
     "phosphor-svelte": "^3.1.0",

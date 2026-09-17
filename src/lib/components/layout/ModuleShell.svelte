@@ -7,7 +7,7 @@
     alphabetHint?: string;
     onReset?: () => void;
     onPaste?: (text: string) => void;
-    layoutMode?: 'default' | 'compact-output';
+    layoutMode?: 'default' | 'compact-output' | 'fullscreen-input';
     output?: import('svelte').Snippet;
     input?: import('svelte').Snippet;
     menuOptions?: import('svelte').Snippet;
@@ -27,13 +27,19 @@
   }: Props = $props();
 </script>
 
-<div class="module-shell" class:compact-output={layoutMode === 'compact-output'}>
+<div
+  class="module-shell"
+  class:compact-output={layoutMode === 'compact-output'}
+  class:fullscreen-input={layoutMode === 'fullscreen-input'}
+>
   <!-- Top: Output & State Zone -->
-  <div class="zone-output">
-    {#if output}
-      {@render output()}
-    {/if}
-  </div>
+  {#if layoutMode !== 'fullscreen-input'}
+    <div class="zone-output">
+      {#if output}
+        {@render output()}
+      {/if}
+    </div>
+  {/if}
 
   <!-- Bottom: Input & Keypad Zone -->
   <div class="zone-input">
@@ -101,5 +107,15 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+  }
+
+  .fullscreen-input .zone-input {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    border-top: none;
+    background-color: var(--color-bg-canvas);
+    padding: var(--space-xs) var(--space-sm) calc(var(--space-xs) + env(safe-area-inset-bottom, 0px)) var(--space-sm);
+    overflow: hidden;
   }
 </style>

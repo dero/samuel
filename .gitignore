@@ -64,7 +64,6 @@ ENV/
 ehthumbs.db
 Thumbs.db
 
-# Large generated SQLite database artifact (~41 MB)
+# Large generated SQLite database artifact
 # Generated from data/ via `python3 scripts/build-database/build_database.py`.
-# Uncomment below if you prefer to build words.db locally rather than committing it to Git:
-# public/words.db
+public/words.db
