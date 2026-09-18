@@ -13,6 +13,7 @@
 - **POKUD** build aktualizuje `public/version.json`, **POTOM** změnu nikdy nevracej (`git checkout`). Aplikace je ve vývojovém režimu a průběžný bump verze je žádoucí.
 - **POKUD** upravíš data v `data/`, **POTOM** spusť `yarn db:build` (nebo `yarn db:build:force`).
 - **POKUD** ladíš přesnost a váhy morse solveru, **POTOM** spusť `yarn benchmark:morse`.
+- **POKUD** pushneš do `feat/init-version` (nebo `main`, až vznikne), **POTOM** se přes GitHub Actions automaticky nasadí produkce na `https://samuel.dero.cz`.
 
 ## 3. Kód & Architektura
 - **POKUD** píšeš komponenty nebo stav, **POTOM** použij výhradně Svelte 5 runes (`$state`, `$derived`, `$props`, `$effect.root`) a sdílený stav dávej do `.svelte.ts`. Nikdy nepoužívej Svelte 3/4 stores ani `export let`.
