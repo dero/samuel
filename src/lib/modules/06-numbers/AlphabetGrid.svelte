@@ -56,9 +56,12 @@
   .alphabet-grid {
     display: grid;
     grid-template-columns: repeat(var(--cols, 6), 1fr);
-    gap: var(--space-sm);
+    gap: 2px;
     width: 100%;
     box-sizing: border-box;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-bg-canvas);
   }
 
   .letter-key {
@@ -67,8 +70,8 @@
     justify-content: center;
     background-color: var(--color-surface-2);
     color: var(--color-text-primary);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    border: none;
+    border-radius: 2px;
     cursor: pointer;
     touch-action: none;
     height: clamp(38px, 5.0vh, 44px);
@@ -76,7 +79,10 @@
     font-family: var(--font-mono, monospace);
     font-size: var(--text-base);
     font-weight: 700;
-    transition: background-color 0.1s ease, transform 0.08s ease, border-color 0.1s ease;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.08s ease, box-shadow 0.08s ease, color 0.08s ease;
     box-sizing: border-box;
     padding: 0;
   }
@@ -91,20 +97,19 @@
   .alphabet-grid.dense-rows .letter-key {
     height: clamp(30px, 3.8vh, 35px);
     font-size: 13px;
-    border-radius: var(--radius-sm);
   }
 
   .letter-key:active:not(:disabled) {
     background-color: var(--color-surface-active);
-    border-color: var(--color-accent-primary);
-    transform: scale(0.95);
+    color: var(--color-accent-primary);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 
   .letter-key:disabled {
-    opacity: 0.3;
+    opacity: 0.25;
     cursor: not-allowed;
     background-color: var(--color-surface-1);
-    border-color: transparent;
   }
 
   .letter-label {

@@ -114,7 +114,7 @@
   .utility-btn {
     height: var(--utility-row-height);
     padding: 0 var(--space-sm);
-    background-color: var(--color-surface-1);
+    background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
     font-size: var(--text-sm);
@@ -127,8 +127,10 @@
     gap: 6px;
     cursor: pointer;
     user-select: none;
-    -webkit-user-select: none;
-    transition: background-color 0.12s, border-color 0.12s, transform 0.08s;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.12s, border-color 0.12s, box-shadow 0.08s, transform 0.08s;
     box-sizing: border-box;
     width: 100%;
     white-space: nowrap;
@@ -137,16 +139,23 @@
 
   .utility-btn:active:not(:disabled) {
     background-color: var(--color-surface-active);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
     transform: scale(0.98);
   }
 
   .utility-btn:disabled {
-    opacity: 0.35;
     cursor: not-allowed;
+  }
+
+  .utility-btn:disabled .btn-icon,
+  .utility-btn:disabled .btn-label {
+    opacity: 0.35;
+    color: var(--color-text-secondary);
   }
 
   .utility-btn.has-active {
     color: var(--color-accent-warning);
+    background-color: var(--color-accent-warning-subtle);
     border-color: rgba(245, 158, 11, 0.4);
   }
 

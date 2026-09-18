@@ -85,8 +85,12 @@
 
   .grid-row {
     display: grid;
-    gap: var(--space-sm);
+    gap: 2px;
     width: 100%;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-bg-canvas);
+    box-sizing: border-box;
   }
 
   .row-4cols {
@@ -105,13 +109,16 @@
     justify-content: center;
     background-color: var(--color-surface-2);
     color: var(--color-text-primary);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    border: none;
+    border-radius: 2px;
     cursor: pointer;
     touch-action: none;
     min-height: var(--tap-min-size);
     font-family: var(--font-mono, monospace);
-    transition: background-color 0.1s ease, transform 0.08s ease, border-color 0.1s ease;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.08s ease, box-shadow 0.08s ease, color 0.08s ease;
     box-sizing: border-box;
     padding: var(--space-2xs) 0;
   }
@@ -139,7 +146,7 @@
   }
 
   .key-subval {
-    font-size: 10px;
+    font-size: var(--text-2xs);
     font-weight: 600;
     color: var(--color-text-muted);
     line-height: 1;
@@ -148,8 +155,8 @@
 
   .key-btn:active:not(:disabled) {
     background-color: var(--color-surface-active);
-    border-color: var(--color-accent-primary);
-    transform: scale(0.96);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 
   .key-btn:disabled {

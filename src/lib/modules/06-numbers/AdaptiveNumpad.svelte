@@ -90,21 +90,25 @@
     justify-content: center;
     background-color: var(--color-surface-2);
     color: var(--color-text-primary);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    border: none;
+    border-radius: 2px;
     cursor: pointer;
     touch-action: none;
     min-height: var(--tap-min-size);
     font-family: var(--font-mono, monospace);
     font-weight: 700;
-    transition: background-color 0.1s ease, transform 0.08s ease, border-color 0.1s ease;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.08s ease, box-shadow 0.08s ease, color 0.08s ease;
     box-sizing: border-box;
   }
 
   .key-btn:active:not(:disabled) {
     background-color: var(--color-surface-active);
-    border-color: var(--color-accent-primary);
-    transform: scale(0.96);
+    color: var(--color-accent-primary);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 
   .key-btn:disabled {
@@ -124,8 +128,12 @@
   /* Sequential grid for bases other than 10 */
   .grid-sequential {
     display: grid;
-    gap: var(--space-sm);
+    gap: 2px;
     width: 100%;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-bg-canvas);
+    box-sizing: border-box;
   }
 
   .grid-sequential.cols-2 {
@@ -138,21 +146,19 @@
 
   .grid-sequential.cols-4 {
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-sm);
+    gap: 2px;
   }
 
   /* Base 2: Binary */
   .key-bin {
     height: clamp(68px, 10.5vh, 88px);
     font-size: clamp(28px, 5vh, 36px);
-    border-radius: var(--radius-lg);
   }
 
   /* Base 3: Ternary */
   .key-ter {
     height: clamp(64px, 9.5vh, 80px);
     font-size: clamp(24px, 4.5vh, 30px);
-    border-radius: var(--radius-lg);
   }
 
   /* Medium keys (Bases 4, 5, 6) */
@@ -177,7 +183,12 @@
   .grid-dec {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-sm);
+    gap: 2px;
+    width: 100%;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-bg-canvas);
+    box-sizing: border-box;
   }
 
   .key-dec {
@@ -186,6 +197,6 @@
   }
 
   .key-zero {
-    grid-column: 2; /* Centered on bottom row */
+    grid-column: 1 / -1; /* Full-width bottom row */
   }
 </style>

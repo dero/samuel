@@ -5,7 +5,6 @@
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
   import SpaceButton from '../../components/ui/SpaceButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
-  import DominantButton from '../../components/ui/DominantButton.svelte';
   import RadioGroup, { type RadioOption } from '../../components/ui/RadioGroup.svelte';
   import InteractiveCross from './InteractiveCross.svelte';
   import CoordinateKeypad from './CoordinateKeypad.svelte';
@@ -463,20 +462,6 @@
     interactiveCrossComponent?.flashCoordinate(a1, a2, a3 ?? 1);
   }
 
-  function handleEnter() {
-    if (polishSelectedChar && selectedAxis1 !== null && selectedAxis2 !== null) {
-      settings.vibrate(25);
-      const a1 = selectedAxis1;
-      const a2 = selectedAxis2;
-      const a3 = selectedAxis3 ?? 1;
-      inputLetters += polishSelectedChar;
-      interactiveCrossComponent?.flashCoordinate(a1, a2, a3);
-      selectedAxis1 = null;
-      selectedAxis2 = null;
-      selectedAxis3 = null;
-    }
-  }
-
   function handleSpace() {
     inputLetters += ' ';
     selectedAxis1 = null;
@@ -767,20 +752,6 @@
           onAction={handleBackspace}
         />
       </div>
-
-      <!-- Dominant Row: Enter (↵) for Large Polish (100% full-width); Small Polish & Polybius don't need dominant row anymore -->
-      {#if crossTypeId === 'large-polish'}
-        <div class="keypad-dominant-1col">
-          <DominantButton
-            symbol={polishSelectedChar || '↵'}
-            name={polishSelectedChar ? `Vložit „${polishSelectedChar === ' ' ? 'Mezeru' : polishSelectedChar}“` : 'Vložit znak'}
-            ready={!!polishSelectedChar}
-            disabled={!polishSelectedChar}
-            title="Vložit znak do textu"
-            onClick={handleEnter}
-          />
-        </div>
-      {/if}
     </div>
   {/snippet}
 

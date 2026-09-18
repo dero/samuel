@@ -379,8 +379,8 @@
     width: clamp(64px, 10.2vh, 84px);
     height: clamp(64px, 10.2vh, 84px);
     border-radius: var(--radius-full);
-    background-color: var(--color-bg-canvas);
-    border: 2px solid var(--color-border-subtle);
+    background-color: #0a0a0e;
+    border: 1.5px solid #22222a;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -388,18 +388,24 @@
     -webkit-user-select: none;
     touch-action: none;
     cursor: pointer;
-    transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.08s ease, box-shadow 0.1s ease;
+    box-shadow: 
+      inset 0 4px 8px rgba(0, 0, 0, 0.95),
+      inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
+      inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
+    transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
     box-sizing: border-box;
   }
 
   .matrix-dot-btn:active {
-    transform: scale(0.92);
+    transform: scale(0.96);
   }
 
   .matrix-dot-btn.is-active {
     background-color: var(--color-accent-primary);
-    border-color: var(--color-text-primary);
-    box-shadow: var(--glow-accent-strong);
+    border-color: #ffffff;
+    box-shadow: 
+      0 0 20px var(--color-accent-primary-glow),
+      inset 0 0 8px rgba(255, 255, 255, 0.6);
   }
 
   .matrix-dot-btn.is-active.is-fading {
@@ -409,18 +415,21 @@
   @keyframes dotFadeOut {
     0% {
       background-color: var(--color-accent-primary);
-      border-color: var(--color-text-primary);
+      border-color: #ffffff;
       box-shadow: 0 0 24px rgba(0, 210, 255, 1);
     }
     25% {
       background-color: var(--color-accent-primary);
-      border-color: var(--color-text-primary);
+      border-color: #ffffff;
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
     }
     100% {
-      background-color: var(--color-bg-canvas);
-      border-color: var(--color-border-subtle);
-      box-shadow: 0 0 0 rgba(0, 210, 255, 0);
+      background-color: #0a0a0e;
+      border-color: #22222a;
+      box-shadow: 
+        inset 0 4px 8px rgba(0, 0, 0, 0.95),
+        inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
+        inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
     }
   }
 

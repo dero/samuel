@@ -277,7 +277,7 @@
   .flags-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: var(--space-xs);
+    gap: 2px;
     width: 100%;
   }
 
@@ -291,24 +291,28 @@
     align-items: center;
     justify-content: center;
     background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
+    border: none;
+    border-radius: 2px;
     padding: 4px 2px;
     gap: 2px;
     min-height: 48px;
-    transition: background-color 0.12s, border-color 0.12s, transform 0.06s;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.12s, box-shadow 0.08s, opacity 0.12s;
     touch-action: manipulation;
   }
 
   .flag-tile:active {
     background-color: var(--color-surface-active);
-    transform: scale(0.94);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 
   .flag-tile.is-dimmed {
-    border-color: transparent;
     background-color: var(--color-surface-1);
-    opacity: 0.45;
+    box-shadow: none;
+    opacity: 0.35;
   }
 
   .flag-tile-preview {
@@ -335,9 +339,13 @@
   .color-filter-row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: var(--space-xs);
+    gap: 2px;
     width: 100%;
     height: var(--dominant-key-height);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-bg-canvas);
+    box-sizing: border-box;
   }
 
   .color-filter-btn {
@@ -347,22 +355,25 @@
     justify-content: center;
     gap: 6px;
     background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    border: none;
+    border-radius: 2px;
     padding: var(--space-xs) 2px;
-    transition: background-color 0.12s, border-color 0.12s, transform 0.06s, box-shadow 0.12s;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.12s, box-shadow 0.08s;
     touch-action: manipulation;
   }
 
   .color-filter-btn:active {
     background-color: var(--color-surface-active);
-    transform: scale(0.96);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 
   .color-filter-btn.is-active {
     background-color: var(--color-surface-active);
-    border-color: var(--color-accent-primary);
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.35);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
   }
 
   .color-swatch {

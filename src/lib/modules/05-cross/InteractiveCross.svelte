@@ -928,10 +928,13 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(4, clamp(44px, 6.5vh, 54px));
-    gap: 5px;
+    gap: 2px;
     width: 100%;
     box-sizing: border-box;
     touch-action: none;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-bg-canvas);
   }
 
   .phone-key-btn {
@@ -940,8 +943,8 @@
     align-items: center;
     justify-content: center;
     background-color: var(--color-surface-2);
-    border: 1.5px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    border: none;
+    border-radius: 2px;
     gap: 1px;
     padding: 3px 4px;
     box-sizing: border-box;
@@ -950,18 +953,22 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-    transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.06s ease, box-shadow 0.1s ease;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.1s ease, color 0.1s ease, box-shadow 0.08s ease;
   }
 
   .phone-key-btn:active {
-    transform: scale(0.95);
+    transform: none;
     background-color: var(--color-surface-active);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
   }
 
   .phone-key-btn.is-active-key {
     background-color: var(--color-surface-active);
-    border-color: var(--color-accent-primary);
-    box-shadow: 0 0 12px rgba(0, 210, 255, 0.35);
+    color: var(--color-accent-primary);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
   }
 
   .phone-key-num {
@@ -1019,33 +1026,37 @@
 
   .polybius-grid {
     display: grid;
-    gap: 3px;
+    gap: 2px;
     width: 100%;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
   }
 
-
   .polybius-header-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-xs);
+    border: none;
+    border-radius: 2px;
     font-size: var(--text-xs);
     font-weight: 700;
     font-family: var(--font-mono);
     color: var(--color-text-secondary);
     cursor: pointer;
     touch-action: none;
-    transition: all 0.12s ease;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.12s ease, box-shadow 0.08s ease, color 0.12s ease;
     padding: 0;
   }
 
   .polybius-header-btn:active {
-    transform: scale(0.92);
+    background-color: var(--color-surface-active);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 
   .polybius-header-btn.col-header-btn {
@@ -1064,9 +1075,8 @@
   .polybius-header-btn.is-active {
     background: var(--color-accent-primary);
     color: #000000;
-    border-color: var(--color-accent-primary);
     font-weight: 800;
-    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4), inset 0 0 4px rgba(255, 255, 255, 0.4);
   }
 
   .polybius-cell {
@@ -1074,7 +1084,7 @@
     aspect-ratio: 1 / 1;
     min-width: 0;
     min-height: 0;
-    border-radius: var(--radius-xs);
+    border-radius: 2px;
     transition: all 0.15s ease;
   }
 
@@ -1095,31 +1105,35 @@
     align-items: center;
     justify-content: center;
     background: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-xs);
+    border: none;
+    border-radius: 2px;
     color: var(--color-text-primary);
     font-size: clamp(14px, 2.3vh, 18px);
     font-weight: 700;
     cursor: pointer;
     touch-action: none;
-    transition: all 0.15s ease;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.12s ease, box-shadow 0.08s ease, color 0.12s ease;
     padding: 0;
   }
 
   .polybius-char-btn:active {
-    transform: scale(0.92);
+    background: var(--color-surface-active);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 
   .polybius-char-btn.is-highlighted {
-    border-color: rgba(0, 210, 255, 0.45);
+    box-shadow: inset 0 0 0 1.5px rgba(0, 210, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
     color: var(--color-text-primary);
   }
 
   .polybius-char-btn.is-exact {
     background: rgba(0, 210, 255, 0.22);
-    border-color: var(--color-accent-primary);
     color: var(--color-accent-primary);
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4), inset 0 0 0 1.5px var(--color-accent-primary);
   }
 
   .polybius-empty-cell {

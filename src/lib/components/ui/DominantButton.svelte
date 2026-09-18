@@ -94,6 +94,9 @@
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -114,12 +117,17 @@
   .dominant-btn.is-pressed:not(:disabled) {
     background-color: var(--color-surface-active);
     border-color: var(--color-border-focus);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
     transform: scale(0.96);
   }
 
   .dominant-btn:disabled {
-    opacity: 0.35;
     cursor: not-allowed;
+  }
+
+  .dominant-btn:disabled .btn-symbol,
+  .dominant-btn:disabled .btn-name {
+    opacity: 0.35;
   }
 
   .btn-symbol {
@@ -155,15 +163,19 @@
     color: var(--color-text-secondary);
   }
 
-  /* Ready to commit state (glowing gradient) */
+  /* Ready to commit state (tactile illuminated mechanical keycap) */
   .dominant-btn.is-ready {
-    background: linear-gradient(135deg, rgba(0, 210, 255, 0.22), rgba(0, 160, 255, 0.14));
-    border-color: var(--color-accent-primary);
-    box-shadow: var(--glow-accent);
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.20) 0%, rgba(0, 180, 240, 0.10) 100%);
+    border-color: rgba(0, 210, 255, 0.45);
+    box-shadow: 
+      0 0 12px rgba(0, 210, 255, 0.20),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.6);
   }
 
   .dominant-btn.is-ready .btn-symbol {
     color: var(--color-accent-primary);
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
   }
 
   .dominant-btn.is-ready .btn-name {
@@ -172,7 +184,11 @@
 
   .dominant-btn.is-ready:active,
   .dominant-btn.is-ready.is-pressed {
-    background: linear-gradient(135deg, rgba(0, 210, 255, 0.35), rgba(0, 160, 255, 0.25));
-    box-shadow: var(--glow-accent-strong);
+    background: linear-gradient(180deg, rgba(0, 180, 240, 0.12) 0%, rgba(0, 210, 255, 0.22) 100%);
+    border-color: rgba(0, 210, 255, 0.6);
+    box-shadow: 
+      0 0 6px rgba(0, 210, 255, 0.15),
+      inset 0 2px 4px rgba(0, 0, 0, 0.65);
+    transform: scale(0.98);
   }
 </style>

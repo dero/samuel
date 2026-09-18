@@ -464,8 +464,8 @@
     width: clamp(52px, 7.8vh, 64px);
     height: clamp(52px, 7.8vh, 64px);
     border-radius: var(--radius-full);
-    background-color: var(--color-bg-canvas);
-    border: 2px solid var(--color-border-subtle);
+    background-color: #0a0a0e;
+    border: 1.5px solid #22222a;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
@@ -473,14 +473,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.08s ease, box-shadow 0.1s ease;
+    box-shadow: 
+      inset 0 3px 6px rgba(0, 0, 0, 0.95),
+      inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
+      inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
+    transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
     box-sizing: border-box;
     z-index: 2;
     padding: 0;
   }
 
   .wheel-dir-btn:active {
-    transform: translate(-50%, -50%) scale(0.92);
+    transform: translate(-50%, -50%) scale(0.96);
   }
 
   .dir-hint {
@@ -508,8 +512,10 @@
 
   .wheel-dir-btn.is-active {
     background-color: var(--color-accent-primary);
-    border-color: var(--color-text-primary);
-    box-shadow: var(--glow-accent-strong);
+    border-color: #ffffff;
+    box-shadow: 
+      0 0 18px var(--color-accent-primary-glow),
+      inset 0 0 6px rgba(255, 255, 255, 0.6);
   }
 
   .wheel-dir-btn.is-active.is-fading {
@@ -519,18 +525,21 @@
   @keyframes buttonFadeOut {
     0% {
       background-color: var(--color-accent-primary);
-      border-color: var(--color-text-primary);
+      border-color: #ffffff;
       box-shadow: 0 0 24px rgba(0, 210, 255, 1);
     }
     25% {
       background-color: var(--color-accent-primary);
-      border-color: var(--color-text-primary);
+      border-color: #ffffff;
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
     }
     100% {
-      background-color: var(--color-bg-canvas);
-      border-color: var(--color-border-subtle);
-      box-shadow: 0 0 0 rgba(0, 210, 255, 0);
+      background-color: #0a0a0e;
+      border-color: #22222a;
+      box-shadow: 
+        inset 0 3px 6px rgba(0, 0, 0, 0.95),
+        inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
+        inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
     }
   }
 </style>

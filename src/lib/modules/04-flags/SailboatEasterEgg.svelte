@@ -170,32 +170,33 @@
     align-items: center;
     justify-content: center;
     background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
+    border: none;
+    border-radius: 2px;
     padding: 0;
     overflow: hidden;
     position: relative;
     cursor: pointer;
     touch-action: manipulation;
     color: var(--color-text-muted);
-    opacity: 0.6;
-    transition: opacity 0.2s ease, border-color 0.15s ease, background-color 0.15s ease;
-  }
-
-  .boat-card:hover {
-    opacity: 0.85;
-    border-color: var(--color-border-default);
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.12s, box-shadow 0.08s;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .boat-card:active {
-    opacity: 1;
     background-color: var(--color-surface-active);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 
   .boat-svg {
     width: 100%;
     height: 100%;
     display: block;
+    opacity: 0.85;
   }
 
   /* Monochromatic styling */

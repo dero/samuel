@@ -10,6 +10,7 @@
 - **POKUD** instaluješ balíčky nebo spouštíš skripty, **POTOM** použij výhradně `yarn` (Berry). Nikdy `npm` ani `pnpm`.
 - **POKUD** spouštíš lokální vývoj, **POTOM** použij `yarn dev`.
 - **POKUD** dokončuješ práci, **POTOM** vždy spusť `yarn check` a `yarn build`.
+- **POKUD** build aktualizuje `public/version.json`, **POTOM** změnu nikdy nevracej (`git checkout`). Aplikace je ve vývojovém režimu a průběžný bump verze je žádoucí.
 - **POKUD** upravíš data v `data/`, **POTOM** spusť `yarn db:build` (nebo `yarn db:build:force`).
 - **POKUD** ladíš přesnost a váhy morse solveru, **POTOM** spusť `yarn benchmark:morse`.
 

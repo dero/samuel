@@ -179,10 +179,9 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    background: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    padding: 6px;
+    background: transparent;
+    border: none;
+    padding: 0;
     touch-action: none;
   }
 
@@ -191,7 +190,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 2px 4px 2px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .col-title {
@@ -218,7 +217,7 @@
   .buttons-stack {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     flex: 1;
     justify-content: space-between;
   }
@@ -226,7 +225,7 @@
   .buttons-stack.grid-stack {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
+    gap: 2px;
   }
 
   .coord-btn {
@@ -237,13 +236,16 @@
     width: 100%;
     min-height: var(--tap-min-size);
     background: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
+    border: none;
+    border-radius: 2px;
     color: var(--color-text-primary);
     cursor: pointer;
     touch-action: none;
     padding: 4px 2px;
-    transition: background-color 0.08s ease, border-color 0.08s ease, transform 0.08s ease;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    transition: background-color 0.08s ease, box-shadow 0.08s ease;
   }
 
   .coord-btn.is-compact-btn {
@@ -253,7 +255,8 @@
 
   .coord-btn:active {
     background-color: var(--color-surface-active);
-    transform: scale(0.96);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 
   .coord-btn.is-active {
@@ -261,7 +264,7 @@
     border-color: var(--color-accent-primary);
     color: var(--color-text-inverse);
     font-weight: 800;
-    box-shadow: 0 0 12px var(--color-accent-primary-glow);
+    box-shadow: 0 0 12px var(--color-accent-primary-glow), inset 0 0 4px rgba(255, 255, 255, 0.4);
   }
 
   .coord-btn.is-active .btn-sub-label {
