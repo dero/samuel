@@ -10,6 +10,7 @@
   import FlagsModule from './lib/modules/04-flags/FlagsModule.svelte';
   import CrossModule from './lib/modules/05-cross/CrossModule.svelte';
   import NumbersModule from './lib/modules/06-numbers/NumbersModule.svelte';
+  import ShiftsModule from './lib/modules/07-shifts/ShiftsModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -74,6 +75,8 @@
     <CrossModule />
   {:else if navigation.activeModuleId === 'numbers'}
     <NumbersModule />
+  {:else if navigation.activeModuleId === 'shifts'}
+    <ShiftsModule />
   {:else if navigation.activeModuleId === 'settings'}
     <SettingsModule />
   {:else if navigation.activeModuleId === 'help'}
