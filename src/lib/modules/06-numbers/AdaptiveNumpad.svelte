@@ -129,10 +129,12 @@
   .grid-sequential {
     display: grid;
     gap: 2px;
+    padding: 2px;
     width: 100%;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     overflow: hidden;
     background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-subtle);
     box-sizing: border-box;
   }
 
@@ -184,10 +186,12 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 2px;
+    padding: 2px;
     width: 100%;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     overflow: hidden;
     background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-subtle);
     box-sizing: border-box;
   }
 

@@ -145,13 +145,15 @@ textarea:focus, input:focus {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 2px;
+  padding: 2px;
   width: 100%;
   align-items: stretch;
   flex-shrink: 0;
   height: var(--utility-row-height);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background-color: var(--color-bg-canvas);
+  border: 1px solid var(--color-border-subtle);
   box-sizing: border-box;
 }
 
@@ -160,13 +162,15 @@ textarea:focus, input:focus {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 2px;
+  padding: 2px;
   width: 100%;
   align-items: stretch;
   flex-shrink: 0;
   height: var(--utility-row-height);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background-color: var(--color-bg-canvas);
+  border: 1px solid var(--color-border-subtle);
   box-sizing: border-box;
 }
 
@@ -185,21 +189,40 @@ textarea:focus, input:focus {
 .keypad-dominant-1col {
   display: grid;
   grid-template-columns: 1fr;
+  gap: 2px;
+  padding: 2px;
   width: 100%;
   flex-shrink: 0;
   touch-action: none;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background-color: var(--color-bg-canvas);
+  border: 1px solid var(--color-border-subtle);
+  box-sizing: border-box;
+}
+
+.keypad-dominant-1col > * {
+  border-radius: 2px !important;
+  border: none !important;
+}
+
+.keypad-dominant-1col > .dominant-btn:active:not(:disabled),
+.keypad-dominant-1col > .dominant-btn.is-pressed:not(:disabled) {
+  transform: none !important;
 }
 
 .keypad-dominant-2col {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 2px;
+  padding: 2px;
   width: 100%;
   flex-shrink: 0;
   touch-action: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background-color: var(--color-bg-canvas);
+  border: 1px solid var(--color-border-subtle);
   box-sizing: border-box;
 }
 
@@ -217,12 +240,14 @@ textarea:focus, input:focus {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 2px;
+  padding: 2px;
   width: 100%;
   flex-shrink: 0;
   touch-action: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background-color: var(--color-bg-canvas);
+  border: 1px solid var(--color-border-subtle);
   box-sizing: border-box;
 }
 

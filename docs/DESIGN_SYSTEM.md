@@ -13,10 +13,11 @@
 5. **Multi-touch & okamžitá odezva kláves:** Klávesnice pro zadávání znaků (`DominantButton`, matice, kruh) musí reagovat na `onpointerdown` s `e.preventDefault()`, nikoli čekat na `click` / `touchend`. Kontejnery klávesnic musí mít `touch-action: none`.
 6. **Ničivé akce (Vymazání):** Vymazání vstupu VŽDY přes `SlideToAction` (podržením s tekutým vybarvováním zleva doprava). Nikdy pouhým kliknutím.
 7. **Toasty & hlášky:** Všechny toasty v aplikaci musí být **max. 30 znaků textu + až 2 emoji**. Delší texty se na mobilu nevzhledně lámou.
-8. **Kondenzované ovládací bloky a tabulky:** Všechny zadávací matice (abeceda, numpad, římská čísla, námořní vlajky, souřadnice, polybius) i řádek utilit (`.keypad-utility-row-3col`) tvoří jednotný kompaktní blok:
-   - Vnější kontejner má zaoblení `border-radius: var(--radius-md)` (10px), `overflow: hidden`, černé spáry `gap: 2px` a pozadí plátna `background-color: var(--color-bg-canvas)` (`#000000`).
-   - Vnitřní tlačítka mají `border: none`, `border-radius: 2px` a plné podbarvení `var(--color-surface-2)`.
-   - Vnější rohy bloku jsou zaobleny přirozeně oříznutím kontejneru (`overflow: hidden`).
+8. **Kondenzované ovládací bloky a tabulky (Zapuštěné šasi):** Všechny zadávací matice (abeceda, numpad, římská čísla, námořní vlajky, souřadnice, polybius) i řádky utilit (`.keypad-utility-row`, `.keypad-utility-row-3col`) a dominantní řady (`.keypad-dominant-2col`, `.keypad-dominant-3col`) tvoří fyzicky zapuštěné černé šasi („switchbed tray“):
+   - **Vnější šasi:** `border-radius: var(--radius-sm)` (6px), `overflow: hidden`, pozadí plátna `background-color: var(--color-bg-canvas)` (`#000000`), vnitřní černé spáry `gap: 2px`, obvodový odstup `padding: 2px` a subtilní ohraničující lem `border: 1px solid var(--color-border-subtle)` (oddělující šasi od šedého spodního panelu `#121214`).
+   - **Obvodová symetrie:** Díky `padding: 2px` má každá klávesa na obvodu i v rozích identickou 2px černou spáru na všech 4 stranách. Rohové klávesy se neořezávají zaoblením kontejneru a drží si čistý `border-radius: 2px`.
+   - **Vnitřní tlačítka (keycaps):** `border: none`, `border-radius: 2px`, plné podbarvení `var(--color-surface-2)`.
+   - **Záslepka neobsazených míst (`.grid-filler`):** Pokud mřížka nekončí na celém řádku (např. abeceda 26/42 znaků), prázdná místa nesmí tvořit černou díru v šasi. Vkládá se záslepka o šířce zbývajících sloupců (`grid-column: span X`) v barvě `var(--color-surface-2)` s utlumenou průhledností `opacity: 0.35`, zaoblením `border-radius: 2px` a odpovídajícími fazetami, která mřížku vizuálně elegantně uzavírá.
 9. **Plasticita a světelné fazety (Tactility):**
    - **Vystouplá tlačítka (keycaps):** 1px fyzická plastická fazeta – horní světelný odraz `inset 0 1px 0 rgba(255, 255, 255, 0.10)` a spodní stín `inset 0 -1px 0 rgba(0, 0, 0, 0.5)`.
    - **Stisknutý stav (`:active`):** Klávesa se fyzicky promáčkne do vnitřního stínu `inset 0 1.5px 3px rgba(0, 0, 0, 0.7)` a `background-color: var(--color-surface-active)`.
@@ -24,6 +25,11 @@
 10. **Konzistence podbarvení a zákaz plošného `opacity` u `disabled`:**
     - Tlačítka a klávesy v neaktivním stavu (`disabled`) NIKDY nesmí mít `opacity: 0.35` na celý kořenový element – na OLED `#000` plátně by povrch prosvítal a ztmavl oproti okolním tlačítkům.
     - Klávesa si vždy drží plnou barvu `var(--color-surface-2)`, ztlumuje se VÝHRADNĚ vnitřní ikona/text na `opacity: 0.35`.
+11. **Sjednocení rádiusů prvků:**
+    - Všechny vnější bloky, kontejnery klávesnic, dominantní tlačítka (`DominantButton`), řádky utilit (`.keypad-utility-row*`), přepínače (`SegmentedControl`), karty voleb (`RadioGroup`) i textareje mají sjednocený poloměr **`--radius-sm` (6px)**.
+    - Jednotlivá malá tlačítka uvnitř mřížek a sdružených řad mají **`border-radius: 2px`**.
+    - Vnitřní sub-prvky (např. aktivní segment v přepínači) mají **`--radius-xs` (4px)**.
+    - Kruhové prvky mají **`--radius-full`** (Braillovy body, kruhové indikátory).
 
 ---
 
@@ -144,15 +150,18 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 />
 ```
 
-### Kondenzované tabulky a mřížky (`AlphabetGrid`, `AdaptiveNumpad`, `RomanNumpad`, `FlagsModule`, `InteractiveCross`)
-- Pravidlo kompaktního zaobleného bloku:
+### Kondenzované tabulky a mřížky (`AlphabetGrid`, `AdaptiveNumpad`, `RomanNumpad`, `FlagsModule`, `InteractiveCross`, `CoordinateKeypad`)
+- **Pravidlo zapuštěného šasi („switchbed tray“):**
 ```css
 .table-grid {
   display: grid;
   gap: 2px;
-  border-radius: var(--radius-md);
+  padding: 2px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background-color: var(--color-bg-canvas);
+  border: 1px solid var(--color-border-subtle);
+  box-sizing: border-box;
 }
 
 .table-key {
@@ -162,12 +171,26 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.10),
     inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
 }
 
 .table-key:active:not(:disabled) {
   background-color: var(--color-surface-active);
   box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
   transform: none;
+}
+
+/* Záslepka nevyužitých slotů na konci mřížky */
+.grid-filler {
+  grid-column: span var(--filler-span, 1);
+  background-color: var(--color-surface-2);
+  opacity: 0.35;
+  border-radius: 2px;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  user-select: none;
 }
 ```
 

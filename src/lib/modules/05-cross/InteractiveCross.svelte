@@ -337,17 +337,6 @@
   {:else if crossType === 'small-polish'}
     <!-- Pigpen (Malý polský kříž): Sjednocené SVG plátno pro 3×3 mřížky i 2×2 šikmé kříže -->
     <div class="pigpen-board-wrapper">
-      <!-- Hlavička sloupců: Bez tečky | S tečkou -->
-      <div class="sp-headers-row">
-        <div class="sp-col-header">
-          <span class="sp-col-title">Bez tečky</span>
-        </div>
-        <div class="sp-col-header">
-          <span class="sp-col-title">S tečkou</span>
-          <span class="sp-dot-badge" aria-hidden="true"></span>
-        </div>
-      </div>
-
       <!-- Sjednocené SVG plátno (identické měřítko teček r=2.5 a nulové přesahy) -->
       <svg
         class="pigpen-board-svg"
@@ -830,40 +819,6 @@
     touch-action: none;
   }
 
-  .sp-headers-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    width: 100%;
-    padding: 0 4px;
-    box-sizing: border-box;
-  }
-
-  .sp-col-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    width: 100%;
-  }
-
-  .sp-col-title {
-    font-size: var(--text-2xs);
-    font-weight: 700;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .sp-dot-badge {
-    display: inline-block;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background-color: var(--color-accent-primary);
-    flex-shrink: 0;
-  }
-
   .pigpen-board-svg {
     width: 100%;
     height: auto;
@@ -929,12 +884,14 @@
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(4, clamp(44px, 6.5vh, 54px));
     gap: 2px;
+    padding: 2px;
     width: 100%;
     box-sizing: border-box;
     touch-action: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     overflow: hidden;
     background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-subtle);
   }
 
   .phone-key-btn {
@@ -1014,23 +971,24 @@
   /* Polybiův čtverec */
   .polybius-board-wrapper {
     width: 100%;
-    max-width: 360px;
-    margin: 0 auto;
-    padding: 0 4px;
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
-  }
-
-  .polybius-board-wrapper.size-6 {
-    max-width: 390px;
   }
 
   .polybius-grid {
     display: grid;
     gap: 2px;
+    padding: 2px;
     width: 100%;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-subtle);
+    box-sizing: border-box;
   }
 
   .polybius-header-btn {
@@ -1062,14 +1020,12 @@
   .polybius-header-btn.col-header-btn {
     min-height: 32px;
     height: 32px;
-    margin-bottom: 2px;
   }
 
   .polybius-header-btn.row-header-btn {
     min-width: 32px;
     width: 32px;
     height: 100%;
-    margin-right: 2px;
   }
 
   .polybius-header-btn.is-active {

@@ -102,14 +102,8 @@
 >
   {#snippet output()}
     {#if flagMode === 'maritime'}
-      <TranslationCard text={inputLetters} />
-    {/if}
-  {/snippet}
-
-  {#snippet input()}
-    {#if flagMode === 'maritime'}
-      <div class="flags-keypad">
-        <!-- Active Filter Summary (Shown only when filtering) -->
+      <div class="flags-output-container">
+        <TranslationCard text={inputLetters} />
         {#if selectedColors.length > 0}
           <div class="filter-indicator-bar">
             <span class="filter-indicator-text">
@@ -117,7 +111,13 @@
             </span>
           </div>
         {/if}
+      </div>
+    {/if}
+  {/snippet}
 
+  {#snippet input()}
+    {#if flagMode === 'maritime'}
+      <div class="flags-keypad">
         <!-- 26 Flags Grid (A–Z) with Sailboat Easter Egg in Top-Left Corner (2x2) -->
         <div class="flags-grid">
           {#if showSailboat}
@@ -244,33 +244,53 @@
     user-select: none;
   }
 
-  /* Filter Indicator Bar */
+  /* Flags Output Container & Floating Filter Bar */
+  .flags-output-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
   .filter-indicator-bar {
+    position: absolute;
+    bottom: var(--space-xs);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 3px var(--space-sm);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    animation: fadeIn 0.15s ease-out;
+    padding: 5px 14px;
+    background: rgba(22, 24, 32, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-full);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.15);
+    animation: filterFloatIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
   }
 
-  @keyframes fadeIn {
+  @keyframes filterFloatIn {
     from {
       opacity: 0;
-      transform: translateY(-4px);
+      transform: translate(-50%, 6px);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+      transform: translate(-50%, 0);
     }
   }
 
   .filter-indicator-text {
     font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--color-text-secondary);
+    font-weight: 700;
+    color: var(--color-accent-primary);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
   }
 
   /* Flags Grid: 5 columns x 6 rows (with Sailboat in top-left 2x2) */
@@ -278,7 +298,13 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 2px;
+    padding: 2px;
     width: 100%;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-subtle);
+    box-sizing: border-box;
   }
 
   .flag-tile.is-solo-z {
@@ -340,11 +366,13 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 2px;
+    padding: 2px;
     width: 100%;
     height: var(--dominant-key-height);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     overflow: hidden;
     background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-subtle);
     box-sizing: border-box;
   }
 

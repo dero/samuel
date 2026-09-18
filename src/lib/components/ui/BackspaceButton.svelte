@@ -7,6 +7,7 @@
     onAction: () => void;
     disabled?: boolean;
     hasActiveSelection?: boolean;
+    icon?: 'auto' | 'backspace' | 'cancel';
     label?: string;
     showLabel?: boolean;
     cancelLabel?: string;
@@ -19,6 +20,7 @@
     onAction,
     disabled = false,
     hasActiveSelection = false,
+    icon = 'auto',
     label = 'Backspace',
     showLabel = false,
     cancelLabel = 'Zrušit výběr',
@@ -82,6 +84,11 @@
 
   let displayLabel = $derived(hasActiveSelection ? cancelLabel : label);
   let displayTitle = $derived(hasActiveSelection ? cancelTitle : title);
+  let resolvedIcon = $derived.by(() => {
+    if (icon === 'backspace') return 'backspace';
+    if (icon === 'cancel') return 'cancel';
+    return hasActiveSelection ? 'cancel' : 'backspace';
+  });
 </script>
 
 <button
@@ -99,7 +106,7 @@
   onkeydown={handleKeyDown}
 >
   <span class="btn-icon">
-    {#if hasActiveSelection}
+    {#if resolvedIcon === 'cancel'}
       <X size={20} weight="bold" />
     {:else}
       <Backspace size={20} weight="duotone" />
@@ -116,7 +123,7 @@
     padding: 0 var(--space-sm);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     font-size: var(--text-sm);
     font-weight: 600;
     line-height: 1;

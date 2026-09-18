@@ -12,6 +12,7 @@
   // Dynamic columns: guarantee max 7 rows
   const cols = $derived(Math.max(6, Math.ceil(letters.length / 7)));
   const rows = $derived(Math.ceil(letters.length / cols));
+  const emptySpan = $derived((cols - (letters.length % cols)) % cols);
 
   function handlePointerDown(char: string, e: PointerEvent) {
     if (disabled || e.button !== 0) return;
@@ -42,6 +43,14 @@
         <span class="letter-label">{letter}</span>
       </button>
     {/each}
+
+    {#if emptySpan > 0}
+      <div
+        class="grid-filler"
+        style="grid-column: span {emptySpan};"
+        aria-hidden="true"
+      ></div>
+    {/if}
   </div>
 </div>
 
@@ -57,11 +66,13 @@
     display: grid;
     grid-template-columns: repeat(var(--cols, 6), 1fr);
     gap: 2px;
+    padding: 2px;
     width: 100%;
     box-sizing: border-box;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     overflow: hidden;
     background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-subtle);
   }
 
   .letter-key {
@@ -114,5 +125,16 @@
 
   .letter-label {
     line-height: 1;
+  }
+
+  .grid-filler {
+    background-color: var(--color-surface-2);
+    opacity: 0.35;
+    border-radius: 2px;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    user-select: none;
   }
 </style>

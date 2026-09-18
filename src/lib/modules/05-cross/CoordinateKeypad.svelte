@@ -218,6 +218,12 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding: 2px;
+    background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-sizing: border-box;
     flex: 1;
     justify-content: space-between;
   }

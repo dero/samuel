@@ -93,17 +93,17 @@
     height: var(--dominant-key-height);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.6);
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 3px;
     padding: 4px 6px;
-    transition: background-color 0.08s ease, border-color 0.08s ease, transform 0.04s ease, box-shadow 0.08s ease;
+    transition: background-color 0.08s ease, border-color 0.08s ease, box-shadow 0.08s ease;
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
@@ -116,9 +116,8 @@
   .dominant-btn:active:not(:disabled),
   .dominant-btn.is-pressed:not(:disabled) {
     background-color: var(--color-surface-active);
-    border-color: var(--color-border-focus);
     box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: scale(0.96);
+    transform: none;
   }
 
   .dominant-btn:disabled {
@@ -163,19 +162,13 @@
     color: var(--color-text-secondary);
   }
 
-  /* Ready to commit state (tactile illuminated mechanical keycap) */
+  /* Ready to commit state: clear bright letter without colored glow or gradient */
   .dominant-btn.is-ready {
-    background: linear-gradient(180deg, rgba(0, 210, 255, 0.20) 0%, rgba(0, 180, 240, 0.10) 100%);
-    border-color: rgba(0, 210, 255, 0.45);
-    box-shadow: 
-      0 0 12px rgba(0, 210, 255, 0.20),
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.6);
+    border-color: var(--color-border-subtle);
   }
 
   .dominant-btn.is-ready .btn-symbol {
-    color: var(--color-accent-primary);
-    text-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+    color: #ffffff;
   }
 
   .dominant-btn.is-ready .btn-name {
@@ -184,11 +177,8 @@
 
   .dominant-btn.is-ready:active,
   .dominant-btn.is-ready.is-pressed {
-    background: linear-gradient(180deg, rgba(0, 180, 240, 0.12) 0%, rgba(0, 210, 255, 0.22) 100%);
-    border-color: rgba(0, 210, 255, 0.6);
-    box-shadow: 
-      0 0 6px rgba(0, 210, 255, 0.15),
-      inset 0 2px 4px rgba(0, 0, 0, 0.65);
-    transform: scale(0.98);
+    background-color: var(--color-surface-active);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    transform: none;
   }
 </style>

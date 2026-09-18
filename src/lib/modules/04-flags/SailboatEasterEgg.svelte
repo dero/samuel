@@ -41,13 +41,13 @@
 
     const now = Date.now();
     clickTimestamps.push(now);
-    // Keep timestamps from the last 20 seconds
-    clickTimestamps = clickTimestamps.filter((t) => now - t <= 20000);
+    // Keep timestamps from the last 12 seconds
+    clickTimestamps = clickTimestamps.filter((t) => now - t <= 12000);
 
     settings.vibrate(15);
 
-    // Easter Egg Level 2: 60 clicks in <= 20 seconds -> Sinking!
-    if (clickTimestamps.length >= 60) {
+    // Easter Egg Level 2: 20 clicks in <= 12 seconds -> Sinking!
+    if (clickTimestamps.length >= 20) {
       triggerSinking();
       return;
     }

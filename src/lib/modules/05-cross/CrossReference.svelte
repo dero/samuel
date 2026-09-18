@@ -99,6 +99,7 @@
         <div class="notation-item"><strong>Zápis počtem stisků:</strong> <code>22</code> = <code>B</code>, <code>7777</code> = <code>S</code>, <code>0</code> = <code>␣</code>, <code>**</code> = <code>+</code></div>
         <div class="notation-item"><strong>Zápis souřadnicemi:</strong> <code>(Klávesa, Stisk)</code> např. <code>(7, 4)</code> = <code>S</code></div>
         <div class="notation-item"><strong>Podržení klávesy:</strong> Zapíše přímo číslici (např. podržení <code>2</code> = <code>2</code>, <code>0</code> = <code>0</code>).</div>
+        <div class="notation-item"><strong>Predikce T9:</strong> 1 stisk na písmeno · plovoucí lišta návrhů · <code>*</code> přepíná slova · <code>0</code> vloží mezeru.</div>
       </div>
     </section>
 

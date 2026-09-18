@@ -274,21 +274,45 @@
           <div class="dial-square">
             <!-- Dial SVG active beams -->
             <svg class="wheel-svg" viewBox="0 0 100 100" aria-hidden="true">
-              <!-- Center pivot dot -->
-              <circle cx="50" cy="50" r="3.5" class="svg-center-dot" />
+              <defs>
+                {#each WHEEL_DIRS as dir}
+                  <linearGradient
+                    id="beam-fade-{dir.index}"
+                    gradientUnits="userSpaceOnUse"
+                    x1={dir.left}
+                    y1={dir.top}
+                    x2="50"
+                    y2="50"
+                  >
+                    <stop offset="0%" stop-color="var(--color-accent-primary)" stop-opacity="1" />
+                    <stop offset="35%" stop-color="var(--color-accent-primary)" stop-opacity="0.8" />
+                    <stop offset="75%" stop-color="var(--color-accent-primary)" stop-opacity="0" />
+                  </linearGradient>
+                {/each}
+              </defs>
 
-              <!-- Active beams from center to selected arms -->
-              {#each activeDirs as dirIdx}
-                {@const dir = WHEEL_DIRS[dirIdx]}
+              <!-- If 1 arm selected: beam fades out towards center -->
+              {#if activeDirs.length === 1}
+                {@const dir0 = WHEEL_DIRS[activeDirs[0]]}
                 <line
-                  x1="50"
-                  y1="50"
-                  x2={dir.left}
-                  y2={dir.top}
+                  x1={dir0.left}
+                  y1={dir0.top}
+                  x2="50"
+                  y2="50"
+                  stroke="url(#beam-fade-{dir0.index})"
+                  class="svg-beam-fade"
+                  class:is-fading={committedFade}
+                />
+              <!-- If 2 arms selected: connected angular path with animated stroke -->
+              {:else if activeDirs.length === 2}
+                {@const dir0 = WHEEL_DIRS[activeDirs[0]]}
+                {@const dir1 = WHEEL_DIRS[activeDirs[1]]}
+                <path
+                  d="M {dir0.left} {dir0.top} L 50 50 L {dir1.left} {dir1.top}"
                   class="svg-beam-active"
                   class:is-fading={committedFade}
                 />
-              {/each}
+              {/if}
             </svg>
 
             <!-- 8 Circular Targets -->
@@ -434,21 +458,44 @@
     pointer-events: none;
   }
 
-  .svg-center-dot {
-    fill: var(--color-bg-canvas);
-    stroke: var(--color-border-subtle);
-    stroke-width: 1.5;
+  .svg-beam-fade {
+    stroke-width: 4.5;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 6px rgba(0, 210, 255, 0.6));
+    animation: beamAppear 0.15s ease-out;
   }
 
   .svg-beam-active {
+    fill: none;
     stroke: var(--color-accent-primary);
     stroke-width: 4.5;
     stroke-linecap: round;
+    stroke-linejoin: round;
     filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.9));
+    animation: beamConnect 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  .svg-beam-fade.is-fading,
   .svg-beam-active.is-fading {
     animation: beamFadeOut 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  @keyframes beamAppear {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes beamConnect {
+    from {
+      opacity: 0.4;
+      stroke-dasharray: 120;
+      stroke-dashoffset: 45;
+    }
+    to {
+      opacity: 1;
+      stroke-dasharray: 120;
+      stroke-dashoffset: 0;
+    }
   }
 
   @keyframes beamFadeOut {

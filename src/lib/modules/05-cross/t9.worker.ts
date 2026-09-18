@@ -159,12 +159,13 @@ self.onmessage = async (e: MessageEvent) => {
         // Ignore
       }
 
-      // 2. Main dictionary
+      // 2. Main dictionary exact matches (cap at 7 to guarantee room for prefix completions)
+      const exactLimit = Math.min(limit, 7);
       try {
         const stmtAll = db.prepare(
           `SELECT word FROM cs_all WHERE len = :len AND word_nodiac GLOB :glob ORDER BY freq DESC LIMIT :limit`
         );
-        stmtAll.bind({ ':len': digits.length, ':glob': globExact, ':limit': limit });
+        stmtAll.bind({ ':len': digits.length, ':glob': globExact, ':limit': exactLimit });
         while (stmtAll.step()) {
           const row = stmtAll.getAsObject() as { word: string };
           const upper = row.word.toUpperCase();
@@ -178,24 +179,50 @@ self.onmessage = async (e: MessageEvent) => {
         // Ignore
       }
 
-      // 3. Prefix completions from cs_all (complete lexicon including verbs and all inflections)
-      if (candidates.length < 3) {
+      // 3. Prefix completions (longer words matching the digit prefix)
+      if (candidates.length < limit) {
+        const globPrefix = globExact + '*';
+
+        // 3a. Cipher keywords prefix
         try {
-          const stmtPrefix = db.prepare(
-            `SELECT word FROM cs_all WHERE len > :len AND word_nodiac GLOB :globPrefix ORDER BY freq DESC LIMIT 5`
+          const stmtPuzzlePre = db.prepare(
+            `SELECT word FROM puzzle_words WHERE len > :len AND word_nodiac GLOB :globPrefix LIMIT 2`
           );
-          stmtPrefix.bind({ ':len': digits.length, ':globPrefix': globExact + '*' });
-          while (stmtPrefix.step()) {
-            const row = stmtPrefix.getAsObject() as { word: string };
+          stmtPuzzlePre.bind({ ':len': digits.length, ':globPrefix': globPrefix });
+          while (stmtPuzzlePre.step()) {
+            const row = stmtPuzzlePre.getAsObject() as { word: string };
             const upper = row.word.toUpperCase();
             if (!seen.has(upper)) {
               seen.add(upper);
               candidates.push(upper);
             }
           }
-          stmtPrefix.free();
+          stmtPuzzlePre.free();
         } catch {
           // Ignore
+        }
+
+        // 3b. Main dictionary prefix by specific lengths (uses idx_all_len_freq for sub-millisecond lookups)
+        const maxLen = Math.min(digits.length + 4, 18);
+        for (let l = digits.length + 1; l <= maxLen && candidates.length < limit; l++) {
+          try {
+            const stmtPrefix = db.prepare(
+              `SELECT word FROM cs_all WHERE len = :len AND word_nodiac GLOB :globPrefix ORDER BY freq DESC LIMIT 2`
+            );
+            stmtPrefix.bind({ ':len': l, ':globPrefix': globPrefix });
+            while (stmtPrefix.step()) {
+              const row = stmtPrefix.getAsObject() as { word: string };
+              const upper = row.word.toUpperCase();
+              if (!seen.has(upper)) {
+                seen.add(upper);
+                candidates.push(upper);
+              }
+              if (candidates.length >= limit) break;
+            }
+            stmtPrefix.free();
+          } catch {
+            // Ignore
+          }
         }
       }
 

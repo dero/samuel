@@ -267,18 +267,17 @@
     return sliced;
   });
 
-  const displayText = $derived.by(() => {
+  const pendingDisplay = $derived.by(() => {
     if (crossTypeId === 'mobile-keypad') {
       if (phoneInputMode === 't9' && t9Digits) {
-        const word = t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits);
-        const prefix = inputLetters.length > 0 && !inputLetters.endsWith(' ') ? inputLetters + ' ' : inputLetters;
-        return prefix + word;
+        const needsSpace = inputLetters.length > 0 && !inputLetters.endsWith(' ');
+        return (needsSpace ? ' ' : '') + t9Digits;
       }
       if (phoneInputMode === 'multitap' && pendingChar) {
-        return inputLetters + pendingChar;
+        return pendingChar;
       }
     }
-    return inputLetters;
+    return '';
   });
 
   function clearCommitTimer() {
@@ -463,7 +462,12 @@
   }
 
   function handleSpace() {
-    inputLetters += ' ';
+    if (crossTypeId === 'mobile-keypad' && phoneInputMode === 't9' && t9Digits) {
+      const word = t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits);
+      commitT9Word(word, true);
+    } else {
+      inputLetters += ' ';
+    }
     selectedAxis1 = null;
     selectedAxis2 = null;
     selectedAxis3 = null;
@@ -642,7 +646,11 @@
   {/snippet}
 
   {#snippet output()}
-    <TranslationCard text={displayText} />
+    <TranslationCard
+      text={inputLetters}
+      pendingText={pendingDisplay}
+      class={crossTypeId === 'mobile-keypad' && phoneInputMode === 't9' && t9Digits ? 'has-t9-floating' : ''}
+    />
   {/snippet}
 
   {#snippet input()}
@@ -656,38 +664,32 @@
           onChange={handlePhoneModeChange}
         />
 
-        <!-- T9 Candidate Suggestion Bar -->
-        {#if phoneInputMode === 't9'}
+        <!-- Floating T9 Candidate Suggestion Bar (zobrazí se plovoucí až při psaní) -->
+        {#if phoneInputMode === 't9' && t9Digits}
           <div class="t9-candidate-container" role="region" aria-label="Návrhy slov T9">
-            <div class="t9-digits-badge" class:is-loading={isT9Loading} title="Zadané číslice">
-              {#if isT9Loading}
-                <span class="t9-digits-spinner"></span>
-              {/if}
-              <span>{t9Digits || 'T9'}</span>
-            </div>
             <div class="t9-candidates-scroll">
               {#if isT9Loading}
                 <div class="t9-loading-state">
                   <span class="t9-spinner"></span>
-                  <span class="t9-loading-text">Hledám ve slovníku...</span>
+                  <span class="t9-loading-text">Hledám...</span>
                   <span class="t9-fallback-chip">{getFallbackT9Word(t9Digits)}</span>
                 </div>
               {:else if t9Candidates.length > 0}
                 {#each t9Candidates as candidate, idx}
+                  {@const matchPart = candidate.slice(0, t9Digits.length)}
+                  {@const restPart = candidate.slice(t9Digits.length)}
                   <button
                     type="button"
                     class="t9-candidate-chip"
                     class:is-active={idx === t9CandidateIndex}
                     onclick={() => handleSelectT9Candidate(candidate)}
                   >
-                    {candidate}
+                    <span class="t9-chip-match">{matchPart}</span>{#if restPart}<span class="t9-chip-rest">{restPart}</span>{/if}
                   </button>
                 {/each}
-              {:else if t9Digits}
+              {:else}
                 <span class="t9-fallback-chip">{getFallbackT9Word(t9Digits)}</span>
                 <span class="t9-no-match-text">(bez shody)</span>
-              {:else}
-                <span class="t9-hint-text">1 stisk na písmeno · (*) další slovo · (0) mezera</span>
               {/if}
             </div>
           </div>
@@ -747,8 +749,9 @@
         <BackspaceButton
           disabled={!inputLetters && !pendingChar && !t9Digits && selectedAxis1 === null && selectedAxis2 === null && selectedAxis3 === null}
           hasActiveSelection={!!pendingChar || !!t9Digits || selectedAxis1 !== null || selectedAxis2 !== null || selectedAxis3 !== null}
+          icon={t9Digits ? 'backspace' : 'auto'}
           cancelLabel={t9Digits ? 'Smazat číslici' : 'Zrušit výběr'}
-          cancelTitle="Zrušit rozepsaný znak"
+          cancelTitle={t9Digits ? 'Smazat číslici' : 'Zrušit rozepsaný znak'}
           onAction={handleBackspace}
         />
       </div>
@@ -777,53 +780,45 @@
     gap: var(--space-sm);
     width: 100%;
     align-items: center;
+    position: relative;
   }
 
-
+  :global(.output-container.has-t9-floating .result-text) {
+    padding-bottom: 48px;
+  }
 
   .t9-candidate-container {
+    position: absolute;
+    bottom: calc(100% + var(--space-xs) + 6px);
+    left: 0;
+    right: 0;
+    z-index: 30;
     display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
-    min-height: 38px;
-    background: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    min-height: 42px;
+    background: rgba(22, 24, 32, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-sm);
     padding: 4px 8px;
     box-sizing: border-box;
     overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.15);
+    animation: t9-float-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .t9-digits-badge {
-    font-family: var(--font-mono, monospace);
-    font-size: var(--text-xs);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    background: rgba(0, 210, 255, 0.1);
-    border: 1px solid rgba(0, 210, 255, 0.25);
-    border-radius: var(--radius-sm);
-    padding: 2px 6px;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.12s ease;
-  }
-
-  .t9-digits-badge.is-loading {
-    border-color: var(--color-accent-primary);
-    box-shadow: 0 0 8px rgba(0, 210, 255, 0.35);
-  }
-
-  .t9-digits-spinner {
-    width: 8px;
-    height: 8px;
-    border: 1.5px solid rgba(0, 210, 255, 0.25);
-    border-top-color: var(--color-accent-primary);
-    border-radius: 50%;
-    animation: t9-spin 0.6s linear infinite;
-    display: inline-block;
+  @keyframes t9-float-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .t9-candidates-scroll {
@@ -849,18 +844,24 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     font-weight: 600;
-    padding: 4px 8px;
+    padding: 6px 12px;
+    min-height: 32px;
     cursor: pointer;
     white-space: nowrap;
     transition: all 0.12s ease;
     user-select: none;
+    -webkit-user-select: none;
     flex-shrink: 0;
   }
 
   .t9-candidate-chip:hover {
     border-color: var(--color-text-secondary);
+  }
+
+  .t9-candidate-chip:active {
+    transform: scale(0.96);
   }
 
   .t9-candidate-chip.is-active {
@@ -869,6 +870,20 @@
     border-color: var(--color-accent-primary);
     box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
     font-weight: 700;
+  }
+
+  .t9-chip-match {
+    font-weight: 700;
+  }
+
+  .t9-chip-rest {
+    opacity: 0.45;
+    font-weight: 400;
+  }
+
+  .t9-candidate-chip.is-active .t9-chip-rest {
+    opacity: 0.7;
+    font-weight: 500;
   }
 
   .t9-fallback-chip {
@@ -923,14 +938,6 @@
     to {
       opacity: 1;
     }
-  }
-
-  .t9-hint-text {
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .visual-cross-container {

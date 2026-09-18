@@ -5,12 +5,14 @@
 
   interface Props {
     text: string;
+    pendingText?: string;
     placeholder?: string;
     class?: string;
   }
 
   let {
     text = '',
+    pendingText = '',
     placeholder = 'Zde se zobrazí přeložený text...',
     class: customClass = ''
   }: Props = $props();
@@ -18,8 +20,8 @@
   let textEl = $state<HTMLDivElement | null>(null);
 
   $effect(() => {
-    // When text changes, auto-scroll to the bottom of the container
-    if (text && textEl) {
+    // When text or pendingText changes, auto-scroll to the bottom of the container
+    if ((text || pendingText) && textEl) {
       tick().then(() => {
         if (textEl) {
           textEl.scrollTop = textEl.scrollHeight;
@@ -29,12 +31,13 @@
   });
 
   async function handleCopy() {
-    if (!text.trim()) return;
+    const fullText = (text + pendingText).trim();
+    if (!fullText) return;
     // Don't copy whole text if the user was highlighting/selecting a specific substring
     const selection = window.getSelection()?.toString();
     if (selection && selection.length > 0) return;
     settings.vibrate(35);
-    await copyToClipboard(text);
+    await copyToClipboard(fullText);
   }
 </script>
 
@@ -44,16 +47,20 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="result-card"
-    class:is-clickable={text.trim().length > 0}
+    class:is-clickable={text.trim().length > 0 || pendingText.trim().length > 0}
     onclick={handleCopy}
     title="Klepnutím zkopírujete do schránky"
   >
     <div
       bind:this={textEl}
       class="result-text"
-      class:empty={!text.trim()}
+      class:empty={!text.trim() && !pendingText.trim()}
     >
-      {text || placeholder}
+      {#if !text.trim() && !pendingText.trim()}
+        {placeholder}
+      {:else}
+        {text}{#if pendingText}<span class="pending-highlight">{pendingText}</span>{/if}
+      {/if}
     </div>
   </div>
 </div>
@@ -114,5 +121,14 @@
     font-size: var(--text-sm);
     font-weight: 400;
     opacity: 0.6;
+  }
+
+  .pending-highlight {
+    color: var(--color-accent-primary);
+    text-decoration: underline;
+    text-decoration-style: solid;
+    text-underline-offset: 4px;
+    text-decoration-color: rgba(0, 210, 255, 0.45);
+    font-weight: 700;
   }
 </style>

@@ -57,6 +57,7 @@
   let zeroBased = $state<boolean>(modSettings.getBoolean('zero_based', false));
   let asciiMode = $state<boolean>(modSettings.getBoolean('ascii_mode', false));
   let autoEnter = $state<boolean>(modSettings.getBoolean('auto_enter', true));
+  let showRomanEasterEgg = $state<boolean>(modSettings.getBoolean('show_roman_easter_egg', true));
   let alphabetId = $state<string>(modSettings.getString('alphabet_id', 'english-26'));
 
   let lastCharInput = $state<string>('');
@@ -73,6 +74,7 @@
     modSettings.setBoolean('zero_based', zeroBased);
     modSettings.setBoolean('ascii_mode', asciiMode);
     modSettings.setBoolean('auto_enter', autoEnter);
+    modSettings.setBoolean('show_roman_easter_egg', showRomanEasterEgg);
     modSettings.setString('alphabet_id', alphabetId);
   });
 
@@ -464,6 +466,7 @@
         <RomanNumpad
           buffer={buffer}
           canonicalOnly={isSourceRomanCanonical}
+          showEasterEgg={showRomanEasterEgg}
           onDigit={handleDigit}
         />
       {:else}
@@ -545,6 +548,17 @@
         onChange={(v) => (autoEnter = v)}
       />
     </div>
+
+    <div class="menu-group">
+      <div class="menu-group-title">Vzhled a chování</div>
+      <OptionRow
+        label="Zobrazovat římskou dekoraci"
+        hint="Zobrazí v prázdném rohu římské klávesnice symbol SPQR."
+        type="switch"
+        checked={showRomanEasterEgg}
+        onChange={(v) => (showRomanEasterEgg = v)}
+      />
+    </div>
   {/snippet}
 
   {#snippet reference()}
@@ -595,7 +609,7 @@
     gap: 6px;
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     height: 38px;
     padding: 0 var(--space-sm);
     cursor: pointer;
@@ -696,7 +710,7 @@
     justify-content: center;
     width: 38px;
     height: 38px;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     color: var(--color-text-secondary);
@@ -709,7 +723,6 @@
     color: var(--color-accent-primary);
     transform: scale(0.92);
   }
-
   /* Menu styling */
   .menu-group {
     display: flex;

@@ -8,6 +8,7 @@ export interface ToastMessage {
 
 class ToastState {
   toasts = $state<ToastMessage[]>([]);
+  private timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   show(
     text: string,
@@ -23,6 +24,11 @@ class ToastState {
           undoLabel?: string;
         }
   ) {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
+
     const opts = typeof options === 'string' ? { type: options } : options;
     const id = 'toast-' + Math.random().toString(36).substring(2, 9);
     const duration = opts?.duration ?? 2600;
@@ -35,10 +41,12 @@ class ToastState {
       undoLabel: opts?.undoLabel ?? 'Vrátit zpět'
     };
 
-    this.toasts = [...this.toasts, toast];
+    // Exactly one toast on screen at a time
+    this.toasts = [toast];
 
-    setTimeout(() => {
+    this.timeoutId = setTimeout(() => {
       this.remove(id);
+      this.timeoutId = null;
     }, duration);
   }
 

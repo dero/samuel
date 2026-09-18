@@ -93,7 +93,7 @@
     align-items: center;
     gap: var(--space-md);
     padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     background: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     cursor: pointer;

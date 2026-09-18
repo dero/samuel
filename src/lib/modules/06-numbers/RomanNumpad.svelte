@@ -1,15 +1,23 @@
 <script lang="ts">
   import { settings } from '../../state/settings.svelte';
   import { isCanonicalRomanPrefix } from './numbersSolver';
+  import RomanEasterEgg from './RomanEasterEgg.svelte';
 
   interface Props {
     buffer?: string;
     canonicalOnly?: boolean;
     disabled?: boolean;
+    showEasterEgg?: boolean;
     onDigit: (digit: string) => void;
   }
 
-  let { buffer = '', canonicalOnly = false, disabled = false, onDigit }: Props = $props();
+  let {
+    buffer = '',
+    canonicalOnly = false,
+    disabled = false,
+    showEasterEgg = true,
+    onDigit
+  }: Props = $props();
 
   const ROMAN_KEYS = [
     { char: 'I', val: 1 },
@@ -39,13 +47,21 @@
   class:is-disabled={disabled}
   oncontextmenu={(e) => e.preventDefault()}
 >
-  <!-- Row 1: Most frequent units & alphabet keys: I, V, X -->
-  <div class="grid-row row-3cols">
+  <!-- Single unified 4x2 grid: [Easter egg / Blank, I, V, X] / [L, C, D, M] -->
+  <div class="grid-row grid-4x2">
+    <!-- Slot 1: Easter egg slot (Colosseum / SPQR) or empty filler -->
+    {#if showEasterEgg}
+      <RomanEasterEgg />
+    {:else}
+      <div class="grid-filler" aria-hidden="true"></div>
+    {/if}
+
+    <!-- Slot 2, 3, 4: I, V, X -->
     {#each ROMAN_KEYS.slice(0, 3) as item}
       {@const keyDisabled = disabled || !isKeyAllowed(item.char)}
       <button
         type="button"
-        class="key-btn key-top-row"
+        class="key-btn"
         disabled={keyDisabled}
         onpointerdown={(e) => handlePointerDown(item.char, e)}
       >
@@ -53,15 +69,13 @@
         <span class="key-subval">{item.val}</span>
       </button>
     {/each}
-  </div>
 
-  <!-- Row 2: Remaining denominations: L, C, D, M -->
-  <div class="grid-row row-4cols">
+    <!-- Row 2: L, C, D, M -->
     {#each ROMAN_KEYS.slice(3) as item}
       {@const keyDisabled = disabled || !isKeyAllowed(item.char)}
       <button
         type="button"
-        class="key-btn key-bottom-row"
+        class="key-btn"
         disabled={keyDisabled}
         onpointerdown={(e) => handlePointerDown(item.char, e)}
       >
@@ -74,9 +88,6 @@
 
 <style>
   .roman-numpad-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
     width: 100%;
     user-select: none;
     -webkit-user-select: none;
@@ -85,20 +96,15 @@
 
   .grid-row {
     display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 2px;
+    padding: 2px;
     width: 100%;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     overflow: hidden;
     background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-subtle);
     box-sizing: border-box;
-  }
-
-  .row-4cols {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .row-3cols {
-    grid-template-columns: repeat(3, 1fr);
   }
 
   .key-btn {
@@ -107,6 +113,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    height: clamp(48px, 7.2vh, 60px);
     background-color: var(--color-surface-2);
     color: var(--color-text-primary);
     border: none;
@@ -123,23 +130,15 @@
     padding: var(--space-2xs) 0;
   }
 
-  .key-top-row {
-    height: clamp(54px, 8.2vh, 66px);
-  }
-
-  .key-top-row .key-label {
-    font-size: clamp(24px, 3.8vh, 28px);
-  }
-
-  .key-bottom-row {
-    height: clamp(46px, 6.8vh, 54px);
-  }
-
-  .key-bottom-row .key-label {
-    font-size: clamp(17px, 2.8vh, 21px);
+  .grid-filler {
+    height: clamp(48px, 7.2vh, 60px);
+    min-height: var(--tap-min-size);
+    visibility: hidden;
+    pointer-events: none;
   }
 
   .key-label {
+    font-size: clamp(20px, 3.2vh, 25px);
     font-weight: 800;
     line-height: 1;
     color: var(--color-accent-primary);

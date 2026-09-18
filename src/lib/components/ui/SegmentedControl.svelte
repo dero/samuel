@@ -58,7 +58,7 @@
     gap: 4px;
     background-color: var(--color-surface-1);
     padding: 3px;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-subtle);
     width: 100%;
     box-sizing: border-box;
@@ -75,7 +75,7 @@
     padding: 4px 8px;
     background: transparent;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-xs);
     color: var(--color-text-secondary);
     font-size: var(--text-xs);
     font-weight: 600;

@@ -45,10 +45,40 @@
   let totalFoundCandidates = $state<number>(0);
   let isBruteforceOpen = $state(false);
   let isSolving = $state(false);
-  let textareaEl = $state<HTMLTextAreaElement | null>(null);
 
-  // Derived decoding & metadata
-  let decodedText = $derived(decodeMorse(inputMorse, { parseCH, parseDigits, parseOther }));
+  // Derived committed vs pending letter
+  const lastSlashIndex = $derived.by(() => {
+    return Math.max(inputMorse.lastIndexOf(' / '), inputMorse.lastIndexOf(' // '));
+  });
+
+  const committedPart = $derived.by(() => {
+    if (lastSlashIndex === -1) {
+      return '';
+    }
+    const isDouble = inputMorse.substring(lastSlashIndex).startsWith(' // ');
+    const sepLen = isDouble ? 4 : 3;
+    return inputMorse.substring(0, lastSlashIndex + sepLen);
+  });
+
+  const pendingMorse = $derived.by(() => {
+    if (lastSlashIndex === -1) {
+      return inputMorse.trim();
+    }
+    const isDouble = inputMorse.substring(lastSlashIndex).startsWith(' // ');
+    const sepLen = isDouble ? 4 : 3;
+    return inputMorse.substring(lastSlashIndex + sepLen).trim();
+  });
+
+  const committedText = $derived(
+    committedPart ? decodeMorse(committedPart, { parseCH, parseDigits, parseOther }) : ''
+  );
+
+  const pendingDisplay = $derived.by(() => {
+    if (!pendingMorse) return '';
+    const decodedPending = decodeMorse(pendingMorse, { parseCH, parseDigits, parseOther });
+    return decodedPending !== '?' ? decodedPending : pendingMorse;
+  });
+
   let permutations = $derived(
     isPermutationsOpen ? getPermutations(inputMorse, { parseCH, parseDigits, parseOther }) : []
   );
@@ -64,18 +94,9 @@
     modSettings.setBoolean('show_wire', showTelegraphWire);
   });
 
-  function autoScrollTextarea() {
-    requestAnimationFrame(() => {
-      if (textareaEl) {
-        textareaEl.scrollTop = textareaEl.scrollHeight;
-      }
-    });
-  }
-
   function appendSymbol(sym: '.' | '-') {
     sendPulse(sym);
     inputMorse += sym;
-    autoScrollTextarea();
   }
 
   function appendSlash() {
@@ -88,7 +109,6 @@
     } else if (trimmed.length > 0) {
       inputMorse = trimmed + ' / ';
     }
-    autoScrollTextarea();
   }
 
   function handleBackspace() {
@@ -102,7 +122,6 @@
     } else {
       inputMorse = inputMorse.slice(0, -1);
     }
-    autoScrollTextarea();
   }
 
   function handleClear() {
@@ -110,7 +129,6 @@
     inputMorse = '';
     bruteforceResults = [];
     totalFoundCandidates = 0;
-    autoScrollTextarea();
   }
 
   function openPermutations() {
@@ -151,7 +169,6 @@
     inputMorse = perm.transformedMorse;
     isPermutationsOpen = false;
     toast.show(`Varianta: ${perm.name}`, 'info');
-    autoScrollTextarea();
   }
 
   function applyCandidate(candidate: BruteforceCandidate) {
@@ -159,7 +176,6 @@
     inputMorse = candidate.spacedMorse;
     isBruteforceOpen = false;
     copyToClipboard(candidate.text, 'Řešení vloženo');
-    autoScrollTextarea();
   }
 
   function handleReset() {
@@ -174,59 +190,46 @@
     if (normalized) {
       inputMorse = normalized;
       toast.show('Kód vložen ze schránky', 'success');
-      autoScrollTextarea();
     }
   }
 </script>
 
 <ModuleShell onReset={handleReset} onPaste={handlePaste}>
   {#snippet output()}
-    <TranslationCard text={decodedText} />
+    <div class="morse-output-container">
+      <TranslationCard text={committedText} pendingText={pendingDisplay} />
+      {#if inputMorse.length > 0}
+        <div class="morse-floating-bar">
+          <button
+            type="button"
+            class="morse-chip-btn"
+            class:active={isPermutationsOpen}
+            onclick={openPermutations}
+            title="Zobrazit permutace a zrcadlení kódu"
+          >
+            <span class="floating-icon"><ArrowsLeftRight size={14} weight="bold" /></span>
+            <span>Permutace</span>
+          </button>
+
+          {#if isEligibleForBruteforce}
+            <button
+              type="button"
+              class="morse-chip-btn bruteforce-chip"
+              class:active={isBruteforceOpen}
+              onclick={runBruteforce}
+              title="Rozluštit morseovku bez mezer pomocí slovníku a jazykového modelu"
+            >
+              <span class="floating-icon"><Lightning size={14} weight="duotone" /></span>
+              <span>Vyřešit bez mezer</span>
+            </button>
+          {/if}
+        </div>
+      {/if}
+    </div>
   {/snippet}
 
   {#snippet input()}
     <div class="keypad-zone" class:no-wire={!showTelegraphWire}>
-      <!-- Small Floating Action Buttons above Textarea -->
-      <div class="morse-floating-toolbar">
-        <button
-          type="button"
-          class="floating-btn"
-          class:active={isPermutationsOpen}
-          onclick={openPermutations}
-          title="Zobrazit permutace a zrcadlení kódu"
-        >
-          <span class="floating-icon"><ArrowsLeftRight size={15} weight="bold" /></span>
-          <span>Permutace</span>
-        </button>
-
-        {#if isEligibleForBruteforce}
-          <button
-            type="button"
-            class="floating-btn bruteforce-btn"
-            class:active={isBruteforceOpen}
-            onclick={runBruteforce}
-            title="Rozluštit morseovku bez mezer pomocí slovníku a jazykového modelu"
-          >
-            <span class="floating-icon"><Lightning size={15} weight="duotone" /></span>
-            <span>Vyřešit bez mezer</span>
-          </button>
-        {/if}
-      </div>
-
-      <!-- 4-line Input Textarea with vertical scrolling -->
-      <div class="morse-textarea-container">
-        <textarea
-          bind:this={textareaEl}
-          bind:value={inputMorse}
-          rows={4}
-          class="morse-textarea"
-          placeholder="Zadávejte tečky, čárky a oddělovače..."
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-        ></textarea>
-      </div>
-
       <!-- Utility Row: Slide to Clear and Backspace -->
       <div class="keypad-utility-row">
         <SlideToAction
@@ -386,100 +389,84 @@
     width: 100%;
   }
 
-  .keypad-zone.no-wire {
-    padding-bottom: clamp(48px, 8vh, 68px);
+  /* Morse Output Container & Floating Action Bar */
+  .morse-output-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
-  /* Floating Toolbar above Textarea */
-  .morse-floating-toolbar {
+  .morse-floating-bar {
+    position: absolute;
+    bottom: var(--space-xs);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    padding: 0 var(--space-2xs);
+    gap: var(--space-xs);
+    background: rgba(22, 24, 32, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-full);
+    padding: 4px 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.15);
+    animation: morseFloatIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .floating-btn {
+  @keyframes morseFloatIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 6px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+
+  .morse-chip-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
+    gap: 5px;
+    padding: 4px 10px;
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-full);
     font-size: var(--text-xs);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--color-text-secondary);
-    transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
-    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+    white-space: nowrap;
   }
 
-  .floating-btn:active {
-    transform: scale(0.96);
-    background-color: var(--color-surface-active);
-  }
-
-  .floating-btn.active {
+  .morse-chip-btn:active,
+  .morse-chip-btn.active {
     background-color: var(--color-surface-active);
     color: var(--color-accent-primary);
     border-color: var(--color-accent-primary);
   }
 
-  .floating-btn.bruteforce-btn {
+  .morse-chip-btn.bruteforce-chip {
     color: var(--color-accent-warning);
     border-color: rgba(245, 158, 11, 0.4);
     background-color: var(--color-accent-warning-subtle);
   }
 
-  .floating-btn.bruteforce-btn:active {
-    background-color: rgba(245, 158, 11, 0.25);
+  .morse-chip-btn.bruteforce-chip:active,
+  .morse-chip-btn.bruteforce-chip.active {
+    background-color: rgba(245, 158, 11, 0.3);
   }
 
   .floating-icon {
     font-size: var(--text-sm);
     display: flex;
     align-items: center;
-  }
-
-  /* Compact Textarea for viewport budget */
-  .morse-textarea-container {
-    width: 100%;
-    display: flex;
-  }
-
-  .morse-textarea {
-    width: 100%;
-    height: 64px;
-    min-height: 64px;
-    max-height: 64px;
-    padding: 10px var(--space-md);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    font-family: var(--font-mono);
-    font-size: var(--text-lg);
-    font-weight: 700;
-    line-height: 1.35;
-    letter-spacing: 1.5px;
-    color: var(--color-text-primary);
-    resize: none;
-    overflow-y: auto;
-    word-break: break-all;
-    white-space: pre-wrap;
-    outline: none;
-    transition: border-color 0.15s ease;
-    box-sizing: border-box;
-  }
-
-  .morse-textarea:focus {
-    border-color: var(--color-border-focus);
-  }
-
-  .morse-textarea::placeholder {
-    color: var(--color-text-muted);
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    font-weight: 400;
-    letter-spacing: normal;
   }
 
   .empty-state, .loading-state {
