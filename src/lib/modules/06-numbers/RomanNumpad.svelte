@@ -133,8 +133,14 @@
   .grid-filler {
     height: clamp(48px, 7.2vh, 60px);
     min-height: var(--tap-min-size);
-    visibility: hidden;
+    background-color: var(--color-surface-2);
+    opacity: 0.35;
+    border-radius: 2px;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.4);
     pointer-events: none;
+    user-select: none;
   }
 
   .key-label {

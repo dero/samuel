@@ -41,13 +41,13 @@
 
     const now = Date.now();
     clickTimestamps.push(now);
-    // Keep timestamps from the last 12 seconds
-    clickTimestamps = clickTimestamps.filter((t) => now - t <= 12000);
+    // Keep timestamps from the last 20 seconds
+    clickTimestamps = clickTimestamps.filter((t) => now - t <= 20000);
 
     settings.vibrate(15);
 
-    // Easter Egg Level 2: 20 clicks in <= 12 seconds -> Sinking!
-    if (clickTimestamps.length >= 20) {
+    // Easter Egg Level 2: 60 clicks in <= 20 seconds -> Sinking!
+    if (clickTimestamps.length >= 60) {
       triggerSinking();
       return;
     }
@@ -89,7 +89,7 @@
 
         setTimeout(() => {
           boatState = 'idle';
-          toast.show('Znovu na hladině! ⛵✨', { type: 'success', duration: 2500 });
+          toast.show('Lodička je zpět! ⛵✨', { type: 'success', duration: 2500 });
         }, 850);
       }, 3200);
     }, 1800);

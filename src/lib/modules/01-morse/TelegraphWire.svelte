@@ -169,8 +169,8 @@
   function handleWireClick() {
     const now = Date.now();
     clickTimestamps.push(now);
-    // Keep timestamps from the last 30 seconds
-    clickTimestamps = clickTimestamps.filter((t) => now - t <= 30000);
+    // Keep timestamps from the last 20 seconds
+    clickTimestamps = clickTimestamps.filter((t) => now - t <= 20000);
 
     settings.vibrate(20);
 
@@ -185,7 +185,7 @@
       completedTransmission = true;
     }
 
-    // Easter Egg Level 2: 60 clicks in <= 30 seconds -> Spark overload!
+    // Easter Egg Level 2: 60 clicks in <= 20 seconds -> Spark overload!
     if (clickTimestamps.length >= 60 && !isOverloaded) {
       triggerOverload();
       return;
