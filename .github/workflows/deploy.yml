@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - feat/init-version
+    paths:
+      - 'data/**'
+      - 'public/**'
+      - 'src/**'
   workflow_dispatch:
 
 concurrency:
