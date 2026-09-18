@@ -1,0 +1,78 @@
+name: Build and Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+      - feat/init-version
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+
+      - name: Enable Corepack & Yarn Berry
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Type check
+        run: yarn check
+
+      - name: Build project
+        run: yarn build
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add VPS to known_hosts
+        env:
+          HOST: ${{ vars.VPS_HOST || secrets.VPS_HOST }}
+          PORT: ${{ vars.VPS_PORT || secrets.VPS_PORT || '22' }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts
+
+      - name: Ensure target directory exists on VPS
+        env:
+          HOST: ${{ vars.VPS_HOST || secrets.VPS_HOST }}
+          USER: ${{ vars.VPS_USER || secrets.VPS_USER }}
+          PORT: ${{ vars.VPS_PORT || secrets.VPS_PORT || '22' }}
+          PATH_DEST: ${{ vars.VPS_PATH || secrets.VPS_PATH }}
+        run: |
+          ssh -p "$PORT" "$USER@$HOST" "mkdir -p '$PATH_DEST'"
+
+      - name: Deploy files with rsync
+        env:
+          HOST: ${{ vars.VPS_HOST || secrets.VPS_HOST }}
+          USER: ${{ vars.VPS_USER || secrets.VPS_USER }}
+          PORT: ${{ vars.VPS_PORT || secrets.VPS_PORT || '22' }}
+          PATH_DEST: ${{ vars.VPS_PATH || secrets.VPS_PATH }}
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p $PORT" \
+            --chmod=D755,F644 \
+            dist/ "$USER@$HOST:$PATH_DEST/"
