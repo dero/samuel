@@ -7,6 +7,8 @@
     text: string;
     pendingText?: string;
     placeholder?: string;
+    emptyHint?: string;
+    emptyTitle?: string;
     class?: string;
   }
 
@@ -14,14 +16,19 @@
     text = '',
     pendingText = '',
     placeholder = 'Zde se zobrazí přeložený text...',
+    emptyHint = '',
+    emptyTitle = '',
     class: customClass = ''
   }: Props = $props();
 
   let textEl = $state<HTMLDivElement | null>(null);
 
+  const hasContent = $derived(!!(text.trim() || pendingText.trim()));
+  const displayHint = $derived(emptyHint || emptyTitle || '');
+
   $effect(() => {
     // When text or pendingText changes, auto-scroll to the bottom of the container
-    if ((text || pendingText) && textEl) {
+    if (hasContent && textEl) {
       tick().then(() => {
         if (textEl) {
           textEl.scrollTop = textEl.scrollHeight;
@@ -47,21 +54,33 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="result-card"
-    class:is-clickable={text.trim().length > 0 || pendingText.trim().length > 0}
+    class:is-clickable={hasContent}
     onclick={handleCopy}
-    title="Klepnutím zkopírujete do schránky"
+    title={hasContent ? 'Klepnutím zkopírujete do schránky' : undefined}
   >
+    <!-- Translation text in normal flow -->
     <div
       bind:this={textEl}
       class="result-text"
-      class:empty={!text.trim() && !pendingText.trim()}
+      class:is-empty={!hasContent}
     >
-      {#if !text.trim() && !pendingText.trim()}
-        {placeholder}
-      {:else}
+      {#if hasContent}
         {text}{#if pendingText}<span class="pending-highlight">{pendingText}</span>{/if}
+      {:else if !displayHint}
+        <span class="placeholder-text">{placeholder}</span>
       {/if}
     </div>
+
+    <!-- Contextual tooltip: seated at bottom, dissolves into nothingness on first activity -->
+    {#if displayHint}
+      <div
+        class="card-empty-state"
+        class:is-hidden={hasContent}
+        aria-hidden={hasContent}
+      >
+        <p class="empty-desc">{displayHint}</p>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -74,17 +93,21 @@
     flex: 1;
     min-height: 0;
     position: relative;
+    justify-content: center;
   }
 
   .result-card {
     background-color: var(--color-bg-canvas);
     border: none;
     border-radius: var(--radius-sm);
-    padding: var(--space-xs) 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
+    width: 100%;
     flex: 1;
-    min-height: var(--output-min-height);
+    min-height: 0;
+    position: relative;
     overflow: hidden;
     transition: opacity 0.15s ease;
     user-select: text;
@@ -113,9 +136,10 @@
     user-select: text;
     -webkit-user-select: text;
     -webkit-touch-callout: default;
+    padding: var(--space-2xs) 0;
   }
 
-  .result-text.empty {
+  .placeholder-text {
     color: var(--color-text-muted);
     font-family: var(--font-sans);
     font-size: var(--text-sm);
@@ -130,5 +154,54 @@
     text-underline-offset: 4px;
     text-decoration-color: rgba(0, 210, 255, 0.45);
     font-weight: 700;
+  }
+
+  .card-empty-state {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    max-width: 320px;
+    padding: 0 var(--space-sm);
+    color: var(--color-text-muted);
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
+    box-sizing: border-box;
+    opacity: 1;
+    filter: blur(0px);
+    transform: scale(1) translateZ(0);
+    will-change: opacity, filter, transform;
+    transition:
+      opacity 0.7s ease-in-out,
+      filter 0.7s ease-in-out,
+      transform 0.7s ease-in-out;
+  }
+
+  .card-empty-state.is-hidden {
+    opacity: 0.2;
+    filter: blur(14px);
+    transform: scale(0.96) translateZ(0);
+    pointer-events: none;
+  }
+
+  .empty-desc {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+    margin: 0;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 100%;
   }
 </style>

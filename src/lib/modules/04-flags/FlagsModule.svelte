@@ -103,7 +103,10 @@
   {#snippet output()}
     {#if flagMode === 'maritime'}
       <div class="flags-output-container">
-        <TranslationCard text={inputLetters} />
+        <TranslationCard
+          text={inputLetters}
+          emptyHint="Tlačítky dole filtrujte vlajky podle viditelných barev."
+        />
         {#if selectedColors.length > 0}
           <div class="filter-indicator-bar">
             <span class="filter-indicator-text">

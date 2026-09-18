@@ -15,7 +15,7 @@
   <div class="output-wrapper">
     <TranslationCard
       text={resultText}
-      placeholder="Dešifrovaný autokey text se zobrazí zde..."
+      emptyHint="Po vyčerpání úvodního hesla se klíč doplňuje dešifrovaným textem zprávy."
     />
   </div>
 

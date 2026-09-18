@@ -544,6 +544,21 @@
     selectedAxis3 = null;
   }
 
+  const emptyHint = $derived.by(() => {
+    switch (crossTypeId) {
+      case 'large-polish':
+        return 'Tapněte do kříže, nebo vyberte souřadnice pro zapsání písmene.';
+      case 'small-polish':
+        return 'Tapněte do kříže, nebo zvolte geometrii a tečku pro zápis znaku.';
+      case 'mobile-keypad':
+        return 'V režimu T9 stačí stisknout klávesu jednou, Samuel dohledá slova.';
+      case 'polybius':
+        return 'Dvojice čísel nebo písmen (např. 14 či AD) přeloží znak v matici.';
+      default:
+        return 'Klepnutím vyberte požadovaný znak.';
+    }
+  });
+
   onDestroy(() => {
     clearCommitTimer();
     t9Service.terminate();
@@ -649,6 +664,7 @@
     <TranslationCard
       text={inputLetters}
       pendingText={pendingDisplay}
+      emptyHint={emptyHint}
       class={crossTypeId === 'mobile-keypad' && phoneInputMode === 't9' && t9Digits ? 'has-t9-floating' : ''}
     />
   {/snippet}

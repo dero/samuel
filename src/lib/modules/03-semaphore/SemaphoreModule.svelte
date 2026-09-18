@@ -253,7 +253,10 @@
 
 <ModuleShell onReset={handleReset} onPaste={handlePaste}>
   {#snippet output()}
-    <TranslationCard text={inputLetters} />
+    <TranslationCard
+      text={inputLetters}
+      emptyHint="Klepněte na dvě pozice ciferníku, nebo je spojte plynulým tahem prstu."
+    />
   {/snippet}
 
   {#snippet input()}

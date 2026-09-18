@@ -30,6 +30,11 @@
     - Jednotlivá malá tlačítka uvnitř mřížek a sdružených řad mají **`border-radius: 2px`**.
     - Vnitřní sub-prvky (např. aktivní segment v přepínači) mají **`--radius-xs` (4px)**.
     - Kruhové prvky mají **`--radius-full`** (Braillovy body, kruhové indikátory).
+12. **Kontextové tooltipy a prázdné stavy (Empty State Hints):**
+    - Ve výstupní zóně překladu (`TranslationCard`, `CaesarView`) slouží prázdné pole pro stručný, jedno- až dvouřádkový kontextový tip k danému nástroji (`emptyHint`).
+    - Zásadně **bez ikon a bez nadpisů** – pouze subtilní text v barvě `var(--color-text-muted)`, usazený při spodním okraji výstupní zóny přímo nad klávesnicí (`position: absolute; bottom: 0`).
+    - **Rozplynutí při aktivitě:** Při prvním zadaném znaku se nápověda během **0.7s** plynule rozostří do jemného oparu (`filter: blur(14px); opacity: 0.2; transform: scale(0.96) translateZ(0);` s `transition: ... 0.7s ease-in-out;` a `will-change: opacity, filter, transform;`).
+    - **Zpětné vynoření:** Při vymazání vstupu se během stejných 0.7s opět plynule zaostří na plnou čitelnost (`blur(0px); opacity: 1; transform: scale(1)`).
 
 ---
 
@@ -197,6 +202,11 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 ### `TranslationCard` (výstupní karta překladu)
 - Čistě minimalistický vzhled: OLED black `#000000`, bez rámečků a zbytečného textu „Překlad“.
 - 1-tap kliknutím zkopíruje celý text do schránky s haptickou odezvou.
+- **Kontextový tip prázdného stavu (`emptyHint`):**
+  - Subtilní text usazený u spodního okraje výstupní zóny (`position: absolute; bottom: 0`).
+  - Žádné ikony ani nadpisy, čistě jedno- až dvouřádkový nápovědný text (`color: var(--color-text-muted)`).
+  - Při psaní plynule disolvuje do jemného oparu (`filter: blur(14px); opacity: 0.2; transform: scale(0.96) translateZ(0)`) přes `0.7s ease-in-out` s GPU akcelerací (`will-change: opacity, filter, transform`).
+  - Při smazání textu se během stejných 0.7s plynule vrátí zpět do plné ostrosti a čitelnosti (`blur(0px); opacity: 1; transform: scale(1)`).
 
 ---
 
@@ -267,7 +277,7 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 
 <ModuleShell onReset={handleClearAll} onPaste={(t) => (text += t)}>
   {#snippet output()}
-    <TranslationCard {text} />
+    <TranslationCard {text} emptyHint="Stručný návod nebo ergonomický tip k nástroji." />
   {/snippet}
 
   {#snippet input()}

@@ -214,6 +214,12 @@
     }
   }
 
+  const brailleEmptyHint = $derived(
+    autoInsert
+      ? 'Body lze zadávat i tahem. Znak se zapíše po zvednutí prstu z displeje.'
+      : 'Body lze zadávat i tahem. Zápis po zvednutí prstu lze zapnout v menu.'
+  );
+
   onDestroy(() => {
     clearFadeTimer();
   });
@@ -221,7 +227,10 @@
 
 <ModuleShell onReset={handleReset} onPaste={handlePaste}>
   {#snippet output()}
-    <TranslationCard text={inputLetters} />
+    <TranslationCard
+      text={inputLetters}
+      emptyHint={brailleEmptyHint}
+    />
   {/snippet}
 
   {#snippet input()}

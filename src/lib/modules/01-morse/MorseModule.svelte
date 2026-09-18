@@ -197,7 +197,11 @@
 <ModuleShell onReset={handleReset} onPaste={handlePaste}>
   {#snippet output()}
     <div class="morse-output-container">
-      <TranslationCard text={committedText} pendingText={pendingDisplay} />
+      <TranslationCard
+        text={committedText}
+        pendingText={pendingDisplay}
+        emptyHint="Lomítko dělí písmena, dvě slova. Šifru bez mezer řeší „Vyřešit bez mezer“."
+      />
       {#if inputMorse.length > 0}
         <div class="morse-floating-bar">
           <button

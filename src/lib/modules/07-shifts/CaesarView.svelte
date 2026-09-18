@@ -36,13 +36,16 @@
 </script>
 
 <div class="caesar-container">
-  {#if !rawText.trim()}
-    <div class="caesar-empty-state">
-      <span class="empty-icon"><Sparkle size={28} weight="duotone" /></span>
-      <p class="empty-title">Zadejte nebo vložte šifrový text</p>
-      <p class="empty-desc">Samuel paralelně vyhodnotí všech {shifts.length || 25} posunů a zvýrazní češtinu.</p>
-    </div>
-  {:else}
+  <!-- Contextual tooltip: seated at bottom, dissolves into nothingness on first activity -->
+  <div
+    class="caesar-empty-state"
+    class:is-hidden={!!rawText.trim()}
+    aria-hidden={!!rawText.trim()}
+  >
+    <p class="empty-desc">Samuel paralelně vyhodnotí všechny posuny abecedy a zvýrazní češtinu.</p>
+  </div>
+
+  {#if rawText.trim()}
     <!-- Top Match Hero Card (if enabled and valid) -->
     {#if showBestHighlight && bestCandidate}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -121,39 +124,59 @@
     height: 100%;
     flex: 1;
     min-height: 0;
+    position: relative;
     overflow: hidden;
     gap: var(--space-xs);
+    justify-content: flex-end;
   }
 
   .caesar-empty-state {
-    flex: 1;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: var(--space-lg);
+    max-width: 320px;
+    padding: 0 var(--space-sm);
     color: var(--color-text-muted);
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
+    box-sizing: border-box;
+    opacity: 1;
+    filter: blur(0px);
+    transform: scale(1) translateZ(0);
+    will-change: opacity, filter, transform;
+    transition:
+      opacity 0.7s ease-in-out,
+      filter 0.7s ease-in-out,
+      transform 0.7s ease-in-out;
   }
 
-  .empty-icon {
-    color: var(--color-accent-primary);
-    opacity: 0.8;
-    margin-bottom: var(--space-sm);
-  }
-
-  .empty-title {
-    font-size: var(--text-base);
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--space-2xs) 0;
+  .caesar-empty-state.is-hidden {
+    opacity: 0.2;
+    filter: blur(14px);
+    transform: scale(0.96) translateZ(0);
+    pointer-events: none;
   }
 
   .empty-desc {
-    font-size: var(--text-xs);
+    font-family: var(--font-sans);
+    font-size: 12px;
     line-height: 1.4;
+    color: var(--color-text-muted);
     margin: 0;
-    max-width: 260px;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 100%;
   }
 
   /* Top Match Hero Card */

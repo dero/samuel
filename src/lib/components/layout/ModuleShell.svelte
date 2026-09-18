@@ -80,7 +80,8 @@
     min-height: var(--output-min-height);
     display: flex;
     flex-direction: column;
-    padding: var(--space-md) var(--space-md) var(--space-xs) var(--space-md);
+    justify-content: center;
+    padding: var(--space-sm) var(--space-md);
     overflow: hidden;
     box-sizing: border-box;
   }
@@ -98,7 +99,7 @@
 
   .compact-output .zone-output {
     flex: 0 0 auto;
-    padding: var(--space-sm) var(--space-md) var(--space-xs) var(--space-md);
+    padding: var(--space-sm) var(--space-md);
   }
 
   .compact-output .zone-input {

@@ -162,7 +162,7 @@
       const clip = await navigator.clipboard.readText();
       if (clip) {
         autokeyPrimer = clip;
-        toast.show('✓ Primer vložen', { type: 'success' });
+        toast.show('✓ Heslo vloženo', { type: 'success' });
       }
     } catch {
       toast.show('Nelze číst schránku', { type: 'danger' });
@@ -437,7 +437,7 @@
             <input
               type="text"
               class="cipher-input font-mono"
-              placeholder="Primer (iniciální klíč)..."
+              placeholder="Heslo (klíč)..."
               bind:value={autokeyPrimer}
               autocomplete="off"
               autocorrect="off"
@@ -452,8 +452,8 @@
                   settings.vibrate(15);
                   autokeyPrimer = '';
                 }}
-                title="Vymazat primer"
-                aria-label="Vymazat primer"
+                title="Vymazat heslo"
+                aria-label="Vymazat heslo"
               >
                 <X size={15} weight="bold" />
               </button>
@@ -462,8 +462,8 @@
               type="button"
               class="input-paste-btn"
               onclick={handlePastePrimer}
-              title="Vložit primer ze schránky"
-              aria-label="Vložit primer ze schránky"
+              title="Vložit heslo ze schránky"
+              aria-label="Vložit heslo ze schránky"
             >
               <ClipboardText size={18} weight="bold" />
             </button>

@@ -366,7 +366,10 @@
   onPaste={handlePaste}
 >
   {#snippet output()}
-    <TranslationCard text={decodedText} />
+    <TranslationCard
+      text={decodedText}
+      emptyHint="Zadávejte hodnotu na klávesnici. Soustavy (2–16, A=1, římská) volí lišta."
+    />
   {/snippet}
 
   {#snippet input()}
