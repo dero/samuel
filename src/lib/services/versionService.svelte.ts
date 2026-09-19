@@ -10,10 +10,13 @@
 import {
   isAppInstalled,
   isDbInstalled,
+  isOcrInstalled,
   fetchRemoteVersion,
   downloadAppAssets,
   downloadDatabase as downloadDbCore,
+  downloadOcrModels as downloadOcrCore,
   clearDatabaseCache,
+  clearOcrCache,
   resetAllOfflineData,
   cleanupLegacyIndexedDb,
   getLocalDbMeta,
@@ -27,6 +30,7 @@ export type VersionStatus =
   | 'checking'
   | 'downloading_app'
   | 'downloading_db'
+  | 'downloading_ocr'
   | 'error';
 
 export interface VersionState {
@@ -34,6 +38,7 @@ export interface VersionState {
   buildTime: number;
   isAppInstalled: boolean;
   isDbInstalled: boolean;
+  isOcrInstalled: boolean;
   dbMeta: LocalDbMeta | null;
   remoteVersion: AppVersionInfo | null;
   appUpdateAvailable: boolean;
@@ -50,6 +55,7 @@ class VersionService {
     buildTime: typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : APP_BUILD_TIME,
     isAppInstalled: true,
     isDbInstalled: false,
+    isOcrInstalled: false,
     dbMeta: null,
     remoteVersion: null,
     appUpdateAvailable: false,
@@ -71,6 +77,7 @@ class VersionService {
     try {
       this.state.isAppInstalled = await isAppInstalled();
       this.state.isDbInstalled = await isDbInstalled();
+      this.state.isOcrInstalled = await isOcrInstalled();
       this.state.dbMeta = getLocalDbMeta();
     } catch {
       // Offline fallback
@@ -201,6 +208,41 @@ class VersionService {
       this.state.updateAvailable = this.state.appUpdateAvailable;
     } catch (err: any) {
       this.state.error = err?.message || 'Chyba při mazání slovníku';
+      throw err;
+    }
+  }
+
+  /**
+   * Downloads offline OCR models into CacheStorage.
+   */
+  async downloadOcr(onProgress?: (percent: number) => void): Promise<void> {
+    this.state.status = 'downloading_ocr';
+    this.state.progress = 0;
+
+    try {
+      await downloadOcrCore((percent) => {
+        this.state.progress = percent;
+        if (onProgress) onProgress(percent);
+      });
+
+      await this.refreshLocalStatus();
+      this.state.status = 'idle';
+    } catch (err: any) {
+      this.state.status = 'error';
+      this.state.error = err?.message || 'Chyba při stahování OCR modelů';
+      throw err;
+    }
+  }
+
+  /**
+   * Deletes offline OCR models from CacheStorage to reclaim space.
+   */
+  async deleteOcr(): Promise<void> {
+    try {
+      await clearOcrCache();
+      await this.refreshLocalStatus();
+    } catch (err: any) {
+      this.state.error = err?.message || 'Chyba při mazání OCR modelů';
       throw err;
     }
   }

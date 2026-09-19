@@ -240,10 +240,198 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@napi-rs/canvas-android-arm64@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-android-arm64@npm:1.0.9"
+  conditions: os=android & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-darwin-arm64@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-darwin-arm64@npm:1.0.9"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-darwin-x64@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-darwin-x64@npm:1.0.9"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-linux-arm-gnueabihf@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-linux-arm-gnueabihf@npm:1.0.9"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-linux-arm64-gnu@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-linux-arm64-gnu@npm:1.0.9"
+  conditions: os=linux & cpu=arm64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-linux-arm64-musl@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-linux-arm64-musl@npm:1.0.9"
+  conditions: os=linux & cpu=arm64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-linux-riscv64-gnu@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-linux-riscv64-gnu@npm:1.0.9"
+  conditions: os=linux & cpu=riscv64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-linux-x64-gnu@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-linux-x64-gnu@npm:1.0.9"
+  conditions: os=linux & cpu=x64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-linux-x64-musl@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-linux-x64-musl@npm:1.0.9"
+  conditions: os=linux & cpu=x64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-win32-arm64-msvc@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-win32-arm64-msvc@npm:1.0.9"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas-win32-x64-msvc@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas-win32-x64-msvc@npm:1.0.9"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@napi-rs/canvas@npm:^1.0.0":
+  version: 1.0.9
+  resolution: "@napi-rs/canvas@npm:1.0.9"
+  dependencies:
+    "@napi-rs/canvas-android-arm64": "npm:1.0.9"
+    "@napi-rs/canvas-darwin-arm64": "npm:1.0.9"
+    "@napi-rs/canvas-darwin-x64": "npm:1.0.9"
+    "@napi-rs/canvas-linux-arm-gnueabihf": "npm:1.0.9"
+    "@napi-rs/canvas-linux-arm64-gnu": "npm:1.0.9"
+    "@napi-rs/canvas-linux-arm64-musl": "npm:1.0.9"
+    "@napi-rs/canvas-linux-riscv64-gnu": "npm:1.0.9"
+    "@napi-rs/canvas-linux-x64-gnu": "npm:1.0.9"
+    "@napi-rs/canvas-linux-x64-musl": "npm:1.0.9"
+    "@napi-rs/canvas-win32-arm64-msvc": "npm:1.0.9"
+    "@napi-rs/canvas-win32-x64-msvc": "npm:1.0.9"
+  dependenciesMeta:
+    "@napi-rs/canvas-android-arm64":
+      optional: true
+    "@napi-rs/canvas-darwin-arm64":
+      optional: true
+    "@napi-rs/canvas-darwin-x64":
+      optional: true
+    "@napi-rs/canvas-linux-arm-gnueabihf":
+      optional: true
+    "@napi-rs/canvas-linux-arm64-gnu":
+      optional: true
+    "@napi-rs/canvas-linux-arm64-musl":
+      optional: true
+    "@napi-rs/canvas-linux-riscv64-gnu":
+      optional: true
+    "@napi-rs/canvas-linux-x64-gnu":
+      optional: true
+    "@napi-rs/canvas-linux-x64-musl":
+      optional: true
+    "@napi-rs/canvas-win32-arm64-msvc":
+      optional: true
+    "@napi-rs/canvas-win32-x64-msvc":
+      optional: true
+    canvas:
+      built: true
+    skia-canvas:
+      built: true
+  checksum: 10c0/7f39cc977ef0bd0a765413b6cee32d1423a8db447ac76ead6df940135b02ad7ea74f3db7db175fa5a776b6fcf337bffc1458d4c0377154b58ec3cdebd6334946
+  languageName: node
+  linkType: hard
+
 "@oxc-project/types@npm:=0.149.0":
   version: 0.149.0
   resolution: "@oxc-project/types@npm:0.149.0"
   checksum: 10c0/f91ff8101300ce5a29fbfc57bdaafd9c1c9d3d9b46c63093f437c479d047042eb615cb6c3ddac91a0d289701ce60c365632866a85d0f1e0d159b20180115187e
+  languageName: node
+  linkType: hard
+
+"@protobufjs/aspromise@npm:^1.1.1, @protobufjs/aspromise@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@protobufjs/aspromise@npm:1.1.2"
+  checksum: 10c0/a83343a468ff5b5ec6bff36fd788a64c839e48a07ff9f4f813564f58caf44d011cd6504ed2147bf34835bd7a7dd2107052af755961c6b098fd8902b4f6500d0f
+  languageName: node
+  linkType: hard
+
+"@protobufjs/base64@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@protobufjs/base64@npm:1.1.2"
+  checksum: 10c0/eec925e681081af190b8ee231f9bad3101e189abbc182ff279da6b531e7dbd2a56f1f306f37a80b1be9e00aa2d271690d08dcc5f326f71c9eed8546675c8caf6
+  languageName: node
+  linkType: hard
+
+"@protobufjs/codegen@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "@protobufjs/codegen@npm:2.0.5"
+  checksum: 10c0/1b8a2ae56ee60a56e9d205cd4b6072a1503c5069b8ebb905710f974ff0098a0d0700641c137e0a8d98dedf14423156a106a9433695cbf52574810f55000fdcab
+  languageName: node
+  linkType: hard
+
+"@protobufjs/eventemitter@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@protobufjs/eventemitter@npm:1.1.1"
+  checksum: 10c0/8e06193d4629c5e7c09d4f8c2ddba8fc4dfa739f0149f33a1d901568d35bb7b8b5277a4e8452baf3bdd0b302fd599cf255d193267aa93a0a4747e23cd073c4ac
+  languageName: node
+  linkType: hard
+
+"@protobufjs/fetch@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@protobufjs/fetch@npm:1.1.1"
+  dependencies:
+    "@protobufjs/aspromise": "npm:^1.1.1"
+  checksum: 10c0/a497ff5433854e8577f0427983ea39b9113b49a8120f94515291d763327061d2c3013e60e24ea436d091dafae01a0f6eb1867e3b1616045d96a31d8b3c646ed4
+  languageName: node
+  linkType: hard
+
+"@protobufjs/float@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@protobufjs/float@npm:1.0.2"
+  checksum: 10c0/18f2bdede76ffcf0170708af15c9c9db6259b771e6b84c51b06df34a9c339dbbeec267d14ce0bddd20acc142b1d980d983d31434398df7f98eb0c94a0eb79069
+  languageName: node
+  linkType: hard
+
+"@protobufjs/path@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@protobufjs/path@npm:1.1.2"
+  checksum: 10c0/cece0a938e7f5dfd2fa03f8c14f2f1cf8b0d6e13ac7326ff4c96ea311effd5fb7ae0bba754fbf505312af2e38500250c90e68506b97c02360a43793d88a0d8b4
+  languageName: node
+  linkType: hard
+
+"@protobufjs/pool@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@protobufjs/pool@npm:1.1.0"
+  checksum: 10c0/eda2718b7f222ac6e6ad36f758a92ef90d26526026a19f4f17f668f45e0306a5bd734def3f48f51f8134ae0978b6262a5c517c08b115a551756d1a3aadfcf038
+  languageName: node
+  linkType: hard
+
+"@protobufjs/utf8@npm:^1.1.1":
+  version: 1.1.2
+  resolution: "@protobufjs/utf8@npm:1.1.2"
+  checksum: 10c0/975c6e2c0319bd50c17531d186b537a88cb4d3205e3ca9297cd842b631d341da0ee3ff16be8656cd2660756dc753b29c8a6a14c0ad8ed602c1f91ddf22e7b3f3
   languageName: node
   linkType: hard
 
@@ -519,6 +707,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@techstark/opencv-js@npm:^5.0.0-release.1":
+  version: 5.0.0-release.1
+  resolution: "@techstark/opencv-js@npm:5.0.0-release.1"
+  checksum: 10c0/f9a3e8451c29518c3d03fbc3345b00abd9786136527d7a0a8959abc3abf5027f47e8f1d72a6fd65611981123f3eedd30a5631a8848aed491ecbb39a548f69a8a
+  languageName: node
+  linkType: hard
+
 "@types/emscripten@npm:*":
   version: 1.41.6
   resolution: "@types/emscripten@npm:1.41.6"
@@ -533,7 +728,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*":
+"@types/node@npm:*, @types/node@npm:>=13.7.0":
   version: 26.5.1
   resolution: "@types/node@npm:26.5.1"
   dependencies:
@@ -771,6 +966,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"flatbuffers@npm:^25.1.24":
+  version: 25.9.23
+  resolution: "flatbuffers@npm:25.9.23"
+  checksum: 10c0/957c4ae2a02be1703c98b36b4dc8ceb81613cf8e2333026afc95a7b68b088bed5458056dc29d0ab7ce8bc403b8c003732b0968d24aba46f5e7c8f71789a6bd9e
+  languageName: node
+  linkType: hard
+
 "fsevents@npm:~2.3.3":
   version: 2.3.3
   resolution: "fsevents@npm:2.3.3"
@@ -794,6 +996,13 @@ __metadata:
   version: 4.2.11
   resolution: "graceful-fs@npm:4.2.11"
   checksum: 10c0/386d011a553e02bc594ac2ca0bd6d9e4c22d7fa8cfbfc448a6d148c59ea881b092db9dbe3547ae4b88e55f1b01f7c4a2ecc53b310c042793e63aa44cf6c257f2
+  languageName: node
+  linkType: hard
+
+"guid-typescript@npm:^1.0.9":
+  version: 1.0.9
+  resolution: "guid-typescript@npm:1.0.9"
+  checksum: 10c0/fa0a2b2b4e06e0976a81c947b74e114b92f6647e84b52e24ab0981d2fdbaa1a640641d8fd269004dd7c581baebeb4f9d9782b74391e717e47c9b822bea4b3be6
   languageName: node
   linkType: hard
 
@@ -940,6 +1149,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"long@npm:^5.2.3, long@npm:^5.3.2":
+  version: 5.3.2
+  resolution: "long@npm:5.3.2"
+  checksum: 10c0/7130fe1cbce2dca06734b35b70d380ca3f70271c7f8852c922a7c62c86c4e35f0c39290565eca7133c625908d40e126ac57c02b1b1a4636b9457d77e1e60b981
+  languageName: node
+  linkType: hard
+
 "magic-string@npm:^0.30.11, magic-string@npm:^0.30.13":
   version: 0.30.21
   resolution: "magic-string@npm:0.30.21"
@@ -1028,6 +1244,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"onnxruntime-common@npm:1.29.0":
+  version: 1.29.0
+  resolution: "onnxruntime-common@npm:1.29.0"
+  checksum: 10c0/cf87c1b2492f4a89e84649086195dd9a40b45fe026d69f88e30cbeb406402342996553f00be298c411bcda57bb2f3eb12c56b17c6a0cc1d643f1b92f18876578
+  languageName: node
+  linkType: hard
+
+"onnxruntime-web@npm:^1.29.0":
+  version: 1.29.0
+  resolution: "onnxruntime-web@npm:1.29.0"
+  dependencies:
+    flatbuffers: "npm:^25.1.24"
+    guid-typescript: "npm:^1.0.9"
+    long: "npm:^5.2.3"
+    onnxruntime-common: "npm:1.29.0"
+    platform: "npm:^1.3.6"
+    protobufjs: "npm:^7.2.4"
+  checksum: 10c0/9eb0ccd13a1f622e9825e2cac07d022ec8dd98eaba7d2fc6115fc5ada66be09640c8f5232931719dba36856519cedabba653654bea051395784daef1340337dc
+  languageName: node
+  linkType: hard
+
 "phosphor-svelte@npm:^3.1.0":
   version: 3.1.0
   resolution: "phosphor-svelte@npm:3.1.0"
@@ -1058,6 +1295,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"platform@npm:^1.3.6":
+  version: 1.3.6
+  resolution: "platform@npm:1.3.6"
+  checksum: 10c0/69f2eb692e15f1a343dd0d9347babd9ca933824c8673096be746ff66f99f2bdc909fadd8609076132e6ec768349080babb7362299f2a7f885b98f1254ae6224b
+  languageName: node
+  linkType: hard
+
 "postcss@npm:^8.5.28":
   version: 8.5.28
   resolution: "postcss@npm:8.5.28"
@@ -1069,10 +1313,69 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ppu-ocv@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "ppu-ocv@npm:4.0.0"
+  dependencies:
+    "@napi-rs/canvas": "npm:^1.0.0"
+    "@techstark/opencv-js": "npm:^5.0.0-release.1"
+  peerDependencies:
+    "@shopify/react-native-skia": ">=1.0.0"
+  peerDependenciesMeta:
+    "@shopify/react-native-skia":
+      optional: true
+  checksum: 10c0/379b63142accf24eb0014bcba9350f7b285151c238fc779260b1da17002c0aed304e30b8730d2996df20fb7b914bbf75385cc8b3f58617e18d03025bd7f0a9ef
+  languageName: node
+  linkType: hard
+
+"ppu-paddle-ocr@npm:^6.5.1":
+  version: 6.5.1
+  resolution: "ppu-paddle-ocr@npm:6.5.1"
+  dependencies:
+    ppu-ocv: "npm:^4.0.0"
+  peerDependencies:
+    "@shopify/react-native-skia": ">=1.0.0"
+    onnxruntime-node: ^1.23.2
+    onnxruntime-react-native: ^1.23.2
+    onnxruntime-web: ^1.23.2
+  peerDependenciesMeta:
+    "@shopify/react-native-skia":
+      optional: true
+    onnxruntime-node:
+      optional: true
+    onnxruntime-react-native:
+      optional: true
+    onnxruntime-web:
+      optional: true
+  bin:
+    ppu-paddle-ocr: cli/index.js
+  checksum: 10c0/6ecadbdc4cedfdd8c0a7df1918488fcb331242b917ebfdf49c3ed753110f13e4e675f2568ebf841be980c62ec3275592ccc712f65bf9ea81a02f46d8303ec1d2
+  languageName: node
+  linkType: hard
+
 "proc-log@npm:^7.0.0":
   version: 7.0.0
   resolution: "proc-log@npm:7.0.0"
   checksum: 10c0/b89c2d862604f35fec795477b0c7e376feab3ba0d4f4d291c4e959567442697cf451ac557d0623c1cc38af45a78128b983410f397a10c5d3a67f76c33de4754b
+  languageName: node
+  linkType: hard
+
+"protobufjs@npm:^7.2.4":
+  version: 7.6.6
+  resolution: "protobufjs@npm:7.6.6"
+  dependencies:
+    "@protobufjs/aspromise": "npm:^1.1.2"
+    "@protobufjs/base64": "npm:^1.1.2"
+    "@protobufjs/codegen": "npm:^2.0.5"
+    "@protobufjs/eventemitter": "npm:^1.1.1"
+    "@protobufjs/fetch": "npm:^1.1.1"
+    "@protobufjs/float": "npm:^1.0.2"
+    "@protobufjs/path": "npm:^1.1.2"
+    "@protobufjs/pool": "npm:^1.1.0"
+    "@protobufjs/utf8": "npm:^1.1.1"
+    "@types/node": "npm:>=13.7.0"
+    long: "npm:^5.3.2"
+  checksum: 10c0/6c0dc6d4a2801825e39417bc116297d5261c0cf28892a5e28adafc13432331c0cb75603bbe50ad6f2715f3b0a9ce2896591ad6b51fdc8eae2d05b9ac2e4a8ec1
   languageName: node
   linkType: hard
 
@@ -1157,7 +1460,9 @@ __metadata:
     "@resvg/resvg-js": "npm:^2.6.2"
     "@sveltejs/vite-plugin-svelte": "npm:^7.3.0"
     "@types/sql.js": "npm:^1.4.11"
+    onnxruntime-web: "npm:^1.29.0"
     phosphor-svelte: "npm:^3.1.0"
+    ppu-paddle-ocr: "npm:^6.5.1"
     sql.js: "npm:^1.14.2"
     svelte: "npm:^5.57.0"
     svelte-check: "npm:^4.7.6"

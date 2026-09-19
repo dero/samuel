@@ -9,7 +9,8 @@ import {
   isAppInstalled,
   fetchRemoteVersion,
   downloadAppAssets,
-  downloadDatabase
+  downloadDatabase,
+  downloadOcrModels
 } from './lib/services/offlineCacheService';
 
 async function registerServiceWorker(): Promise<void> {
@@ -68,6 +69,7 @@ async function initBootstrap(): Promise<void> {
   const progressFill = document.getElementById('shell-progress-fill');
   const progressText = document.getElementById('shell-progress-text');
   const dbCheck = document.getElementById('pkg-db') as HTMLInputElement | null;
+  const ocrCheck = document.getElementById('pkg-ocr') as HTMLInputElement | null;
 
   if (checkingEl) checkingEl.style.display = 'none';
   if (firstRunEl) firstRunEl.style.display = 'flex';
@@ -79,8 +81,10 @@ async function initBootstrap(): Promise<void> {
     downloadBtn.style.display = 'none';
     progressBox.style.display = 'flex';
     if (dbCheck) dbCheck.disabled = true;
+    if (ocrCheck) ocrCheck.disabled = true;
 
     const wantDb = Boolean(dbCheck?.checked);
+    const wantOcr = Boolean(ocrCheck?.checked);
 
     try {
       if (progressText) progressText.textContent = 'Načítám informace…';
@@ -93,7 +97,8 @@ async function initBootstrap(): Promise<void> {
       if (progressText) progressText.textContent = 'Stahuji aplikaci (0 %)…';
       await downloadAppAssets(assets, (percent) => {
         if (progressFill) {
-          const fillWidth = wantDb ? Math.round(percent * 0.35) : percent;
+          const factor = (wantDb && wantOcr) ? 0.2 : (wantDb || wantOcr) ? 0.35 : 1.0;
+          const fillWidth = Math.round(percent * factor);
           progressFill.style.width = `${Math.max(5, fillWidth)}%`;
         }
         if (progressText) {
@@ -106,13 +111,33 @@ async function initBootstrap(): Promise<void> {
         if (progressText) progressText.textContent = 'Stahuji slovník (0 %)…';
         await downloadDatabase(remoteVersion, (percent, loaded, total) => {
           if (progressFill) {
-            const fillWidth = Math.round(35 + percent * 0.65);
+            const startPct = wantOcr ? 20 : 35;
+            const spanPct = wantOcr ? 50 : 65;
+            const fillWidth = Math.round(startPct + (percent / 100) * spanPct);
             progressFill.style.width = `${fillWidth}%`;
           }
           if (progressText) {
             const mbLoaded = Math.round(loaded / (1024 * 1024));
             const mbTotal = Math.round(total / (1024 * 1024));
             progressText.textContent = `Stahuji slovník (${mbLoaded} / ${mbTotal} MB)…`;
+          }
+        });
+      }
+
+      // Download OCR Models if checked
+      if (wantOcr) {
+        if (progressText) progressText.textContent = 'Stahuji OCR modely (0 %)…';
+        await downloadOcrModels((percent, loaded, total) => {
+          if (progressFill) {
+            const startPct = wantDb ? 70 : 35;
+            const spanPct = wantDb ? 30 : 65;
+            const fillWidth = Math.round(startPct + (percent / 100) * spanPct);
+            progressFill.style.width = `${fillWidth}%`;
+          }
+          if (progressText) {
+            const mbLoaded = Math.round(loaded / (1024 * 1024));
+            const mbTotal = Math.round(total / (1024 * 1024));
+            progressText.textContent = `Stahuji OCR modely (${mbLoaded} / ${mbTotal} MB)…`;
           }
         });
       }

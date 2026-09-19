@@ -7,7 +7,9 @@
 
 export const APP_CACHE_NAME = 'samuel-app';
 export const DB_CACHE_NAME = 'samuel-db';
+export const OCR_CACHE_NAME = 'samuel-ocr';
 export const DB_META_KEY = 'samuel_words_db_meta';
+export const OCR_META_KEY = 'samuel_ocr_meta';
 export const APP_META_KEY = 'samuel_app_meta';
 
 export interface AppVersionInfo {
@@ -57,6 +59,23 @@ export async function isDbInstalled(): Promise<boolean> {
     const cache = await caches.open(DB_CACHE_NAME);
     const match = await cache.match('/words.db');
     return Boolean(match);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Checks if OCR models and WASM binaries are cached offline.
+ */
+export async function isOcrInstalled(): Promise<boolean> {
+  try {
+    if (!('caches' in window)) return false;
+    const hasCache = await caches.has(OCR_CACHE_NAME);
+    if (!hasCache) return false;
+    const cache = await caches.open(OCR_CACHE_NAME);
+    const matchDet = await cache.match('/ocr/PP-OCRv6_small_det.ort');
+    const matchRec = await cache.match('/ocr/PP-OCRv6_small_rec.ort');
+    return Boolean(matchDet && matchRec);
   } catch {
     return false;
   }
@@ -258,6 +277,99 @@ export async function clearDatabaseCache(): Promise<void> {
     localStorage.removeItem(DB_META_KEY);
   } catch (e) {
     console.warn('Failed to clear database cache:', e);
+  }
+}
+
+export const OCR_ASSETS_LIST = [
+  '/ocr/PP-OCRv6_small_det.ort',
+  '/ocr/PP-OCRv6_small_rec.ort',
+  '/ocr/ppocrv6_dict.txt',
+  '/ocr/ort-wasm-simd-threaded.wasm',
+  '/ocr/ort-wasm-simd-threaded.mjs',
+  '/ocr/ort-wasm-simd-threaded.jsep.wasm',
+  '/ocr/ort-wasm-simd-threaded.jsep.mjs'
+];
+
+export const OCR_EXPECTED_TOTAL_BYTES = 73178027;
+
+/**
+ * Downloads OCR models and WASM binaries into CacheStorage (samuel-ocr) with streaming progress tracking.
+ */
+export async function downloadOcrModels(
+  onProgress?: (percent: number, loadedBytes: number, totalBytes: number) => void
+): Promise<void> {
+  if (!('caches' in window)) {
+    throw new Error('CacheStorage API is not supported in this browser.');
+  }
+
+  const cache = await caches.open(OCR_CACHE_NAME);
+  let totalLoaded = 0;
+  const expectedTotal = OCR_EXPECTED_TOTAL_BYTES;
+
+  for (const assetUrl of OCR_ASSETS_LIST) {
+    const networkUrl = `${assetUrl}?sw-strategy=network&t=${Date.now()}`;
+    const response = await fetch(networkUrl);
+    if (!response.ok) {
+      throw new Error(`Chyba při stahování OCR souboru ${assetUrl}: ${response.status} ${response.statusText}`);
+    }
+
+    if (!response.body) {
+      const buffer = await response.arrayBuffer();
+      await cache.put(assetUrl, new Response(buffer));
+      totalLoaded += buffer.byteLength;
+      if (onProgress) {
+        const pct = Math.min(100, Math.round((totalLoaded / expectedTotal) * 100));
+        onProgress(pct, totalLoaded, expectedTotal);
+      }
+      continue;
+    }
+
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let fileLoaded = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        fileLoaded += value.length;
+        totalLoaded += value.length;
+        if (onProgress) {
+          const pct = Math.min(99, Math.round((totalLoaded / expectedTotal) * 100));
+          onProgress(pct, totalLoaded, expectedTotal);
+        }
+      }
+    }
+
+    const fileBuffer = new Uint8Array(fileLoaded);
+    let offset = 0;
+    for (const chunk of chunks) {
+      fileBuffer.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    await cache.put(assetUrl, new Response(fileBuffer.buffer));
+  }
+
+  try {
+    localStorage.setItem(OCR_META_KEY, JSON.stringify({ cachedAt: Date.now(), totalBytes: totalLoaded }));
+  } catch {}
+
+  if (onProgress) {
+    onProgress(100, totalLoaded, expectedTotal);
+  }
+}
+
+/**
+ * Removes OCR models from CacheStorage.
+ */
+export async function clearOcrCache(): Promise<void> {
+  try {
+    await caches.delete(OCR_CACHE_NAME);
+    localStorage.removeItem(OCR_META_KEY);
+  } catch (e) {
+    console.warn('Failed to clear OCR cache:', e);
   }
 }
 

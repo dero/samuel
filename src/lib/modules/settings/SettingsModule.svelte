@@ -106,6 +106,26 @@
     }
   }
 
+  async function handleDownloadOcrManual() {
+    try {
+      settings.vibrate(20);
+      toast.show('Zahajuji stahování OCR modelů...', { type: 'info' });
+      await versionService.downloadOcr();
+      toast.show('OCR modely byly úspěšně staženy', { type: 'success' });
+    } catch (err: any) {
+      toast.show(`Chyba: ${err?.message || 'Nepodařilo se stáhnout'}`, { type: 'danger' });
+    }
+  }
+
+  async function handleDeleteOcrManual() {
+    try {
+      await versionService.deleteOcr();
+      toast.show('OCR modely byly smazány z paměti', { type: 'info' });
+    } catch {
+      toast.show('Chyba při mazání OCR modelů', { type: 'danger' });
+    }
+  }
+
   let isResetting = $state(false);
 
   async function handleResetAllData() {
@@ -229,6 +249,10 @@
           <span>Slovníková data</span>
           <span class="version-badge">{formattedDbVersion}</span>
         </div>
+        <div class="sys-row">
+          <span>OCR modely (foto)</span>
+          <span class="version-badge">{versionService.state.isOcrInstalled ? 'Nainstalováno' : 'Nestaženo'}</span>
+        </div>
       </div>
 
       <!-- Tlačítko pro stažení / smazání slovníku -->
@@ -254,6 +278,34 @@
           label="Smazat slovník (102 MB)"
           confirmedLabel="Slovník smazán"
           ariaLabel="Podržte pro smazání slovníku"
+          holdDuration={600}
+          variant="outline"
+        />
+      {/if}
+
+      <!-- Tlačítko pro stažení / smazání OCR modelů -->
+      {#if !versionService.state.isOcrInstalled}
+        <button
+          class="secondary-btn"
+          disabled={versionService.state.status !== 'idle'}
+          onclick={handleDownloadOcrManual}
+        >
+          {#if versionService.state.status === 'downloading_ocr'}
+            <SpinnerGap size={16} class="spin" />
+            <span>Stahuji OCR modely ({versionService.state.progress} %)...</span>
+          {:else}
+            <DownloadSimple size={16} weight="bold" />
+            <span>Stáhnout OCR modely (~73 MB)</span>
+          {/if}
+        </button>
+      {:else}
+        <SlideToAction
+          onAction={handleDeleteOcrManual}
+          disabled={versionService.state.status !== 'idle'}
+          showLabel={true}
+          label="Smazat OCR modely (~73 MB)"
+          confirmedLabel="OCR modely smazány"
+          ariaLabel="Podržte pro smazání OCR modelů"
           holdDuration={600}
           variant="outline"
         />

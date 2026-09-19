@@ -18,7 +18,8 @@
     Question,
     Gear,
     DeviceMobile,
-    SquaresFour
+    SquaresFour,
+    Scan
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
 
@@ -58,6 +59,7 @@
     calendar: CalendarBlank,
     facts: Lightbulb,
     colors: Palette,
+    ocr: Scan,
     settings: Gear,
     help: Question,
 
@@ -78,6 +80,7 @@
     calendarblank: CalendarBlank,
     lightbulb: Lightbulb,
     palette: Palette,
+    scan: Scan,
     gear: Gear,
     question: Question
   };

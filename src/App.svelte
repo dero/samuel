@@ -14,6 +14,7 @@
   import MobileModule from './lib/modules/mobile/MobileModule.svelte';
   import NumbersModule from './lib/modules/numbers/NumbersModule.svelte';
   import ShiftsModule from './lib/modules/shifts/ShiftsModule.svelte';
+  import OcrModule from './lib/modules/ocr/OcrModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -84,6 +85,8 @@
     <NumbersModule />
   {:else if navigation.activeModuleId === 'shifts'}
     <ShiftsModule />
+  {:else if navigation.activeModuleId === 'ocr'}
+    <OcrModule />
   {:else if navigation.activeModuleId === 'settings'}
     <SettingsModule />
   {:else if navigation.activeModuleId === 'help'}

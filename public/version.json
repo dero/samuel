@@ -1,22 +1,23 @@
 {
   "appVersion": "0.1.0",
-  "buildTime": 1789840296180,
+  "buildTime": 1789846948346,
   "dbVersion": "2026.09.16-2124",
   "dbHash": "7e81da4745219cfc",
   "dbSizeBytes": 106483712,
   "dbUpdated": "2026-09-16T21:24:13Z",
   "sourceHash": "3f566a3b15cd3d11",
-  "entryJs": "/assets/index-CmQNfUWM.js",
+  "entryJs": "/assets/index-v5CrJWA9.js",
   "appAssets": [
     "/",
     "/index.html",
     "/manifest.webmanifest",
     "/favicon.svg",
     "/sw.js",
-    "/assets/index-CmQNfUWM.js",
-    "/assets/main-3VEbyKSG.js",
-    "/assets/main-CHVuGUr5.css",
+    "/assets/index-v5CrJWA9.js",
+    "/assets/main-CQ_1TxnP.js",
+    "/assets/main-YZp_nPb1.css",
     "/assets/morse.worker-BOKTKCNN.js",
+    "/assets/ocr.worker-BOafL0TS.js",
     "/assets/sql-wasm-DfANybxk.wasm",
     "/assets/t9.worker-CZ5VDiQ7.js"
   ]

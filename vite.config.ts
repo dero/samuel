@@ -34,6 +34,10 @@ export default defineConfig({
 
         let entryJs = '';
         for (const [fileName, file] of Object.entries(bundle)) {
+          // Do not include large optional OCR WASM in mandatory appAssets
+          if (fileName.includes('ort-wasm')) {
+            continue;
+          }
           assets.add('/' + fileName);
           if (file.type === 'chunk' && file.isEntry) {
             entryJs = '/' + fileName;
