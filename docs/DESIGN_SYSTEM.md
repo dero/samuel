@@ -1,40 +1,68 @@
 # Samuel Design System (AI & Developer Reference)
 
-> Rychlá reference designových pravidel a komponent pro aplikaci **Samuel**. Žádný boilerplate, pouze závazné standardy.
+> Závazná reference designových pravidel, architektury a komponent pro aplikaci **Samuel**.  
+> Každý AI agent i vývojář se těmito pravidly musí bezvýhradně řídit.
+
+---
+
+## 0. Rozhodovací matice pro AI agenty (POKUD ..., POTOM ...)
+
+- **POKUD** skládáš rozhraní jakéhokoliv modulu, **POTOM** použij striktní hierarchii v `<ModuleShell>`:  
+  1. Fixní Header (52 px)  
+  2. Výstupní zóna `<TranslationCard>` (`flex: 1`, min. 84 px, OLED černá `#000000`, bez celostránkového scrollu)  
+  3. Vstupní zóna `ZONE-INPUT` (max. výškový rozpočet 326 px, zapuštěná šasi klávesnic)
+- **POKUD** navrhuješ vstupní matici (abeceda, numpad, vlajky, kříž, ciferník), **POTOM** její výšku clampuj (`clamp(...)`), aby celá vstupní zóna nepřekročila 326 px a celé UI se bez scrollu vešlo na minimální viewport **320 × 540 px** v portrait režimu.
+- **POKUD** modul vyžaduje potvrzení rozepsaného znaku (Enter / Commit), **POTOM** NIKDY nevytvářej samostatné velké tlačítko pod utilitním řádkem. **POTOM** použij kontextové středové tlačítko `<SpaceCommitButton>` v utilitním trojbloku, které se při rozepsaném znaku promění z Mezery na Enter/Vložit.
+- **POKUD** modul zadává znaky okamžitě (auto-insert / přímý dotyk dlaždice), **POTOM** středové tlačítko v utilitní řadě zůstává trvale Mezerou.
+- **POKUD** renderuješ ikonu mezerníku v `<SpaceCommitButton>`, **POTOM** použij čistou SVG ikonu otevřené klávesy `|_|` (tloušťka 2.2px, perfektní vertikální centrování). NIKDY nepoužívej textový znak `␣` z fontu, který sedí příliš nízko na účaří a je miniaturní.
+- **POKUD** `<SpaceCommitButton>` zobrazuje potvrzovaný text/slovo (např. T9 predikce), **POTOM** musí mít `max-width: 100%`, `text-overflow: ellipsis`, `overflow: hidden`, `white-space: nowrap` a přizpůsobenou velikost písma `clamp(...)`, aby text nikdy nepřetekl tlačítko.
+- **POKUD** je `<SpaceCommitButton>` aktivní (v režimu potvrzení/Enter), **POTOM** musí zachovat identický horní plastický odlesk `inset 0 1px 0 rgba(255, 255, 255, 0.10)` jako okolní tlačítka, aby nevznikal dojem odlišného nasvícení zvrchu.
+- **POKUD** modul používá sub-toolbar (např. výběr nástroje nebo akce modulu), **POTOM** musí být vždy roztažený na celou šířku obrazovky (`100% full width`), nikdy zúžený ani centrovaný jako volná pilulka.
+- **POKUD** modul nabízí sekundární volby nebo režimy klávesnice (např. Klasik vs. T9 na mobilní klávesnici), **POTOM** NIKDY nestav dva sub-toolbary nad sebe – sekundární přepínač patří do kontextového menu modulu.
+- **POKUD** otevíráš kontextové menu modulu (`ModuleMenu`), **POTOM** záhlaví VŽDY nese název `<název aktuální obrazovky>: nastavení` (např. `Mobil: nastavení`, `Cézar: nastavení`, `Semafor: nastavení`), NIKDY generické `Menu modulu`.
+- **POKUD** je zařízení v landscape režimu s výškou obrazovky nižší než 540 px, **POTOM** aplikace renderuje celoobrazovkový černý overlay `<LandscapeWarning>` s výzvou „Otočte na výšku“.
+- **POKUD** uživatel zadává delší text nebo edituje řetězec nativní klávesnicí OS (např. Posuny, kódování), **POTOM** použij `<TextEntrySheet>` (overlay s nadpisem, textareou a tlačítky). NIKDY nenechávej inline textové inputy deformovat a zmenšovat hlavní obrazovku po vysunutí softwarové klávesnice.
+- **POKUD** modul nabízí volbu nástrojů nebo podtypů šifry (např. Cézar / Vigenère / Autokey v Posunech nebo Velký / Malý / Polybius / Mobil v Křížích), **POTOM** umísti `<SegmentedControl>` přímo do **Sub-Toolbaru** nad klávesnici na hlavní obrazovce. NIKDY neschovávej přepínání primárních nástrojů do `ModuleMenu`.
+- **POKUD** prvek plní roli taháku, tabulky nebo encyklopedie (např. Vlajky světa, morseovský tahák), **POTOM** ho umísti do `ReferenceModal` (ikona Knížky v záhlaví), NIKDY do těla zadávacího modulu přes `fullscreen-input`.
+- **POKUD** má tlačítko nebo klávesa stav `disabled`, **POTOM** NIKDY nenastavuj `opacity` na kořenový element tlačítka. VŽDY zachovej plnou barvu povrchu `var(--color-surface-2)` a ztlum pouze vnitřní ikonu/label na `opacity: 0.35`.
+- **POKUD** vytváříš kontextové akce nebo živé predikce (např. T9 kandidáti slov, akce morseovky), **POTOM** je umísti do Sub-Toolbaru těsně nad klávesnici. NIKDY nevytvářej plovoucí pilulky (floating bar) přes kartu `<TranslationCard>`.
+- **POKUD** píšeš nápovědný text prázdného stavu (`emptyHint`), **POTOM** formuluj úderný vstupní tip pro nováčka v 1 větě. Zásadně bez textové vaty typu „V tomto okně se zobrazuje...“.
+- **POKUD** implementuješ mazání celého vstupu, **POTOM** VŽDY použij `<SlideToAction>` (bezpečné podržení tahem zleva doprava). NIKDY nemaž text pouhým kliknutím na křížek.
+- **POKUD** zobrazuješ toast hlášku, **POTOM** musí mít **max. 30 znaků textu + až 2 emoji**.
+- **POKUD** umisťuješ easter egg, **POTOM** smí fungovat výhradně jako pasivní záslepka mřížky (`.grid-filler`) nebo ergonomický spodní buffer. NIKDY nesmí rozbíjet rozložení kláves ani mít vlastní vyhrazený řádek na úkor ovládání.
 
 ---
 
 ## 1. Závazná pravidla (Core Rules)
 
-1. **Plátno a barvy:** Pozadí vždy čistě černé `--color-bg-canvas` (`#000000`). Zákaz vlastních hex/rgb barev v komponentách – použij CSS tokeny.
-2. **Žádný scroll celé stránky:** `ModuleShell` má `overflow: hidden`. Scrollovat smí pouze vnitřek `TranslationCard` nebo `.table-scroll`.
-3. **Haptika:** VŽDY volat `settings.vibrate(ms)` z `state/settings.svelte`. **NIKDY nevolat `navigator.vibrate` přímo.** Nezdvojovat volání (komponenta tlačítka již haptiku zajišťuje).
-4. **Touch targets:** Všechny interaktivní prvky min. 48 × 48 px (`--tap-min-size`), v kondenzovaných tabulkách sjednocené s ergonomií bloku.
-5. **Multi-touch & okamžitá odezva kláves:** Klávesnice pro zadávání znaků (`DominantButton`, matice, kruh) musí reagovat na `onpointerdown` s `e.preventDefault()`, nikoli čekat na `click` / `touchend`. Kontejnery klávesnic musí mít `touch-action: none`.
-6. **Ničivé akce (Vymazání):** Vymazání vstupu VŽDY přes `SlideToAction` (podržením s tekutým vybarvováním zleva doprava). Nikdy pouhým kliknutím.
-7. **Toasty & hlášky:** Všechny toasty v aplikaci musí být **max. 30 znaků textu + až 2 emoji**. Delší texty se na mobilu nevzhledně lámou.
-8. **Kondenzované ovládací bloky a tabulky (Zapuštěné šasi):** Všechny zadávací matice (abeceda, numpad, římská čísla, námořní vlajky, souřadnice, polybius) i řádky utilit (`.keypad-utility-row`, `.keypad-utility-row-3col`) a dominantní řady (`.keypad-dominant-2col`, `.keypad-dominant-3col`) tvoří fyzicky zapuštěné černé šasi („switchbed tray“):
+1. **Plátno a barvy:** Pozadí vždy čistě černé `--color-bg-canvas` (`#000000`). Zákaz vlastních hex/rgb barev v komponentách – použij výhradně CSS tokeny.
+2. **Žádný celostránkový scroll:** `<ModuleShell>` má `overflow: hidden`. Scrollovat smí pouze vnitřek `TranslationCard` nebo `.table-scroll`.
+3. **Viewport 320 × 540 px (Portrait-only):** Všechny obrazovky a nástroje se musí pohodlně a bez deformace vejít do výšky 540 px při šířce 320 px. Při landscape orientaci pod 540 px výšky se zobrazí varovný overlay.
+4. **Haptika:** VŽDY volat `settings.vibrate(ms)` z `state/settings.svelte`. **NIKDY nevolat `navigator.vibrate` přímo.** Nezdvojovat volání (komponenta tlačítka již haptiku zajišťuje).
+5. **Touch targets a clampování:** Samostatná tlačítka min. 48 × 48 px (`--tap-min-size`). V kondenzovaných maticích (abeceda, numpad, vlajky) platí explicitní výjimka: výška klávesy se dynamicky clampuje na **32–40 px**, aby matice nepřekročila prostorový rozpočet.
+6. **Multi-touch & okamžitá odezva kláves:** Klávesnice pro zadávání znaků musí reagovat na `onpointerdown` s `e.preventDefault()`, nikoli čekat na `click` / `touchend`. Kontejnery klávesnic musí mít `touch-action: none`.
+7. **Ničivé akce (Vymazání):** Vymazání vstupu VŽDY přes `<SlideToAction>` (podržením s tekutým vybarvováním zleva doprava). Nikdy pouhým kliknutím.
+8. **Kondenzované ovládací bloky (Zapuštěné šasi „switchbed tray“):**
+   Všechny zadávací matice i utilitní trojblok tvoří fyzicky zapuštěná černá šasi:
    - **Vnější šasi:** `border-radius: var(--radius-sm)` (6px), `overflow: hidden`, pozadí plátna `background-color: var(--color-bg-canvas)` (`#000000`), vnitřní černé spáry `gap: 2px`, obvodový odstup `padding: 2px` a subtilní ohraničující lem `border: 1px solid var(--color-border-subtle)` (oddělující šasi od šedého spodního panelu `#121214`).
-   - **Obvodová symetrie:** Díky `padding: 2px` má každá klávesa na obvodu i v rozích identickou 2px černou spáru na všech 4 stranách. Rohové klávesy se neořezávají zaoblením kontejneru a drží si čistý `border-radius: 2px`.
+   - **Obvodová symetrie:** Každá klávesa na obvodu i v rozích má identickou 2px černou spáru na všech 4 stranách. Rohové klávesy se neořezávají zaoblením kontejneru a drží si čistý `border-radius: 2px`.
    - **Vnitřní tlačítka (keycaps):** `border: none`, `border-radius: 2px`, plné podbarvení `var(--color-surface-2)`.
-   - **Záslepka neobsazených míst (`.grid-filler`):** Pokud mřížka nekončí na celém řádku (např. abeceda 26/42 znaků), prázdná místa nesmí tvořit černou díru v šasi. Vkládá se záslepka o šířce zbývajících sloupců (`grid-column: span X`) v barvě `var(--color-surface-2)` s utlumenou průhledností `opacity: 0.35`, zaoblením `border-radius: 2px` a odpovídajícími fazetami, která mřížku vizuálně elegantně uzavírá.
+   - **Záslepka neobsazených míst (`.grid-filler`):** Pokud mřížka nekončí na celém řádku (např. abeceda 26/42 znaků), prázdná místa nesmí tvořit černou díru v šasi. Vkládá se záslepka o šířce zbývajících sloupců (`grid-column: span X`) v barvě `var(--color-surface-2)` s utlumenou průhledností `opacity: 0.35`, zaoblením `border-radius: 2px` a odpovídajícími fazetami.
 9. **Plasticita a světelné fazety (Tactility):**
    - **Vystouplá tlačítka (keycaps):** 1px fyzická plastická fazeta – horní světelný odraz `inset 0 1px 0 rgba(255, 255, 255, 0.10)` a spodní stín `inset 0 -1px 0 rgba(0, 0, 0, 0.5)`.
    - **Stisknutý stav (`:active`):** Klávesa se fyzicky promáčkne do vnitřního stínu `inset 0 1.5px 3px rgba(0, 0, 0, 0.7)` a `background-color: var(--color-surface-active)`.
-   - **Zapuštěné prvky / průstřely (negativní hloubka):** Prvky simulující otvory (Braillovy neaktivní body, poziční indikátory Semaforu) mají horní vnitřní stín `inset 0 1px 2px rgba(0, 0, 0, 0.8)` a spodní 1px odraz dna `inset 0 -1px 0 rgba(255, 255, 255, 0.05)`.
-10. **Konzistence podbarvení a zákaz plošného `opacity` u `disabled`:**
-    - Tlačítka a klávesy v neaktivním stavu (`disabled`) NIKDY nesmí mít `opacity: 0.35` na celý kořenový element – na OLED `#000` plátně by povrch prosvítal a ztmavl oproti okolním tlačítkům.
-    - Klávesa si vždy drží plnou barvu `var(--color-surface-2)`, ztlumuje se VÝHRADNĚ vnitřní ikona/text na `opacity: 0.35`.
+10. **Zákaz plošného `opacity` u `disabled`:**
+    Tlačítka a klávesy v neaktivním stavu NIKDY nesmí mít `opacity` na kořenový element. Klávesa si drží plnou barvu `var(--color-surface-2)`, tlumí se výhradně vnitřní ikona/text na `opacity: 0.35`.
 11. **Sjednocení rádiusů prvků:**
-    - Všechny vnější bloky, kontejnery klávesnic, dominantní tlačítka (`DominantButton`), řádky utilit (`.keypad-utility-row*`), přepínače (`SegmentedControl`), karty voleb (`RadioGroup`) i textareje mají sjednocený poloměr **`--radius-sm` (6px)**.
-    - Jednotlivá malá tlačítka uvnitř mřížek a sdružených řad mají **`border-radius: 2px`**.
-    - Vnitřní sub-prvky (např. aktivní segment v přepínači) mají **`--radius-xs` (4px)**.
-    - Kruhové prvky mají **`--radius-full`** (Braillovy body, kruhové indikátory).
-12. **Kontextové tooltipy a prázdné stavy (Empty State Hints):**
-    - Ve výstupní zóně překladu (`TranslationCard`, `CaesarView`) slouží prázdné pole pro stručný, jedno- až dvouřádkový kontextový tip k danému nástroji (`emptyHint`).
-    - Zásadně **bez ikon a bez nadpisů** – pouze subtilní text v barvě `var(--color-text-muted)`, usazený při spodním okraji výstupní zóny přímo nad klávesnicí (`position: absolute; bottom: 0`).
-    - **Rozplynutí při aktivitě:** Při prvním zadaném znaku se nápověda během **0.7s** plynule rozostří do jemného oparu (`filter: blur(14px); opacity: 0.2; transform: scale(0.96) translateZ(0);` s `transition: ... 0.7s ease-in-out;` a `will-change: opacity, filter, transform;`).
-    - **Zpětné vynoření:** Při vymazání vstupu se během stejných 0.7s opět plynule zaostří na plnou čitelnost (`blur(0px); opacity: 1; transform: scale(1)`).
+    - Vnější šasi, kontejnery klávesnic, utilitní blok, přepínače (`SegmentedControl`), dialogy a textareje: **`--radius-sm` (6px)**.
+    - Jednotlivá tlačítka uvnitř mřížek a sdružených řad: **`border-radius: 2px`**.
+    - Vnitřní sub-prvky (např. aktivní segment přepínače): **`--radius-xs` (4px)**.
+    - Kruhové prvky: **`--radius-full`** (Braillovy body, ciferníky).
+12. **Kontextové tooltipy prázdného stavu (`emptyHint`):**
+    - Slouží pro stručný, jednovětý vstupní tip pro uživatele, který nástroj otevřel poprvé.
+    - Zásadně **bez ikon a bez nadpisů** – subtilní text v barvě `var(--color-text-muted)`, usazený u spodního okraje výstupní zóny.
+    - **Rozplynutí při aktivitě:** Při prvním zadaném znaku se nápověda během **0.7s** plynule rozostří do oparu (`filter: blur(14px); opacity: 0.2; transform: scale(0.96) translateZ(0)`).
+    - **Zpětné vynoření:** Při vymazání vstupu se během 0.7s plynule zaostří zpět na plnou čitelnost.
 
 ---
 
@@ -43,29 +71,30 @@
 ### Barvy
 - **Plátno a povrchy:** `--color-bg-canvas` (#000000), `--color-surface-1` (#121214), `--color-surface-2` (#1c1c22), `--color-surface-3` (#262630), `--color-surface-active` (#323240), `--color-surface-elevated` (#161820).
 - **Rámečky:** `--color-border-subtle` (#2a2a34), `--color-border-medium` (#3a3a48), `--color-border-focus` (#00d2ff).
-- **Text:** `--color-text-primary` (#ffffff), `--color-text-secondary` (#9da0af), `--color-text-muted` (#626474).
+- **Text:** `--color-text-primary` (#ffffff), `--color-text-secondary` (#9da0af), `--color-text-muted` (#626474), `--color-text-inverse` (#000000).
 - **Akcenty:**
-  - Primary (Cyan): `--color-accent-primary` (#00d2ff) | subtle: `rgba(0, 210, 255, 0.12)`
+  - Primary (Cyan): `--color-accent-primary` (#00d2ff) | subtle: `rgba(0, 210, 255, 0.12)` | glow: `rgba(0, 210, 255, 0.35)`
   - Success (Green): `--color-accent-success` (#10b981) | subtle: `rgba(16, 185, 129, 0.12)`
   - Warning (Amber): `--color-accent-warning` (#f59e0b) | subtle: `rgba(245, 158, 11, 0.12)`
   - Danger (Red): `--color-accent-danger` (#ef4444) | subtle: `rgba(239, 68, 68, 0.15)`
 
-### Dimenze & Škála
+### Dimenze & Layout Budget
 - **Spacing:** `--space-2xs` (2px), `--space-xs` (4px), `--space-sm` (8px), `--space-md` (12px), `--space-lg` (16px), `--space-xl` (20px), `--space-2xl` (24px).
 - **Radius:** `--radius-xs` (4px), `--radius-sm` (6px), `--radius-md` (10px), `--radius-lg` (14px), `--radius-full` (9999px).
-- **Text:** `--text-xs` (11px), `--text-sm` (13px), `--text-base` (15px), `--text-lg` (17px), `--text-xl` (20px), `--text-2xl` (24px).
-- **Layout:**
+- **Text:** `--text-2xs` (10px), `--text-xs` (11px), `--text-sm` (13px), `--text-base` (15px), `--text-lg` (17px), `--text-xl` (20px), `--text-2xl` (24px).
+- **Layoutové konstanty:**
   - `--header-height: 52px;`
   - `--tap-min-size: 48px;`
+  - `--subtoolbar-height: 36px;`
   - `--utility-row-height: 42px;`
-  - `--dominant-key-height: clamp(62px, 9.5vh, 82px);`
   - `--output-min-height: 84px;`
+  - `--keypad-max-budget: 326px;`
 
 ---
 
 ## 3. Vertikální rozpočet obrazovky (Screen Layout Budget)
 
-Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
+Při minimální portrait výšce **540 px**:
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -73,23 +102,23 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 ├────────────────────────────────────────────────────────┤
 │ ZONE-OUTPUT: <TranslationCard>                         │
 │ - flex: 1, min-height: 84px                            │
-│ - OLED black (#000000), bez rušivých popisků           │
-│ - automatický scroll dolů, 1-tap copy do schránky      │
+│ - OLED black (#000000), bez rušivých plovoucích prvků │
+│ - 1-tap copy do schránky, plynulý auto-scroll dolů     │
 ├────────────────────────────────────────────────────────┤
-│ ZONE-INPUT: Klávesnice modulu (flex-shrink: 0)         │
-│ 1. [Volitelný Toolbar / SegmentedControl]              │
-│ 2. [Vstupní matice / Kruh dial / Interaktivní kříž]    │
-│ 3. .keypad-utility-row-3col (42px, repeat(3, 1fr))     │
-│    [ <SlideToAction> | <SpaceButton> | <Backspace> ]   │
-│    - Stejně široká tlačítka (1 : 1 : 1)                │
-│    - Pouze ikony bez textových popisků                 │
-│ 4. [Volitelný .keypad-dominant-1col / 3col]            │
-│    <DominantButton> (clamp 62–82px, touch-action: none)│
-│    - Jen tam, kde je potřeba potvrdit znak (Morse,     │
-│      Braille, Semafor, Čísla). U křížů a vlajek se     │
-│      vynechává pro úsporu vertikálního místa.          │
+│ ZONE-INPUT: Zapuštěné šasi klávesnice (max. 326 px)    │
+│ 1. [Volitelný Sub-Toolbar / SegmentedControl] (36 px)  │
+│ 2. Vstupní matice / Kruh dial / Kříž (clampováno)      │
+│ 3. .keypad-utility-row-3col (42px fixně)               │
+│    [ <SlideToAction> | <SpaceCommitButton> | <Backspace> ]
+│    - Poměr šířek: 1fr : 1.3fr : 1fr                    │
+│    - Výhradně symboly a ikony bez textu                │
 └────────────────────────────────────────────────────────┘
 ```
+
+### Matematika rozpočtu:
+$$540\text{ px} - [52\text{ (Header)} + 84\text{ (Output)} + 42\text{ (Utility)} + 20\text{ (Paddings)} + 16\text{ (Gaps)}] = \mathbf{326\text{ px}}$$
+
+Žádná klávesnice nesmí v součtu (matice + subtoolbar) překročit **326 px**.
 
 ---
 
@@ -97,227 +126,174 @@ Každý modul má 2 hlavní zóny uvnitř `<ModuleShell>`:
 
 | Kde | Co tam patří | Příklady |
 | :--- | :--- | :--- |
-| **By Default** | Běžná pravidla šifry (95 % případů v terénu) | Morse s CH, Braille bez auto-insertu, Semaphore s auto-insertem |
-| **Module Menu** (ikona List vpravo) | Odchylky konkrétní šifry na stanovišti + akce se stavem | Bez CH, přímá čísla (A=1), zrcadlení, přepínač easter eggu |
-| **Reference Modal** (ikona Knížka) | Statické taháky výhradně pro čtení | Pomocná slova morseovky, tabulka Brailla, kruh semaforu, námořní vlajky |
-| **App Settings** (`/settings`) | Globální předvolby zařízení a aktualizace | Evergreen aktualizace aplikace a DB, Haptika, Wake Lock, správa abeced |
+| **By Default** | Běžná pravidla šifry (95 % případů v terénu) | Morse s CH, Braille bez nutnosti mačkat Enter, Semafor s okamžitým zápisem |
+| **Sub-Toolbar** (přímo nad klávesnicí) | Přepínače nástrojů na očích + živé akce modulu | Posuny (Cézar/Vigenère/Autokey), Kříže (Polský/Malý/Polybius/T9), T9 kandidáti slov, Morse permutace |
+| **Module Menu** (ikona List vpravo) | Odchylky konkrétní šifry na stanovišti + volba abecedy | Výběr abecedy modulu, vynechaná písmena Polybia, zrcadlení semaforu, reset modulu |
+| **Reference Modal** (ikona Knížka) | Statické taháky a encyklopedie výhradně pro čtení | Pomocná slova morseovky, tabulka Brailla, kruh semaforu, námořní vlajky, atlas vlajek světa |
+| **App Settings** (`/settings`) | Globální předvolby zařízení a správa databáze | Offline slovníková DB (~102 MB), Evergreen aktualizace, haptika, správa abeced |
 
 ---
 
-## 5. Rychlý katalog komponent
+## 5. Rychlý katalog klíčových komponent
 
-### `SlideToAction` (tekuté mazání tažením/podržením)
-- Nahrazuje mechanický posuvník/thumb čistým tlačítkem se stejnou šířkou jako Mezera a Backspace.
-- **Tekuté vybarvování:** Při stisku a držení se tlačítko plynule zleva doprava vybarvuje červenou (`progress * 100%`).
-- **Nulový artefakt v klidu:** V klidovém stavu má proužek `opacity: 0`, takže nevytváří žádnou červenou linku na levém okraji.
-- **Disabled stav:** Zachovává plné podbarvení `var(--color-surface-2)`, tlumí pouze ikonu koše.
+### `SlideToAction` (bezpečné tekuté mazání)
+- Tlačítko se stejnou výškou (42 px) v levé pozici utilitního šasi.
+- **Vzhled v klidu:** Pouze ikona koše (`Trash`), neutrální tmavý povrch, plné podbarvení i při `disabled`. Žádné plošné `opacity`.
+- **Interakce:** Při podržení se plynule zalévá červenou barvou zleva doprava (`holdDuration: 450ms`).
 ```svelte
 <SlideToAction
-  disabled={!text}
+  disabled={!hasContent}
   onAction={handleClearAll}
-  label="Vymazat"
   ariaLabel="Vymazat text podržením"
 />
 ```
 
-### `SpaceButton` (Mezera v troj-tlačítku)
-- Centrální součást utilitního bloku se symbolem `␣`.
-- Vždy na pozici 2 v `keypad-utility-row-3col`.
+### `SpaceCommitButton` (kontextové středové tlačítko)
+- Centrální součást utilitního bloku s poměrem šířky `1.3fr`.
+- **Klidový stav (žádný rozepsaný znak):** Zobrazuje symbol mezery `␣`. Po stisku vloží mezeru.
+- **Aktivní stav (rozepsané body Brailla, 1. rameno Semaforu, číslice):**
+  Plynule se promění na potvrzení **Enter / Vložit**. Zobrazuje symbol `↵` nebo náhled vkládaného písmene s akcentním rámečkem.
 ```svelte
-<SpaceButton onAction={handleSpace} />
+<SpaceCommitButton
+  pendingChar={pendingChar}
+  onSpace={handleSpace}
+  onCommit={handleCommit}
+/>
 ```
 
-### `BackspaceButton` (mazání a rušení výběru)
-- Součást utilitního bloku se symbolem `⌫`.
-- **Dvojí role:** Pokud je rozepsaný znak (selekce souřadnice, tečky, segmentu), ikona se automaticky změní na `✕` a stisk zruší rozepsaný stav namísto mazání hotového textu.
+### `BackspaceButton` (korekce a rušení rozepsaného stavu)
+- Pravá součást utilitního bloku se symbolem `⌫`.
+- **Dvojí role:** Pokud je rozepsaný znak (selekce souřadnice, ramena, bodů), ikona se automaticky změní na `✕` a stisk zruší rozepsaný stav bez smazání hotového textu.
 ```svelte
 <BackspaceButton
-  disabled={!text && !hasSelection}
+  disabled={!hasContent && !hasSelection}
   hasActiveSelection={hasSelection}
-  cancelTitle="Zrušit rozepsaný znak"
   onAction={handleBackspace}
 />
 ```
 
-### `DominantButton` (hlavní potvrzovací klávesa / Enter)
-- **Mechanická podsvícená klávesa:**
-  - **Klidový stav:** Plastický keycap se střídmou fazetou (`inset 0 1px 0 rgba(255, 255, 255, 0.12)`, `inset 0 -1px 0 rgba(0, 0, 0, 0.6)`).
-  - **Aktivní / připraveno (`.is-ready`):** Zvýrazněná horní světelná hrana (`inset 0 1px 0 rgba(255, 255, 255, 0.35)`), spodní stín fazety (`inset 0 -1px 0 rgba(0, 0, 0, 0.6)`), decentní aura (`0 0 12px rgba(0, 210, 255, 0.20)`) a tenký rámeček `rgba(0, 210, 255, 0.45)`. Žádný difuzní neonový wash.
-  - **Stisknutý stav (`:active` / `.is-pressed`):** Fyzické promáčknutí do vnitřního stínu (`inset 0 2px 4px rgba(0, 0, 0, 0.65)`).
+### `TranslationCard` (výstupní karta překladu)
+- Čistě minimalistický vzhled: OLED black `#000000`, bez rámečků a bez plovoucích prvků.
+- 1-tap kliknutím zkopíruje celý text do schránky s haptickou odezvou.
+- **`emptyHint`:** Jednovětý návod usazený u spodního okraje, který se při psaní plynule rozostří do oparu (0.7s).
 ```svelte
-<DominantButton
-  symbol={currentChar || '↵'}
-  name={currentChar ? `Vložit „${currentChar}“` : 'Vložit znak'}
-  ready={!!currentChar}
-  disabled={!currentChar}
-  variant="accent"
-  onClick={commitChar}
+<TranslationCard
+  text={committedText}
+  pendingText={pendingDisplay}
+  emptyHint="Klepněte na body nebo tahem spojte."
 />
 ```
 
-### Kondenzované tabulky a mřížky (`AlphabetGrid`, `AdaptiveNumpad`, `RomanNumpad`, `FlagsModule`, `InteractiveCross`, `CoordinateKeypad`)
-- **Pravidlo zapuštěného šasi („switchbed tray“):**
-```css
-.table-grid {
-  display: grid;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  background-color: var(--color-bg-canvas);
-  border: 1px solid var(--color-border-subtle);
-  box-sizing: border-box;
-}
+### `TextEntrySheet` (overlay pro delší vstupy s nativní klávesnicí)
+- Zajišťuje zadávání textu přes systémovou klávesnici OS bez deformace hlavní obrazovky modulu.
+- Otevírá se klepnutím na vstupní pole v Posunech a textových šifrách.
+- Obsahuje nadpis, pohodlnou `<textarea>`, tlačítko *Vložit ze schránky* a tlačítko *Hotovo*.
 
-.table-key {
-  background-color: var(--color-surface-2);
-  border: none;
-  border-radius: 2px;
-  box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-  box-sizing: border-box;
-}
-
-.table-key:active:not(:disabled) {
-  background-color: var(--color-surface-active);
-  box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  transform: none;
-}
-
-/* Záslepka nevyužitých slotů na konci mřížky */
-.grid-filler {
-  grid-column: span var(--filler-span, 1);
-  background-color: var(--color-surface-2);
-  opacity: 0.35;
-  border-radius: 2px;
-  box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
-  pointer-events: none;
-  user-select: none;
-}
-```
-
-### `TranslationCard` (výstupní karta překladu)
-- Čistě minimalistický vzhled: OLED black `#000000`, bez rámečků a zbytečného textu „Překlad“.
-- 1-tap kliknutím zkopíruje celý text do schránky s haptickou odezvou.
-- **Kontextový tip prázdného stavu (`emptyHint`):**
-  - Subtilní text usazený u spodního okraje výstupní zóny (`position: absolute; bottom: 0`).
-  - Žádné ikony ani nadpisy, čistě jedno- až dvouřádkový nápovědný text (`color: var(--color-text-muted)`).
-  - Při psaní plynule disolvuje do jemného oparu (`filter: blur(14px); opacity: 0.2; transform: scale(0.96) translateZ(0)`) přes `0.7s ease-in-out` s GPU akcelerací (`will-change: opacity, filter, transform`).
-  - Při smazání textu se během stejných 0.7s plynule vrátí zpět do plné ostrosti a čitelnosti (`blur(0px); opacity: 1; transform: scale(1)`).
+### `LandscapeWarning` (systémový overlay při otočení)
+- Aktivuje se při `@media (orientation: landscape) and (max-height: 539px)`.
+- 100% OLED black plátno, animovaný piktogram rotace telefonu a text **„Otočte na výšku“**.
 
 ---
 
-## 6. Easter Eggy & Dekorace
+## 6. Pravidla pro texty a Microcopy
 
-1. **Vzhled a plasticita:** Monochromatické SVG, sedící na plně plastické dlaždici s fazetou odpovídající okolním prvkům (např. lodička v námořních vlajkách).
-2. **Volitelnost:** VŽDY přepínač v `ModuleMenu` (default: zapnuto).
-3. **Neruší vstup:** Klávesy nesmí spouštět easter egg hlášky ani zpožďovat psaní.
-4. **Dvoustupňová interakce:**
-   - *Level 1 (Objev):* ~5 kliků na dekoraci → jemná animace + hláška.
-   - *Level 2 (Finále):* ~60 kliků / 20 s → dramatický efekt (potopení lodičky s SOS vibrací, elektrické přepětí).
-5. **Žádné spoilery:** Pokud prvek vysílá skrytou šifru/zprávu, NIKDY nezobrazovat rozluštěný text v toastu.
-6. **Toast limit:** Max. 30 znaků textu + max. 2 emoji.
-
----
-
-## 7. Dotykový výkon & Animace
-
-1. **Multi-touch:** Klávesy řešit přes `onpointerdown` + `e.preventDefault()`. Kontejner i klávesy: `touch-action: none`.
-2. **Žádné 60 FPS smyčky v JS:** Zákaz `requestAnimationFrame` s reaktivním `$state`. Pro křivky výhradně CSS `offset-path: path(...)` na GPU.
-3. **Nezdvojovat haptiku:** Pokud vibruje komponenta (`DominantButton`, `SlideToAction`), nevolat `settings.vibrate()` v obslužné funkci.
+1. **Žádná textová vata:** Zakázána slova typu *„Zde se zobrazuje...“*, *„Tento modul slouží k...“*, *„Kliknutím zkopírujete...“*.
+2. **Standard pro `emptyHint`:**
+   - Morse: *„Lomítko dělí písmena, dvě slova. Text bez mezer řeší tlačítko dole.“*
+   - Braille: *„Body lze zadávat klepnutím i plynulým tahem.“*
+   - Semafor: *„Zvolte 2 pozice nebo spojte tahem.“*
+   - Vlajky: *„Filtrujte vlajky barvami dole.“*
+   - Kříže (Polský): *„Klepněte přímo do pole kříže nebo zvolte souřadnice.“*
+   - Kříže (T9): *„Každou klávesu stiskněte jen jednou, slova doplňuje slovník.“*
+   - Čísla: *„Soustavy a režimy volí lišta nahoře.“*
+   - Posuny: *„Všechny posuny abecedy se vyhodnocují živě.“*
+3. **Toasty:** Max. 30 znaků textu + až 2 emoji. Úderné, imperativní tvary (*„Zkopírováno“*, *„Vyčištěno“*, *„Stahuji slovník...“*).
 
 ---
 
-## 8. Šablona modulu (Blueprint)
+## 7. Šablona modulu (Blueprint)
 
 ```svelte
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
-  import SpaceButton from '../../components/ui/SpaceButton.svelte';
+  import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
-  import DominantButton from '../../components/ui/DominantButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
 
-  const modSettings = localSettingsService.forModule('new_mod');
-  let text = $state(modSettings.getString('input', ''));
-  let pending = $state('');
+  const modSettings = localSettingsService.forModule('example_mod');
+  let text = $state(modSettings.getString('text', ''));
+  let pendingChar = $state('');
 
-  $effect(() => { modSettings.setString('input', text); });
+  $effect(() => { modSettings.setString('text', text); });
 
   function handleClearAll() {
     text = '';
-    pending = '';
+    pendingChar = '';
   }
 
   function handleSpace() {
     text += ' ';
   }
 
-  function handleBackspace() {
-    if (pending) {
-      pending = '';
-    } else if (text) {
-      text = text.slice(0, -1);
+  function handleCommit() {
+    if (pendingChar) {
+      text += pendingChar;
+      pendingChar = '';
     }
   }
 
-  function handleCommit() {
-    if (pending) {
-      text += pending;
-      pending = '';
+  function handleBackspace() {
+    if (pendingChar) {
+      pendingChar = '';
+    } else if (text) {
+      text = text.slice(0, -1);
     }
   }
 </script>
 
 <ModuleShell onReset={handleClearAll} onPaste={(t) => (text += t)}>
   {#snippet output()}
-    <TranslationCard {text} emptyHint="Stručný návod nebo ergonomický tip k nástroji." />
+    <TranslationCard
+      {text}
+      pendingText={pendingChar}
+      emptyHint="Úderný a stručný návod ke vstupu."
+    />
   {/snippet}
 
   {#snippet input()}
     <div class="keypad-zone">
-      <!-- 1. Kondenzovaná matice / zadávací pole modulu -->
+      <!-- 1. Volitelný Sub-Toolbar / SegmentedControl (36px) -->
 
-      <!-- 2. Troj-tlačítko utilit (Vymazat, Mezera, Backspace) -->
-      <div class="keypad-utility-row-3col">
-        <SlideToAction
-          disabled={!text && !pending}
-          onAction={handleClearAll}
-          label="Vymazat"
-        />
-        <SpaceButton
-          onAction={handleSpace}
-        />
-        <BackspaceButton
-          disabled={!text && !pending}
-          hasActiveSelection={!!pending}
-          cancelTitle="Zrušit rozepsaný znak"
-          onAction={handleBackspace}
-        />
+      <!-- 2. Vstupní šasi s clampovanou výškou kláves -->
+      <div class="keypad-matrix">
+        <!-- Tlačítka klávesnice s výškou clamp(34px, 4.5vh, 42px) -->
       </div>
 
-      <!-- 3. Volitelný dominantní řádek (Enter) -->
-      <div class="keypad-dominant-1col">
-        <DominantButton
-          symbol={pending || '↵'}
-          name={pending ? `Vložit „${pending}“` : 'Vložit znak'}
-          ready={!!pending}
-          disabled={!pending}
-          variant="accent"
-          onClick={handleCommit}
+      <!-- 3. Utilitní trojblok (42px fixně): Clear | Space+Commit | Backspace -->
+      <div class="keypad-utility-row-3col">
+        <SlideToAction
+          disabled={!text && !pendingChar}
+          onAction={handleClearAll}
+        />
+        <SpaceCommitButton
+          {pendingChar}
+          onSpace={handleSpace}
+          onCommit={handleCommit}
+        />
+        <BackspaceButton
+          disabled={!text && !pendingChar}
+          hasActiveSelection={!!pendingChar}
+          onAction={handleBackspace}
         />
       </div>
     </div>
   {/snippet}
 
   {#snippet menuOptions()}
-    <OptionRow label="Možnost" checked={false} onChange={() => {}} />
+    <OptionRow label="Možnost modulu" checked={false} onChange={() => {}} />
   {/snippet}
 </ModuleShell>
 ```

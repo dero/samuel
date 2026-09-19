@@ -42,7 +42,7 @@
     class:is-hidden={!!rawText.trim()}
     aria-hidden={!!rawText.trim()}
   >
-    <p class="empty-desc">Samuel paralelně vyhodnotí všechny posuny abecedy a zvýrazní češtinu.</p>
+    <p class="empty-desc">Všechny posuny abecedy se vyhodnocují živě.</p>
   </div>
 
   {#if rawText.trim()}

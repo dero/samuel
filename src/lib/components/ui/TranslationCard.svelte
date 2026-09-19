@@ -15,7 +15,7 @@
   let {
     text = '',
     pendingText = '',
-    placeholder = 'Zde se zobrazí přeložený text...',
+    placeholder = '',
     emptyHint = '',
     emptyTitle = '',
     class: customClass = ''

@@ -166,6 +166,9 @@
     grid-row: 1 / span 2;
     width: 100%;
     height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -195,6 +198,7 @@
   .boat-svg {
     width: 100%;
     height: 100%;
+    max-height: 100%;
     display: block;
     opacity: 0.85;
   }

@@ -105,15 +105,8 @@
       <div class="flags-output-container">
         <TranslationCard
           text={inputLetters}
-          emptyHint="Tlačítky dole filtrujte vlajky podle viditelných barev."
+          emptyHint="Filtrujte vlajky barvami dole."
         />
-        {#if selectedColors.length > 0}
-          <div class="filter-indicator-bar">
-            <span class="filter-indicator-text">
-              Nalezeno {matchCount} z 26
-            </span>
-          </div>
-        {/if}
       </div>
     {/if}
   {/snippet}
@@ -132,7 +125,6 @@
               type="button"
               class="flag-tile"
               class:is-dimmed={!isMatching}
-              class:is-solo-z={!showSailboat && flag.code === 'Z'}
               onpointerdown={(e) => {
                 if (e.button !== 0) return;
                 e.preventDefault();
@@ -146,6 +138,9 @@
               <span class="flag-tile-code">{flag.code}</span>
             </button>
           {/each}
+          {#if !showSailboat}
+            <div class="grid-filler" style="grid-column: span 4;" aria-hidden="true"></div>
+          {/if}
         </div>
 
         <!-- Utility Row: SlideToAction (Vymazat) + Mezera + Backspace (1.2fr 1fr 1fr) -->
@@ -257,49 +252,11 @@
     min-height: 0;
   }
 
-  .filter-indicator-bar {
-    position: absolute;
-    bottom: var(--space-xs);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 5px 14px;
-    background: rgba(22, 24, 32, 0.94);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--color-border-medium);
-    border-radius: var(--radius-full);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.15);
-    animation: filterFloatIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-    pointer-events: none;
-  }
-
-  @keyframes filterFloatIn {
-    from {
-      opacity: 0;
-      transform: translate(-50%, 6px);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-  }
-
-  .filter-indicator-text {
-    font-size: var(--text-xs);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    letter-spacing: 0.3px;
-    white-space: nowrap;
-  }
-
   /* Flags Grid: 5 columns x 6 rows (with Sailboat in top-left 2x2) */
   .flags-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: clamp(34px, 4.4vh, 40px);
     gap: 2px;
     padding: 2px;
     width: 100%;
@@ -310,10 +267,6 @@
     box-sizing: border-box;
   }
 
-  .flag-tile.is-solo-z {
-    grid-column: 3;
-  }
-
   .flag-tile {
     display: flex;
     flex-direction: column;
@@ -322,14 +275,28 @@
     background-color: var(--color-surface-2);
     border: none;
     border-radius: 2px;
-    padding: 4px 2px;
-    gap: 2px;
-    min-height: 48px;
+    padding: 2px;
+    gap: 1px;
+    height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
     box-shadow: 
       inset 0 1px 0 rgba(255, 255, 255, 0.10),
       inset 0 -1px 0 rgba(0, 0, 0, 0.5);
     transition: background-color 0.12s, box-shadow 0.08s, opacity 0.12s;
     touch-action: manipulation;
+  }
+
+  .grid-filler {
+    background-color: var(--color-surface-2);
+    opacity: 0.35;
+    border-radius: 2px;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    user-select: none;
+    height: 100%;
   }
 
   .flag-tile:active {
@@ -345,8 +312,8 @@
   }
 
   .flag-tile-preview {
-    width: 28px;
-    height: 28px;
+    width: clamp(20px, 2.6vh, 24px);
+    height: clamp(20px, 2.6vh, 24px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -354,7 +321,7 @@
 
   .flag-tile-code {
     font-family: var(--font-condensed);
-    font-size: var(--text-xs);
+    font-size: var(--text-2xs);
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1;
@@ -364,14 +331,14 @@
     color: var(--color-text-muted);
   }
 
-  /* Dominant Bottom Row: 5 Large Color Buttons */
+  /* Color Filter Row: 5 Compact Color Buttons (42px) */
   .color-filter-row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 2px;
     padding: 2px;
     width: 100%;
-    height: var(--dominant-key-height);
+    height: var(--utility-row-height, 42px);
     border-radius: var(--radius-sm);
     overflow: hidden;
     background-color: var(--color-bg-canvas);
@@ -384,16 +351,17 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 2px;
     background-color: var(--color-surface-2);
     border: none;
     border-radius: 2px;
-    padding: var(--space-xs) 2px;
+    padding: 2px;
     box-shadow: 
       inset 0 1px 0 rgba(255, 255, 255, 0.10),
       inset 0 -1px 0 rgba(0, 0, 0, 0.5);
     transition: background-color 0.12s, box-shadow 0.08s;
     touch-action: manipulation;
+    box-sizing: border-box;
   }
 
   .color-filter-btn:active {
@@ -408,22 +376,22 @@
   }
 
   .color-swatch {
-    width: 22px;
-    height: 22px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    border: 2px solid;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    border: 1.5px solid;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     transition: transform 0.12s, box-shadow 0.12s;
   }
 
   .color-filter-btn.is-active .color-swatch {
     transform: scale(1.15);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
   }
 
   .color-name {
     font-family: var(--font-sans);
-    font-size: var(--text-2xs);
+    font-size: 9px;
     font-weight: 600;
     color: var(--color-text-secondary);
     letter-spacing: 0.2px;

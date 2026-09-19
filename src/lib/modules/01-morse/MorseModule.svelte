@@ -211,14 +211,18 @@
 
 <ModuleShell onReset={handleReset} onPaste={handlePaste}>
   {#snippet output()}
-    <div class="morse-output-container">
-      <TranslationCard
-        text={committedText}
-        pendingText={pendingDisplay}
-        emptyHint="Lomítko dělí písmena, dvě slova. Šifru bez mezer řeší „Vyřešit bez mezer“."
-      />
+    <TranslationCard
+      text={committedText}
+      pendingText={pendingDisplay}
+      emptyHint="Lomítko dělí písmena, dvě slova. Text bez mezer řeší tlačítko dole."
+    />
+  {/snippet}
+
+  {#snippet input()}
+    <div class="keypad-zone" class:no-wire={!showTelegraphWire}>
+      <!-- Sub-Toolbar: Permutations and Bruteforce solver -->
       {#if inputMorse.length > 0}
-        <div class="morse-floating-bar">
+        <div class="morse-subtoolbar">
           <button
             type="button"
             class="morse-chip-btn"
@@ -244,26 +248,6 @@
           {/if}
         </div>
       {/if}
-    </div>
-  {/snippet}
-
-  {#snippet input()}
-    <div class="keypad-zone" class:no-wire={!showTelegraphWire}>
-      <!-- Utility Row: Slide to Clear and Backspace -->
-      <div class="keypad-utility-row">
-        <SlideToAction
-          disabled={!inputMorse}
-          onAction={handleClear}
-          label="Vymazat"
-          ariaLabel="Vymazat celý kód tažením"
-        />
-
-        <BackspaceButton
-          disabled={!inputMorse}
-          title="Smazat poslední znak nebo oddělovač"
-          onAction={handleBackspace}
-        />
-      </div>
 
       <!-- Big dominant keys: Tečka, Čárka, Oddělovač -->
       <div class="keypad-dominant-3col">
@@ -286,6 +270,21 @@
           name="Oddělovač"
           variant="secondary"
           onClick={appendSlash}
+        />
+      </div>
+
+      <!-- Utility Row: Slide to Clear and Backspace -->
+      <div class="keypad-utility-row">
+        <SlideToAction
+          disabled={!inputMorse}
+          onAction={handleClear}
+          ariaLabel="Vymazat celý kód tažením"
+        />
+
+        <BackspaceButton
+          disabled={!inputMorse}
+          title="Smazat poslední znak nebo oddělovač"
+          onAction={handleBackspace}
         />
       </div>
 
@@ -425,60 +424,35 @@
     width: 100%;
   }
 
-  /* Morse Output Container & Floating Action Bar */
-  .morse-output-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
 
-  .morse-floating-bar {
-    position: absolute;
-    bottom: var(--space-xs);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    display: flex;
-    align-items: center;
+  .morse-subtoolbar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: var(--space-xs);
-    background: rgba(22, 24, 32, 0.94);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--color-border-medium);
-    border-radius: var(--radius-full);
-    padding: 4px 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.15);
-    animation: morseFloatIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @keyframes morseFloatIn {
-    from {
-      opacity: 0;
-      transform: translate(-50%, 6px);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
+    width: 100%;
+    height: var(--subtoolbar-height, 36px);
+    box-sizing: border-box;
   }
 
   .morse-chip-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    padding: 0 var(--space-sm);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-sm);
     font-size: var(--text-xs);
     font-weight: 700;
     color: var(--color-text-secondary);
     cursor: pointer;
     transition: background-color 0.12s ease, color 0.12s ease;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .morse-chip-btn:active,

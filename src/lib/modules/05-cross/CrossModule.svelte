@@ -3,7 +3,7 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
-  import SpaceButton from '../../components/ui/SpaceButton.svelte';
+  import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import RadioGroup, { type RadioOption } from '../../components/ui/RadioGroup.svelte';
   import InteractiveCross from './InteractiveCross.svelte';
@@ -43,6 +43,13 @@
   const phoneModeOptions: SegmentOption<'multitap' | 't9'>[] = [
     { id: 'multitap', label: 'Klasik' },
     { id: 't9', label: 'T9' }
+  ];
+
+  const crossSubmoduleOptions: SegmentOption<CrossType>[] = [
+    { id: 'large-polish', label: 'Velký' },
+    { id: 'small-polish', label: 'Malý' },
+    { id: 'polybius', label: 'Polybius' },
+    { id: 'mobile-keypad', label: 'Mobil' }
   ];
 
   // Polybius configuration state
@@ -557,13 +564,13 @@
   const emptyHint = $derived.by(() => {
     switch (crossTypeId) {
       case 'large-polish':
-        return 'Tapněte do kříže, nebo vyberte souřadnice pro zapsání písmene.';
+        return 'Klepněte přímo do pole kříže nebo zvolte souřadnice.';
       case 'small-polish':
-        return 'Tapněte do kříže, nebo zvolte geometrii a tečku pro zápis znaku.';
+        return 'Klepněte do pole kříže se zvolenou tečkou.';
       case 'mobile-keypad':
-        return 'V režimu T9 stačí stisknout klávesu jednou, Samuel dohledá slova.';
+        return 'Každou klávesu stiskněte jen jednou, slova doplňuje slovník.';
       case 'polybius':
-        return 'Dvojice čísel nebo písmen (např. 14 či AD) přeloží znak v matici.';
+        return 'Dvojice souřadnic (1–5 či A–E) přeloží znak v matici.';
       default:
         return 'Klepnutím vyberte požadovaný znak.';
     }
@@ -576,18 +583,47 @@
 </script>
 
 <ModuleShell
+  title={activeConfig.name}
   onReset={handleReset}
   onPaste={handlePaste}
 >
   {#snippet menuOptions()}
-    <div class="menu-group">
-      <div class="menu-group-title">Šifrovací nástroj</div>
-      <RadioGroup
-        options={crossTypeOptions}
-        value={crossTypeId}
-        onChange={handleTypeChange}
-      />
-    </div>
+    {#if crossTypeId === 'mobile-keypad'}
+      <div class="menu-group">
+        <div class="menu-group-title">Režim psaní</div>
+        <SegmentedControl
+          options={phoneModeOptions}
+          value={phoneInputMode}
+          ariaLabel="Režim mobilní klávesnice"
+          onChange={handlePhoneModeChange}
+        />
+      </div>
+
+      {#if phoneInputMode === 't9' && !versionService.state.isDbInstalled}
+        <div class="nonstandard-banner" role="alert">
+          <div class="banner-top">
+            <span class="banner-icon"><Warning size={20} weight="fill" /></span>
+            <div class="banner-text">
+              <span class="banner-title">Slovník pro T9 není stažen</span>
+              <p class="banner-desc">
+                Pro prediktivní psaní T9 je potřeba stáhnout slovníkovou databázi v Nastavení aplikace (~102 MB).
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="banner-reset-btn"
+            onclick={() => {
+              settings.vibrate(20);
+              navigation.closeSubView();
+              navigation.navigate('settings');
+            }}
+          >
+            Přejít do Nastavení
+          </button>
+        </div>
+      {/if}
+    {/if}
 
     {#if activeConfig.hasAlphabet}
       <div class="menu-group">
@@ -675,62 +711,50 @@
       text={inputLetters}
       pendingText={pendingDisplay}
       emptyHint={emptyHint}
-      class={crossTypeId === 'mobile-keypad' && phoneInputMode === 't9' && t9Digits ? 'has-t9-floating' : ''}
     />
   {/snippet}
 
   {#snippet input()}
     <div class="cross-module-content">
-      <!-- Mobile Keypad Mode Switcher (Klasické vs T9) -->
-      {#if crossTypeId === 'mobile-keypad'}
+      <!-- 1. Sub-Toolbar: Volba šifrovacího nástroje (Velký | Malý | Polybius | Mobil) -->
+      <div class="submodule-nav">
         <SegmentedControl
-          options={phoneModeOptions}
-          value={phoneInputMode}
-          ariaLabel="Režim mobilní klávesnice"
-          onChange={handlePhoneModeChange}
+          options={crossSubmoduleOptions}
+          value={crossTypeId}
+          ariaLabel="Výběr typu kříže"
+          onChange={handleTypeChange}
         />
+      </div>
 
-        <!-- Floating T9 Candidate Suggestion Bar / Missing DB Banner -->
-        {#if phoneInputMode === 't9' && !versionService.state.isDbInstalled}
-          <div class="t9-missing-banner">
-            <span class="t9-missing-text">Slovník pro T9 není stažen (~102 MB).</span>
-            <button
-              type="button"
-              class="t9-settings-btn"
-              onclick={() => navigation.navigate('settings')}
-            >
-              Stáhnout v Nastavení
-            </button>
-          </div>
-        {:else if phoneInputMode === 't9' && t9Digits}
-          <div class="t9-candidate-container" role="region" aria-label="Návrhy slov T9">
-            <div class="t9-candidates-scroll">
-              {#if isT9Loading}
-                <div class="t9-loading-state">
-                  <span class="t9-spinner"></span>
-                  <span class="t9-loading-text">Hledám...</span>
-                  <span class="t9-fallback-chip">{getFallbackT9Word(t9Digits)}</span>
-                </div>
-              {:else if t9Candidates.length > 0}
-                {#each t9Candidates as candidate, idx}
-                  {@const matchPart = candidate.slice(0, t9Digits.length)}
-                  {@const restPart = candidate.slice(t9Digits.length)}
-                  <button
-                    type="button"
-                    class="t9-candidate-chip"
-                    class:is-active={idx === t9CandidateIndex}
-                    onclick={() => handleSelectT9Candidate(candidate)}
-                  >
-                    <span class="t9-chip-match">{matchPart}</span>{#if restPart}<span class="t9-chip-rest">{restPart}</span>{/if}
-                  </button>
-                {/each}
-              {:else}
+      <!-- Active T9 Candidates Bar when typing digits -->
+      {#if crossTypeId === 'mobile-keypad' && phoneInputMode === 't9' && t9Digits}
+        <div class="t9-candidate-container" role="region" aria-label="Návrhy slov T9">
+          <div class="t9-candidates-scroll">
+            {#if isT9Loading}
+              <div class="t9-loading-state">
+                <span class="t9-spinner"></span>
+                <span class="t9-loading-text">Hledám...</span>
                 <span class="t9-fallback-chip">{getFallbackT9Word(t9Digits)}</span>
-                <span class="t9-no-match-text">(bez shody)</span>
-              {/if}
-            </div>
+              </div>
+            {:else if t9Candidates.length > 0}
+              {#each t9Candidates as candidate, idx}
+                {@const matchPart = candidate.slice(0, t9Digits.length)}
+                {@const restPart = candidate.slice(t9Digits.length)}
+                <button
+                  type="button"
+                  class="t9-candidate-chip"
+                  class:is-active={idx === t9CandidateIndex}
+                  onclick={() => handleSelectT9Candidate(candidate)}
+                >
+                  <span class="t9-chip-match">{matchPart}</span>{#if restPart}<span class="t9-chip-rest">{restPart}</span>{/if}
+                </button>
+              {/each}
+            {:else}
+              <span class="t9-fallback-chip">{getFallbackT9Word(t9Digits)}</span>
+              <span class="t9-no-match-text">(bez shody)</span>
+            {/if}
           </div>
-        {/if}
+        </div>
       {/if}
 
       <!-- Center Zone: Interactive Cross or Mobile Keypad (100% width) -->
@@ -770,17 +794,18 @@
         </div>
       {/if}
 
-      <!-- Utility Row: SlideToAction, SpaceButton & BackspaceButton (1.2fr 1fr 1fr) -->
+      <!-- Utility Row: SlideToAction, Space/Commit & Backspace (1fr 1.3fr 1fr) -->
       <div class="keypad-utility-row-3col">
         <SlideToAction
           disabled={!inputLetters && !pendingChar && !t9Digits && selectedAxis1 === null && selectedAxis2 === null && selectedAxis3 === null}
           onAction={handleClearAll}
-          label="Vymazat"
           ariaLabel="Vymazat text tažením"
         />
 
-        <SpaceButton
-          onAction={handleSpace}
+        <SpaceCommitButton
+          pendingChar={phoneInputMode === 't9' && t9Digits ? (t9Candidates[t9CandidateIndex] || '↵') : (pendingChar || '')}
+          onSpace={handleSpace}
+          onCommit={handleSpace}
         />
 
         <BackspaceButton
@@ -816,71 +841,29 @@
     flex-direction: column;
     gap: var(--space-sm);
     width: 100%;
-    align-items: center;
+    align-items: stretch;
     position: relative;
   }
 
-  :global(.output-container.has-t9-floating .result-text) {
-    padding-bottom: 48px;
-  }
-
-  .t9-missing-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    padding: 8px 12px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-  }
-
-  .t9-settings-btn {
-    padding: 6px 10px;
-    background-color: var(--color-surface-active);
-    color: var(--color-accent-primary);
-    border: 1px solid var(--color-border-medium);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
+  .submodule-nav {
+    width: 100%;
+    flex-shrink: 0;
   }
 
   .t9-candidate-container {
-    position: absolute;
-    bottom: calc(100% + var(--space-xs) + 6px);
-    left: 0;
-    right: 0;
-    z-index: 30;
     display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
-    min-height: 42px;
-    background: rgba(22, 24, 32, 0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--color-border-medium);
+    height: 38px;
+    min-height: 38px;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    padding: 4px 8px;
+    padding: 3px 6px;
     box-sizing: border-box;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.15);
-    animation: t9-float-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @keyframes t9-float-in {
-    from {
-      opacity: 0;
-      transform: translateY(6px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    flex-shrink: 0;
   }
 
   .t9-candidates-scroll {

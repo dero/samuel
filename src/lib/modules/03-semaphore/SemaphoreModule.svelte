@@ -3,10 +3,9 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import SemaphoreReference from './SemaphoreReference.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
-  import SpaceButton from '../../components/ui/SpaceButton.svelte';
+  import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
-  import DominantButton from '../../components/ui/DominantButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import {
     SEMAPHORE_DIRECTIONS,
@@ -255,7 +254,7 @@
   {#snippet output()}
     <TranslationCard
       text={inputLetters}
-      emptyHint="Klepněte na dvě pozice ciferníku, nebo je spojte plynulým tahem prstu."
+      emptyHint="Zvolte 2 pozice nebo spojte tahem."
     />
   {/snippet}
 
@@ -342,17 +341,18 @@
         </div>
       </div>
 
-      <!-- Utility Row: Slide to Clear, Mezera and Smart Backspace (1.2fr 1fr 1fr) -->
+      <!-- Utility Row: Slide to Clear, Space/Commit and Smart Backspace (1fr 1.3fr 1fr) -->
       <div class="keypad-utility-row-3col">
         <SlideToAction
           disabled={!inputLetters && activeDirs.length === 0}
           onAction={handleClearAll}
-          label="Vymazat"
           ariaLabel="Vymazat celý text tažením"
         />
 
-        <SpaceButton
-          onAction={handleSpace}
+        <SpaceCommitButton
+          pendingChar={currentChar}
+          onSpace={handleSpace}
+          onCommit={commitChar}
         />
 
         <BackspaceButton
@@ -363,20 +363,6 @@
           onAction={handleBackspace}
         />
       </div>
-
-      <!-- Dominant Row: Vložit znak (100% width, only when manual confirmation is active) -->
-      {#if !autoInsert}
-        <div class="keypad-dominant-1col">
-          <DominantButton
-            symbol={currentChar || '↵'}
-            name={currentChar ? `Vložit „${currentChar}“` : activeDirs.length === 1 ? 'Zvolte 2. rameno' : 'Vložit znak'}
-            ready={!!currentChar && !committedFade}
-            disabled={!currentChar || committedFade}
-            title="Vložit znak do textu"
-            onClick={commitChar}
-          />
-        </div>
-      {/if}
     </div>
   {/snippet}
 
@@ -425,7 +411,6 @@
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
-    margin-bottom: var(--space-md);
   }
 
   .semaphore-wheel-card {
@@ -438,14 +423,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: clamp(4px, 1vh, 10px) var(--space-sm);
+    padding: clamp(2px, 0.8vh, 8px) var(--space-sm);
   }
 
   /* Strict 1:1 square dial ensures exact circle */
   .dial-square {
     position: relative;
-    width: clamp(240px, 37vh, 330px);
-    height: clamp(240px, 37vh, 330px);
+    width: clamp(200px, 32vh, 290px);
+    height: clamp(200px, 32vh, 290px);
     max-width: calc(100vw - 32px);
     max-height: calc(100vw - 32px);
     aspect-ratio: 1 / 1;

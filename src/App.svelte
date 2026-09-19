@@ -1,6 +1,7 @@
 <script lang="ts">
   import Header from './lib/components/layout/Header.svelte';
   import LauncherOverlay from './lib/components/layout/LauncherOverlay.svelte';
+  import LandscapeWarning from './lib/components/layout/LandscapeWarning.svelte';
   import ToastContainer from './lib/components/ui/ToastContainer.svelte';
   import SettingsModule from './lib/modules/settings/SettingsModule.svelte';
   import HelpModule from './lib/modules/help/HelpModule.svelte';
@@ -88,6 +89,7 @@
 
 <LauncherOverlay />
 <ToastContainer />
+<LandscapeWarning />
 
 <style>
   .main-content {

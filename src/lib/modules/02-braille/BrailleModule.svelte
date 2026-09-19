@@ -3,10 +3,9 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import BrailleReference from './BrailleReference.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
-  import SpaceButton from '../../components/ui/SpaceButton.svelte';
+  import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
-  import DominantButton from '../../components/ui/DominantButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import { dotsToMask } from './brailleData';
   import { decodeSingleMask, normalizeBrailleInput } from './brailleSolver';
@@ -214,11 +213,7 @@
     }
   }
 
-  const brailleEmptyHint = $derived(
-    autoInsert
-      ? 'Body lze zadávat i tahem. Znak se zapíše po zvednutí prstu z displeje.'
-      : 'Body lze zadávat i tahem. Zápis po zvednutí prstu lze zapnout v menu.'
-  );
+  const brailleEmptyHint = 'Body lze zadávat klepnutím i plynulým tahem.';
 
   onDestroy(() => {
     clearFadeTimer();
@@ -282,17 +277,18 @@
         </div>
       </div>
 
-      <!-- Utility Row: Slide to Clear, Mezera and Smart Backspace (1.2fr 1fr 1fr) -->
+      <!-- Utility Row: Slide to Clear, Space/Commit and Smart Backspace (1fr 1.3fr 1fr) -->
       <div class="keypad-utility-row-3col">
         <SlideToAction
           disabled={!inputLetters && activeDots.length === 0}
           onAction={handleClearAll}
-          label="Vymazat"
           ariaLabel="Vymazat celý text tažením"
         />
 
-        <SpaceButton
-          onAction={handleSpace}
+        <SpaceCommitButton
+          pendingChar={activeDots.length > 0 && !committedFade ? (currentCharInfo.char || '↵') : ''}
+          onSpace={handleSpace}
+          onCommit={commitChar}
         />
 
         <BackspaceButton
@@ -303,20 +299,6 @@
           onAction={handleBackspace}
         />
       </div>
-
-      <!-- Dominant Row: Vložit znak (100% width, only when manual confirmation is active) -->
-      {#if !autoInsert}
-        <div class="keypad-dominant-1col">
-          <DominantButton
-            symbol={activeDots.length > 0 ? currentCharInfo.char : '↵'}
-            name={activeDots.length > 0 ? `Vložit „${currentCharInfo.char}“` : 'Vložit znak'}
-            ready={activeDots.length > 0 && !committedFade}
-            disabled={activeDots.length === 0 || committedFade}
-            title="Vložit znak do textu"
-            onClick={commitChar}
-          />
-        </div>
-      {/if}
     </div>
   {/snippet}
 
@@ -370,7 +352,7 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: clamp(12px, 2.5vh, 24px) clamp(20px, 7vw, 44px);
+    padding: clamp(6px, 1.6vh, 18px) clamp(20px, 7vw, 44px);
     background: transparent;
     border: none;
     box-shadow: none;
@@ -380,13 +362,13 @@
   .matrix-col {
     display: flex;
     flex-direction: column;
-    gap: clamp(20px, 3.4vh, 34px);
+    gap: clamp(14px, 2.6vh, 26px);
     align-items: center;
   }
 
   .matrix-dot-btn {
-    width: clamp(64px, 10.2vh, 84px);
-    height: clamp(64px, 10.2vh, 84px);
+    width: clamp(54px, 8.8vh, 76px);
+    height: clamp(54px, 8.8vh, 76px);
     border-radius: var(--radius-full);
     background-color: #0a0a0e;
     border: 1.5px solid #22222a;

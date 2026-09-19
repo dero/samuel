@@ -50,8 +50,8 @@
         type="button"
         class="header-btn"
         class:has-warning={navigation.hasMenuWarning}
-        aria-label={navigation.hasMenuWarning ? "Menu modulu (nestandardní abeceda)" : "Menu modulu"}
-        title={navigation.hasMenuWarning ? "Menu modulu (upozornění: nestandardní abeceda)" : "Menu modulu"}
+        aria-label={navigation.hasMenuWarning ? `Nastavení modulu (${active?.name ?? ''} - upozornění)` : `Nastavení modulu (${active?.name ?? ''})`}
+        title={navigation.hasMenuWarning ? `Nastavení: ${active?.name ?? ''} (upozornění: nestandardní abeceda)` : `Nastavení: ${active?.name ?? ''}`}
         onclick={() => {
           settings.vibrate(20);
           navigation.toggleMenu();

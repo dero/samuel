@@ -119,8 +119,9 @@
 
 <style>
   .utility-btn {
-    height: var(--utility-row-height);
-    padding: 0 var(--space-sm);
+    height: var(--utility-row-height, 42px);
+    min-height: 0;
+    padding: 0 var(--space-xs);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
@@ -167,10 +168,15 @@
   }
 
   .btn-icon {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    line-height: 0;
+  }
+
+  .btn-icon :global(svg) {
+    display: block;
   }
 
   .btn-label {

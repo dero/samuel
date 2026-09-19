@@ -195,9 +195,9 @@
   /* Utility variant (default cipher keypad button) */
   .variant-utility {
     width: 100%;
-    height: var(--utility-row-height, var(--tap-min-size, 48px));
-    min-height: var(--tap-min-size, 48px);
-    padding: 0 var(--space-sm);
+    height: var(--utility-row-height, 42px);
+    min-height: 0;
+    padding: 0 var(--space-xs);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
@@ -257,7 +257,6 @@
   }
 
   .hold-btn:disabled {
-    opacity: 0.4;
     cursor: not-allowed;
   }
 
@@ -309,8 +308,10 @@
     z-index: 2;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-sm);
     pointer-events: none;
+    line-height: 0;
   }
 
   .variant-menu .btn-content {
@@ -318,10 +319,15 @@
   }
 
   .btn-icon {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    line-height: 0;
+  }
+
+  .btn-icon :global(svg) {
+    display: block;
   }
 
   .btn-label {

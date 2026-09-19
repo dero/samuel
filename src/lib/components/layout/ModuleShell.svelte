@@ -3,6 +3,7 @@
   import ReferenceModal from './ReferenceModal.svelte';
 
   interface Props {
+    title?: string;
     hasAlphabet?: boolean;
     alphabetHint?: string;
     onReset?: () => void;
@@ -15,6 +16,7 @@
   }
 
   let {
+    title,
     hasAlphabet = false,
     alphabetHint,
     onReset,
@@ -49,7 +51,7 @@
   </div>
 
   <!-- Contextual Menu -->
-  <ModuleMenu {hasAlphabet} {alphabetHint} {onReset} {onPaste}>
+  <ModuleMenu {title} {hasAlphabet} {alphabetHint} {onReset} {onPaste}>
     {#if menuOptions}
       {@render menuOptions()}
     {/if}

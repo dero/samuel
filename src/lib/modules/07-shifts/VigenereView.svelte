@@ -15,7 +15,7 @@
   <div class="output-wrapper">
     <TranslationCard
       text={resultText}
-      emptyHint="Text dešifruje posun hesla. Páska dole zobrazuje vzájemné zarovnání."
+      emptyHint="Text dešifruje posun hesla. Páska dole zobrazuje zarovnání."
     />
   </div>
 

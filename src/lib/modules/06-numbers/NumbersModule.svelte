@@ -2,14 +2,13 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
-  import SpaceButton from '../../components/ui/SpaceButton.svelte';
+  import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
-  import DominantButton from '../../components/ui/DominantButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import AlphabetSelect from '../../components/ui/AlphabetSelect.svelte';
   import AdaptiveNumpad from './AdaptiveNumpad.svelte';
   import RomanNumpad from './RomanNumpad.svelte';
-  import AlphabetGrid from './AlphabetGrid.svelte';
+  import AlphabetGrid from '../../components/ui/AlphabetGrid.svelte';
   import FlowModeModal from './FlowModeModal.svelte';
   import NumbersReference from './NumbersReference.svelte';
   import {
@@ -368,7 +367,7 @@
   {#snippet output()}
     <TranslationCard
       text={decodedText}
-      emptyHint="Zadávejte hodnotu na klávesnici. Soustavy (2–16, A=1, římská) volí lišta."
+      emptyHint="Soustavy a režimy volí lišta nahoře."
     />
   {/snippet}
 
@@ -479,35 +478,23 @@
         />
       {/if}
 
-      <!-- 3. Keypad Utility Row: SlideToAction, Mezera and Backspace (1.2fr 1fr 1fr) -->
+      <!-- 3. Keypad Utility Row: SlideToAction, Space/Commit and Backspace (1fr 1.3fr 1fr) -->
       <div class="keypad-utility-row-3col">
         <SlideToAction
           disabled={!decodedText && !buffer}
           onAction={handleClearAll}
-          label="Vymazat"
+          ariaLabel="Vymazat text tažením"
         />
-        <SpaceButton
-          onAction={handleSpace}
+        <SpaceCommitButton
+          pendingChar={!isAutoEnterActive && isEnterButtonEnabled ? (enterButtonSymbol !== '↵' ? enterButtonSymbol : '↵') : ''}
+          onSpace={handleSpace}
+          onCommit={handleCommit}
         />
         <BackspaceButton
           disabled={!decodedText && !buffer}
           onAction={handleBackspace}
         />
       </div>
-
-      <!-- 4. Dominant Button Row: Enter (100% full-width, hidden when auto-enter is active) -->
-      {#if !isAutoEnterActive}
-        <div class="keypad-dominant-1col">
-          <DominantButton
-            symbol={enterButtonSymbol}
-            name={enterButtonName}
-            ready={isEnterButtonEnabled}
-            disabled={!isEnterButtonEnabled}
-            variant="accent"
-            onClick={handleCommit}
-          />
-        </div>
-      {/if}
     </div>
   {/snippet}
 

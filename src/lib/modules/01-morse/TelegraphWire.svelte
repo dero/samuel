@@ -356,7 +356,7 @@
     background-color: rgba(0, 0, 0, 0.001);
     border: none;
     padding: 0;
-    margin-top: var(--space-xl);
+    margin-top: var(--space-xs);
     margin-bottom: var(--space-2xs);
     position: relative;
     cursor: pointer;

@@ -26,7 +26,8 @@
   import { navigation } from '../../state/navigation.svelte';
   import { toast } from '../../state/toast.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
-  import { Warning, X, ClipboardText } from 'phosphor-svelte';
+  import { Warning, X, ClipboardText, PencilSimple } from 'phosphor-svelte';
+  import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
 
   const modSettings = localSettingsService.forModule('shifts');
 
@@ -39,6 +40,7 @@
   let text = $state<string>(modSettings.getString('text', ''));
   let keyText = $state<string>(modSettings.getString('key', ''));
   let autokeyPrimer = $state<string>(modSettings.getString('autokey_primer', ''));
+  let activeTextSheet = $state<'text' | 'key' | 'primer' | null>(null);
 
   // Options
   let showBestHighlight = $state<boolean>(
@@ -202,6 +204,7 @@
 </script>
 
 <ModuleShell
+  title={activeSubmodule === 'caesar' ? 'Cézar' : activeSubmodule === 'vigenere' ? 'Vigenère' : 'Autokey'}
   hasAlphabet={true}
   onReset={handleReset}
   onPaste={handlePaste}
@@ -278,12 +281,24 @@
             {/if}
             <button
               type="button"
+              class="input-sheet-btn"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'text';
+              }}
+              title="Otevřít textový editor"
+              aria-label="Otevřít textový editor"
+            >
+              <PencilSimple size={16} weight="bold" />
+            </button>
+            <button
+              type="button"
               class="input-paste-btn"
               onclick={handlePasteText}
               title="Vložit ze schránky"
               aria-label="Vložit ze schránky"
             >
-              <ClipboardText size={18} weight="bold" />
+              <ClipboardText size={17} weight="bold" />
             </button>
           </div>
 
@@ -350,12 +365,24 @@
             {/if}
             <button
               type="button"
+              class="input-sheet-btn"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'text';
+              }}
+              title="Otevřít textový editor"
+              aria-label="Otevřít textový editor"
+            >
+              <PencilSimple size={16} weight="bold" />
+            </button>
+            <button
+              type="button"
               class="input-paste-btn"
               onclick={handlePasteText}
               title="Vložit text ze schránky"
               aria-label="Vložit text ze schránky"
             >
-              <ClipboardText size={18} weight="bold" />
+              <ClipboardText size={17} weight="bold" />
             </button>
           </div>
 
@@ -386,12 +413,24 @@
             {/if}
             <button
               type="button"
+              class="input-sheet-btn"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'key';
+              }}
+              title="Otevřít editor klíče"
+              aria-label="Otevřít editor klíče"
+            >
+              <PencilSimple size={16} weight="bold" />
+            </button>
+            <button
+              type="button"
               class="input-paste-btn"
               onclick={handlePasteKey}
               title="Vložit klíč ze schránky"
               aria-label="Vložit klíč ze schránky"
             >
-              <ClipboardText size={18} weight="bold" />
+              <ClipboardText size={17} weight="bold" />
             </button>
           </div>
         </div>
@@ -426,12 +465,24 @@
             {/if}
             <button
               type="button"
+              class="input-sheet-btn"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'text';
+              }}
+              title="Otevřít textový editor"
+              aria-label="Otevřít textový editor"
+            >
+              <PencilSimple size={16} weight="bold" />
+            </button>
+            <button
+              type="button"
               class="input-paste-btn"
               onclick={handlePasteText}
               title="Vložit text ze schránky"
               aria-label="Vložit text ze schránky"
             >
-              <ClipboardText size={18} weight="bold" />
+              <ClipboardText size={17} weight="bold" />
             </button>
           </div>
 
@@ -462,12 +513,24 @@
             {/if}
             <button
               type="button"
+              class="input-sheet-btn"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'primer';
+              }}
+              title="Otevřít editor hesla"
+              aria-label="Otevřít editor hesla"
+            >
+              <PencilSimple size={16} weight="bold" />
+            </button>
+            <button
+              type="button"
               class="input-paste-btn"
               onclick={handlePastePrimer}
               title="Vložit heslo ze schránky"
               aria-label="Vložit heslo ze schránky"
             >
-              <ClipboardText size={18} weight="bold" />
+              <ClipboardText size={17} weight="bold" />
             </button>
           </div>
         </div>
@@ -521,6 +584,39 @@
     <ShiftsReference />
   {/snippet}
 </ModuleShell>
+
+<TextEntrySheet
+  open={activeTextSheet !== null}
+  title={
+    activeTextSheet === 'text'
+      ? 'Šifrový text'
+      : activeTextSheet === 'key'
+        ? 'Šifrovací klíč'
+        : 'Počáteční heslo'
+  }
+  value={
+    activeTextSheet === 'text'
+      ? text
+      : activeTextSheet === 'key'
+        ? keyText
+        : autokeyPrimer
+  }
+  placeholder={
+    activeTextSheet === 'text'
+      ? 'Zadejte nebo vložte šifrový text...'
+      : activeTextSheet === 'key'
+        ? 'Zadejte heslo nebo číselný klíč...'
+        : 'Zadejte heslo pro autokey...'
+  }
+  onSave={(val) => {
+    if (activeTextSheet === 'text') text = val;
+    else if (activeTextSheet === 'key') keyText = val;
+    else if (activeTextSheet === 'primer') autokeyPrimer = val;
+  }}
+  onClose={() => {
+    activeTextSheet = null;
+  }}
+/>
 
 <style>
   .submodule-nav {
@@ -674,8 +770,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     background: transparent;
     border: none;
     color: var(--color-text-muted);
@@ -690,11 +786,35 @@
     background-color: var(--color-surface-3);
   }
 
+  .input-sheet-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background-color: var(--color-surface-3);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xs);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.1s ease, color 0.1s ease, transform 0.08s ease;
+  }
+
+  .input-sheet-btn:hover {
+    color: var(--color-accent-primary);
+    background-color: var(--color-surface-active);
+  }
+
+  .input-sheet-btn:active {
+    transform: scale(0.96);
+  }
+
   .input-paste-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
+    width: 34px;
     height: 34px;
     background-color: var(--color-surface-3);
     border: 1px solid var(--color-border-subtle);

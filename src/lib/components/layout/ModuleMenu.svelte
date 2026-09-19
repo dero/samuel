@@ -7,6 +7,7 @@
   import { ClipboardText, List } from 'phosphor-svelte';
 
   interface Props {
+    title?: string;
     hasAlphabet?: boolean;
     alphabetHint?: string;
     onReset?: () => void;
@@ -14,7 +15,11 @@
     children?: import('svelte').Snippet;
   }
 
-  let { onReset, onPaste, children }: Props = $props();
+  let { title, onReset, onPaste, children }: Props = $props();
+
+  const menuTitle = $derived(
+    title ? `${title}: nastavení` : `${navigation.activeModule.name}: nastavení`
+  );
 
   function handleResetAction() {
     if (onReset) onReset();
@@ -35,7 +40,7 @@
 
 <BottomSheet
   open={navigation.subView === 'menu' && !!navigation.activeModuleId}
-  title="Menu modulu"
+  title={menuTitle}
   icon={List}
   maxWidth="480px"
   onClose={() => navigation.closeSubView()}

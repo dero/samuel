@@ -23,7 +23,7 @@
           <strong>Kopírování jedním klepnutím (One-tap Copy):</strong> Klepnutím na jakýkoliv dekódovaný text nebo výsledkový řádek se obsah automaticky zkopíruje do schránky.
         </li>
         <li>
-          <strong>Menu modulu:</strong> Tlačítko se symbolem <span class="inline-icon"><List size={14} weight="bold" /></span> v záhlaví obsahuje rychlé volby specifické pro daný nástroj, výběr abecedy a bezpečné tlačítko pro vyčištění modulu.
+          <strong>Nastavení modulu:</strong> Tlačítko se symbolem <span class="inline-icon"><List size={14} weight="bold" /></span> v záhlaví obsahuje rychlé volby specifické pro daný nástroj, výběr abecedy a bezpečné tlačítko pro vyčištění modulu.
         </li>
         <li>
           <strong>Reference a taháky:</strong> Tlačítko <span class="inline-icon"><BookOpen size={14} weight="duotone" /></span> v záhlaví okamžitě otevře tahák a tabulky daného modulu.

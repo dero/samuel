@@ -15,7 +15,7 @@
   <div class="output-wrapper">
     <TranslationCard
       text={resultText}
-      emptyHint="Po vyčerpání úvodního hesla se klíč doplňuje dešifrovaným textem zprávy."
+      emptyHint="Po vyčerpání hesla se klíč doplňuje textem zprávy."
     />
   </div>
 
