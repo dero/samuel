@@ -19,7 +19,7 @@
     onAction,
     disabled = false,
     label = "Vymazat",
-    showLabel = false,
+    showLabel,
     confirmedLabel = "Smazáno",
     ariaLabel,
     holdDuration = 450,
@@ -27,6 +27,10 @@
     iconSize,
     class: customClass = "",
   }: Props = $props();
+
+  let effectiveShowLabel = $derived(
+    showLabel ?? (variant === "menu" || variant === "outline")
+  );
 
   let effectiveIconSize = $derived(
     iconSize ?? (variant === "menu" ? 20 : variant === "outline" ? 16 : variant === "icon-only" ? 15 : 20)
@@ -170,7 +174,7 @@
         <Trash size={effectiveIconSize} weight="duotone" />
       {/if}
     </span>
-    {#if showLabel}
+    {#if effectiveShowLabel}
       <span class="btn-label">{isConfirmed ? confirmedLabel : label}</span>
     {/if}
   </span>
@@ -311,7 +315,7 @@
     justify-content: center;
     gap: var(--space-sm);
     pointer-events: none;
-    line-height: 0;
+    line-height: 1;
   }
 
   .variant-menu .btn-content {
@@ -331,6 +335,9 @@
   }
 
   .btn-label {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: 1.2;
     letter-spacing: 0.2px;
     white-space: nowrap;
     overflow: hidden;

@@ -221,33 +221,31 @@
   {#snippet input()}
     <div class="keypad-zone" class:no-wire={!showTelegraphWire}>
       <!-- Sub-Toolbar: Permutations and Bruteforce solver -->
-      {#if inputMorse.length > 0}
-        <div class="morse-subtoolbar">
-          <button
-            type="button"
-            class="morse-chip-btn"
-            class:active={isPermutationsOpen}
-            onclick={openPermutations}
-            title="Zobrazit permutace a zrcadlení kódu"
-          >
-            <span class="floating-icon"><ArrowsLeftRight size={14} weight="bold" /></span>
-            <span>Permutace</span>
-          </button>
+      <div class="morse-subtoolbar">
+        <button
+          type="button"
+          class="morse-chip-btn"
+          class:active={isPermutationsOpen}
+          onclick={openPermutations}
+          disabled={!inputMorse}
+          title="Zobrazit permutace a zrcadlení kódu"
+        >
+          <span class="floating-icon"><ArrowsLeftRight size={14} weight="bold" /></span>
+          <span>Permutace</span>
+        </button>
 
-          {#if isEligibleForBruteforce}
-            <button
-              type="button"
-              class="morse-chip-btn bruteforce-chip"
-              class:active={isBruteforceOpen}
-              onclick={runBruteforce}
-              title="Rozluštit morseovku bez mezer pomocí slovníku a jazykového modelu"
-            >
-              <span class="floating-icon"><Lightning size={14} weight="duotone" /></span>
-              <span>Vyřešit bez mezer</span>
-            </button>
-          {/if}
-        </div>
-      {/if}
+        <button
+          type="button"
+          class="morse-chip-btn"
+          class:active={isBruteforceOpen}
+          onclick={runBruteforce}
+          disabled={!inputMorse || !isEligibleForBruteforce}
+          title="Rozluštit morseovku bez mezer pomocí slovníku a jazykového modelu"
+        >
+          <span class="floating-icon"><Lightning size={14} weight="duotone" /></span>
+          <span>Vyřešit bez mezer</span>
+        </button>
+      </div>
 
       <!-- Big dominant keys: Tečka, Čárka, Oddělovač -->
       <div class="keypad-dominant-3col">
@@ -427,7 +425,7 @@
 
   .morse-subtoolbar {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-xs);
     width: 100%;
     height: var(--subtoolbar-height, 36px);
@@ -449,28 +447,25 @@
     font-weight: 700;
     color: var(--color-text-secondary);
     cursor: pointer;
-    transition: background-color 0.12s ease, color 0.12s ease;
+    transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .morse-chip-btn:active,
-  .morse-chip-btn.active {
+  .morse-chip-btn:active:not(:disabled),
+  .morse-chip-btn.active:not(:disabled) {
     background-color: var(--color-surface-active);
     color: var(--color-accent-primary);
     border-color: var(--color-accent-primary);
   }
 
-  .morse-chip-btn.bruteforce-chip {
-    color: var(--color-accent-warning);
-    border-color: rgba(245, 158, 11, 0.4);
-    background-color: var(--color-accent-warning-subtle);
-  }
-
-  .morse-chip-btn.bruteforce-chip:active,
-  .morse-chip-btn.bruteforce-chip.active {
-    background-color: rgba(245, 158, 11, 0.3);
+  .morse-chip-btn:disabled {
+    color: var(--color-text-muted);
+    background-color: var(--color-surface-1);
+    border-color: var(--color-border-subtle);
+    pointer-events: none;
+    cursor: default;
   }
 
   .floating-icon {

@@ -423,16 +423,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: clamp(2px, 0.8vh, 8px) var(--space-sm);
+    padding: clamp(2px, 0.8vh, 8px) 0;
   }
 
   /* Strict 1:1 square dial ensures exact circle */
   .dial-square {
     position: relative;
-    width: clamp(200px, 32vh, 290px);
-    height: clamp(200px, 32vh, 290px);
-    max-width: calc(100vw - 32px);
-    max-height: calc(100vw - 32px);
+    width: 100%;
+    max-width: min(100%, calc(100dvh - 240px), 420px);
+    height: auto;
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
   }

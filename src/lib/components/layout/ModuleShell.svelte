@@ -72,6 +72,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     overflow: hidden;
     position: relative;
     background-color: var(--color-bg-canvas);
@@ -80,6 +81,7 @@
   .zone-output {
     flex: 1;
     min-height: var(--output-min-height);
+    max-height: clamp(90px, 28vh, 220px);
     display: flex;
     flex-direction: column;
     justify-content: center;

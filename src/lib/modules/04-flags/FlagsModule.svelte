@@ -256,7 +256,7 @@
   .flags-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: clamp(34px, 4.4vh, 40px);
+    grid-auto-rows: clamp(34px, 5.6vh, 52px);
     gap: 2px;
     padding: 2px;
     width: 100%;
@@ -275,8 +275,8 @@
     background-color: var(--color-surface-2);
     border: none;
     border-radius: 2px;
-    padding: 2px;
-    gap: 1px;
+    padding: 3px 2px;
+    gap: 2px;
     height: 100%;
     min-height: 0;
     box-sizing: border-box;
@@ -312,8 +312,8 @@
   }
 
   .flag-tile-preview {
-    width: clamp(20px, 2.6vh, 24px);
-    height: clamp(20px, 2.6vh, 24px);
+    width: clamp(20px, 3.4vh, 30px);
+    height: clamp(20px, 3.4vh, 30px);
     display: flex;
     align-items: center;
     justify-content: center;

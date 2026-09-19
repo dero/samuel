@@ -100,6 +100,7 @@
       <SlideToAction
         disabled={!draftText}
         onAction={handleClear}
+        showLabel={true}
         label="Vymazat"
         ariaLabel="Vymazat text podržením"
         holdDuration={400}

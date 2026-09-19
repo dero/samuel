@@ -716,46 +716,47 @@
 
   {#snippet input()}
     <div class="cross-module-content">
-      <!-- 1. Sub-Toolbar: Volba šifrovacího nástroje (Velký | Malý | Polybius | Mobil) -->
-      <div class="submodule-nav">
-        <SegmentedControl
-          options={crossSubmoduleOptions}
-          value={crossTypeId}
-          ariaLabel="Výběr typu kříže"
-          onChange={handleTypeChange}
-        />
-      </div>
-
-      <!-- Active T9 Candidates Bar when typing digits -->
-      {#if crossTypeId === 'mobile-keypad' && phoneInputMode === 't9' && t9Digits}
-        <div class="t9-candidate-container" role="region" aria-label="Návrhy slov T9">
-          <div class="t9-candidates-scroll">
-            {#if isT9Loading}
-              <div class="t9-loading-state">
-                <span class="t9-spinner"></span>
-                <span class="t9-loading-text">Hledám...</span>
+      <!-- 1. Sub-Toolbar Slot: Volba šifrovacího nástroje nebo aktivní T9 návrhy (žádný layout shift) -->
+      <div class="submodule-slot">
+        {#if crossTypeId === 'mobile-keypad' && phoneInputMode === 't9' && t9Digits}
+          <div class="t9-candidate-container" role="region" aria-label="Návrhy slov T9">
+            <div class="t9-candidates-scroll">
+              {#if isT9Loading}
+                <div class="t9-loading-state">
+                  <span class="t9-spinner"></span>
+                  <span class="t9-loading-text">Hledám...</span>
+                  <span class="t9-fallback-chip">{getFallbackT9Word(t9Digits)}</span>
+                </div>
+              {:else if t9Candidates.length > 0}
+                {#each t9Candidates as candidate, idx}
+                  {@const matchPart = candidate.slice(0, t9Digits.length)}
+                  {@const restPart = candidate.slice(t9Digits.length)}
+                  <button
+                    type="button"
+                    class="t9-candidate-chip"
+                    class:is-active={idx === t9CandidateIndex}
+                    onclick={() => handleSelectT9Candidate(candidate)}
+                  >
+                    <span class="t9-chip-match">{matchPart}</span>{#if restPart}<span class="t9-chip-rest">{restPart}</span>{/if}
+                  </button>
+                {/each}
+              {:else}
                 <span class="t9-fallback-chip">{getFallbackT9Word(t9Digits)}</span>
-              </div>
-            {:else if t9Candidates.length > 0}
-              {#each t9Candidates as candidate, idx}
-                {@const matchPart = candidate.slice(0, t9Digits.length)}
-                {@const restPart = candidate.slice(t9Digits.length)}
-                <button
-                  type="button"
-                  class="t9-candidate-chip"
-                  class:is-active={idx === t9CandidateIndex}
-                  onclick={() => handleSelectT9Candidate(candidate)}
-                >
-                  <span class="t9-chip-match">{matchPart}</span>{#if restPart}<span class="t9-chip-rest">{restPart}</span>{/if}
-                </button>
-              {/each}
-            {:else}
-              <span class="t9-fallback-chip">{getFallbackT9Word(t9Digits)}</span>
-              <span class="t9-no-match-text">(bez shody)</span>
-            {/if}
+                <span class="t9-no-match-text">(bez shody)</span>
+              {/if}
+            </div>
           </div>
-        </div>
-      {/if}
+        {:else}
+          <div class="submodule-nav">
+            <SegmentedControl
+              options={crossSubmoduleOptions}
+              value={crossTypeId}
+              ariaLabel="Výběr typu kříže"
+              onChange={handleTypeChange}
+            />
+          </div>
+        {/if}
+      </div>
 
       <!-- Center Zone: Interactive Cross or Mobile Keypad (100% width) -->
       <div class="visual-cross-container">
@@ -845,8 +846,20 @@
     position: relative;
   }
 
+  .submodule-slot {
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
   .submodule-nav {
     width: 100%;
+    height: 42px;
+    display: flex;
+    align-items: center;
     flex-shrink: 0;
   }
 
@@ -855,8 +868,8 @@
     align-items: center;
     gap: 8px;
     width: 100%;
-    height: 38px;
-    min-height: 38px;
+    height: 42px;
+    min-height: 42px;
     background: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
