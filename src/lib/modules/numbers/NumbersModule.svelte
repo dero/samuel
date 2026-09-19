@@ -372,7 +372,7 @@
   {/snippet}
 
   {#snippet input()}
-    <div class="keypad-zone">
+    <div class="zone-input-flow">
       <!-- 1. Flow Mode Bar: VSTUP ➔ VÝSTUP (integrovaný živý stav převodu) -->
       <div class="flow-bar">
         <!-- Vstupní tlačítko -->
@@ -575,14 +575,6 @@
 />
 
 <style>
-  /* Keypad Zone */
-  .keypad-zone {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    width: 100%;
-  }
-
   /* Flow Bar (VSTUP ➔ VÝSTUP) */
   .flow-bar {
     display: grid;
@@ -590,6 +582,9 @@
     align-items: center;
     gap: var(--space-xs);
     width: 100%;
+    height: var(--subtoolbar-height);
+    box-sizing: border-box;
+    margin: 0;
   }
 
   .flow-btn {
@@ -600,11 +595,12 @@
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    height: 38px;
+    height: 100%;
     padding: 0 var(--space-sm);
     cursor: pointer;
     overflow: hidden;
     white-space: nowrap;
+    box-sizing: border-box;
     transition: background-color 0.12s ease, border-color 0.12s ease;
   }
 
@@ -698,13 +694,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: var(--subtoolbar-height);
+    height: 100%;
     border-radius: var(--radius-sm);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     color: var(--color-text-secondary);
     cursor: pointer;
+    box-sizing: border-box;
     transition: background-color 0.12s ease, color 0.12s ease, transform 0.1s ease;
   }
 

@@ -7,8 +7,8 @@ import {
   DEFAULT_CAESAR_WEIGHTS,
   type CaesarScorerWeights,
   type CaesarLexicon
-} from '../../src/lib/modules/07-shifts/caesarScorer';
-import { shiftCaesar } from '../../src/lib/modules/07-shifts/shiftsSolver';
+} from '../../src/lib/modules/shifts/caesarScorer';
+import { shiftCaesar } from '../../src/lib/modules/shifts/shiftsSolver';
 
 const ALPHA_26 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 

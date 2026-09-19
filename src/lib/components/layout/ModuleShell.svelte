@@ -92,10 +92,10 @@
 
   .zone-input {
     flex-shrink: 0;
-    padding: var(--space-xs) var(--space-md) calc(var(--space-lg) + env(safe-area-inset-bottom, 0px)) var(--space-md);
+    padding: var(--space-sm) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px)) var(--space-md);
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--zone-input-gap);
     background-color: var(--color-surface-1);
     border-top: 1px solid var(--color-border-subtle);
     box-sizing: border-box;

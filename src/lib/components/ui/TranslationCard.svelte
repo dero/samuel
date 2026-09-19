@@ -184,7 +184,7 @@
   }
 
   .card-empty-state.is-hidden {
-    opacity: 0.2;
+    opacity: 0;
     filter: blur(14px);
     transform: scale(0.96) translateZ(0);
     pointer-events: none;

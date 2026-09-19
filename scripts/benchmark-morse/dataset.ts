@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { resolve } from 'node:path';
-import { wordToMorse } from '../../src/lib/modules/01-morse/morseSolver';
+import { wordToMorse } from '../../src/lib/modules/morse/morseSolver';
+import { removeDiacritics } from '../../src/lib/utils/text';
 import type { RawLexiconWord } from './loadDb';
 
 export interface BenchmarkCipher {
@@ -11,10 +12,6 @@ export interface BenchmarkCipher {
   category: 'single' | 'multi';
   wordCount: number;
   isCanonical?: boolean;
-}
-
-function removeDiacritics(str: string): string {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 /**

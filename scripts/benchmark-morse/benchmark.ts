@@ -15,7 +15,7 @@ import {
   DEFAULT_SOLVER_WEIGHTS,
   type MorseSolverWeights,
   type LexiconItem
-} from '../../src/lib/modules/01-morse/morseSolver';
+} from '../../src/lib/modules/morse/morseSolver';
 
 export interface BenchmarkMiss {
   target: string;
@@ -410,7 +410,7 @@ export async function optimizeParameters(
  * Applies optimal weights into src/lib/modules/01-morse/morseSolver.ts
  */
 export function applyWeightsToFile(weights: MorseSolverWeights): void {
-  const targetFile = resolve(process.cwd(), 'src/lib/modules/01-morse/morseSolver.ts');
+  const targetFile = resolve(process.cwd(), 'src/lib/modules/morse/morseSolver.ts');
   let content = fs.readFileSync(targetFile, 'utf8');
 
   const replacement = `export const DEFAULT_SOLVER_WEIGHTS: MorseSolverWeights = {\n` +

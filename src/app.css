@@ -72,7 +72,9 @@
   /* Layout & Component Budgets */
   --header-height: 52px;
   --tap-min-size: 48px;
+  --subtoolbar-height: 36px;
   --utility-row-height: 42px;
+  --zone-input-gap: var(--space-sm);
   --dominant-key-height: clamp(62px, 9.5vh, 82px);
   --output-min-height: 84px;
   --max-app-width: 640px;
@@ -138,6 +140,32 @@ textarea, input {
 textarea:focus, input:focus {
   outline: none;
   border-color: var(--color-border-focus);
+}
+
+/* Standard Unified Input Zone Flow (Sub-Toolbar -> Keypad Stage -> Utility Row) */
+.zone-input-flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zone-input-gap);
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Standard Sub-Toolbar Container (Fixed 36px, zero overflow) */
+.subtoolbar-container {
+  width: 100%;
+  height: var(--subtoolbar-height);
+  min-height: var(--subtoolbar-height);
+  max-height: var(--subtoolbar-height);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 /* Common Keypad Layouts */

@@ -1,7 +1,4 @@
-export type CrossType = 'large-polish' | 'small-polish' | 'mobile-keypad' | 'polybius';
-
-export type PolybiusSize = '5x5' | '6x6';
-export type PolybiusCoordLabel = 'numbers' | 'letters';
+export type CrossType = 'large-polish' | 'small-polish';
 
 export interface CrossTypeConfig {
   id: CrossType;
@@ -75,65 +72,6 @@ export const CROSS_TYPES: CrossTypeConfig[] = [
     axis2Options: [
       { value: 1, label: 'Bez', sub: 'Bez tečky' },
       { value: 2, label: 'S tečkou', sub: 'S tečkou (•)' }
-    ]
-  },
-  {
-    id: 'mobile-keypad',
-    name: 'Mobilní klávesnice',
-    shortName: 'T9 / SMS',
-    description: 'Klávesnice ITU E.161',
-    hasAlphabet: false,
-    capacity: 0,
-    standardAlphabetIds: [],
-    axis1Label: 'Klávesa',
-    axis1Short: 'Klávesa',
-    axis1Options: [
-      { value: 2, label: '2', sub: 'ABC' },
-      { value: 3, label: '3', sub: 'DEF' },
-      { value: 4, label: '4', sub: 'GHI' },
-      { value: 5, label: '5', sub: 'JKL' },
-      { value: 6, label: '6', sub: 'MNO' },
-      { value: 7, label: '7', sub: 'PQRS' },
-      { value: 8, label: '8', sub: 'TUV' },
-      { value: 9, label: '9', sub: 'WXYZ' },
-      { value: 0, label: '0', sub: '␣ Mezera' }
-    ],
-    axis2Label: 'Pořadí / Stisk',
-    axis2Short: 'Stisk',
-    axis2Options: [
-      { value: 1, label: '1', sub: '1. znak' },
-      { value: 2, label: '2', sub: '2. znak' },
-      { value: 3, label: '3', sub: '3. znak' },
-      { value: 4, label: '4', sub: '4. znak' },
-      { value: 5, label: '5', sub: '5. znak' }
-    ]
-  },
-  {
-    id: 'polybius',
-    name: 'Polybiův čtverec',
-    shortName: '5×5 / 6×6',
-    description: 'Souřadnicová mřížka (Řádek × Sloupec)',
-    hasAlphabet: true,
-    capacity: 25,
-    defaultAlphabetId: 'english-26',
-    standardAlphabetIds: ['english-26', 'alphanumeric-36'],
-    axis1Label: 'Řádek',
-    axis1Short: 'Ř',
-    axis1Options: [
-      { value: 1, label: '1', sub: 'A' },
-      { value: 2, label: '2', sub: 'B' },
-      { value: 3, label: '3', sub: 'C' },
-      { value: 4, label: '4', sub: 'D' },
-      { value: 5, label: '5', sub: 'E' }
-    ],
-    axis2Label: 'Sloupec',
-    axis2Short: 'S',
-    axis2Options: [
-      { value: 1, label: '1', sub: 'A' },
-      { value: 2, label: '2', sub: 'B' },
-      { value: 3, label: '3', sub: 'C' },
-      { value: 4, label: '4', sub: 'D' },
-      { value: 5, label: '5', sub: 'E' }
     ]
   }
 ];

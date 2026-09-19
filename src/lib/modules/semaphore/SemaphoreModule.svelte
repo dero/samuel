@@ -397,7 +397,7 @@
   .keypad-zone {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--zone-input-gap);
     width: 100%;
     flex-shrink: 0;
   }

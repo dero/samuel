@@ -34,12 +34,8 @@ export interface ParsedToken {
   isIncompatibleLetter?: boolean;
 }
 
-/**
- * Strips combining diacritical marks from a string.
- */
-export function stripDiacritics(str: string): string {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
+import { stripDiacritics } from '../../utils/text';
+export { stripDiacritics };
 
 /**
  * Tokenize input text against a given alphabet:

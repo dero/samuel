@@ -84,20 +84,17 @@
 </script>
 
 <div class="coordinate-keypad" class:two-columns={!hasAxis3}>
-  <!-- Column 1: Axis 1 -->
-  <div class="coord-column" class:is-dense-column={config.axis1Options.length > 4}>
-    <div class="col-header">
-      <span class="col-title">{config.axis1Label}</span>
-      <span class="col-badge">{config.axis1Short}</span>
-    </div>
-    <div class="buttons-stack" class:grid-stack={config.axis1Options.length > 4}>
+  <!-- Column 1: Axis 1 (Řádek) -->
+  <div class="coord-column" title={`${config.axis1Label} (${config.axis1Short})`}>
+    <div class="buttons-stack">
       {#each config.axis1Options as opt}
         {@const isSelected = selectedAxis1 === opt.value}
         <button
           type="button"
           class="coord-btn"
           class:is-active={isSelected}
-          class:is-compact-btn={config.axis1Options.length > 4}
+          title={`${config.axis1Label}: ${opt.label} (${opt.sub || ''})`}
+          aria-label={`${config.axis1Label} ${opt.label}`}
           onpointerdown={(e) => handleAxis1PointerDown(e, opt.value)}
         >
           <span class="btn-main-label">{opt.label}</span>
@@ -109,12 +106,8 @@
     </div>
   </div>
 
-  <!-- Column 2: Axis 2 -->
-  <div class="coord-column">
-    <div class="col-header">
-      <span class="col-title">{config.axis2Label}</span>
-      <span class="col-badge">{config.axis2Short}</span>
-    </div>
+  <!-- Column 2: Axis 2 (Sloupec) -->
+  <div class="coord-column" title={`${config.axis2Label} (${config.axis2Short})`}>
     <div class="buttons-stack">
       {#each config.axis2Options as opt}
         {@const isSelected = selectedAxis2 === opt.value}
@@ -122,6 +115,8 @@
           type="button"
           class="coord-btn"
           class:is-active={isSelected}
+          title={`${config.axis2Label}: ${opt.label} (${opt.sub || ''})`}
+          aria-label={`${config.axis2Label} ${opt.label}`}
           onpointerdown={(e) => handleAxis2PointerDown(e, opt.value)}
         >
           <span class="btn-main-label">{opt.label}</span>
@@ -133,13 +128,9 @@
     </div>
   </div>
 
-  <!-- Column 3: Axis 3 (if present) -->
+  <!-- Column 3: Axis 3 (Pozice / Tečka) -->
   {#if hasAxis3 && config.axis3Options}
-    <div class="coord-column">
-      <div class="col-header">
-        <span class="col-title">{config.axis3Label}</span>
-        <span class="col-badge">{config.axis3Short}</span>
-      </div>
+    <div class="coord-column" title={`${config.axis3Label} (${config.axis3Short})`}>
       <div class="buttons-stack">
         {#each config.axis3Options as opt}
           {@const isSelected = selectedAxis3 === opt.value}
@@ -147,6 +138,8 @@
             type="button"
             class="coord-btn"
             class:is-active={isSelected}
+            title={`${config.axis3Label}: ${opt.label} (${opt.sub || ''})`}
+            aria-label={`${config.axis3Label} ${opt.label}`}
             onpointerdown={(e) => handleAxis3PointerDown(e, opt.value)}
           >
             <span class="btn-main-label">{opt.label}</span>
@@ -164,59 +157,31 @@
   .coordinate-keypad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-xs);
+    gap: 4px;
     width: 100%;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
+    box-sizing: border-box;
   }
 
   .coordinate-keypad.two-columns {
-    grid-template-columns: 1.25fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .coord-column {
     display: flex;
     flex-direction: column;
-    gap: 4px;
     background: transparent;
     border: none;
     padding: 0;
     touch-action: none;
   }
 
-  .col-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2px 4px 2px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .col-title {
-    font-size: var(--text-xs);
-    font-weight: 700;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .col-badge {
-    font-size: var(--text-2xs);
-    font-family: var(--font-mono);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    background: var(--color-accent-primary-subtle);
-    padding: 1px 4px;
-    border-radius: var(--radius-xs);
-  }
-
   .buttons-stack {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(3, var(--utility-row-height, 42px));
     gap: 2px;
     padding: 2px;
     background-color: var(--color-bg-canvas);
@@ -224,39 +189,28 @@
     border-radius: var(--radius-sm);
     overflow: hidden;
     box-sizing: border-box;
-    flex: 1;
-    justify-content: space-between;
-  }
-
-  .buttons-stack.grid-stack {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
   }
 
   .coord-btn {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
+    gap: 4px;
     width: 100%;
-    min-height: var(--tap-min-size);
+    height: 100%;
     background: var(--color-surface-2);
     border: none;
     border-radius: 2px;
     color: var(--color-text-primary);
     cursor: pointer;
     touch-action: none;
-    padding: 4px 2px;
+    padding: 0 4px;
+    box-sizing: border-box;
     box-shadow: 
       inset 0 1px 0 rgba(255, 255, 255, 0.10),
       inset 0 -1px 0 rgba(0, 0, 0, 0.5);
     transition: background-color 0.08s ease, box-shadow 0.08s ease;
-  }
-
-  .coord-btn.is-compact-btn {
-    min-height: 38px;
-    padding: 2px;
   }
 
   .coord-btn:active {
@@ -267,32 +221,30 @@
 
   .coord-btn.is-active {
     background-color: var(--color-accent-primary);
-    border-color: var(--color-accent-primary);
     color: var(--color-text-inverse);
     font-weight: 800;
     box-shadow: 0 0 12px var(--color-accent-primary-glow), inset 0 0 4px rgba(255, 255, 255, 0.4);
   }
 
   .coord-btn.is-active .btn-sub-label {
-    color: rgba(0, 0, 0, 0.75);
-    font-weight: 600;
+    color: rgba(0, 0, 0, 0.85);
+    font-weight: 700;
   }
 
   .btn-main-label {
-    font-size: var(--text-base);
+    font-size: var(--text-sm);
     font-weight: 700;
     font-family: var(--font-mono);
-    line-height: 1.1;
+    line-height: 1;
   }
 
   .btn-sub-label {
     font-size: var(--text-2xs);
     color: var(--color-text-muted);
-    line-height: 1.1;
+    line-height: 1;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
   }
 </style>

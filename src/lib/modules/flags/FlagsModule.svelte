@@ -237,7 +237,7 @@
   .flags-keypad {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--zone-input-gap);
     width: 100%;
     user-select: none;
   }

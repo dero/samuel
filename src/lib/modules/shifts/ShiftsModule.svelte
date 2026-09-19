@@ -238,12 +238,13 @@
 
   <!-- BOTTOM ZONE: Single-line Text Inputs & Quick Actions -->
   {#snippet input()}
-    <div class="input-zone">
+    <div class="zone-input-flow">
       <!-- Submodule Selector Segment: Cézar | Vigenère | Autokey -->
-      <div class="submodule-nav">
+      <div class="subtoolbar-container">
         <SegmentedControl
           options={SHIFT_SEGMENT_OPTIONS}
           value={activeSubmodule}
+          size="sm"
           onChange={(m) => {
             activeSubmodule = m;
           }}
@@ -619,12 +620,6 @@
 />
 
 <style>
-  .submodule-nav {
-    width: 100%;
-    margin-bottom: 0;
-    flex-shrink: 0;
-  }
-
   .submodule-content {
     flex: 1;
     min-height: 0;
@@ -633,18 +628,12 @@
     overflow: hidden;
   }
 
-  .input-zone {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-  }
-
   .inputs-column {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--zone-input-gap);
     width: 100%;
+    box-sizing: border-box;
   }
 
   /* Single-line Input Row */

@@ -8,7 +8,7 @@ import {
   maskToUnicode,
   unicodeToMask
 } from './brailleData';
-import { removeDiacritics } from '../../utils/search';
+import { removeDiacritics } from '../../utils/text';
 
 export interface BrailleDecodeOptions {
   czechDiacritics?: boolean;

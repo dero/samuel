@@ -4,12 +4,9 @@
  */
 
 import puzzleWords from '../../../data/puzzle_words.json';
-import { removeDiacritics } from '../db/czechCollation';
+import { removeDiacritics } from '../utils/text';
 
 export const CIPHER_KEYWORDS: ReadonlySet<string> = new Set(
   (puzzleWords as string[]).map((w: string) => removeDiacritics(w).toUpperCase())
 );
-
-// Backward compatibility alias
-export const CORE_CIPHER_WORDS = CIPHER_KEYWORDS;
 

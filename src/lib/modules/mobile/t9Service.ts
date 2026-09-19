@@ -3,7 +3,7 @@
  */
 
 import T9Worker from './t9.worker.ts?worker';
-import { getFallbackT9Word } from './t9Solver';
+import { getFallbackT9Word } from './t9Data';
 
 export interface T9Result {
   digits: string;

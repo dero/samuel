@@ -24,10 +24,6 @@ export async function ensureNgramLoaded(): Promise<NgramTables> {
   return loadPromise;
 }
 
-export function isNgramLoaded(): boolean {
-  return ngramModel !== null;
-}
-
 /**
  * Returns conditional log-probability log P(ch | history) with backoff.
  * If model is not loaded yet, falls back to neutral penalty.
@@ -50,26 +46,3 @@ export function getNgramLogProb(history: string, ch: string): number {
   }
   return -4.5;
 }
-
-/**
- * Evaluates the log-likelihood of a word under the 4-gram model (bounded by ^^ and $$).
- */
-export function scoreNgramWord(word: string): number {
-  if (!word) return -5.0;
-  const clean = word.toUpperCase().replace(/[^A-Z]/g, '');
-  if (!clean) return -5.0;
-
-  const bounded = '^^' + clean + '$$';
-  let total = 0;
-  for (let i = 2; i < bounded.length; i++) {
-    total += getNgramLogProb(bounded.slice(0, i), bounded[i]);
-  }
-  return total / (bounded.length - 2);
-}
-
-export default {
-  ensureNgramLoaded,
-  isNgramLoaded,
-  getNgramLogProb,
-  scoreNgramWord
-};

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import type { CrossType } from './crossData';
-  import { coordinatesToIndex, getPhoneKeyLetters } from './crossSolver';
+  import { coordinatesToIndex } from './crossSolver';
   import { settings } from '../../state/settings.svelte';
 
   interface Props {
@@ -10,14 +10,7 @@
     selectedAxis1: number | null;
     selectedAxis2: number | null;
     selectedAxis3: number | null;
-    pendingKey?: string | null;
-    pendingTapIndex?: number;
-    polybiusSize?: number;
-    polybiusCoordLabels?: 'numbers' | 'letters';
     onLetterSelect: (char: string) => void;
-    onCoordSelect?: (axis: 1 | 2, val: number) => void;
-    onPhoneKeyTap?: (keyId: string) => void;
-    onPhoneKeyLongPress?: (keyId: string) => void;
   }
 
   let {
@@ -26,31 +19,8 @@
     selectedAxis1,
     selectedAxis2,
     selectedAxis3,
-    pendingKey = null,
-    pendingTapIndex = 0,
-    polybiusSize = 5,
-    polybiusCoordLabels = 'numbers',
-    onLetterSelect,
-    onCoordSelect,
-    onPhoneKeyTap,
-    onPhoneKeyLongPress
+    onLetterSelect
   }: Props = $props();
-
-  const polybiusIndices = $derived(Array.from({ length: polybiusSize }, (_, i) => i + 1));
-
-  function getCoordLabel(index: number): string {
-    if (polybiusCoordLabels === 'letters') {
-      return String.fromCharCode(65 + index - 1);
-    }
-    return String(index);
-  }
-
-  function handleCoordPointerDown(e: PointerEvent, axis: 1 | 2, val: number) {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    e.preventDefault();
-    settings.vibrate(18);
-    onCoordSelect?.(axis, val);
-  }
 
   const smallPolishLetters = $derived.by(() => {
     if (letters.length >= 26) {
@@ -64,17 +34,6 @@
   });
 
   let containerEl = $state<HTMLElement | null>(null);
-  let activePhonePressKey: string | null = null;
-  let isPhoneLongPressTriggered = false;
-  let phonePressTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function clearPhonePressTimer() {
-    if (phonePressTimer) {
-      clearTimeout(phonePressTimer);
-      phonePressTimer = null;
-    }
-  }
-
   let activePigpenChar = $state<string | null>(null);
   let pigpenClearTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -87,7 +46,7 @@
 
   function triggerEnclosureAnimation(target: HTMLElement | SVGElement) {
     const cell = target.closest(
-      '.polish-cell, .mini-cell, .sp-cell, .sp-wedge, .phone-key-btn, .pigpen-cell, .polybius-cell, .polybius-char-btn, .polybius-header-btn'
+      '.polish-cell, .pigpen-cell'
     ) as HTMLElement | SVGElement | null;
     if (!cell) return;
 
@@ -126,36 +85,6 @@
           { duration: 520, easing: 'ease-out' }
         );
       }
-    } else if (crossType === 'small-polish') {
-      const cell = containerEl.querySelector(`.small-polish-tables .table-block:nth-child(${a1}) .mini-cell.r-${a2}.c-${a3}`) as HTMLElement | null;
-      if (cell) {
-        triggerEnclosureAnimation(cell);
-        const btn = cell.querySelector('button') as HTMLElement | null;
-        if (btn) {
-          btn.animate(
-            [
-              { backgroundColor: 'var(--color-accent-primary)', color: '#000000', transform: 'scale(1.22)', boxShadow: '0 0 16px rgba(0, 210, 255, 0.9)' },
-              { backgroundColor: 'transparent', color: 'var(--color-text-primary)', transform: 'scale(1)', boxShadow: 'none' }
-            ],
-            { duration: 520, easing: 'ease-out' }
-          );
-        }
-      }
-    } else if (crossType === 'polybius') {
-      const cell = containerEl.querySelector(`.polybius-cell.r-${a1}.c-${a2}`) as HTMLElement | null;
-      if (cell) {
-        triggerEnclosureAnimation(cell);
-        const btn = cell.querySelector('.polybius-char-btn') as HTMLElement | null;
-        if (btn) {
-          btn.animate(
-            [
-              { backgroundColor: 'var(--color-accent-primary)', color: '#000000', transform: 'scale(1.2)', boxShadow: '0 0 16px rgba(0, 210, 255, 0.9)' },
-              { backgroundColor: 'var(--color-surface-2)', color: 'var(--color-text-primary)', transform: 'scale(1)', boxShadow: 'none' }
-            ],
-            { duration: 520, easing: 'ease-out' }
-          );
-        }
-      }
     }
   }
 
@@ -185,51 +114,8 @@
     }
   }
 
-  function handlePhonePointerDown(e: PointerEvent, keyId: string) {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    e.preventDefault();
-    clearPhonePressTimer();
-
-    activePhonePressKey = keyId;
-    isPhoneLongPressTriggered = false;
-
-    const target = e.currentTarget as HTMLElement;
-
-    phonePressTimer = setTimeout(() => {
-      isPhoneLongPressTriggered = true;
-      settings.vibrate([20, 35]);
-      triggerEnclosureAnimation(target);
-      onPhoneKeyLongPress?.(keyId);
-    }, 420);
-  }
-
-  function handlePhonePointerUp(e: PointerEvent, keyId: string) {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    e.preventDefault();
-
-    const wasLongPress = isPhoneLongPressTriggered;
-    clearPhonePressTimer();
-
-    if (!wasLongPress && activePhonePressKey === keyId) {
-      settings.vibrate(18);
-      triggerEnclosureAnimation(e.currentTarget as HTMLElement);
-      onPhoneKeyTap?.(keyId);
-    }
-
-    activePhonePressKey = null;
-    isPhoneLongPressTriggered = false;
-  }
-
-  function handlePhonePointerCancel(e: PointerEvent) {
-    clearPhonePressTimer();
-    activePhonePressKey = null;
-    isPhoneLongPressTriggered = false;
-  }
-
   function isLetterHighlighted(a1: number, a2: number, a3: number): boolean {
     if (crossType === 'large-polish') {
-      // In large polish cross, only highlight specific letter pills when axis3 (position/dot) is active
-      // or when all 3 axes match. Rows and columns are smoothly highlighted on cell level.
       if (selectedAxis3 !== null) {
         if (selectedAxis3 !== a3) return false;
         if (selectedAxis1 !== null && selectedAxis1 !== a1) return false;
@@ -259,23 +145,7 @@
     return letters[idx] ?? '';
   }
 
-  const PHONE_GRID_3X4 = [
-    { digit: '1', keyId: '1' },
-    { digit: '2', keyId: '2' },
-    { digit: '3', keyId: '3' },
-    { digit: '4', keyId: '4' },
-    { digit: '5', keyId: '5' },
-    { digit: '6', keyId: '6' },
-    { digit: '7', keyId: '7' },
-    { digit: '8', keyId: '8' },
-    { digit: '9', keyId: '9' },
-    { digit: '*', keyId: '*' },
-    { digit: '0', keyId: '0' },
-    { digit: '#', keyId: '#' }
-  ];
-
   onDestroy(() => {
-    clearPhonePressTimer();
     clearPigpenTimeout();
   });
 </script>
@@ -286,71 +156,66 @@
   class="interactive-cross-container"
   oncontextmenu={(e) => e.preventDefault()}
 >
-  {#if crossType === 'large-polish'}
-    <!-- Velký polský kříž (9 nezávislých chlívků se specifickými ohrádkami a mezerami) -->
-    <div class="polish-grid-3x3">
-      {#each [1, 2, 3] as r}
-        {#each [1, 2, 3] as c}
-          {@const cellHighlighted =
-            (selectedAxis1 === null || selectedAxis1 === r) &&
-            (selectedAxis2 === null || selectedAxis2 === c) &&
-            (selectedAxis1 !== null || selectedAxis2 !== null)}
-          <div
-            class="polish-cell r-{r} c-{c}"
-            class:cell-active={cellHighlighted}
-            data-row={r}
-            data-col={c}
-          >
-            {#each [1, 2, 3] as p}
-              {@const char = getPolishChar(r, c, p)}
-              {@const isSelected = isLetterHighlighted(r, c, p)}
-              {@const displaySymbol = char === ' ' ? '␣' : char}
-              {#if char}
-                <button
-                  type="button"
-                  data-pos={p}
-                  class="letter-btn"
-                  class:is-highlighted={isSelected}
-                  class:is-space-btn={char === ' '}
-                  onpointerdown={(e) => handleLetterPointerDown(e, char)}
-                >
-                  <span class="char-symbol" class:is-space-symbol={char === ' '}>{displaySymbol}</span>
-                  <span class="dot-indicator">
-                    {#if p === 1}
-                      <span class="dot">•</span>
-                    {:else if p === 2}
-                      <span class="dot">••</span>
-                    {:else if p === 3}
-                      <span class="dot">•••</span>
-                    {/if}
-                  </span>
-                </button>
-              {:else}
-                <div class="letter-placeholder"></div>
-              {/if}
-            {/each}
-          </div>
-        {/each}
+  <!-- Velký polský kříž (9 nezávislých chlívků se specifickými ohrádkami a mezerami) -->
+  <div class="polish-grid-3x3" class:is-hidden={crossType !== 'large-polish'}>
+    {#each [1, 2, 3] as r}
+      {#each [1, 2, 3] as c}
+        {@const cellHighlighted =
+          (selectedAxis1 === null || selectedAxis1 === r) &&
+          (selectedAxis2 === null || selectedAxis2 === c) &&
+          (selectedAxis1 !== null || selectedAxis2 !== null)}
+        <div
+          class="polish-cell r-{r} c-{c}"
+          class:cell-active={cellHighlighted}
+          data-row={r}
+          data-col={c}
+        >
+          {#each [1, 2, 3] as p}
+            {@const char = getPolishChar(r, c, p)}
+            {@const isSelected = isLetterHighlighted(r, c, p)}
+            {@const displaySymbol = char === ' ' ? '␣' : char}
+            {#if char}
+              <button
+                type="button"
+                data-pos={p}
+                class="letter-btn"
+                class:is-highlighted={isSelected}
+                class:is-space-btn={char === ' '}
+                onpointerdown={(e) => handleLetterPointerDown(e, char)}
+              >
+                <span class="char-symbol" class:is-space-symbol={char === ' '}>{displaySymbol}</span>
+                <span class="dot-indicator">
+                  {#if p === 1}
+                    <span class="dot">•</span>
+                  {:else if p === 2}
+                    <span class="dot">••</span>
+                  {:else if p === 3}
+                    <span class="dot">•••</span>
+                  {/if}
+                </span>
+              </button>
+            {:else}
+              <div class="letter-placeholder"></div>
+            {/if}
+          {/each}
+        </div>
       {/each}
-    </div>
+    {/each}
+  </div>
 
-  {:else if crossType === 'small-polish'}
-    <!-- Pigpen (Malý polský kříž): Sjednocené SVG plátno pro 3×3 mřížky i 2×2 šikmé kříže -->
-    <div class="pigpen-board-wrapper">
-      <!-- Sjednocené SVG plátno (identické měřítko teček r=2.5 a nulové přesahy) -->
-      <svg
-        class="pigpen-board-svg"
-        viewBox="0 0 312 266"
-        role="group"
-        aria-label="Pigpen šifrovací kříže"
-        oncontextmenu={(e) => e.preventDefault()}
-        onpointerup={handleLetterPointerUp}
-        onpointercancel={handleLetterPointerUp}
-        onpointerleave={handleLetterPointerUp}
-      >
-        <!-- ==================== 1. HITAREAS & OBSAH (BUŇKY) ==================== -->
-
-        <!-- --- 3x3 Mřížka Col 1 (A–I, bez tečky) --- -->
+  <!-- Pigpen (Malý polský kříž): Sjednocené SVG plátno pro 3×3 mřížky i 2×2 šikmé kříže -->
+  <div class="pigpen-board-wrapper" class:is-hidden={crossType !== 'small-polish'}>
+    <svg
+      class="pigpen-board-svg"
+      viewBox="0 0 312 266"
+      role="group"
+      aria-label="Pigpen šifrovací kříže"
+      oncontextmenu={(e) => e.preventDefault()}
+      onpointerup={handleLetterPointerUp}
+      onpointercancel={handleLetterPointerUp}
+      onpointerleave={handleLetterPointerUp}
+    >
+        <!-- 3x3 Mřížka Col 1 (A–I, bez tečky) -->
         {#each [0, 1, 2] as r}
           {#each [0, 1, 2] as c}
             {@const char = smallPolishLetters[r * 3 + c]}
@@ -376,7 +241,7 @@
           {/each}
         {/each}
 
-        <!-- --- 3x3 Mřížka Col 2 (J–R, s tečkou) --- -->
+        <!-- 3x3 Mřížka Col 2 (J–R, s tečkou) -->
         {#each [0, 1, 2] as r}
           {#each [0, 1, 2] as c}
             {@const char = smallPolishLetters[9 + r * 3 + c]}
@@ -403,8 +268,7 @@
           {/each}
         {/each}
 
-        <!-- --- 2x2 Šikmý kříž Col 1 (S–V, bez tečky) --- -->
-        <!-- Wedge Top (S) -->
+        <!-- 2x2 Šikmý kříž Col 1 (S–V, bez tečky) -->
         <g
           class="pigpen-cell"
           class:is-active={activePigpenChar === smallPolishLetters[18]}
@@ -421,7 +285,6 @@
           </g>
         </g>
 
-        <!-- Wedge Left (T) -->
         <g
           class="pigpen-cell"
           class:is-active={activePigpenChar === smallPolishLetters[19]}
@@ -438,7 +301,6 @@
           </g>
         </g>
 
-        <!-- Wedge Right (U) -->
         <g
           class="pigpen-cell"
           class:is-active={activePigpenChar === smallPolishLetters[20]}
@@ -455,7 +317,6 @@
           </g>
         </g>
 
-        <!-- Wedge Bottom (V) -->
         <g
           class="pigpen-cell"
           class:is-active={activePigpenChar === smallPolishLetters[21]}
@@ -472,8 +333,7 @@
           </g>
         </g>
 
-        <!-- --- 2x2 Šikmý kříž Col 2 (W–Z, s tečkou) --- -->
-        <!-- Wedge Top (W) -->
+        <!-- 2x2 Šikmý kříž Col 2 (W–Z, s tečkou) -->
         <g
           class="pigpen-cell"
           class:is-active={activePigpenChar === smallPolishLetters[22]}
@@ -491,7 +351,6 @@
           </g>
         </g>
 
-        <!-- Wedge Left (X) -->
         <g
           class="pigpen-cell"
           class:is-active={activePigpenChar === smallPolishLetters[23]}
@@ -509,7 +368,6 @@
           </g>
         </g>
 
-        <!-- Wedge Right (Y) -->
         <g
           class="pigpen-cell"
           class:is-active={activePigpenChar === smallPolishLetters[24]}
@@ -527,7 +385,6 @@
           </g>
         </g>
 
-        <!-- Wedge Bottom (Z) -->
         <g
           class="pigpen-cell"
           class:is-active={activePigpenChar === smallPolishLetters[25]}
@@ -545,140 +402,24 @@
           </g>
         </g>
 
-        <!-- ==================== 2. DĚLICÍ ČÁRY (KRESLENÉ NAHOŘE) ==================== -->
-        <!-- 3x3 Mřížka Col 1 -->
+        <!-- DĚLICÍ ČÁRY -->
         <line x1="52" y1="4" x2="52" y2="148" class="pigpen-line" />
         <line x1="100" y1="4" x2="100" y2="148" class="pigpen-line" />
         <line x1="4" y1="52" x2="148" y2="52" class="pigpen-line" />
         <line x1="4" y1="100" x2="148" y2="100" class="pigpen-line" />
 
-        <!-- 3x3 Mřížka Col 2 -->
         <line x1="212" y1="4" x2="212" y2="148" class="pigpen-line" />
         <line x1="260" y1="4" x2="260" y2="148" class="pigpen-line" />
         <line x1="164" y1="52" x2="308" y2="52" class="pigpen-line" />
         <line x1="164" y1="100" x2="308" y2="100" class="pigpen-line" />
 
-        <!-- 2x2 Šikmý kříž Col 1 -->
         <line x1="28" y1="164" x2="124" y2="260" class="pigpen-line" />
         <line x1="124" y1="164" x2="28" y2="260" class="pigpen-line" />
 
-        <!-- 2x2 Šikmý kříž Col 2 -->
         <line x1="188" y1="164" x2="284" y2="260" class="pigpen-line" />
         <line x1="284" y1="164" x2="188" y2="260" class="pigpen-line" />
       </svg>
     </div>
-
-  {:else if crossType === 'mobile-keypad'}
-    <!-- Mobilní klávesnice 3x4 (100% šířka, klepnutí = multi-tap, podržení = číslo) -->
-    <div class="phone-keypad-grid-3x4">
-      {#each PHONE_GRID_3X4 as item}
-        {@const keyLetters = getPhoneKeyLetters(item.keyId)}
-        {@const isActiveKey = pendingKey === item.keyId}
-        <button
-          type="button"
-          class="phone-key-btn"
-          class:is-active-key={isActiveKey}
-          onpointerdown={(e) => handlePhonePointerDown(e, item.keyId)}
-          onpointerup={(e) => handlePhonePointerUp(e, item.keyId)}
-          onpointercancel={handlePhonePointerCancel}
-          onpointerleave={handlePhonePointerCancel}
-          oncontextmenu={(e) => e.preventDefault()}
-        >
-          <span class="phone-key-num">{item.digit}</span>
-          <div class="phone-key-sub">
-            {#if item.keyId === '0'}
-              <span
-                class="phone-sub-char"
-                class:is-active-char={isActiveKey && pendingTapIndex === 0}
-              >
-                ␣
-              </span>
-              <span
-                class="phone-sub-char"
-                class:is-active-char={isActiveKey && pendingTapIndex === 1}
-              >
-                0
-              </span>
-            {:else if keyLetters.length > 0}
-              {#each keyLetters as ch, idx}
-                <span
-                  class="phone-sub-char"
-                  class:is-active-char={isActiveKey && pendingTapIndex === idx}
-                >
-                  {ch}
-                </span>
-              {/each}
-            {/if}
-          </div>
-        </button>
-      {/each}
-    </div>
-
-  {:else if crossType === 'polybius'}
-    <!-- Polybiův čtverec (5×5 nebo 6×6 s interaktivními souřadnicovými tlačítky v záhlaví) -->
-    <div class="polybius-board-wrapper" class:size-6={polybiusSize === 6}>
-      <div
-        class="polybius-grid"
-        style:grid-template-columns="32px repeat({polybiusSize}, 1fr)"
-      >
-        <!-- Top header row: empty corner cell + interactive col header buttons -->
-        <div class="polybius-corner-cell" aria-hidden="true"></div>
-        {#each polybiusIndices as c}
-          {@const isColActive = selectedAxis2 === c}
-          <button
-            type="button"
-            class="polybius-header-btn col-header-btn"
-            class:is-active={isColActive}
-            onpointerdown={(e) => handleCoordPointerDown(e, 2, c)}
-            aria-label={`Sloupec ${getCoordLabel(c)}`}
-          >
-            <span>{getCoordLabel(c)}</span>
-          </button>
-        {/each}
-
-        <!-- Grid rows: interactive row header button + letter cells -->
-        {#each polybiusIndices as r}
-          {@const isRowActive = selectedAxis1 === r}
-          <button
-            type="button"
-            class="polybius-header-btn row-header-btn"
-            class:is-active={isRowActive}
-            onpointerdown={(e) => handleCoordPointerDown(e, 1, r)}
-            aria-label={`Řádek ${getCoordLabel(r)}`}
-          >
-            <span>{getCoordLabel(r)}</span>
-          </button>
-          {#each polybiusIndices as c}
-            {@const idx = (r - 1) * polybiusSize + (c - 1)}
-            {@const char = letters[idx] ?? ''}
-            {@const isExact = selectedAxis1 === r && selectedAxis2 === c}
-            {@const isHighlighted = (selectedAxis1 === r || selectedAxis2 === c) && (selectedAxis1 !== null || selectedAxis2 !== null)}
-            <div
-              class="polybius-cell r-{r} c-{c}"
-              class:is-row-matched={selectedAxis1 === r}
-              class:is-col-matched={selectedAxis2 === c}
-              class:is-exact-matched={isExact}
-            >
-              {#if char}
-                <button
-                  type="button"
-                  class="polybius-char-btn"
-                  class:is-highlighted={isHighlighted}
-                  class:is-exact={isExact}
-                  onpointerdown={(e) => handleLetterPointerDown(e, char)}
-                  aria-label={`Písmeno ${char}, řádek ${getCoordLabel(r)}, sloupec ${getCoordLabel(c)}`}
-                >
-                  <span class="polybius-char">{char}</span>
-                </button>
-              {:else}
-                <div class="polybius-empty-cell"></div>
-              {/if}
-            </div>
-          {/each}
-        {/each}
-      </div>
-    </div>
-  {/if}
 </div>
 
 <style>
@@ -694,19 +435,24 @@
     touch-action: none;
   }
 
+  .is-hidden {
+    display: none !important;
+  }
+
   /* --- Velký polský kříž 3x3: 9 samostatných chlívků s mezerami --- */
   .polish-grid-3x3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, clamp(46px, 7.5vh, 58px));
-    gap: 6px;
+    grid-template-rows: repeat(3, clamp(36px, 5.5vh, 46px));
+    gap: 4px;
     width: 100%;
     background: transparent;
+    margin: 0;
     padding: 0;
+    box-sizing: border-box;
     touch-action: none;
   }
 
-  /* Každý chlívek má pouze své vlastní specifické ohrádky */
   .polish-cell {
     position: relative;
     display: grid;
@@ -809,9 +555,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     width: 100%;
-    padding: var(--space-lg) 0 var(--space-xl);
-    gap: var(--space-sm);
+    height: 100%;
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
     user-select: none;
     -webkit-user-select: none;
@@ -821,6 +569,7 @@
 
   .pigpen-board-svg {
     width: 100%;
+    max-width: 320px;
     height: auto;
     display: block;
     touch-action: none;
@@ -876,226 +625,5 @@
     stroke-width: 2.5px;
     stroke-linecap: round;
     pointer-events: none;
-  }
-
-  /* --- Mobilní klávesnice 3x4 (100% šířka) --- */
-  .phone-keypad-grid-3x4 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(4, clamp(44px, 6.5vh, 54px));
-    gap: 2px;
-    padding: 2px;
-    width: 100%;
-    box-sizing: border-box;
-    touch-action: none;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background-color: var(--color-bg-canvas);
-    border: 1px solid var(--color-border-subtle);
-  }
-
-  .phone-key-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--color-surface-2);
-    border: none;
-    border-radius: 2px;
-    gap: 1px;
-    padding: 3px 4px;
-    box-sizing: border-box;
-    cursor: pointer;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.1s ease, color 0.1s ease, box-shadow 0.08s ease;
-  }
-
-  .phone-key-btn:active {
-    transform: none;
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  }
-
-  .phone-key-btn.is-active-key {
-    background-color: var(--color-surface-active);
-    color: var(--color-accent-primary);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  }
-
-  .phone-key-num {
-    font-size: clamp(18px, 2.6vh, 22px);
-    font-weight: 800;
-    font-family: var(--font-mono);
-    color: var(--color-text-primary);
-    line-height: 1;
-    pointer-events: none;
-  }
-
-  .phone-key-btn.is-active-key .phone-key-num {
-    color: var(--color-accent-primary);
-  }
-
-  .phone-key-sub {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    line-height: 1;
-    pointer-events: none;
-  }
-
-  .phone-sub-char {
-    font-size: clamp(10px, 1.4vh, 11px);
-    font-weight: 600;
-    font-family: var(--font-mono);
-    color: var(--color-text-secondary);
-    transition: all 0.08s ease;
-  }
-
-  .phone-sub-char.is-active-char {
-    color: #000000;
-    background-color: var(--color-accent-primary);
-    font-weight: 800;
-    padding: 1px 3px;
-    border-radius: var(--radius-xs);
-    transform: scale(1.15);
-    box-shadow: 0 0 6px rgba(0, 210, 255, 0.8);
-  }
-
-  /* Polybiův čtverec */
-  .polybius-board-wrapper {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  .polybius-grid {
-    display: grid;
-    gap: 2px;
-    padding: 2px;
-    width: 100%;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background-color: var(--color-bg-canvas);
-    border: 1px solid var(--color-border-subtle);
-    box-sizing: border-box;
-  }
-
-  .polybius-header-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-surface-1);
-    border: none;
-    border-radius: 2px;
-    font-size: var(--text-xs);
-    font-weight: 700;
-    font-family: var(--font-mono);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    touch-action: none;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s ease, box-shadow 0.08s ease, color 0.12s ease;
-    padding: 0;
-  }
-
-  .polybius-header-btn:active {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: none;
-  }
-
-  .polybius-header-btn.col-header-btn {
-    min-height: 32px;
-    height: 32px;
-  }
-
-  .polybius-header-btn.row-header-btn {
-    min-width: 32px;
-    width: 32px;
-    height: 100%;
-  }
-
-  .polybius-header-btn.is-active {
-    background: var(--color-accent-primary);
-    color: #000000;
-    font-weight: 800;
-    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4), inset 0 0 4px rgba(255, 255, 255, 0.4);
-  }
-
-  .polybius-cell {
-    display: flex;
-    aspect-ratio: 1 / 1;
-    min-width: 0;
-    min-height: 0;
-    border-radius: 2px;
-    transition: all 0.15s ease;
-  }
-
-  .polybius-cell.is-row-matched,
-  .polybius-cell.is-col-matched {
-    background: rgba(0, 210, 255, 0.06);
-  }
-
-  .polybius-cell.is-exact-matched {
-    background: rgba(0, 210, 255, 0.16);
-  }
-
-  .polybius-char-btn {
-    width: 100%;
-    height: 100%;
-    min-height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-surface-2);
-    border: none;
-    border-radius: 2px;
-    color: var(--color-text-primary);
-    font-size: clamp(14px, 2.3vh, 18px);
-    font-weight: 700;
-    cursor: pointer;
-    touch-action: none;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s ease, box-shadow 0.08s ease, color 0.12s ease;
-    padding: 0;
-  }
-
-  .polybius-char-btn:active {
-    background: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: none;
-  }
-
-  .polybius-char-btn.is-highlighted {
-    box-shadow: inset 0 0 0 1.5px rgba(0, 210, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    color: var(--color-text-primary);
-  }
-
-  .polybius-char-btn.is-exact {
-    background: rgba(0, 210, 255, 0.22);
-    color: var(--color-accent-primary);
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4), inset 0 0 0 1.5px var(--color-accent-primary);
-  }
-
-  .polybius-empty-cell {
-    width: 100%;
-    height: 100%;
-    border-radius: var(--radius-xs);
-    background: rgba(255, 255, 255, 0.02);
   }
 </style>

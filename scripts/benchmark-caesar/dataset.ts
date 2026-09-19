@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { resolve } from 'node:path';
-import { shiftCaesar } from '../../src/lib/modules/07-shifts/shiftsSolver';
+import { shiftCaesar } from '../../src/lib/modules/shifts/shiftsSolver';
+import { removeDiacritics } from '../../src/lib/utils/text';
 import type { RawLexiconWord } from '../benchmark-morse/loadDb';
 
 export interface CaesarBenchmarkCase {
@@ -70,10 +71,6 @@ const NOISE_SUFFIXES = [
 ];
 
 const ALPHA_26 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
-function removeDiacritics(str: string): string {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
 
 export function loadCaesarBenchmark(
   rawWords: RawLexiconWord[],

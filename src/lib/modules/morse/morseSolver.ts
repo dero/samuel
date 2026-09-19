@@ -8,7 +8,7 @@ import {
 import { scoreCandidate } from '../../data/markovModel';
 import { CIPHER_KEYWORDS } from '../../data/cipherKeywords';
 import { ensureNgramLoaded, getNgramLogProb } from '../../data/ngramModel';
-import { removeDiacritics } from '../../utils/search';
+import { removeDiacritics } from '../../utils/text';
 
 export interface DecodeMorseOptions {
   parseCH?: boolean;
@@ -147,9 +147,6 @@ export function textToMorse(
     })
     .join(wordSep);
 }
-
-// Backwards compatibility alias for encodeMorse
-export const encodeMorse = textToMorse;
 
 /**
  * Calculates a plausibility score (0 to 100) for decoded Czech text using the precalculated Markov chain.

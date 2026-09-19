@@ -5,13 +5,15 @@
   import ToastContainer from './lib/components/ui/ToastContainer.svelte';
   import SettingsModule from './lib/modules/settings/SettingsModule.svelte';
   import HelpModule from './lib/modules/help/HelpModule.svelte';
-  import MorseModule from './lib/modules/01-morse/MorseModule.svelte';
-  import BrailleModule from './lib/modules/02-braille/BrailleModule.svelte';
-  import SemaphoreModule from './lib/modules/03-semaphore/SemaphoreModule.svelte';
-  import FlagsModule from './lib/modules/04-flags/FlagsModule.svelte';
-  import CrossModule from './lib/modules/05-cross/CrossModule.svelte';
-  import NumbersModule from './lib/modules/06-numbers/NumbersModule.svelte';
-  import ShiftsModule from './lib/modules/07-shifts/ShiftsModule.svelte';
+  import MorseModule from './lib/modules/morse/MorseModule.svelte';
+  import BrailleModule from './lib/modules/braille/BrailleModule.svelte';
+  import SemaphoreModule from './lib/modules/semaphore/SemaphoreModule.svelte';
+  import FlagsModule from './lib/modules/flags/FlagsModule.svelte';
+  import CrossModule from './lib/modules/cross/CrossModule.svelte';
+  import PolybiusModule from './lib/modules/polybius/PolybiusModule.svelte';
+  import MobileModule from './lib/modules/mobile/MobileModule.svelte';
+  import NumbersModule from './lib/modules/numbers/NumbersModule.svelte';
+  import ShiftsModule from './lib/modules/shifts/ShiftsModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -74,6 +76,10 @@
     <FlagsModule />
   {:else if navigation.activeModuleId === 'cross'}
     <CrossModule />
+  {:else if navigation.activeModuleId === 'polybius'}
+    <PolybiusModule />
+  {:else if navigation.activeModuleId === 'mobile'}
+    <MobileModule />
   {:else if navigation.activeModuleId === 'numbers'}
     <NumbersModule />
   {:else if navigation.activeModuleId === 'shifts'}

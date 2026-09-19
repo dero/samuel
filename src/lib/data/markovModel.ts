@@ -5,7 +5,7 @@
 
 import { CIPHER_KEYWORDS } from './cipherKeywords';
 
-export { CIPHER_KEYWORDS, CORE_CIPHER_WORDS } from './cipherKeywords';
+export { CIPHER_KEYWORDS } from './cipherKeywords';
 
 // 27x27 flat array: from [^, A-Z] (27) to [A-Z, $] (27)
 export const MARKOV_MATRIX: readonly number[] = Object.freeze([

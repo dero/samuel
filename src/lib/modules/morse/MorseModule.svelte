@@ -418,17 +418,16 @@
   .keypad-zone {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--zone-input-gap);
     width: 100%;
   }
-
 
   .morse-subtoolbar {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-xs);
     width: 100%;
-    height: var(--subtoolbar-height, 36px);
+    height: var(--subtoolbar-height);
     box-sizing: border-box;
   }
 

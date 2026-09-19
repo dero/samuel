@@ -3,7 +3,7 @@
 > Rychlá pravidla pro práci v repozitáři **Samuel**.
 
 ## 1. Zdroje & Plánování
-- **POKUD** tvoříš nebo upravuješ UI, **POTOM** se řiď [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) (OLED `#000`, min. 48px touch targety, bez celostránkového scrollu, klávesnice přes `pointerdown` + `preventDefault()`, výmaz tažením přes `SlideToAction`, toast max. 30 znaků).
+- **POKUD** tvoříš nebo upravuješ UI, **POTOM** se řiď [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)
 - **POKUD** navrhuješ nový modul nebo šifrovací logiku, **POTOM** vycházej z [`research/PLAN.md`](research/PLAN.md) (heuristiky, paralelní varianty, algoritmy).
 
 ## 2. Tooling & Příkazy
@@ -12,7 +12,6 @@
 - **POKUD** dokončuješ práci, **POTOM** vždy spusť `yarn check` a `yarn build`.
 - **POKUD** build aktualizuje `public/version.json`, **POTOM** změnu nikdy nevracej (`git checkout`). Aplikace je ve vývojovém režimu a průběžný bump verze je žádoucí.
 - **POKUD** upravíš data v `data/`, **POTOM** spusť `yarn db:build` (nebo `yarn db:build:force`).
-- **POKUD** ladíš přesnost a váhy morse solveru, **POTOM** spusť `yarn benchmark:morse`.
 - **POKUD** pushneš do `feat/init-version` (nebo `main`, až vznikne), **POTOM** se přes GitHub Actions automaticky nasadí produkce na `https://samuel.dero.cz`.
 
 ## 3. Kód & Architektura

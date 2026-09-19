@@ -11,16 +11,8 @@ export interface SearchOptions {
   /** If true, matches the exact query phrase instead of requiring all tokens. Default: false */
   exactPhrase?: boolean;
 }
-
-/**
- * Removes diacritics (accents/carons) from text.
- */
-export function removeDiacritics(text: string): string {
-  if (!text) return '';
-  return text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
+import { removeDiacritics } from './text';
+export { removeDiacritics };
 
 /**
  * Normalizes text for search operations (by default lowercase without diacritics).

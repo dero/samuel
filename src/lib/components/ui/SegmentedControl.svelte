@@ -14,6 +14,7 @@
     value: T;
     ariaLabel?: string;
     class?: string;
+    size?: 'sm' | 'md';
     onChange: (val: T) => void;
   }
 
@@ -22,6 +23,7 @@
     value,
     ariaLabel = 'Volby',
     class: customClass = '',
+    size = 'sm',
     onChange
   }: Props = $props();
 
@@ -32,7 +34,7 @@
   }
 </script>
 
-<div class="segmented-control {customClass}" role="tablist" aria-label={ariaLabel}>
+<div class="segmented-control size-{size} {customClass}" role="tablist" aria-label={ariaLabel}>
   {#each options as opt (opt.id)}
     {@const isActive = opt.id === value}
     <button
@@ -57,12 +59,38 @@
     align-items: center;
     gap: 4px;
     background-color: var(--color-surface-1);
-    padding: 3px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-subtle);
     width: 100%;
     box-sizing: border-box;
     flex-shrink: 0;
+  }
+
+  /* size="sm": Standard Sub-Toolbar (36px fixed, zero overflow) */
+  .segmented-control.size-sm {
+    height: var(--subtoolbar-height, 36px);
+    padding: 2px;
+  }
+
+  .segmented-control.size-sm .segment-btn {
+    height: 100%;
+    min-height: 0;
+    padding: 2px 8px;
+    font-size: var(--text-xs);
+    line-height: 1;
+  }
+
+  /* size="md": Standard Menu / Dialog variant (42px) */
+  .segmented-control.size-md {
+    height: var(--utility-row-height, 42px);
+    padding: 3px;
+  }
+
+  .segmented-control.size-md .segment-btn {
+    height: 100%;
+    min-height: 34px;
+    padding: 4px 8px;
+    font-size: var(--text-xs);
   }
 
   .segment-btn {
@@ -71,15 +99,13 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    min-height: 34px;
-    padding: 4px 8px;
     background: transparent;
     border: none;
     border-radius: var(--radius-xs);
     color: var(--color-text-secondary);
-    font-size: var(--text-xs);
     font-weight: 600;
     cursor: pointer;
+    box-sizing: border-box;
     transition: background-color 0.12s ease, color 0.12s ease;
     user-select: none;
     -webkit-user-select: none;

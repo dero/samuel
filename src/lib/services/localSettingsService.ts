@@ -7,16 +7,9 @@ export interface RootSettingsData {
   [key: string]: any;
 }
 
-/**
- * Scoped settings access for a specific section or module.
- * All mutations automatically persist to the single root settings object in localStorage.
- */
-export class SettingsScope {
-  constructor(
-    private readonly getStore: () => Record<string, any>,
-    private readonly onSave: () => void,
-    public readonly scopePath: string
-  ) {}
+export abstract class KeyValueScope {
+  abstract getStore(): Record<string, any>;
+  abstract onSave(): void;
 
   get<T>(key: string, defaultValue: T): T {
     const store = this.getStore();
@@ -95,6 +88,23 @@ export class SettingsScope {
     this.set(key, value);
   }
 
+  /**
+   * Batch update multiple key-value pairs with a single persistence save.
+   */
+  update(entries: Record<string, any>): void {
+    const store = this.getStore();
+    let changed = false;
+    for (const [key, val] of Object.entries(entries)) {
+      if (store[key] !== val) {
+        store[key] = val;
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.onSave();
+    }
+  }
+
   getAll(): Record<string, any> {
     return { ...this.getStore() };
   }
@@ -110,21 +120,51 @@ export class SettingsScope {
   }
 }
 
-export type ModuleSettingsScope = SettingsScope;
+/**
+ * Scoped settings access for a specific section or module.
+ * All mutations automatically persist to the single root settings object in localStorage.
+ */
+export class SettingsScope extends KeyValueScope {
+  constructor(
+    private readonly storeGetter: () => Record<string, any>,
+    private readonly saveHandler: () => void,
+    public readonly scopePath: string
+  ) {
+    super();
+  }
+
+  getStore(): Record<string, any> {
+    return this.storeGetter();
+  }
+
+  onSave(): void {
+    this.saveHandler();
+  }
+}
 
 /**
  * Centralized service managing a single persistent settings JSON object in localStorage.
  * Consolidates all app, alphabet, and module settings into one single storage key (`samuel_settings`).
  */
-export class LocalSettingsService {
+export class LocalSettingsService extends KeyValueScope {
   private readonly storageKey = STORAGE_KEYS.SETTINGS;
   private readonly isStorageAvailable: boolean;
   private data: RootSettingsData;
   private readonly scopes = new Map<string, SettingsScope>();
+  private isSaveScheduled = false;
 
   constructor() {
+    super();
     this.isStorageAvailable = this.checkStorageAvailability();
     this.data = this.loadInitialData();
+  }
+
+  getStore(): Record<string, any> {
+    return this.data;
+  }
+
+  onSave(): void {
+    this.scheduleSave();
   }
 
   private checkStorageAvailability(): boolean {
@@ -158,7 +198,8 @@ export class LocalSettingsService {
     return {};
   }
 
-  private save(): void {
+  private commitSave(): void {
+    this.isSaveScheduled = false;
     if (!this.isStorageAvailable) return;
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(this.data));
@@ -167,84 +208,31 @@ export class LocalSettingsService {
     }
   }
 
-  get isAvailable(): boolean {
-    return this.isStorageAvailable;
+  /**
+   * Batches asynchronous save writes within the same microtask / event loop tick
+   * to eliminate duplicate JSON.stringify and localStorage writes during reactive updates.
+   */
+  public scheduleSave(): void {
+    if (this.isSaveScheduled) return;
+    this.isSaveScheduled = true;
+    queueMicrotask(() => {
+      if (this.isSaveScheduled) {
+        this.commitSave();
+      }
+    });
   }
 
   /**
-   * Access a top-level property in the root settings object.
+   * Synchronously flushes any pending saves immediately.
    */
-  get<T>(key: string, defaultValue: T): T {
-    if (this.data[key] !== undefined && this.data[key] !== null) {
-      return this.data[key] as T;
-    }
-    return defaultValue;
-  }
-
-  set<T>(key: string, value: T): void {
-    if (this.data[key] === value) return;
-    this.data[key] = value;
-    this.save();
-  }
-
-  has(key: string): boolean {
-    return this.data[key] !== undefined && this.data[key] !== null;
-  }
-
-  removeItem(key: string): void {
-    if (key in this.data) {
-      delete this.data[key];
-      this.save();
+  public flush(): void {
+    if (this.isSaveScheduled) {
+      this.commitSave();
     }
   }
 
-  getString(key: string, defaultValue = ''): string {
-    const val = this.get(key, defaultValue);
-    return typeof val === 'string' ? val : String(val ?? defaultValue);
-  }
-
-  setString(key: string, value: string): void {
-    this.set(key, value);
-  }
-
-  getBoolean(key: string, defaultValue: boolean): boolean {
-    const val = this.get(key, defaultValue);
-    if (typeof val === 'boolean') return val;
-    if (val === 'true' || val === '1' || val === 1) return true;
-    if (val === 'false' || val === '0' || val === 0) return false;
-    return defaultValue;
-  }
-
-  setBoolean(key: string, value: boolean): void {
-    this.set(key, Boolean(value));
-  }
-
-  getNumber(key: string, defaultValue: number): number {
-    const val = this.get(key, defaultValue);
-    if (typeof val === 'number' && !isNaN(val)) return val;
-    const num = Number(val);
-    return isNaN(num) ? defaultValue : num;
-  }
-
-  setNumber(key: string, value: number): void {
-    this.set(key, Number(value));
-  }
-
-  getJSON<T>(key: string, defaultValue: T): T {
-    const val = this.get<T>(key, defaultValue);
-    if (val === undefined || val === null) return defaultValue;
-    if (typeof val === 'string') {
-      try {
-        return JSON.parse(val) as T;
-      } catch {
-        return defaultValue;
-      }
-    }
-    return val;
-  }
-
-  setJSON<T>(key: string, value: T): void {
-    this.set(key, value);
+  get isAvailable(): boolean {
+    return this.isStorageAvailable;
   }
 
   /**
@@ -264,7 +252,7 @@ export class LocalSettingsService {
           }
           return this.data.modules[moduleId];
         },
-        () => this.save(),
+        () => this.scheduleSave(),
         `modules.${moduleId}`
       );
       this.scopes.set(scopeKey, scope);
@@ -286,7 +274,7 @@ export class LocalSettingsService {
           }
           return this.data[sectionName];
         },
-        () => this.save(),
+        () => this.scheduleSave(),
         sectionName
       );
       this.scopes.set(scopeKey, scope);
@@ -307,7 +295,7 @@ export class LocalSettingsService {
   importRootData(newData: RootSettingsData): void {
     if (newData && typeof newData === 'object' && !Array.isArray(newData)) {
       this.data = JSON.parse(JSON.stringify(newData));
-      this.save();
+      this.commitSave();
     }
   }
 
@@ -315,6 +303,7 @@ export class LocalSettingsService {
    * Resets all settings by clearing the root object and removing the single LS entry.
    */
   clear(): void {
+    this.isSaveScheduled = false;
     this.data = {};
     if (this.isStorageAvailable) {
       try {
@@ -328,3 +317,4 @@ export class LocalSettingsService {
 
 export const localSettingsService = new LocalSettingsService();
 export const localSettings = localSettingsService;
+

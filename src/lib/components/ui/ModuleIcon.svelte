@@ -16,7 +16,9 @@
     Lightbulb,
     Palette,
     Question,
-    Gear
+    Gear,
+    DeviceMobile,
+    SquaresFour
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
 
@@ -45,11 +47,13 @@
     semaphore: FlagBanner,
     flags: FlagCheckered,
     cross: Hash,
+    polybius: GridFour,
+    mobile: DeviceMobile,
     numbers: Calculator,
     shifts: ArrowsClockwise,
     substitution: TextAa,
     'freq-ocr': ChartBar,
-    grille: GridFour,
+    grille: SquaresFour,
     words: BookOpen,
     calendar: CalendarBlank,
     facts: Lightbulb,
@@ -68,6 +72,8 @@
     textaa: TextAa,
     chartbar: ChartBar,
     gridfour: GridFour,
+    squaresfour: SquaresFour,
+    devicemobile: DeviceMobile,
     bookopen: BookOpen,
     calendarblank: CalendarBlank,
     lightbulb: Lightbulb,
