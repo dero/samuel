@@ -1,7 +1,7 @@
 <script lang="ts">
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
-  import { dbState } from '../../db/database.svelte';
+  import { versionService } from '../../services/versionService.svelte';
   import ModuleIcon from '../ui/ModuleIcon.svelte';
   import { List, BookOpen, CaretDown, FlagBanner } from 'phosphor-svelte';
 
@@ -67,9 +67,9 @@
     {/if}
   </div>
 
-  {#if dbState.status === 'loading'}
-    <div class="db-sync-bar" title="Stahování slovníkové databáze ({dbState.progress}%)">
-      <div class="db-sync-progress" style="width: {dbState.progress}%"></div>
+  {#if versionService.state.status === 'downloading_db'}
+    <div class="db-sync-bar" title="Stahování slovníkové databáze ({versionService.state.progress}%)">
+      <div class="db-sync-progress" style="width: {versionService.state.progress}%"></div>
     </div>
   {/if}
 </header>

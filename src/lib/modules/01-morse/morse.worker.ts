@@ -18,34 +18,15 @@ import {
   type MorseSolverWeights
 } from './morseSolver';
 
-const IDB_NAME = 'samuel_offline_storage';
-const IDB_STORE = 'sqlite_blobs';
-const IDB_KEY_DB = 'words_db';
-
-function openIdb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(IDB_NAME, 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(IDB_STORE)) {
-        db.createObjectStore(IDB_STORE);
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
+const DB_CACHE_NAME = 'samuel-db';
 
 async function getCachedDbBuffer(): Promise<ArrayBuffer | null> {
   try {
-    const idb = await openIdb();
-    return new Promise((resolve) => {
-      const tx = idb.transaction(IDB_STORE, 'readonly');
-      const store = tx.objectStore(IDB_STORE);
-      const req = store.get(IDB_KEY_DB);
-      req.onsuccess = () => resolve(req.result ? (req.result as ArrayBuffer) : null);
-      req.onerror = () => resolve(null);
-    });
+    if (typeof self === 'undefined' || !('caches' in self)) return null;
+    const cache = await self.caches.open(DB_CACHE_NAME);
+    const match = await cache.match('/words.db');
+    if (!match) return null;
+    return await match.arrayBuffer();
   } catch {
     return null;
   }

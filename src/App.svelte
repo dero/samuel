@@ -14,10 +14,10 @@
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
-  import { checkUpdatesOnInit } from './lib/db/database.svelte';
+  import { versionService } from './lib/services/versionService.svelte';
 
   onMount(() => {
-    checkUpdatesOnInit();
+    versionService.checkUpdates();
   });
 
   function handleGlobalContextMenu(e: MouseEvent) {

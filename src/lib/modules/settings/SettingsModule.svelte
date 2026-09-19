@@ -2,14 +2,19 @@
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { APP_BUILD_TIME } from '../../constants';
-  import { dbState, getDatabase, checkUpdatesOnInit } from '../../db/database.svelte';
-  import { ArrowsClockwise, RocketLaunch, SpinnerGap, CheckCircle } from 'phosphor-svelte';
+  import { versionService } from '../../services/versionService.svelte';
+  import {
+    ArrowsClockwise,
+    RocketLaunch,
+    SpinnerGap,
+    CheckCircle,
+    DownloadSimple,
+    Trash
+  } from 'phosphor-svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
 
   let newLayoutName = $state('');
   let isCreatingLayout = $state(false);
-  let isCheckingUpdates = $state(false);
 
   function formatTimestamp(ts: number | string | undefined | null): string {
     if (!ts) return 'Neznámé';
@@ -36,52 +41,69 @@
   }
 
   let formattedAppVersion = $derived(
-    APP_BUILD_TIME > 0 ? formatTimestamp(APP_BUILD_TIME) : formatTimestamp(Date.now())
+    formatTimestamp(versionService.state.buildTime)
   );
 
   let formattedDbVersion = $derived(
-    dbState.meta?.dbUpdated
-      ? formatTimestamp(dbState.meta.dbUpdated)
-      : dbState.meta?.dbVersion
-        ? formatTimestamp(dbState.meta.dbVersion)
-        : dbState.remoteVersion?.dbUpdated
-          ? formatTimestamp(dbState.remoteVersion.dbUpdated)
-          : dbState.remoteVersion?.dbVersion
-            ? formatTimestamp(dbState.remoteVersion.dbVersion)
-            : 'Aktuální'
+    !versionService.state.isDbInstalled
+      ? 'Nestaženo'
+      : versionService.state.dbMeta?.dbUpdated
+        ? formatTimestamp(versionService.state.dbMeta.dbUpdated)
+        : versionService.state.dbMeta?.dbVersion
+          ? formatTimestamp(versionService.state.dbMeta.dbVersion)
+          : 'Nainstalováno'
   );
 
   async function handleCheckUpdates() {
-    isCheckingUpdates = true;
     try {
       settings.vibrate(20);
       toast.show('Kontroluji aktualizace...', { type: 'info', duration: 2000 });
-      await checkUpdatesOnInit();
-      if (!dbState.updateAvailable) {
+      const { updateAvailable } = await versionService.checkUpdates();
+      if (!updateAvailable) {
         toast.show('Máte nejnovější verzi', { type: 'success', duration: 2500 });
       } else {
         toast.show('Dostupná nová verze!', { type: 'warning', duration: 3000 });
       }
     } catch {
       toast.show('Chyba kontroly', { type: 'danger' });
-    } finally {
-      isCheckingUpdates = false;
     }
   }
 
   async function handleApplyUpdate() {
     try {
       settings.vibrate(30);
-      if (dbState.dbUpdateAvailable) {
+      if (versionService.state.dbUpdateAvailable) {
         toast.show('Stahuji slovník...', { type: 'info' });
-        await getDatabase({ forceRefresh: true });
+        await versionService.downloadDb();
         toast.show('Slovník aktualizován', { type: 'success' });
-      } else if (dbState.appUpdateAvailable) {
-        toast.show('Načítám novou verzi...', { type: 'info' });
-        window.location.reload();
+      } else if (versionService.state.appUpdateAvailable) {
+        toast.show('Stahuji novou verzi...', { type: 'info' });
+        await versionService.updateApp();
+        toast.show('Aplikace aktualizována', { type: 'success' });
       }
     } catch {
       toast.show('Chyba aktualizace', { type: 'danger' });
+    }
+  }
+
+  async function handleDownloadDbManual() {
+    try {
+      settings.vibrate(20);
+      toast.show('Zahajuji stahování slovníku...', { type: 'info' });
+      await versionService.downloadDb();
+      toast.show('Slovník byl úspěšně stažen', { type: 'success' });
+    } catch (err: any) {
+      toast.show(`Chyba: ${err?.message || 'Nepodařilo se stáhnout'}`, { type: 'danger' });
+    }
+  }
+
+  async function handleDeleteDbManual() {
+    try {
+      settings.vibrate(35);
+      await versionService.deleteDb();
+      toast.show('Slovník byl smazán z paměti', { type: 'info' });
+    } catch {
+      toast.show('Chyba při mazání slovníku', { type: 'danger' });
     }
   }
 
@@ -135,7 +157,7 @@
             Aplikace i data fungují offline. Aktualizace probíhají jednoduše jedním klepnutím.
           </p>
         </div>
-        {#if !dbState.updateAvailable && dbState.status !== 'loading'}
+        {#if !versionService.state.updateAvailable && versionService.state.status === 'idle'}
           <span class="badge-status online">
             <CheckCircle size={14} weight="fill" />
             <span>Aktuální</span>
@@ -144,7 +166,7 @@
       </div>
 
       <!-- Banner s výzvou k aktualizaci, pokud je k dispozici -->
-      {#if dbState.updateAvailable}
+      {#if versionService.state.updateAvailable}
         <div class="update-banner">
           <div class="update-banner-info">
             <div class="update-title">
@@ -152,10 +174,10 @@
               <span>K dispozici je novější verze</span>
             </div>
             <div class="update-subtitle">
-              {#if dbState.dbUpdateAvailable && dbState.remoteVersion}
-                Nová verze slovníku ({formatTimestamp(dbState.remoteVersion.dbUpdated || dbState.remoteVersion.dbVersion)}).
-              {:else if dbState.appUpdateAvailable && dbState.remoteVersion}
-                Nové vydání aplikace ({formatTimestamp(dbState.remoteVersion.buildTime)}).
+              {#if versionService.state.dbUpdateAvailable && versionService.state.remoteVersion}
+                Nová verze slovníku ({formatTimestamp(versionService.state.remoteVersion.dbUpdated || versionService.state.remoteVersion.dbVersion)}).
+              {:else if versionService.state.appUpdateAvailable && versionService.state.remoteVersion}
+                Nové vydání aplikace ({formatTimestamp(versionService.state.remoteVersion.buildTime)}).
               {:else}
                 Na serveru je k dispozici novější verze.
               {/if}
@@ -163,12 +185,12 @@
           </div>
           <button
             class="update-action-btn"
-            disabled={isCheckingUpdates || dbState.status === 'loading'}
+            disabled={versionService.state.status !== 'idle'}
             onclick={handleApplyUpdate}
           >
-            {#if dbState.status === 'loading'}
+            {#if versionService.state.status === 'downloading_app' || versionService.state.status === 'downloading_db'}
               <SpinnerGap size={15} class="spin" />
-              <span>Stahuji...</span>
+              <span>Stahuji ({versionService.state.progress} %)...</span>
             {:else}
               <RocketLaunch size={16} weight="bold" />
               <span>Aktualizovat nyní</span>
@@ -189,13 +211,39 @@
         </div>
       </div>
 
+      <!-- Tlačítko pro stažení / smazání slovníku -->
+      {#if !versionService.state.isDbInstalled}
+        <button
+          class="secondary-btn"
+          disabled={versionService.state.status !== 'idle'}
+          onclick={handleDownloadDbManual}
+        >
+          {#if versionService.state.status === 'downloading_db'}
+            <SpinnerGap size={16} class="spin" />
+            <span>Stahuji slovník ({versionService.state.progress} %)...</span>
+          {:else}
+            <DownloadSimple size={16} weight="bold" />
+            <span>Stáhnout slovník (102 MB)</span>
+          {/if}
+        </button>
+      {:else}
+        <button
+          class="danger-outline-btn"
+          disabled={versionService.state.status !== 'idle'}
+          onclick={handleDeleteDbManual}
+        >
+          <Trash size={16} weight="bold" />
+          <span>Smazat slovník (102 MB)</span>
+        </button>
+      {/if}
+
       <!-- Tlačítko kontroly aktualizací -->
       <button
         class="secondary-btn"
-        disabled={isCheckingUpdates || dbState.status === 'loading'}
+        disabled={versionService.state.status !== 'idle'}
         onclick={handleCheckUpdates}
       >
-        {#if isCheckingUpdates}
+        {#if versionService.state.status === 'checking'}
           <SpinnerGap size={16} class="spin" />
           <span>Kontroluji aktualizace...</span>
         {:else}
@@ -614,6 +662,32 @@
   }
 
   .secondary-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .danger-outline-btn {
+    padding: 10px 14px;
+    background-color: transparent;
+    border: 1px solid var(--color-accent-danger);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-accent-danger);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .danger-outline-btn:active:not(:disabled) {
+    background-color: var(--color-accent-danger-subtle);
+  }
+
+  .danger-outline-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }

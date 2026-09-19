@@ -67,3 +67,8 @@ Thumbs.db
 # Large generated SQLite database artifact
 # Generated from data/ via `python3 scripts/build-database/build_database.py`.
 public/words.db
+
+# Local SSL certificates for testing
+dev-certs/
+*.pem
+
