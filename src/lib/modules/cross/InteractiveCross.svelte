@@ -443,7 +443,7 @@
   .polish-grid-3x3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, clamp(36px, 5.5vh, 46px));
+    grid-template-rows: repeat(3, 46px);
     gap: 4px;
     width: 100%;
     background: transparent;

@@ -90,7 +90,7 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** otevíráš kontextové menu (`ModuleMenu`), **POTOM** záhlaví VŽDY nese název `<Název modulu>: nastavení` (např. `Kříže: nastavení`), NIKDY generické `Menu modulu`.
 
 ### Klávesnice & Tlačítka
-- **POKUD** navrhuješ vstupní matici, **POTOM** její výšku clampuj (`clamp(...)`), aby celá vstupní zóna nepřekročila prostorový rozpočet **326 px**.
+- **POKUD** navrhuješ vstupní matici, **POTOM** její výška má preferovat maximální povolený rozměr (např. 52 px pro mobilní číselník, 46 px pro kříž, 42 px pro abecedu), přičemž `ZONE-INPUT` má přednost a ukousne si z `ZONE-OUTPUT` tolik prostoru, kolik potřebuje, dokud výstup nenarazí na své minimum 84 px (`var(--output-min-height)`). NIKDY nepoužívej `vh`/`dvh` clampy, které zmenšují tlačítka na úkor volného místa.
 - **POKUD** vytváříš samostatné tlačítko, **POTOM** minimální rozměr je 48 × 48 px (`--tap-min-size`). U hustých matic (abeceda, numpad, vlajky) platí výjimka na výšku **32–40 px**.
 - **POKUD** tvoříš zadávací matice a utilitní blok, **POTOM** tvoří zapuštěná šasi: pozadí `#000000`, vnější rádius `--radius-sm` (6 px), rámeček `1px solid var(--color-border-subtle)`, vnitřní černé spáry `gap: 2px`, obvodový odstup `padding: 2px`.
 - **POKUD** renderuješ keycaps uvnitř šasi, **POTOM** mají `border: none`, `border-radius: 2px`, pozadí `var(--color-surface-2)`, horní plastický odlesk `inset 0 1px 0 rgba(255, 255, 255, 0.10)` a spodní stín `inset 0 -1px 0 rgba(0, 0, 0, 0.5)`. Při stisku (`:active`) vnitřní stín `inset 0 1.5px 3px rgba(0, 0, 0, 0.7)` a `var(--color-surface-active)`.

@@ -131,7 +131,7 @@
 
   .btn-symbol {
     font-family: var(--font-mono);
-    font-size: clamp(24px, 4vh, 36px);
+    font-size: 34px;
     font-weight: 900;
     line-height: 1;
     color: var(--color-text-primary);

@@ -249,7 +249,7 @@
   }
 
   .hero-text {
-    font-size: clamp(17px, 2.5vh, 21px);
+    font-size: 20px;
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.3;

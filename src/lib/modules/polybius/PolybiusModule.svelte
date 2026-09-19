@@ -511,7 +511,7 @@
     border: none;
     border-radius: 2px;
     color: var(--color-text-primary);
-    font-size: clamp(14px, 2.3vh, 18px);
+    font-size: 17px;
     font-weight: 700;
     cursor: pointer;
     touch-action: none;

@@ -423,14 +423,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: clamp(2px, 0.8vh, 8px) 0;
+    padding: 6px 0;
   }
 
   /* Strict 1:1 square dial ensures exact circle */
   .dial-square {
     position: relative;
     width: 100%;
-    max-width: min(100%, calc(100dvh - 240px), 420px);
+    max-width: min(100%, 360px);
     height: auto;
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
@@ -495,8 +495,8 @@
   .wheel-dir-btn {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: clamp(52px, 7.8vh, 64px);
-    height: clamp(52px, 7.8vh, 64px);
+    width: 60px;
+    height: 60px;
     border-radius: var(--radius-full);
     background-color: #0a0a0e;
     border: 1.5px solid #22222a;
@@ -523,7 +523,7 @@
 
   .dir-hint {
     font-family: var(--font-condensed);
-    font-size: clamp(20px, 3vh, 26px);
+    font-size: 24px;
     font-weight: 800;
     color: rgba(255, 255, 255, 0.42);
     line-height: 1;

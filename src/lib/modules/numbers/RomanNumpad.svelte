@@ -113,7 +113,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: clamp(48px, 7.2vh, 60px);
+    height: 58px;
     background-color: var(--color-surface-2);
     color: var(--color-text-primary);
     border: none;
@@ -131,7 +131,7 @@
   }
 
   .grid-filler {
-    height: clamp(48px, 7.2vh, 60px);
+    height: 58px;
     min-height: var(--tap-min-size);
     background-color: var(--color-surface-2);
     opacity: 0.35;
@@ -144,7 +144,7 @@
   }
 
   .key-label {
-    font-size: clamp(20px, 3.2vh, 25px);
+    font-size: 22px;
     font-weight: 800;
     line-height: 1;
     color: var(--color-accent-primary);

@@ -484,7 +484,7 @@
   .phone-keypad-grid-3x4 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(4, clamp(44px, 6.5vh, 54px));
+    grid-template-rows: repeat(4, 52px);
     gap: 2px;
     padding: 2px;
     width: 100%;
@@ -531,7 +531,7 @@
   }
 
   .phone-key-num {
-    font-size: clamp(18px, 2.6vh, 22px);
+    font-size: 22px;
     font-weight: 800;
     font-family: var(--font-mono);
     color: var(--color-text-primary);
@@ -553,7 +553,7 @@
   }
 
   .phone-sub-char {
-    font-size: clamp(10px, 1.4vh, 11px);
+    font-size: 11px;
     font-weight: 600;
     font-family: var(--font-mono);
     color: var(--color-text-secondary);

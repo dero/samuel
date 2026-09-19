@@ -256,7 +256,7 @@
   .flags-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: clamp(34px, 5.6vh, 52px);
+    grid-auto-rows: 48px;
     gap: 2px;
     padding: 2px;
     width: 100%;
@@ -312,8 +312,8 @@
   }
 
   .flag-tile-preview {
-    width: clamp(20px, 3.4vh, 30px);
-    height: clamp(20px, 3.4vh, 30px);
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -86,7 +86,7 @@
     border-radius: 2px;
     cursor: pointer;
     touch-action: none;
-    height: clamp(38px, 5.0vh, 44px);
+    height: 42px;
     min-height: 32px;
     font-family: var(--font-mono, monospace);
     font-size: var(--text-base);
@@ -101,13 +101,13 @@
 
   /* Medium rows (6 rows, e.g. alphanumeric 36) */
   .alphabet-grid.medium-rows .letter-key {
-    height: clamp(34px, 4.4vh, 39px);
+    height: 38px;
     font-size: var(--text-sm);
   }
 
   /* Dense rows (7 rows, e.g. Czech 42) */
   .alphabet-grid.dense-rows .letter-key {
-    height: clamp(30px, 3.8vh, 35px);
+    height: 34px;
     font-size: 13px;
   }
 

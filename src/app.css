@@ -75,7 +75,7 @@
   --subtoolbar-height: 36px;
   --utility-row-height: 42px;
   --zone-input-gap: var(--space-sm);
-  --dominant-key-height: clamp(62px, 9.5vh, 82px);
+  --dominant-key-height: 76px;
   --output-min-height: 84px;
   --max-app-width: 640px;
 

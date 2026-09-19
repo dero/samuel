@@ -147,7 +147,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: clamp(48px, 7.2vh, 60px);
+    height: 58px;
     background-color: var(--color-surface-2);
     color: var(--color-text-muted);
     border: none;

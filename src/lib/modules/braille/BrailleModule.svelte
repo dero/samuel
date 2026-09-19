@@ -352,7 +352,7 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: clamp(6px, 1.6vh, 18px) clamp(20px, 7vw, 44px);
+    padding: 10px clamp(20px, 7vw, 44px);
     background: transparent;
     border: none;
     box-shadow: none;
@@ -362,13 +362,13 @@
   .matrix-col {
     display: flex;
     flex-direction: column;
-    gap: clamp(14px, 2.6vh, 26px);
+    gap: 18px;
     align-items: center;
   }
 
   .matrix-dot-btn {
-    width: clamp(54px, 8.8vh, 76px);
-    height: clamp(54px, 8.8vh, 76px);
+    width: 68px;
+    height: 68px;
     border-radius: var(--radius-full);
     background-color: #0a0a0e;
     border: 1.5px solid #22222a;
@@ -426,7 +426,7 @@
 
   .dot-num {
     font-family: var(--font-mono);
-    font-size: clamp(22px, 3.6vh, 30px);
+    font-size: 26px;
     font-weight: 900;
     color: var(--color-text-secondary);
     pointer-events: none;

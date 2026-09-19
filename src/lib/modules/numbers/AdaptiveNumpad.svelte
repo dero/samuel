@@ -153,31 +153,31 @@
 
   /* Base 2: Binary */
   .key-bin {
-    height: clamp(68px, 10.5vh, 88px);
-    font-size: clamp(28px, 5vh, 36px);
+    height: 84px;
+    font-size: 32px;
   }
 
   /* Base 3: Ternary */
   .key-ter {
-    height: clamp(64px, 9.5vh, 80px);
-    font-size: clamp(24px, 4.5vh, 30px);
+    height: 76px;
+    font-size: 28px;
   }
 
   /* Medium keys (Bases 4, 5, 6) */
   .key-medium {
-    height: clamp(52px, 7.5vh, 64px);
+    height: 62px;
     font-size: var(--text-xl);
   }
 
   /* Compact keys (Bases 7, 8, 9) */
   .key-compact {
-    height: clamp(48px, 6.5vh, 58px);
+    height: 56px;
     font-size: var(--text-lg);
   }
 
   /* Hex keys (Bases 11..16) */
   .key-hex {
-    height: clamp(42px, 5.5vh, 50px);
+    height: 48px;
     font-size: var(--text-lg);
   }
 
@@ -196,7 +196,7 @@
   }
 
   .key-dec {
-    height: clamp(44px, 6vh, 54px);
+    height: 52px;
     font-size: var(--text-xl);
   }
 
