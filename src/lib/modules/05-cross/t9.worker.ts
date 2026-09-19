@@ -70,6 +70,7 @@ async function getWorkerDatabase(): Promise<SqlDatabase> {
 
     const buffer = await getCachedDbBuffer();
     if (!buffer) {
+      initPromise = null;
       throw new Error('Slovníková databáze není stažena.');
     }
 

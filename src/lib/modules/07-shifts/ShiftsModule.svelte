@@ -22,6 +22,7 @@
   import { buildCaesarLexicon } from './caesarScorer';
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
+  import { versionService } from '../../services/versionService.svelte';
   import { navigation } from '../../state/navigation.svelte';
   import { toast } from '../../state/toast.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
@@ -82,6 +83,7 @@
   let isLexiconLoaded = $state<boolean>(false);
 
   onMount(() => {
+    if (!versionService.state.isDbInstalled) return;
     getLexiconWords()
       .then((words) => {
         setCaesarLexicon(buildCaesarLexicon(words));

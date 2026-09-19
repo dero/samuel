@@ -14,6 +14,7 @@ import {
   downloadAppAssets,
   downloadDatabase as downloadDbCore,
   clearDatabaseCache,
+  resetAllOfflineData,
   cleanupLegacyIndexedDb,
   getLocalDbMeta,
   type AppVersionInfo,
@@ -202,6 +203,15 @@ class VersionService {
       this.state.error = err?.message || 'Chyba při mazání slovníku';
       throw err;
     }
+  }
+
+  /**
+   * Resets all offline caches, registrations, and metadata,
+   * then reloads to root which triggers the first-run splash screen.
+   */
+  async resetAllData(): Promise<void> {
+    await resetAllOfflineData();
+    window.location.href = '/?sw-strategy=network';
   }
 }
 

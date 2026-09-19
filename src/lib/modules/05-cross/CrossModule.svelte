@@ -24,6 +24,7 @@
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
+  import { versionService } from '../../services/versionService.svelte';
   import { navigation } from '../../state/navigation.svelte';
   import AlphabetSelect from '../../components/ui/AlphabetSelect.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
@@ -304,6 +305,12 @@
       isT9Loading = false;
       return;
     }
+    if (!versionService.state.isDbInstalled) {
+      t9Candidates = [getFallbackT9Word(digits)];
+      t9CandidateIndex = 0;
+      isT9Loading = false;
+      return;
+    }
     const currentReq = ++t9ReqCounter;
     isT9Loading = true;
     t9Candidates = [];
@@ -424,6 +431,9 @@
       commitT9Word(word, false);
     }
     phoneInputMode = newMode;
+    if (newMode === 't9' && !versionService.state.isDbInstalled) {
+      toast.show('Stáhněte slovník v Nastavení pro T9', { type: 'warning' });
+    }
   }
 
   const polishSelectedChar = $derived.by(() => {
@@ -680,8 +690,19 @@
           onChange={handlePhoneModeChange}
         />
 
-        <!-- Floating T9 Candidate Suggestion Bar (zobrazí se plovoucí až při psaní) -->
-        {#if phoneInputMode === 't9' && t9Digits}
+        <!-- Floating T9 Candidate Suggestion Bar / Missing DB Banner -->
+        {#if phoneInputMode === 't9' && !versionService.state.isDbInstalled}
+          <div class="t9-missing-banner">
+            <span class="t9-missing-text">Slovník pro T9 není stažen (~102 MB).</span>
+            <button
+              type="button"
+              class="t9-settings-btn"
+              onclick={() => navigation.navigate('settings')}
+            >
+              Stáhnout v Nastavení
+            </button>
+          </div>
+        {:else if phoneInputMode === 't9' && t9Digits}
           <div class="t9-candidate-container" role="region" aria-label="Návrhy slov T9">
             <div class="t9-candidates-scroll">
               {#if isT9Loading}
@@ -801,6 +822,31 @@
 
   :global(.output-container.has-t9-floating .result-text) {
     padding-bottom: 48px;
+  }
+
+  .t9-missing-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: 8px 12px;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+  }
+
+  .t9-settings-btn {
+    padding: 6px 10px;
+    background-color: var(--color-surface-active);
+    color: var(--color-accent-primary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
   }
 
   .t9-candidate-container {

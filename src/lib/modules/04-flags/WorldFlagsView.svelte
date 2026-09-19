@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { settings } from '../../state/settings.svelte';
+  import { versionService } from '../../services/versionService.svelte';
+  import { navigation } from '../../state/navigation.svelte';
   import { matchesSearch } from '../../utils/search';
   import SearchInput from '../../components/ui/SearchInput.svelte';
   import FlagDetailModal from './FlagDetailModal.svelte';
@@ -30,6 +32,10 @@
   let isDetailOpen = $state(false);
 
   onMount(async () => {
+    if (!versionService.state.isDbInstalled) {
+      isLoading = false;
+      return;
+    }
     try {
       allFlags = await getWorldFlags();
     } catch (err) {
@@ -153,7 +159,15 @@
 
   <!-- Middle Section: Scrollable Results Grid with 1x1 Flags -->
   <div class="flags-scroll-zone">
-    {#if isLoading}
+    {#if !versionService.state.isDbInstalled}
+      <div class="empty-state">
+        <span class="empty-title">Slovníková data nejsou stažena</span>
+        <span class="empty-hint text-muted">Katalog státních vlajek je součástí slovníkového balíčku (~102 MB).</span>
+        <button type="button" class="empty-reset-btn" onclick={() => navigation.navigate('settings')}>
+          Stáhnout v Nastavení
+        </button>
+      </div>
+    {:else if isLoading}
       <div class="loading-state">
         <Globe size={32} class="spin-icon text-muted" />
         <span class="text-muted">Načítám státy světa...</span>

@@ -3,7 +3,8 @@
   import { settings } from '../../state/settings.svelte';
   import { pasteFromClipboard } from '../../utils/clipboard';
   import BottomSheet from '../ui/BottomSheet.svelte';
-  import { ClipboardText, Trash, List } from 'phosphor-svelte';
+  import SlideToAction from '../ui/SlideToAction.svelte';
+  import { ClipboardText, List } from 'phosphor-svelte';
 
   interface Props {
     hasAlphabet?: boolean;
@@ -15,22 +16,11 @@
 
   let { onReset, onPaste, children }: Props = $props();
 
-  let isConfirmingReset = $state(false);
-  let resetTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  function handleResetClick() {
-    settings.vibrate(25);
-    if (!isConfirmingReset) {
-      isConfirmingReset = true;
-      resetTimeout = setTimeout(() => {
-        isConfirmingReset = false;
-      }, 3000);
-    } else {
-      if (resetTimeout) clearTimeout(resetTimeout);
-      isConfirmingReset = false;
-      if (onReset) onReset();
+  function handleResetAction() {
+    if (onReset) onReset();
+    setTimeout(() => {
       navigation.closeSubView();
-    }
+    }, 280);
   }
 
   async function handlePasteClick() {
@@ -63,15 +53,15 @@
       <span>Vložit ze schránky</span>
     </button>
 
-    <button
-      type="button"
-      class="action-btn reset-btn"
-      class:confirming={isConfirmingReset}
-      onclick={handleResetClick}
-    >
-      <span class="btn-icon"><Trash size={20} weight="duotone" /></span>
-      <span>{isConfirmingReset ? 'Opravdu vymazat modul?' : 'Vyčistit modul'}</span>
-    </button>
+    <SlideToAction
+      onAction={handleResetAction}
+      showLabel={true}
+      label="Vyčistit modul"
+      confirmedLabel="Vyčištěno"
+      ariaLabel="Podržte pro vyčištění modulu"
+      holdDuration={500}
+      variant="menu"
+    />
   </div>
 </BottomSheet>
 
@@ -103,26 +93,11 @@
     min-height: var(--tap-min-size);
     color: var(--color-text-primary);
     transition: background-color 0.12s ease, border-color 0.12s ease;
+    box-sizing: border-box;
+    width: 100%;
   }
   .action-btn:active {
     background-color: var(--color-surface-active);
-  }
-
-  .reset-btn {
-    color: var(--color-accent-danger);
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-
-  .reset-btn.confirming {
-    background-color: var(--color-accent-danger);
-    color: #ffffff;
-    border-color: var(--color-accent-danger);
-    animation: pulse 0.5s infinite alternate;
-  }
-
-  @keyframes pulse {
-    from { opacity: 0.85; }
-    to { opacity: 1; }
   }
 
   .btn-icon {

@@ -45,11 +45,10 @@ async function getWorkerLexicon(): Promise<LexiconItem[]> {
       locateFile: () => sqlWasmUrl
     });
 
-    let buffer = await getCachedDbBuffer();
+    const buffer = await getCachedDbBuffer();
     if (!buffer) {
-      const res = await fetch('/words.db');
-      if (!res.ok) throw new Error('Failed to fetch words.db');
-      buffer = await res.arrayBuffer();
+      initPromise = null;
+      throw new Error('Slovníková databáze není lokálně stažena. Stáhněte ji v Nastavení.');
     }
 
     const db = new SQL.Database(new Uint8Array(buffer));

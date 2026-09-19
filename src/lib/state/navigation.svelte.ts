@@ -84,6 +84,10 @@ class NavigationState {
     }
   }
 
+  navigate(id: ModuleId) {
+    this.openModule(id);
+  }
+
   /**
    * Open module contextual menu (pushes state: Module > Menu)
    */

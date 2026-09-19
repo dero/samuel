@@ -20,6 +20,8 @@
   import { morseService } from './morseService.svelte';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
+  import { versionService } from '../../services/versionService.svelte';
+  import { navigation } from '../../state/navigation.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
   import { copyToClipboard } from '../../utils/clipboard';
   import { ArrowsLeftRight, Lightning } from 'phosphor-svelte';
@@ -143,6 +145,14 @@
 
   async function runBruteforce() {
     if (!isEligibleForBruteforce) return;
+
+    if (!versionService.state.isDbInstalled) {
+      settings.vibrate(30);
+      toast.show('Stáhněte slovník v Nastavení', { type: 'warning' });
+      navigation.navigate('settings');
+      return;
+    }
+
     isPermutationsOpen = false;
     isSolving = true;
     isBruteforceOpen = true;
@@ -152,13 +162,18 @@
       bruteforceResults = res.candidates;
       totalFoundCandidates = res.totalFound;
       if (bruteforceResults.length > 0) {
-        toast.show(`Nalezeno ${totalFoundCandidates} možností`, 'success');
+        toast.show(`Nalezeno ${totalFoundCandidates} možností`, { type: 'success' });
       } else {
-        toast.show('Žádný rozpad nenalezen', 'warning');
+        toast.show('Žádný rozpad nenalezen', { type: 'warning' });
       }
     } catch (err: any) {
       console.error('Bruteforce solve error:', err);
-      toast.show('Chyba při řešení morseovky', 'danger');
+      if (err?.message?.includes('slovník') || err?.message?.includes('databáze')) {
+        toast.show('Stáhněte slovník v Nastavení', { type: 'warning' });
+        navigation.navigate('settings');
+      } else {
+        toast.show('Chyba při řešení morseovky', { type: 'danger' });
+      }
     } finally {
       isSolving = false;
     }
@@ -349,7 +364,24 @@
   badge={bruteforceResults.length > 0 ? `${bruteforceResults.length}${totalFoundCandidates > bruteforceResults.length ? ` z ${totalFoundCandidates}` : ''}` : undefined}
   onClose={() => (isBruteforceOpen = false)}
 >
-  {#if isSolving}
+  {#if !versionService.state.isDbInstalled}
+    <div class="empty-state" style="padding: 24px 16px; text-align: center;">
+      <p style="color: var(--color-text-secondary); margin-bottom: 16px;">
+        Pro automatické řešení morseovky bez mezer je vyžadován offline slovník (~102 MB).
+      </p>
+      <button
+        type="button"
+        class="secondary-btn"
+        style="width: 100%; min-height: 48px; font-weight: 600;"
+        onclick={() => {
+          isBruteforceOpen = false;
+          navigation.navigate('settings');
+        }}
+      >
+        Přejít do Nastavení ke stažení
+      </button>
+    </div>
+  {:else if isSolving}
     <div class="loading-state">
       <div class="loading-spinner"></div>
       <span>Prohledávám strom možností a slovník...</span>

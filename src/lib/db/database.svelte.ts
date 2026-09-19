@@ -198,81 +198,30 @@ export async function getDatabase(options: { forceRefresh?: boolean } = {}): Pro
 
   initPromise = (async () => {
     dbState.status = 'loading';
-    dbState.progress = 5;
+    dbState.progress = 20;
     dbState.error = null;
 
     try {
-      // 1. Initialize sql.js WASM
-      const SQL = await initSqlJs({
-        locateFile: () => sqlWasmUrl
-      });
-      dbState.progress = 20;
+      // 1. Read buffer strictly from local CacheStorage (NO network downloads!)
+      const buffer = await getCachedDb();
+      if (!buffer) {
+        dbState.status = 'idle';
+        initPromise = null;
+        throw new Error('Slovníková databáze není lokálně dostupná. Přejděte do Nastavení pro její stažení.');
+      }
 
-      // 2. Read local metadata & buffer from CacheStorage
-      let localMeta = options.forceRefresh ? null : await getCachedMeta();
-      let buffer = options.forceRefresh ? null : await getCachedDb();
+      const localMeta = await getCachedMeta();
       if (localMeta) {
         dbState.meta = localMeta;
       }
 
-      // 3. Keep status accurate via authoritative versionService
-      let remoteVersion: AppVersionInfo | null = versionService.state.remoteVersion;
-      if (!remoteVersion) {
-        await versionService.checkUpdates();
-        remoteVersion = versionService.state.remoteVersion;
-      }
+      // 2. Initialize sql.js WASM
+      const SQL = await initSqlJs({
+        locateFile: () => sqlWasmUrl
+      });
+      dbState.progress = 60;
 
-      const isDev = import.meta.env.DEV;
-      const hasCachedBuffer = Boolean(buffer);
-      const dbHasNewerVersion = Boolean(
-        hasCachedBuffer && localMeta && remoteVersion && remoteVersion.dbHash !== localMeta.dbHash
-      );
-      const appNeedsUpdate = !isDev && Boolean(
-        remoteVersion && (
-          (typeof __BUILD_TIME__ !== 'undefined' && remoteVersion.buildTime > __BUILD_TIME__) ||
-          (typeof __APP_VERSION__ !== 'undefined' && remoteVersion.appVersion !== __APP_VERSION__)
-        )
-      );
-
-      dbState.dbUpdateAvailable = dbHasNewerVersion;
-      dbState.appUpdateAvailable = appNeedsUpdate;
-      dbState.updateAvailable = dbHasNewerVersion || appNeedsUpdate;
-
-      // CRITICAL: We ONLY download words.db if:
-      // A) options.forceRefresh === true (user explicitly clicked Update / Re-download)
-      // B) !buffer (first launch, no database cached at all in CacheStorage)
-      // We NEVER automatically re-download just because remoteVersion.dbHash !== localMeta.dbHash!
-      const mustDownload = options.forceRefresh || !buffer;
-
-      if (mustDownload) {
-        if (!buffer && typeof navigator !== 'undefined' && !navigator.onLine) {
-          throw new Error('Aplikace je offline a slovníková databáze ještě nebyla stažena. Připojte se k internetu a stáhněte ji v Nastavení.');
-        }
-
-        // Download fresh /words.db via authoritative versionService
-        await versionService.downloadDb((p) => {
-          dbState.progress = p;
-        });
-        buffer = await getCachedDb();
-        localMeta = versionService.state.dbMeta;
-        dbState.meta = localMeta;
-        dbState.dbUpdateAvailable = false;
-        dbState.updateAvailable = dbState.appUpdateAvailable;
-
-        // When user explicitly updates DB, if a newer app version is also available in production,
-        // reload to prevent DB schema drift!
-        if (!isDev && appNeedsUpdate && typeof window !== 'undefined') {
-          console.log('Database updated and newer app version detected. Reloading to prevent DB schema drift...');
-          setTimeout(() => {
-            window.location.reload();
-          }, 300);
-        }
-      }
-
-      if (!buffer) {
-        throw new Error('Nepodařilo se načíst data slovníku.');
-      }
-
+      // 3. Mount SQLite database from offline buffer
       dbInstance = new SQL.Database(new Uint8Array(buffer));
 
       // Get count across all 5 tables
@@ -294,7 +243,7 @@ export async function getDatabase(options: { forceRefresh?: boolean } = {}): Pro
     } catch (err: any) {
       dbState.status = 'error';
       dbState.error = err?.message ?? 'Chyba inicializace databáze';
-      console.error('Database initialization error:', err);
+      initPromise = null;
       throw err;
     }
   })();

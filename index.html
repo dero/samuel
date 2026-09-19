@@ -224,32 +224,44 @@
         color: var(--color-text-muted);
       }
 
-      .shell-progress-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .shell-progress-bar {
+      .shell-progress-box {
         width: 100%;
-        height: 6px;
+        height: 52px;
+        min-height: 52px;
+        position: relative;
         background-color: var(--color-surface-2);
-        border-radius: var(--radius-full);
+        border: 1px solid var(--color-border-medium);
+        border-radius: var(--radius-sm);
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
       }
 
       .shell-progress-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
         width: 0%;
-        height: 100%;
         background-color: var(--color-accent-primary);
-        border-radius: var(--radius-full);
+        opacity: 0.28;
+        border-right: 2px solid var(--color-accent-primary);
         transition: width 0.15s ease;
       }
 
       .shell-progress-text {
-        font-size: 12px;
-        color: var(--color-text-secondary);
+        position: relative;
+        z-index: 1;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--color-text-primary);
         text-align: center;
+        padding: 0 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .shell-btn {
@@ -311,21 +323,19 @@
               <input type="checkbox" id="pkg-db" />
               <div class="shell-pkg-info">
                 <span class="shell-pkg-name">Slovníková databáze</span>
-                <span class="shell-pkg-size">~102 MB • Volitelné (morseovka, T9)</span>
+                <span class="shell-pkg-size">~102 MB • Volitelné</span>
               </div>
             </label>
-          </div>
-
-          <div id="shell-progress-wrap" class="shell-progress-wrap" style="display: none;">
-            <div class="shell-progress-bar">
-              <div id="shell-progress-fill" class="shell-progress-fill"></div>
-            </div>
-            <div id="shell-progress-text" class="shell-progress-text">Připravuji stahování…</div>
           </div>
 
           <button id="shell-download-btn" class="shell-btn" type="button">
             Stáhnout vybrané a spustit
           </button>
+
+          <div id="shell-progress-box" class="shell-progress-box" style="display: none;">
+            <div id="shell-progress-fill" class="shell-progress-fill"></div>
+            <div id="shell-progress-text" class="shell-progress-text">Připravuji stahování…</div>
+          </div>
         </div>
       </div>
     </div>

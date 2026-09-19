@@ -3,13 +3,13 @@
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import { versionService } from '../../services/versionService.svelte';
+  import SlideToAction from '../../components/ui/SlideToAction.svelte';
   import {
     ArrowsClockwise,
     RocketLaunch,
     SpinnerGap,
     CheckCircle,
-    DownloadSimple,
-    Trash
+    DownloadSimple
   } from 'phosphor-svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
 
@@ -99,12 +99,32 @@
 
   async function handleDeleteDbManual() {
     try {
-      settings.vibrate(35);
       await versionService.deleteDb();
       toast.show('Slovník byl smazán z paměti', { type: 'info' });
     } catch {
       toast.show('Chyba při mazání slovníku', { type: 'danger' });
     }
+  }
+
+  let isResetting = $state(false);
+
+  async function handleResetAllData() {
+    isResetting = true;
+    try {
+      await versionService.resetAllData();
+    } catch (err) {
+      console.error('Failed to reset all data:', err);
+      isResetting = false;
+      toast.show('Chyba při resetu dat', { type: 'danger' });
+    }
+  }
+
+  function handleDeleteCustomLayout(id: string) {
+    alphabet.deleteCustomLayout(id);
+    if (inspectedLayoutId === id) {
+      inspectedLayoutId = alphabet.layouts[0]?.id ?? 'english-26';
+    }
+    toast.show('Abeceda smazána', { type: 'info' });
   }
 
   let inspectedLayoutId = $state<string>(alphabet.layouts[0]?.id ?? 'english-26');
@@ -227,14 +247,16 @@
           {/if}
         </button>
       {:else}
-        <button
-          class="danger-outline-btn"
+        <SlideToAction
+          onAction={handleDeleteDbManual}
           disabled={versionService.state.status !== 'idle'}
-          onclick={handleDeleteDbManual}
-        >
-          <Trash size={16} weight="bold" />
-          <span>Smazat slovník (102 MB)</span>
-        </button>
+          showLabel={true}
+          label="Smazat slovník (102 MB)"
+          confirmedLabel="Slovník smazán"
+          ariaLabel="Podržte pro smazání slovníku"
+          holdDuration={600}
+          variant="outline"
+        />
       {/if}
 
       <!-- Tlačítko kontroly aktualizací -->
@@ -282,21 +304,13 @@
             </button>
 
             {#if !layout.isBuiltin}
-              <button
-                type="button"
-                class="delete-btn"
-                title="Smazat vlastní abecedu"
-                onclick={() => {
-                  settings.vibrate(35);
-                  alphabet.deleteCustomLayout(layout.id);
-                  if (inspectedLayoutId === layout.id) {
-                    inspectedLayoutId = alphabet.layouts[0]?.id ?? 'english-26';
-                  }
-                  toast.show('Abeceda smazána', { type: 'info' });
-                }}
-              >
-                ✕
-              </button>
+              <SlideToAction
+                onAction={() => handleDeleteCustomLayout(layout.id)}
+                showLabel={false}
+                ariaLabel="Podržte pro smazání vlastní abecedy"
+                holdDuration={400}
+                variant="icon-only"
+              />
             {/if}
           </div>
         {/each}
@@ -378,6 +392,25 @@
         onChange={(val) => {
           settings.wakeLockEnabled = val;
         }}
+      />
+    </section>
+
+    <!-- 4. Reset a správa úložiště -->
+    <section class="card">
+      <h2 class="card-title">Správa úložiště</h2>
+      <p class="card-desc">
+        Odstraní všechna data aplikace i slovníku z offline mezipaměti a vrátí aplikaci do výchozího stavu prvního spuštění.
+      </p>
+
+      <SlideToAction
+        onAction={handleResetAllData}
+        disabled={isResetting}
+        showLabel={true}
+        label={isResetting ? "Resetuji mezipaměť..." : "Reset všech dat"}
+        confirmedLabel="Resetuji mezipaměť..."
+        ariaLabel="Podržte pro reset všech dat"
+        holdDuration={800}
+        variant="outline"
       />
     </section>
   </div>
@@ -585,12 +618,6 @@
     color: var(--color-accent-primary);
   }
 
-  .delete-btn {
-    padding: 6px 10px;
-    color: var(--color-accent-danger);
-    font-size: var(--text-sm);
-  }
-
   .letters-preview {
     display: flex;
     flex-direction: column;
@@ -662,32 +689,6 @@
   }
 
   .secondary-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .danger-outline-btn {
-    padding: 10px 14px;
-    background-color: transparent;
-    border: 1px solid var(--color-accent-danger);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-accent-danger);
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-  }
-
-  .danger-outline-btn:active:not(:disabled) {
-    background-color: var(--color-accent-danger-subtle);
-  }
-
-  .danger-outline-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }

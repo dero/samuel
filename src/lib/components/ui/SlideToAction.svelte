@@ -8,9 +8,10 @@
     label?: string;
     showLabel?: boolean;
     confirmedLabel?: string;
-    icon?: string;
     ariaLabel?: string;
     holdDuration?: number;
+    variant?: "utility" | "outline" | "menu" | "icon-only";
+    iconSize?: number;
     class?: string;
   }
 
@@ -20,11 +21,16 @@
     label = "Vymazat",
     showLabel = false,
     confirmedLabel = "Smazáno",
-    icon,
-    ariaLabel = "Podržte pro vymazání",
+    ariaLabel,
     holdDuration = 450,
+    variant = "utility",
+    iconSize,
     class: customClass = "",
   }: Props = $props();
+
+  let effectiveIconSize = $derived(
+    iconSize ?? (variant === "menu" ? 20 : variant === "outline" ? 16 : variant === "icon-only" ? 15 : 20)
+  );
 
   let isHolding = $state(false);
   let progress = $state(0);
@@ -132,7 +138,7 @@
 
 <button
   type="button"
-  class="utility-btn hold-delete-btn {customClass}"
+  class="hold-btn variant-{variant} {customClass}"
   class:is-holding={isHolding}
   class:is-confirmed={isConfirmed}
   {disabled}
@@ -159,9 +165,9 @@
   <span class="btn-content">
     <span class="btn-icon">
       {#if isConfirmed}
-        <Check size={20} weight="bold" />
+        <Check size={effectiveIconSize} weight="bold" />
       {:else}
-        <Trash size={20} weight="duotone" />
+        <Trash size={effectiveIconSize} weight="duotone" />
       {/if}
     </span>
     {#if showLabel}
@@ -171,9 +177,26 @@
 </button>
 
 <style>
-  .utility-btn {
+  .hold-btn {
     position: relative;
-    height: var(--utility-row-height);
+    box-sizing: border-box;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    white-space: nowrap;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.12s, border-color 0.12s, box-shadow 0.08s, transform 0.08s;
+  }
+
+  /* Utility variant (default cipher keypad button) */
+  .variant-utility {
+    width: 100%;
+    height: var(--utility-row-height, var(--tap-min-size, 48px));
+    min-height: var(--tap-min-size, 48px);
     padding: 0 var(--space-sm);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
@@ -182,34 +205,63 @@
     font-weight: 600;
     line-height: 1;
     color: var(--color-accent-danger);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
     box-shadow: 
       inset 0 1px 0 rgba(255, 255, 255, 0.10),
       inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s, border-color 0.12s, box-shadow 0.08s, transform 0.08s;
-    box-sizing: border-box;
-    width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
   }
 
-  .utility-btn:active:not(:disabled),
-  .utility-btn.is-holding {
+  /* Menu variant (for BottomSheet menus like ModuleMenu) */
+  .variant-menu {
+    width: 100%;
+    min-height: var(--tap-min-size, 48px);
+    padding: var(--space-md);
+    background-color: var(--color-surface-2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-accent-danger);
+    justify-content: flex-start;
+  }
+
+  /* Outline variant (for Settings cards) */
+  .variant-outline {
+    width: 100%;
+    min-height: var(--tap-min-size, 48px);
+    padding: 10px 14px;
+    background-color: transparent;
+    border: 1px solid var(--color-accent-danger);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-accent-danger);
+    justify-content: center;
+  }
+
+  /* Icon-only variant (for row actions like deleting custom alphabets) */
+  .variant-icon-only {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    background-color: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--radius-sm);
+    color: var(--color-accent-danger);
+    justify-content: center;
+  }
+
+  .hold-btn:active:not(:disabled),
+  .hold-btn.is-holding {
     box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
   }
 
-  .utility-btn:disabled {
+  .hold-btn:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
   }
 
-  .utility-btn:disabled .btn-content {
+  .hold-btn:disabled .btn-content {
     opacity: 0.35;
     color: var(--color-text-secondary);
   }
@@ -246,9 +298,10 @@
     border-right: none;
   }
 
-  .utility-btn.is-confirmed {
+  .hold-btn.is-confirmed {
     background-color: var(--color-accent-danger);
     color: #ffffff;
+    border-color: var(--color-accent-danger);
   }
 
   .btn-content {
@@ -256,9 +309,12 @@
     z-index: 2;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
+    gap: var(--space-sm);
     pointer-events: none;
+  }
+
+  .variant-menu .btn-content {
+    gap: var(--space-md);
   }
 
   .btn-icon {
