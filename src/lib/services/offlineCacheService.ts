@@ -75,7 +75,8 @@ export async function isOcrInstalled(): Promise<boolean> {
     const cache = await caches.open(OCR_CACHE_NAME);
     const matchDet = await cache.match('/ocr/PP-OCRv6_small_det.ort');
     const matchRec = await cache.match('/ocr/PP-OCRv6_small_rec.ort');
-    return Boolean(matchDet && matchRec);
+    const matchUv = await cache.match('/ocr/UVDoc_grid.onnx');
+    return Boolean(matchDet && matchRec && matchUv);
   } catch {
     return false;
   }
@@ -284,13 +285,15 @@ export const OCR_ASSETS_LIST = [
   '/ocr/PP-OCRv6_small_det.ort',
   '/ocr/PP-OCRv6_small_rec.ort',
   '/ocr/ppocrv6_dict.txt',
+  '/ocr/UVDoc_grid.onnx',
+  '/ocr/UVDoc_grid.onnx.data',
   '/ocr/ort-wasm-simd-threaded.wasm',
   '/ocr/ort-wasm-simd-threaded.mjs',
   '/ocr/ort-wasm-simd-threaded.jsep.wasm',
   '/ocr/ort-wasm-simd-threaded.jsep.mjs'
 ];
 
-export const OCR_EXPECTED_TOTAL_BYTES = 73178027;
+export const OCR_EXPECTED_TOTAL_BYTES = 105009269;
 
 /**
  * Downloads OCR models and WASM binaries into CacheStorage (samuel-ocr) with streaming progress tracking.

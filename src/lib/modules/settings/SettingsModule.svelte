@@ -295,7 +295,7 @@
             <span>Stahuji OCR modely ({versionService.state.progress} %)...</span>
           {:else}
             <DownloadSimple size={16} weight="bold" />
-            <span>Stáhnout OCR modely (~73 MB)</span>
+            <span>Stáhnout OCR modely (~105 MB)</span>
           {/if}
         </button>
       {:else}
@@ -303,7 +303,7 @@
           onAction={handleDeleteOcrManual}
           disabled={versionService.state.status !== 'idle'}
           showLabel={true}
-          label="Smazat OCR modely (~73 MB)"
+          label="Smazat OCR modely (~105 MB)"
           confirmedLabel="OCR modely smazány"
           ariaLabel="Podržte pro smazání OCR modelů"
           holdDuration={600}

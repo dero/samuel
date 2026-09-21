@@ -44,6 +44,12 @@
   let showBoundingBoxes = $state(false);
   let copyFeedback = $state<string | null>(null);
 
+  let enableUnwarp = $state(true);
+  let unwarpedPreviewUrl = $state<string | null>(null);
+  let showOriginal = $state(false);
+
+  let displayImageUrl = $derived((unwarpedPreviewUrl && !showOriginal) ? unwarpedPreviewUrl : imagePreviewUrl);
+
   // Effective mode: if auto, choose table if tableStructure.isTable, else text
   let effectiveMode = $derived.by(() => {
     if (layoutMode === 'auto') {
@@ -88,6 +94,9 @@
       recognizedLines = data.lines;
       tableStructure = data.table;
       confidenceScore = data.confidence;
+      if (data.unwarpedPreviewUrl) {
+        unwarpedPreviewUrl = data.unwarpedPreviewUrl;
+      }
       if (data.effectiveRotation !== undefined && userRotation === 0 && data.effectiveRotation !== 0) {
         userRotation = data.effectiveRotation;
       }
@@ -152,6 +161,8 @@
     recognizedLines = [];
     tableStructure = null;
     showBoundingBoxes = false;
+    unwarpedPreviewUrl = null;
+    showOriginal = false;
     const buffer = await file.arrayBuffer();
     currentFileBuffer = buffer;
 
@@ -179,6 +190,8 @@
   function rotateImage(delta: number) {
     settings.vibrate(20);
     userRotation = ((userRotation + delta) % 360 + 360) % 360;
+    unwarpedPreviewUrl = null;
+    showOriginal = false;
     if (recognizedLines.length > 0) {
       recognizedLines = [];
       showBoundingBoxes = false;
@@ -208,7 +221,8 @@
       id: String(Date.now()),
       type: 'recognize',
       imageBuffer: currentFileBuffer,
-      userRotation
+      userRotation,
+      enableUnwarp
     });
   }
 
@@ -220,6 +234,8 @@
   function clearCurrent() {
     settings.vibrate(20);
     imagePreviewUrl = null;
+    unwarpedPreviewUrl = null;
+    showOriginal = false;
     recognizedText = '';
     recognizedLines = [];
     tableStructure = null;
@@ -268,7 +284,7 @@
         <div class="banner-text">
           <h2 class="banner-title">Offline OCR modely</h2>
           <p class="banner-desc">
-            Pro čtení textu z fotek přímo v terénu bez internetu je potřeba stáhnout offline balíček (~73 MB).
+            Pro čtení textu z fotek přímo v terénu bez internetu je potřeba stáhnout offline balíček (~105 MB).
           </p>
         </div>
       </div>
@@ -284,7 +300,7 @@
           <span>Stahuji OCR modely ({versionService.state.progress} %)...</span>
         {:else}
           <DownloadSimple size={18} weight="bold" />
-          <span>Stáhnout OCR modely do paměti (~73 MB)</span>
+          <span>Stáhnout OCR modely do paměti (~105 MB)</span>
         {/if}
       </button>
     </section>
@@ -325,7 +341,11 @@
             class="preview-rotatable"
             style="transform: rotate({userRotation}deg); transition: transform 0.2s ease;"
           >
-            <img src={imagePreviewUrl} alt="Předloha k rozpoznání" class="preview-img" />
+            <img src={displayImageUrl} alt="Předloha k rozpoznání" class="preview-img" />
+
+            {#if unwarpedPreviewUrl && !showOriginal}
+              <div class="unwarp-badge">UVDoc narovnáno</div>
+            {/if}
 
             <!-- Optional Bounding Box Overlay -->
             {#if showBoundingBoxes && recognizedLines.length > 0 && imageNaturalWidth > 0}
@@ -373,6 +393,34 @@
           </div>
 
           <div class="tool-group actions-group">
+            <button
+              type="button"
+              class="tool-btn"
+              class:active={enableUnwarp}
+              onclick={() => {
+                settings.vibrate(20);
+                enableUnwarp = !enableUnwarp;
+              }}
+              title="Vyrovnat zakřivení papíru a vlnění řádků pomocí UVDoc"
+            >
+              <span>UVDoc</span>
+            </button>
+
+            {#if unwarpedPreviewUrl}
+              <button
+                type="button"
+                class="tool-btn"
+                class:active={showOriginal}
+                onclick={() => {
+                  settings.vibrate(20);
+                  showOriginal = !showOriginal;
+                }}
+                title="Přepnout mezi původní a narovnanou fotkou"
+              >
+                <span>{showOriginal ? 'Původní' : 'Narovnaná'}</span>
+              </button>
+            {/if}
+
             {#if recognizedLines.length > 0}
               <button
                 type="button"
@@ -755,6 +803,22 @@
     max-height: 260px;
     object-fit: contain;
     display: block;
+  }
+
+  .unwarp-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: rgba(16, 185, 129, 0.85);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.03em;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+    z-index: 2;
   }
 
   .bounding-boxes-layer {

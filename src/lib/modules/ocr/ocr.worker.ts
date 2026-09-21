@@ -6,6 +6,7 @@
 import * as ort from 'onnxruntime-web';
 import { PaddleOcrService } from 'ppu-paddle-ocr/web';
 import { analyzeTableStructure } from './tableDetector';
+import { getUnwarpSession, unwarpDocument } from './unwarper';
 import type { OcrItem } from './types';
 
 const OCR_CACHE_NAME = 'samuel-ocr';
@@ -92,8 +93,39 @@ async function getOcrService(): Promise<PaddleOcrService> {
   return initPromise;
 }
 
+let unwarpSession: ort.InferenceSession | null = null;
+let unwarpInitPromise: Promise<ort.InferenceSession | null> | null = null;
+
+async function getUnwarpSessionWrapper(): Promise<ort.InferenceSession | null> {
+  if (unwarpSession) return unwarpSession;
+  if (unwarpInitPromise) return unwarpInitPromise;
+
+  unwarpInitPromise = (async () => {
+    try {
+      const [modelBuffer, dataBuffer] = await Promise.all([
+        getCachedResource('/ocr/UVDoc_grid.onnx'),
+        getCachedResource('/ocr/UVDoc_grid.onnx.data')
+      ]);
+
+      if (!modelBuffer || !dataBuffer) {
+        console.warn('UVDoc model files not found in cache or network');
+        return null;
+      }
+
+      const sess = await getUnwarpSession(modelBuffer, dataBuffer);
+      unwarpSession = sess;
+      return sess;
+    } catch (err) {
+      console.warn('Failed to load UVDoc session:', err);
+      return null;
+    }
+  })();
+
+  return unwarpInitPromise;
+}
+
 self.onmessage = async (e: MessageEvent) => {
-  const { id, type, imageBuffer, userRotation = 0 } = e.data;
+  const { id, type, imageBuffer, userRotation = 0, enableUnwarp = true } = e.data;
 
   if (type === 'init') {
     try {
@@ -139,11 +171,36 @@ self.onmessage = async (e: MessageEvent) => {
       }
       bitmap.close();
 
+      // 3. Document unwarping using UVDoc grid
+      let unwarpedPreviewUrl: string | null = null;
+      if (enableUnwarp) {
+        try {
+          self.postMessage({ id, type: 'progress', step: 'unwarping', message: 'Rovnám zakřivení papíru (UVDoc)…' });
+          const unwarpSess = await getUnwarpSessionWrapper();
+          if (unwarpSess) {
+            const unwarped = await unwarpDocument(canvas, unwarpSess);
+            canvas = unwarped;
+            try {
+              const blob = await unwarped.convertToBlob({ type: 'image/jpeg', quality: 0.92 });
+              const reader = new FileReader();
+              unwarpedPreviewUrl = await new Promise<string>((resolve) => {
+                reader.onload = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+              });
+            } catch (blobErr) {
+              console.warn('Could not export unwarped preview:', blobErr);
+            }
+          }
+        } catch (unwarpErr) {
+          console.warn('UVDoc unwarp failed, falling back to original image:', unwarpErr);
+        }
+      }
+
       self.postMessage({ id, type: 'progress', step: 'detecting', message: 'Detekuji text a geometrii…' });
       let detectedBoxes = await service.detect(canvas);
       let effectiveRotation = rot;
 
-      // 3. Auto-detect rotation fallback: if 0 boxes detected at current angle, test 90°, 270°, 180°
+      // 4. Auto-detect rotation fallback: if 0 boxes detected at current angle, test 90°, 270°, 180°
       if ((!detectedBoxes || detectedBoxes.boxes.length === 0) && rot === 0) {
         for (const testAngle of [90, 270, 180]) {
           self.postMessage({ id, type: 'progress', step: 'rotating', message: `Zkouším otočení ${testAngle}°…` });
@@ -197,7 +254,8 @@ self.onmessage = async (e: MessageEvent) => {
         lines,
         table,
         confidence: rawResult.confidence || 0.9,
-        effectiveRotation
+        effectiveRotation,
+        unwarpedPreviewUrl
       });
     } catch (err: any) {
       console.error('OCR worker error:', err);
