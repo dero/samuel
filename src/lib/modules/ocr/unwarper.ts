@@ -75,8 +75,8 @@ function remapWithWebGL(
   dstHeight: number
 ): OffscreenCanvas {
   const outputCanvas = new OffscreenCanvas(dstWidth, dstHeight);
-  const gl = (outputCanvas.getContext('webgl2') ||
-    outputCanvas.getContext('webgl')) as WebGLRenderingContext | null;
+  const gl = (outputCanvas.getContext('webgl2', { preserveDrawingBuffer: true }) ||
+    outputCanvas.getContext('webgl', { preserveDrawingBuffer: true })) as WebGLRenderingContext | null;
 
   if (!gl) {
     console.warn('WebGL not available in worker for unwarping, returning source canvas');
@@ -213,6 +213,15 @@ function remapWithWebGL(
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+  gl.flush();
+
+  // WebGL context prevents getContext('2d') on the same canvas.
+  // Copy to a fresh 2D OffscreenCanvas so downstream Canvas 2D operations (getImageData, drawImage) work!
+  const final2dCanvas = new OffscreenCanvas(dstWidth, dstHeight);
+  const ctx2d = final2dCanvas.getContext('2d');
+  if (ctx2d) {
+    ctx2d.drawImage(outputCanvas, 0, 0);
+  }
 
   // Clean up WebGL resources
   gl.deleteBuffer(vbo);
@@ -221,7 +230,7 @@ function remapWithWebGL(
   gl.deleteShader(vs);
   gl.deleteShader(fs);
 
-  return outputCanvas;
+  return final2dCanvas;
 }
 
 function createShader(gl: WebGLRenderingContext, type: number, source: string): WebGLShader {
