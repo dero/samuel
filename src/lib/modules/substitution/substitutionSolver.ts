@@ -1,4 +1,4 @@
-import { stripDiacritics } from '../../utils/text';
+import { removeDiacritics } from '../../utils/text';
 
 export interface SubstitutionToken {
   /** The text to render */
@@ -87,7 +87,7 @@ export function solveSubstitution(
     // 2. Diacritic fallback (if alphabet doesn't contain diacritics)
     if (!alphabetHasDiacritics) {
       const char = text[i];
-      const stripped = stripDiacritics(char);
+      const stripped = removeDiacritics(char);
       if (stripped !== char) {
         for (const { upper } of sortedLetters) {
           if (stripped.toUpperCase() === upper) {
@@ -173,7 +173,7 @@ export function getAlphabetLettersInText(
 
     if (!alphabetHasDiacritics) {
       const char = text[i];
-      const stripped = stripDiacritics(char);
+      const stripped = removeDiacritics(char);
       if (stripped !== char) {
         for (const { upper } of sortedLetters) {
           if (stripped.toUpperCase() === upper) {

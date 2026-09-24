@@ -4,7 +4,7 @@ class SettingsState {
   hapticsEnabled = $state<boolean>(true);
   wakeLockEnabled = $state<boolean>(true);
 
-  private wakeLockSentinel: any = null;
+  private wakeLockSentinel: WakeLockSentinel | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {

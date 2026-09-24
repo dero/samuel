@@ -10,8 +10,3 @@ export function removeDiacritics(text: string): string {
   if (!text) return '';
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
-
-/**
- * Alias for removeDiacritics for compatibility across solvers and modules.
- */
-export const stripDiacritics = removeDiacritics;

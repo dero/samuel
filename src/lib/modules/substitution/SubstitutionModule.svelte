@@ -13,7 +13,8 @@
   import { toast } from '../../state/toast.svelte';
   import { navigation } from '../../state/navigation.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
-  import { PencilSimple, ClipboardText, Warning } from 'phosphor-svelte';
+  import { PencilSimple, ClipboardText } from 'phosphor-svelte';
+  import NonStandardAlphabetBanner from '../../components/ui/NonStandardAlphabetBanner.svelte';
 
   const modSettings = localSettingsService.forModule('substitution');
 
@@ -55,13 +56,6 @@
   const isNonStandardAlphabet = $derived(
     !['english-26', 'english-ch-27'].includes(alphabetId)
   );
-
-  $effect(() => {
-    navigation.setMenuWarning(isNonStandardAlphabet);
-    return () => {
-      navigation.setMenuWarning(false);
-    };
-  });
 
   // Substitution Solver Output
   const result = $derived(
@@ -207,14 +201,10 @@
   {#snippet menuOptions()}
     <div class="menu-group">
       <div class="menu-group-title">Abeceda modulu</div>
-      {#if isNonStandardAlphabet}
-        <div class="nonstandard-banner" role="alert">
-          <span class="banner-icon"><Warning size={18} weight="fill" /></span>
-          <div class="banner-text">
-            Pro Substituci je nastavena <strong>{currentLayout.name}</strong>. Běžně se používá <strong>Anglická (26)</strong> nebo <strong>Anglická + CH (27)</strong>.
-          </div>
-        </div>
-      {/if}
+      <NonStandardAlphabetBanner
+        isWarning={isNonStandardAlphabet}
+        description="Pro Substituci je nastavena {currentLayout.name}. Běžně se používá Anglická (26) nebo Anglická + CH (27)."
+      />
       <AlphabetSelect
         value={alphabetId}
         onChange={(id) => {
@@ -397,29 +387,4 @@
     background-color: var(--color-surface-active);
   }
 
-  .nonstandard-banner {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.25);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    font-size: 13px;
-    line-height: 1.4;
-    color: var(--color-text-primary);
-  }
-
-  .banner-icon {
-    color: var(--color-accent-warning, #f59e0b);
-    display: flex;
-    align-items: center;
-    margin-top: 1px;
-    flex-shrink: 0;
-  }
-
-  .banner-text {
-    flex: 1;
-  }
 </style>

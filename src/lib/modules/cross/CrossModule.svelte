@@ -20,7 +20,7 @@
   import { navigation } from '../../state/navigation.svelte';
   import AlphabetSelect from '../../components/ui/AlphabetSelect.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
-  import { Warning } from 'phosphor-svelte';
+  import NonStandardAlphabetBanner from '../../components/ui/NonStandardAlphabetBanner.svelte';
 
   const modSettings = localSettingsService.forModule('cross');
 
@@ -77,14 +77,6 @@
     if (!activeConfig.hasAlphabet) return false;
     if (!activeConfig.standardAlphabetIds || activeConfig.standardAlphabetIds.length === 0) return false;
     return !activeConfig.standardAlphabetIds.includes(currentAlphabetId);
-  });
-
-  // Sync warning indicator with navigation header
-  $effect(() => {
-    navigation.setMenuWarning(isNonStandardAlphabet);
-    return () => {
-      navigation.setMenuWarning(false);
-    };
   });
 
   const activeLetters = $derived<string[]>(currentLayout.letters);
@@ -181,21 +173,12 @@
       <div class="menu-group">
         <div class="menu-group-title">Abeceda nástroje</div>
 
-        {#if isNonStandardAlphabet}
-          <div class="nonstandard-banner" role="alert">
-            <div class="banner-top">
-              <span class="banner-icon"><Warning size={20} weight="fill" /></span>
-              <div class="banner-text">
-                <span class="banner-title">Nestandardní abeceda</span>
-                <p class="banner-desc">
-                  Pro tento kříž je obvyklá {activeConfig.defaultAlphabetId === 'english-ch-27'
-                    ? 'Anglická s CH (27 znaků)'
-                    : 'Anglická (26 znaků)'}.
-                </p>
-              </div>
-            </div>
-          </div>
-        {/if}
+        <NonStandardAlphabetBanner
+          isWarning={isNonStandardAlphabet}
+          description="Pro tento kříž je obvyklá {activeConfig.defaultAlphabetId === 'english-ch-27'
+            ? 'Anglická s CH (27 znaků)'
+            : 'Anglická (26 znaků)'}."
+        />
 
         <AlphabetSelect
           value={currentAlphabetId}
@@ -329,48 +312,4 @@
     letter-spacing: 0.5px;
   }
 
-  .nonstandard-banner {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    background-color: rgba(245, 158, 11, 0.12);
-    border: 1px solid var(--color-accent-warning);
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm) var(--space-md);
-    margin-bottom: var(--space-sm);
-  }
-
-  .banner-top {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-sm);
-  }
-
-  .banner-icon {
-    color: var(--color-accent-warning);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    margin-top: 1px;
-  }
-
-  .banner-text {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .banner-title {
-    display: block;
-    font-size: var(--text-sm);
-    font-weight: 700;
-    color: var(--color-text-primary);
-    margin-bottom: 2px;
-  }
-
-  .banner-desc {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    margin: 0;
-    line-height: 1.4;
-  }
 </style>

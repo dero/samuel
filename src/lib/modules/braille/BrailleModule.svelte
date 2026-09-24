@@ -11,14 +11,14 @@
   import { decodeSingleMask, normalizeBrailleInput } from './brailleSolver';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { localSettingsService } from '../../services/localSettingsService';
+  import { createModuleState } from '../../state/moduleState.svelte';
 
-  const modSettings = localSettingsService.forModule('braille');
-
-  let inputLetters = $state<string>(modSettings.getString('text', ''));
-  let czechDiacritics = $state<boolean>(modSettings.getBoolean('czech', true));
-  let directNumbers = $state<boolean>(modSettings.getBoolean('direct_nums', false));
-  let autoInsert = $state<boolean>(modSettings.getBoolean('auto_insert', false));
+  const { state: modState, reset: resetState } = createModuleState('braille', {
+    text: '',
+    czech: true,
+    direct_nums: false,
+    auto_insert: false
+  });
 
   // Active cell being edited: array of dot numbers [1..6]
   let activeDots = $state<number[]>([]);
@@ -28,16 +28,8 @@
   // Derived decoding & metadata
   let currentMask = $derived(dotsToMask(activeDots));
   let currentCharInfo = $derived(
-    decodeSingleMask(currentMask, { czechDiacritics, directNumbers })
+    decodeSingleMask(currentMask, { czechDiacritics: modState.czech, directNumbers: modState.direct_nums })
   );
-
-  // Persistence
-  $effect(() => {
-    modSettings.setString('text', inputLetters);
-    modSettings.setBoolean('czech', czechDiacritics);
-    modSettings.setBoolean('direct_nums', directNumbers);
-    modSettings.setBoolean('auto_insert', autoInsert);
-  });
 
   function clearFadeTimer() {
     if (fadeTimeout) {
@@ -115,7 +107,7 @@
     isPointerDown = false;
 
     // Single tap on an already active dot -> toggles it OFF (when manual)
-    if (!autoInsert && strokeActivatedDots.size === 1 && initialDotWasActive) {
+    if (!modState.auto_insert && strokeActivatedDots.size === 1 && initialDotWasActive) {
       const dot = Array.from(strokeActivatedDots)[0];
       settings.vibrate(20);
       activeDots = activeDots.filter((d) => d !== dot);
@@ -130,10 +122,10 @@
       // ignore
     }
 
-    if (autoInsert && hadInteractedDots && activeDots.length > 0) {
+    if (modState.auto_insert && hadInteractedDots && activeDots.length > 0) {
       const info = currentCharInfo;
       if (info.isValid) {
-        inputLetters += info.char;
+        modState.text += info.char;
         settings.vibrate([15, 30, 15]);
         committedFade = true;
         if (fadeTimeout) clearTimeout(fadeTimeout);
@@ -158,7 +150,7 @@
     if (committedFade || activeDots.length === 0) return;
 
     const info = currentCharInfo;
-    inputLetters += info.char;
+    modState.text += info.char;
     committedFade = true;
     if (fadeTimeout) clearTimeout(fadeTimeout);
     fadeTimeout = setTimeout(() => {
@@ -172,10 +164,10 @@
     clearFadeTimer();
     // If dots are selected and not fading, commit them first then add space
     if (!wasFading && activeDots.length > 0) {
-      inputLetters += currentCharInfo.char;
+      modState.text += currentCharInfo.char;
     }
     activeDots = [];
-    inputLetters += ' ';
+    modState.text += ' ';
   }
 
   function handleBackspace() {
@@ -189,14 +181,14 @@
 
     // 2. Otherwise (or if fading), delete last character from text
     activeDots = [];
-    if (inputLetters.length > 0) {
-      inputLetters = inputLetters.slice(0, -1);
+    if (modState.text.length > 0) {
+      modState.text = modState.text.slice(0, -1);
     }
   }
 
   function handleClearAll() {
     clearFadeTimer();
-    inputLetters = '';
+    modState.text = '';
     activeDots = [];
   }
 
@@ -206,9 +198,9 @@
 
   function handlePaste(text: string) {
     clearFadeTimer();
-    const normalized = normalizeBrailleInput(text, { czechDiacritics, directNumbers });
+    const normalized = normalizeBrailleInput(text, { czechDiacritics: modState.czech, directNumbers: modState.direct_nums });
     if (normalized) {
-      inputLetters += (inputLetters.length > 0 ? ' ' : '') + normalized;
+      modState.text += (modState.text.length > 0 ? ' ' : '') + normalized;
       toast.show('Text vložen ze schránky', 'success');
     }
   }
@@ -223,7 +215,7 @@
 <ModuleShell onReset={handleReset} onPaste={handlePaste}>
   {#snippet output()}
     <TranslationCard
-      text={inputLetters}
+      text={modState.text}
       emptyHint={brailleEmptyHint}
     />
   {/snippet}
@@ -280,7 +272,7 @@
       <!-- Utility Row: Slide to Clear, Space/Commit and Smart Backspace (1fr 1.3fr 1fr) -->
       <div class="keypad-utility-row-3col">
         <SlideToAction
-          disabled={!inputLetters && activeDots.length === 0}
+          disabled={!modState.text && activeDots.length === 0}
           onAction={handleClearAll}
           ariaLabel="Vymazat celý text tažením"
         />
@@ -292,7 +284,7 @@
         />
 
         <BackspaceButton
-          disabled={!inputLetters && activeDots.length === 0}
+          disabled={!modState.text && activeDots.length === 0}
           hasActiveSelection={activeDots.length > 0 && !committedFade}
           cancelLabel="Zrušit body"
           cancelTitle="Zrušit výběr bodů"
@@ -306,18 +298,18 @@
     <OptionRow
       label="Okamžité zadávání (bez potvrzování)"
       hint="Znak se automaticky vloží ihned po dokončení tahu (tahem i klepnutím)."
-      checked={autoInsert}
-      onChange={(v) => (autoInsert = v)}
+      checked={modState.auto_insert}
+      onChange={(v) => (modState.auto_insert = v)}
     />
     <OptionRow
       label="Česká diakritika (body 2,4,5,6 = Ř, W = 1,2,3,5,6)"
-      checked={czechDiacritics}
-      onChange={(v) => (czechDiacritics = v)}
+      checked={modState.czech}
+      onChange={(v) => (modState.czech = v)}
     />
     <OptionRow
       label="Přímý režim čísel (A–J jako 1–0 bez prefixu)"
-      checked={directNumbers}
-      onChange={(v) => (directNumbers = v)}
+      checked={modState.direct_nums}
+      onChange={(v) => (modState.direct_nums = v)}
     />
   {/snippet}
 

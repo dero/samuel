@@ -22,17 +22,17 @@
   import { toast } from '../../state/toast.svelte';
   import { versionService } from '../../services/versionService.svelte';
   import { navigation } from '../../state/navigation.svelte';
-  import { localSettingsService } from '../../services/localSettingsService';
   import { copyToClipboard } from '../../utils/clipboard';
   import { ArrowsLeftRight, Lightning } from 'phosphor-svelte';
+  import { createModuleState } from '../../state/moduleState.svelte';
 
-  const modSettings = localSettingsService.forModule('morse');
-
-  let inputMorse = $state<string>(modSettings.getString('input', ''));
-  let parseCH = $state<boolean>(modSettings.getBoolean('parse_ch', true));
-  let parseDigits = $state<boolean>(modSettings.getBoolean('parse_digits', true));
-  let parseOther = $state<boolean>(modSettings.getBoolean('parse_other', true));
-  let showTelegraphWire = $state<boolean>(modSettings.getBoolean('show_wire', true));
+  const { state: modState, reset: resetModState } = createModuleState('morse', {
+    input: '',
+    parse_ch: true,
+    parse_digits: true,
+    parse_other: true,
+    show_wire: true
+  });
 
   let currentPulse = $state<PulseEvent | null>(null);
   let pulseCounter = 0;
@@ -50,85 +50,76 @@
 
   // Derived committed vs pending letter
   const lastSlashIndex = $derived.by(() => {
-    return Math.max(inputMorse.lastIndexOf(' / '), inputMorse.lastIndexOf(' // '));
+    return Math.max(modState.input.lastIndexOf(' / '), modState.input.lastIndexOf(' // '));
   });
 
   const committedPart = $derived.by(() => {
     if (lastSlashIndex === -1) {
       return '';
     }
-    const isDouble = inputMorse.substring(lastSlashIndex).startsWith(' // ');
+    const isDouble = modState.input.substring(lastSlashIndex).startsWith(' // ');
     const sepLen = isDouble ? 4 : 3;
-    return inputMorse.substring(0, lastSlashIndex + sepLen);
+    return modState.input.substring(0, lastSlashIndex + sepLen);
   });
 
   const pendingMorse = $derived.by(() => {
     if (lastSlashIndex === -1) {
-      return inputMorse.trim();
+      return modState.input.trim();
     }
-    const isDouble = inputMorse.substring(lastSlashIndex).startsWith(' // ');
+    const isDouble = modState.input.substring(lastSlashIndex).startsWith(' // ');
     const sepLen = isDouble ? 4 : 3;
-    return inputMorse.substring(lastSlashIndex + sepLen).trim();
+    return modState.input.substring(lastSlashIndex + sepLen).trim();
   });
 
   const committedText = $derived(
-    committedPart ? decodeMorse(committedPart, { parseCH, parseDigits, parseOther }) : ''
+    committedPart ? decodeMorse(committedPart, { parseCH: modState.parse_ch, parseDigits: modState.parse_digits, parseOther: modState.parse_other }) : ''
   );
 
   const pendingDisplay = $derived.by(() => {
     if (!pendingMorse) return '';
-    const decodedPending = decodeMorse(pendingMorse, { parseCH, parseDigits, parseOther });
+    const decodedPending = decodeMorse(pendingMorse, { parseCH: modState.parse_ch, parseDigits: modState.parse_digits, parseOther: modState.parse_other });
     return decodedPending !== '?' ? decodedPending : pendingMorse;
   });
 
   let permutations = $derived(
-    isPermutationsOpen ? getPermutations(inputMorse, { parseCH, parseDigits, parseOther }) : []
+    isPermutationsOpen ? getPermutations(modState.input, { parseCH: modState.parse_ch, parseDigits: modState.parse_digits, parseOther: modState.parse_other }) : []
   );
-  let cleanMorse = $derived(inputMorse.replace(/[^.-]/g, ''));
+  let cleanMorse = $derived(modState.input.replace(/[^.-]/g, ''));
   let isEligibleForBruteforce = $derived(cleanMorse.length >= 4);
-
-  // Consolidated persistence
-  $effect(() => {
-    modSettings.setString('input', inputMorse);
-    modSettings.setBoolean('parse_ch', parseCH);
-    modSettings.setBoolean('parse_digits', parseDigits);
-    modSettings.setBoolean('parse_other', parseOther);
-    modSettings.setBoolean('show_wire', showTelegraphWire);
-  });
 
   function appendSymbol(sym: '.' | '-') {
     sendPulse(sym);
-    inputMorse += sym;
+    modState.input += sym;
   }
 
   function appendSlash() {
     sendPulse('/');
-    const trimmed = inputMorse.trimEnd();
+    const trimmed = modState.input.trimEnd();
     if (trimmed.endsWith('//')) {
       return;
     } else if (trimmed.endsWith('/')) {
-      inputMorse = trimmed + '/ ';
+      modState.input = trimmed + '/ ';
     } else if (trimmed.length > 0) {
-      inputMorse = trimmed + ' / ';
+      modState.input = trimmed + ' / ';
     }
   }
 
   function handleBackspace() {
     settings.vibrate(25);
-    if (!inputMorse) return;
+    if (!modState.input) return;
 
-    if (inputMorse.endsWith(' // ')) {
-      inputMorse = inputMorse.slice(0, -4);
-    } else if (inputMorse.endsWith(' / ')) {
-      inputMorse = inputMorse.slice(0, -3);
+    if (modState.input.endsWith(' // ')) {
+      modState.input = modState.input.slice(0, -4);
+    } else if (modState.input.endsWith(' / ')) {
+      modState.input = modState.input.slice(0, -3);
     } else {
-      inputMorse = inputMorse.slice(0, -1);
+      modState.input = modState.input.slice(0, -1);
     }
   }
 
   function handleClear() {
     settings.vibrate(30);
-    inputMorse = '';
+    modState.input = '';
     bruteforceResults = [];
     totalFoundCandidates = 0;
   }
@@ -149,7 +140,7 @@
     if (!versionService.state.isDbInstalled) {
       settings.vibrate(30);
       toast.show('Stáhněte slovník v Nastavení', { type: 'warning' });
-      navigation.navigate('settings');
+      navigation.openModule('settings');
       return;
     }
 
@@ -170,7 +161,7 @@
       console.error('Bruteforce solve error:', err);
       if (err?.message?.includes('slovník') || err?.message?.includes('databáze')) {
         toast.show('Stáhněte slovník v Nastavení', { type: 'warning' });
-        navigation.navigate('settings');
+        navigation.openModule('settings');
       } else {
         toast.show('Chyba při řešení morseovky', { type: 'danger' });
       }
@@ -181,20 +172,23 @@
 
   function applyPermutation(perm: PermutationResult) {
     settings.vibrate(25);
-    inputMorse = perm.transformedMorse;
+    modState.input = perm.transformedMorse;
     isPermutationsOpen = false;
     toast.show(`Varianta: ${perm.name}`, 'info');
   }
 
   function applyCandidate(candidate: BruteforceCandidate) {
     settings.vibrate(25);
-    inputMorse = candidate.spacedMorse;
+    modState.input = candidate.spacedMorse;
     isBruteforceOpen = false;
     copyToClipboard(candidate.text, 'Řešení vloženo');
   }
 
   function handleReset() {
-    handleClear();
+    settings.vibrate(30);
+    resetModState();
+    bruteforceResults = [];
+    totalFoundCandidates = 0;
     isBruteforceOpen = false;
     isPermutationsOpen = false;
     toast.show('Morseovka byla vyčištěna', 'info');
@@ -203,7 +197,7 @@
   function handlePaste(text: string) {
     const normalized = normalizeMorse(text);
     if (normalized) {
-      inputMorse = normalized;
+      modState.input = normalized;
       toast.show('Kód vložen ze schránky', 'success');
     }
   }
@@ -219,7 +213,7 @@
   {/snippet}
 
   {#snippet input()}
-    <div class="keypad-zone" class:no-wire={!showTelegraphWire}>
+    <div class="keypad-zone" class:no-wire={!modState.show_wire}>
       <!-- Sub-Toolbar: Permutations and Bruteforce solver -->
       <div class="morse-subtoolbar">
         <button
@@ -227,7 +221,7 @@
           class="morse-chip-btn"
           class:active={isPermutationsOpen}
           onclick={openPermutations}
-          disabled={!inputMorse}
+          disabled={!modState.input}
           title="Zobrazit permutace a zrcadlení kódu"
         >
           <span class="floating-icon"><ArrowsLeftRight size={14} weight="bold" /></span>
@@ -239,7 +233,7 @@
           class="morse-chip-btn"
           class:active={isBruteforceOpen}
           onclick={runBruteforce}
-          disabled={!inputMorse || !isEligibleForBruteforce}
+          disabled={!modState.input || !isEligibleForBruteforce}
           title="Rozluštit morseovku bez mezer pomocí slovníku a jazykového modelu"
         >
           <span class="floating-icon"><Lightning size={14} weight="duotone" /></span>
@@ -274,20 +268,20 @@
       <!-- Utility Row: Slide to Clear and Backspace -->
       <div class="keypad-utility-row">
         <SlideToAction
-          disabled={!inputMorse}
+          disabled={!modState.input}
           onAction={handleClear}
           ariaLabel="Vymazat celý kód tažením"
         />
 
         <BackspaceButton
-          disabled={!inputMorse}
+          disabled={!modState.input}
           title="Smazat poslední znak nebo oddělovač"
           onAction={handleBackspace}
         />
       </div>
 
       <!-- Animated Telegraph Wire Decoration & Easter Egg -->
-      {#if showTelegraphWire}
+      {#if modState.show_wire}
         <TelegraphWire pulse={currentPulse} />
       {/if}
     </div>
@@ -298,23 +292,23 @@
       label="Zobrazovat telegrafní vedení"
       hint="Animované sloupy s drátem a světelnými impulsy pod tlačítky"
       type="switch"
-      checked={showTelegraphWire}
-      onChange={(v) => (showTelegraphWire = v)}
+      checked={modState.show_wire}
+      onChange={(v) => (modState.show_wire = v)}
     />
     <OptionRow
       label="Rozpoznávat písmeno CH (----)"
-      checked={parseCH}
-      onChange={(v) => (parseCH = v)}
+      checked={modState.parse_ch}
+      onChange={(v) => (modState.parse_ch = v)}
     />
     <OptionRow
       label="Rozpoznávat číslice (0–9)"
-      checked={parseDigits}
-      onChange={(v) => (parseDigits = v)}
+      checked={modState.parse_digits}
+      onChange={(v) => (modState.parse_digits = v)}
     />
     <OptionRow
       label="Rozpoznávat ostatní znaky (.,?!...)"
-      checked={parseOther}
-      onChange={(v) => (parseOther = v)}
+      checked={modState.parse_other}
+      onChange={(v) => (modState.parse_other = v)}
     />
   {/snippet}
 
@@ -372,7 +366,7 @@
         style="width: 100%; min-height: 48px; font-weight: 600;"
         onclick={() => {
           isBruteforceOpen = false;
-          navigation.navigate('settings');
+          navigation.openModule('settings');
         }}
       >
         Přejít do Nastavení ke stažení

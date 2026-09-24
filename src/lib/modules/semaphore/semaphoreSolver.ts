@@ -5,6 +5,7 @@ import {
   transformDirection,
   type SemaphoreEntry
 } from './semaphoreData';
+import { removeDiacritics } from '../../utils/text';
 
 export interface SemaphoreDecodeOptions {
   mirrorX?: boolean;
@@ -77,10 +78,7 @@ export function normalizeSemaphoreInput(
   }
 
   // Otherwise, treat as Latin text
-  const clean = trimmed
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase();
+  const clean = removeDiacritics(trimmed).toUpperCase();
 
   return clean;
 }

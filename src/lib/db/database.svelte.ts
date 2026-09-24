@@ -28,40 +28,7 @@ export interface WorldFlagRecord {
   svg_1x1: string;
 }
 
-import type { AppVersionInfo, LocalDbMeta } from '../services/offlineCacheService';
-export type { AppVersionInfo, LocalDbMeta };
-
-export interface DbState {
-  status: 'idle' | 'loading' | 'ready' | 'error';
-  progress: number; // 0 to 100
-  totalRows: number;
-  error: string | null;
-  meta: LocalDbMeta | null;
-  remoteVersion: AppVersionInfo | null;
-  updateAvailable: boolean;
-  appUpdateAvailable: boolean;
-  dbUpdateAvailable: boolean;
-}
-
-// Reactive Svelte 5 state for DB status
-export const dbState: DbState = $state({
-  status: 'idle',
-  progress: 0,
-  totalRows: 0,
-  error: null,
-  meta: null,
-  remoteVersion: null,
-  updateAvailable: false,
-  appUpdateAvailable: false,
-  dbUpdateAvailable: false
-});
-
-import {
-  DB_CACHE_NAME,
-  getLocalDbMeta,
-  setLocalDbMeta
-} from '../services/offlineCacheService';
-import { versionService } from '../services/versionService.svelte';
+import { DB_CACHE_NAME } from '../services/offlineCacheService';
 
 let dbInstance: SqlDatabase | null = null;
 let initPromise: Promise<SqlDatabase> | null = null;
@@ -78,130 +45,46 @@ async function getCachedDb(): Promise<ArrayBuffer | null> {
   }
 }
 
-function getCachedMeta(): LocalDbMeta | null {
-  return getLocalDbMeta();
-}
-
-async function setCachedDb(buffer: ArrayBuffer, meta: LocalDbMeta): Promise<void> {
-  try {
-    if (typeof window === 'undefined' || !('caches' in window)) return;
-    const cache = await caches.open(DB_CACHE_NAME);
-    await cache.put(
-      '/words.db',
-      new Response(buffer, {
-        headers: { 'Content-Type': 'application/x-sqlite3' }
-      })
-    );
-    setLocalDbMeta(meta);
-  } catch (e) {
-    console.warn('Failed to cache db in CacheStorage:', e);
-  }
-}
-
 /**
- * Clears local CacheStorage database cache and in-memory instances to force re-download.
+ * Resets in-memory SQLite database instance and cached query results.
  */
-export async function clearDbCache(): Promise<void> {
-  await versionService.deleteDb();
+export function resetDatabase(): void {
   dbInstance = null;
   initPromise = null;
   cachedLexiconWords = null;
   cachedWorldFlags = null;
-  dbState.status = 'idle';
-  dbState.progress = 0;
-  dbState.totalRows = 0;
-  dbState.meta = null;
-  dbState.updateAvailable = versionService.state.updateAvailable;
-  dbState.appUpdateAvailable = versionService.state.appUpdateAvailable;
-  dbState.dbUpdateAvailable = false;
-}
-
-/**
- * Checks for updates on app launch / refresh:
- * Authoritatively delegates to versionService (which also cleans up legacy IndexedDB).
- */
-export async function checkUpdatesOnInit(): Promise<void> {
-  await versionService.checkUpdates();
-  dbState.meta = versionService.state.dbMeta;
-  dbState.remoteVersion = versionService.state.remoteVersion;
-  dbState.appUpdateAvailable = versionService.state.appUpdateAvailable;
-  dbState.dbUpdateAvailable = versionService.state.dbUpdateAvailable;
-  dbState.updateAvailable = versionService.state.updateAvailable;
-}
-
-/**
- * Explicitly triggers download of the latest database from server.
- * When the update finishes and a newer app version is also available,
- * reloads the application to eliminate DB schema drift.
- */
-export async function updateDatabase(): Promise<SqlDatabase> {
-  return getDatabase({ forceRefresh: true });
 }
 
 /**
  * Initializes sql.js and loads the words.db database.
  * NEVER automatically downloads words.db if a cached version already exists in CacheStorage!
- * Only downloads if:
- * 1. options.forceRefresh is true (user explicitly requested update), OR
- * 2. No database is cached locally yet.
+ * Only loads from local CacheStorage.
  */
 export async function getDatabase(options: { forceRefresh?: boolean } = {}): Promise<SqlDatabase> {
   if (options.forceRefresh) {
-    dbInstance = null;
-    initPromise = null;
-    cachedLexiconWords = null;
-    cachedWorldFlags = null;
+    resetDatabase();
   }
   if (dbInstance) return dbInstance;
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    dbState.status = 'loading';
-    dbState.progress = 20;
-    dbState.error = null;
-
     try {
       // 1. Read buffer strictly from local CacheStorage (NO network downloads!)
       const buffer = await getCachedDb();
       if (!buffer) {
-        dbState.status = 'idle';
         initPromise = null;
         throw new Error('Slovníková databáze není lokálně dostupná. Přejděte do Nastavení pro její stažení.');
-      }
-
-      const localMeta = await getCachedMeta();
-      if (localMeta) {
-        dbState.meta = localMeta;
       }
 
       // 2. Initialize sql.js WASM
       const SQL = await initSqlJs({
         locateFile: () => sqlWasmUrl
       });
-      dbState.progress = 60;
 
       // 3. Mount SQLite database from offline buffer
       dbInstance = new SQL.Database(new Uint8Array(buffer));
-
-      // Get count across all 5 tables
-      const countRes = dbInstance.exec(`
-        SELECT 
-          (SELECT COUNT(*) FROM puzzle_words) +
-          (SELECT COUNT(*) FROM cs_substantives) +
-          (SELECT COUNT(*) FROM cs_all) +
-          (SELECT COUNT(*) FROM ruian) +
-          (SELECT COUNT(*) FROM world_flags) as cnt
-      `);
-      if (countRes.length > 0 && countRes[0].values.length > 0) {
-        dbState.totalRows = Number(countRes[0].values[0][0]);
-      }
-
-      dbState.status = 'ready';
-      dbState.progress = 100;
       return dbInstance;
     } catch (err: any) {
-      dbState.status = 'error';
-      dbState.error = err?.message ?? 'Chyba inicializace databáze';
       initPromise = null;
       throw err;
     }

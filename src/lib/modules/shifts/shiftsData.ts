@@ -1,12 +1,20 @@
-import type { SegmentOption } from '../../components/ui/SegmentedControl.svelte';
-import type { RadioOption } from '../../components/ui/RadioGroup.svelte';
-
 export type ShiftType = 'caesar' | 'vigenere' | 'autokey';
 
 export interface ShiftTypeConfig {
   id: ShiftType;
   name: string;
   shortName: string;
+  description: string;
+}
+
+export interface ShiftSegmentOption {
+  id: ShiftType;
+  label: string;
+}
+
+export interface ShiftRadioOption {
+  value: ShiftType;
+  label: string;
   description: string;
 }
 
@@ -31,12 +39,12 @@ export const SHIFT_TYPES: ShiftTypeConfig[] = [
   }
 ];
 
-export const SHIFT_SEGMENT_OPTIONS: SegmentOption<ShiftType>[] = SHIFT_TYPES.map((t) => ({
+export const SHIFT_SEGMENT_OPTIONS: ShiftSegmentOption[] = SHIFT_TYPES.map((t) => ({
   id: t.id,
   label: t.shortName
 }));
 
-export const SHIFT_TYPE_RADIO_OPTIONS: RadioOption<ShiftType>[] = SHIFT_TYPES.map((t) => ({
+export const SHIFT_TYPE_RADIO_OPTIONS: ShiftRadioOption[] = SHIFT_TYPES.map((t) => ({
   value: t.id,
   label: t.name,
   description: t.description

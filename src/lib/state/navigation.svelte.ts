@@ -14,10 +14,18 @@ class NavigationState {
     MODULES.find((m) => m.id === this.activeModuleId) ?? MODULES.find((m) => m.id === DEFAULT_FIRST_MODULE)!
   );
 
+  private handleHashChange = () => this.syncFromHash();
+
   constructor() {
     if (typeof window !== 'undefined') {
       this.syncFromHash();
-      window.addEventListener('hashchange', () => this.syncFromHash());
+      window.addEventListener('hashchange', this.handleHashChange);
+    }
+  }
+
+  destroy() {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('hashchange', this.handleHashChange);
     }
   }
 
@@ -82,10 +90,6 @@ class NavigationState {
     } else if (this.subView !== 'none') {
       this.closeSubView();
     }
-  }
-
-  navigate(id: ModuleId) {
-    this.openModule(id);
   }
 
   /**

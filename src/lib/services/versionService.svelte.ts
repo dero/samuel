@@ -21,6 +21,7 @@ import {
   type LocalDbMeta
 } from './offlineCacheService';
 import { APP_BUILD_TIME, APP_VERSION } from '../constants';
+import { resetDatabase } from '../db/database.svelte';
 
 export type VersionStatus =
   | 'idle'
@@ -196,6 +197,7 @@ class VersionService {
   async deleteDb(): Promise<void> {
     try {
       await clearDatabaseCache();
+      resetDatabase();
       await this.refreshLocalStatus();
       this.state.dbUpdateAvailable = false;
       this.state.updateAvailable = this.state.appUpdateAvailable;

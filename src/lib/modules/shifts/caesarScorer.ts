@@ -1,5 +1,6 @@
 import { scoreMarkovWord } from '../../data/markovModel';
 import { CIPHER_KEYWORDS } from '../../data/cipherKeywords';
+import { removeDiacritics } from '../../utils/text';
 
 export interface CaesarLexiconEntry {
   freq: number;
@@ -96,9 +97,7 @@ export function evaluateCandidateRaw(
   lexicon: CaesarLexicon,
   weights: CaesarScorerWeights = DEFAULT_CAESAR_WEIGHTS
 ): CaesarCandidateRawScore {
-  const clean = text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  const clean = removeDiacritics(text)
     .toUpperCase()
     .replace(/[^A-Z]/g, '');
   const n = clean.length;

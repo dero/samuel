@@ -19,14 +19,14 @@
   } from './semaphoreSolver';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { localSettingsService } from '../../services/localSettingsService';
+  import { createModuleState } from '../../state/moduleState.svelte';
 
-  const modSettings = localSettingsService.forModule('semaphore');
-
-  let inputLetters = $state<string>(modSettings.getString('input', ''));
-  let mirrorX = $state<boolean>(modSettings.getBoolean('mirror', false));
-  let directNumbers = $state<boolean>(modSettings.getBoolean('direct_nums', false));
-  let autoInsert = $state<boolean>(modSettings.getBoolean('auto_insert', true));
+  const { state: modState, reset: resetState } = createModuleState('semaphore', {
+    input: '',
+    mirror: false,
+    direct_nums: false,
+    auto_insert: true
+  });
 
   // State: 0, 1, or 2 active direction indices (0..7)
   let activeDirs = $state<number[]>([]);
@@ -40,18 +40,10 @@
   let isPointerDown = false;
   let lastInteractedDir: number | null = null;
 
-  // Persistence effect
-  $effect(() => {
-    modSettings.setString('input', inputLetters);
-    modSettings.setBoolean('mirror', mirrorX);
-    modSettings.setBoolean('direct_nums', directNumbers);
-    modSettings.setBoolean('auto_insert', autoInsert);
-  });
-
   // Current options
   let decodeOptions = $derived<SemaphoreDecodeOptions>({
-    mirrorX,
-    directNumbers
+    mirrorX: modState.mirror,
+    directNumbers: modState.direct_nums
   });
 
   // Decoded character for currently selected pair of directions
@@ -100,12 +92,12 @@
         triggerHaptic('tap');
       } else if (activeDirs.length === 1) {
         const firstDir = activeDirs[0];
-        if (autoInsert) {
+        if (modState.auto_insert) {
           // Instant decode and commit on 2nd arm, with visual fade-out of the complete sign
           const entry = decodePair(firstDir, dirIdx, decodeOptions);
           if (entry) {
             const charToInsert = getCharForEntry(entry, decodeOptions);
-            inputLetters += charToInsert;
+            modState.input += charToInsert;
             triggerHaptic('commit');
             activeDirs = [firstDir, dirIdx];
             committedFade = true;
@@ -179,7 +171,7 @@
 
   function commitChar() {
     if (!currentChar || committedFade) return;
-    inputLetters += currentChar;
+    modState.input += currentChar;
     committedFade = true;
     if (fadeTimeout) clearTimeout(fadeTimeout);
     fadeTimeout = setTimeout(() => {
@@ -191,9 +183,9 @@
   function handleSpace() {
     clearFadeTimer();
     if (currentChar) {
-      inputLetters += currentChar + ' ';
+      modState.input += currentChar + ' ';
     } else {
-      inputLetters += ' ';
+      modState.input += ' ';
     }
     activeDirs = [];
   }
@@ -203,14 +195,14 @@
     if (activeDirs.length > 0) {
       // Cancel active arm selection without touching text
       activeDirs = [];
-    } else if (inputLetters.length > 0) {
-      inputLetters = inputLetters.slice(0, -1);
+    } else if (modState.input.length > 0) {
+      modState.input = modState.input.slice(0, -1);
     }
   }
 
   function handleClearAll() {
     clearFadeTimer();
-    inputLetters = '';
+    modState.input = '';
     activeDirs = [];
   }
 
@@ -222,7 +214,7 @@
     clearFadeTimer();
     const normalized = normalizeSemaphoreInput(text, decodeOptions);
     if (normalized) {
-      inputLetters += (inputLetters.length > 0 ? ' ' : '') + normalized;
+      modState.input += (modState.input.length > 0 ? ' ' : '') + normalized;
       toast.show('Text vložen ze schránky', 'success');
     }
   }
@@ -253,7 +245,7 @@
 <ModuleShell onReset={handleReset} onPaste={handlePaste}>
   {#snippet output()}
     <TranslationCard
-      text={inputLetters}
+      text={modState.input}
       emptyHint="Zvolte 2 pozice nebo spojte tahem."
     />
   {/snippet}
@@ -344,7 +336,7 @@
       <!-- Utility Row: Slide to Clear, Space/Commit and Smart Backspace (1fr 1.3fr 1fr) -->
       <div class="keypad-utility-row-3col">
         <SlideToAction
-          disabled={!inputLetters && activeDirs.length === 0}
+          disabled={!modState.input && activeDirs.length === 0}
           onAction={handleClearAll}
           ariaLabel="Vymazat celý text tažením"
         />
@@ -356,7 +348,7 @@
         />
 
         <BackspaceButton
-          disabled={!inputLetters && activeDirs.length === 0}
+          disabled={!modState.input && activeDirs.length === 0}
           hasActiveSelection={activeDirs.length > 0}
           cancelLabel="Zrušit ramena"
           cancelTitle="Zrušit výběr ramen"
@@ -370,20 +362,20 @@
     <OptionRow
       label="Okamžité zadávání (bez potvrzování)"
       hint="Znak se automaticky vloží ihned po navolení 2 ramen (tahem i klepnutím)."
-      checked={autoInsert}
-      onChange={(v) => (autoInsert = v)}
+      checked={modState.auto_insert}
+      onChange={(v) => (modState.auto_insert = v)}
     />
     <OptionRow
       label="Režim čísel (1–9, 0 místo písmen)"
       hint="Dekóduje znaky A–I, K jako číslice 1–9, 0."
-      checked={directNumbers}
-      onChange={(v) => (directNumbers = v)}
+      checked={modState.direct_nums}
+      onChange={(v) => (modState.direct_nums = v)}
     />
     <OptionRow
       label="Zrcadlení (Pohled vysílajícího)"
       hint="Zrcadlí horizontální směr ramen (vlevo ↔ vpravo)."
-      checked={mirrorX}
-      onChange={(v) => (mirrorX = v)}
+      checked={modState.mirror}
+      onChange={(v) => (modState.mirror = v)}
     />
   {/snippet}
 

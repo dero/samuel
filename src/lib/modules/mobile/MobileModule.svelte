@@ -12,17 +12,15 @@
   import { t9Service } from './t9Service';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { localSettingsService } from '../../services/localSettingsService';
   import { versionService } from '../../services/versionService.svelte';
   import { navigation } from '../../state/navigation.svelte';
   import { Warning } from 'phosphor-svelte';
+  import { createModuleState } from '../../state/moduleState.svelte';
 
-  const modSettings = localSettingsService.forModule('mobile');
-
-  let text = $state<string>(modSettings.getString('text', ''));
-  let phoneInputMode = $state<'multitap' | 't9'>(
-    (modSettings.getString('phoneMode', 'multitap') as 'multitap' | 't9') || 'multitap'
-  );
+  const { state: modState, reset: resetModState } = createModuleState('mobile', {
+    text: '',
+    phoneMode: 'multitap' as 'multitap' | 't9'
+  });
 
   const phoneModeOptions: SegmentOption<'multitap' | 't9'>[] = [
     { id: 'multitap', label: 'Klasik (SMS)' },
@@ -47,13 +45,6 @@
   let isPhoneLongPressTriggered = false;
   let phonePressTimer: ReturnType<typeof setTimeout> | null = null;
 
-  $effect(() => {
-    modSettings.update({
-      text,
-      phoneMode: phoneInputMode
-    });
-  });
-
   function clearCommitTimer() {
     if (commitTimer) {
       clearTimeout(commitTimer);
@@ -70,7 +61,7 @@
 
   function commitPendingChar() {
     if (pendingChar) {
-      text += pendingChar;
+      modState.text += pendingChar;
       pendingKey = null;
       pendingTapIndex = 0;
       pendingChar = '';
@@ -132,7 +123,7 @@
 
   function commitT9Word(word: string, addSpace: boolean = true) {
     if (word) {
-      text += (text.length > 0 && !text.endsWith(' ') ? ' ' : '') + word + (addSpace ? ' ' : '');
+      modState.text += (modState.text.length > 0 && !modState.text.endsWith(' ') ? ' ' : '') + word + (addSpace ? ' ' : '');
     }
     t9Digits = '';
     t9Candidates = [];
@@ -148,27 +139,27 @@
         settings.vibrate(15);
         t9CandidateIndex = (t9CandidateIndex + 1) % t9Candidates.length;
       } else if (!t9Digits) {
-        text += '*';
+        modState.text += '*';
       }
     } else if (keyId === '0') {
       if (t9Digits) {
         const word = t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits);
         commitT9Word(word, true);
       } else {
-        text += ' ';
+        modState.text += ' ';
       }
     } else if (keyId === '1') {
       if (t9Digits) {
         const word = t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits);
         commitT9Word(word, false);
       }
-      text += '.';
+      modState.text += '.';
     } else if (keyId === '#') {
       if (t9Digits) {
         const word = t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits);
         commitT9Word(word, false);
       } else {
-        text += '#';
+        modState.text += '#';
       }
     }
   }
@@ -184,15 +175,15 @@
     phonePressTimer = setTimeout(() => {
       isPhoneLongPressTriggered = true;
       settings.vibrate([20, 35]);
-      if (phoneInputMode === 't9') {
+      if (modState.phoneMode === 't9') {
         if (t9Digits) {
           const word = t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits);
           commitT9Word(word, false);
         }
-        text += keyId;
+        modState.text += keyId;
       } else {
         commitPendingChar();
-        text += keyId;
+        modState.text += keyId;
       }
     }, 420);
   }
@@ -206,7 +197,7 @@
 
     if (!wasLongPress && activePhonePressKey === keyId) {
       settings.vibrate(18);
-      if (phoneInputMode === 't9') {
+      if (modState.phoneMode === 't9') {
         handleT9KeyTap(keyId);
       } else {
         handleMultiTap(keyId);
@@ -224,39 +215,39 @@
   }
 
   function handlePhoneModeChange(newMode: 'multitap' | 't9') {
-    if (phoneInputMode === newMode) return;
+    if (modState.phoneMode === newMode) return;
     settings.vibrate(25);
-    if (phoneInputMode === 'multitap' && pendingChar) {
+    if (modState.phoneMode === 'multitap' && pendingChar) {
       commitPendingChar();
-    } else if (phoneInputMode === 't9' && t9Digits) {
+    } else if (modState.phoneMode === 't9' && t9Digits) {
       const word = t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits);
       commitT9Word(word, false);
     }
-    phoneInputMode = newMode;
+    modState.phoneMode = newMode;
     if (newMode === 't9' && !versionService.state.isDbInstalled) {
       toast.show('Stáhněte slovník v Nastavení pro T9', 'warning');
     }
   }
 
   function handleSpace() {
-    if (phoneInputMode === 't9' && t9Digits) {
+    if (modState.phoneMode === 't9' && t9Digits) {
       const word = t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits);
       commitT9Word(word, true);
-    } else if (phoneInputMode === 'multitap' && pendingChar) {
+    } else if (modState.phoneMode === 'multitap' && pendingChar) {
       commitPendingChar();
-      text += ' ';
+      modState.text += ' ';
     } else {
-      text += ' ';
+      modState.text += ' ';
     }
   }
 
   function handleBackspace() {
-    if (phoneInputMode === 't9') {
+    if (modState.phoneMode === 't9') {
       if (t9Digits.length > 0) {
         t9Digits = t9Digits.slice(0, -1);
         fetchT9Candidates(t9Digits);
-      } else if (text.length > 0) {
-        text = text.slice(0, -1);
+      } else if (modState.text.length > 0) {
+        modState.text = modState.text.slice(0, -1);
       }
     } else {
       if (pendingChar) {
@@ -264,8 +255,8 @@
         pendingKey = null;
         pendingTapIndex = 0;
         pendingChar = '';
-      } else if (text.length > 0) {
-        text = text.slice(0, -1);
+      } else if (modState.text.length > 0) {
+        modState.text = modState.text.slice(0, -1);
       }
     }
   }
@@ -273,7 +264,7 @@
   function handleClearAll() {
     clearCommitTimer();
     settings.vibrate(35);
-    text = '';
+    modState.text = '';
     pendingKey = null;
     pendingTapIndex = 0;
     pendingChar = '';
@@ -283,11 +274,11 @@
   }
 
   const activeT9Candidate = $derived<string>(
-    phoneInputMode === 't9' && t9Digits ? t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits) : ''
+    modState.phoneMode === 't9' && t9Digits ? t9Candidates[t9CandidateIndex] || getFallbackT9Word(t9Digits) : ''
   );
 
   const pendingDisplay = $derived<string>(
-    phoneInputMode === 't9' ? (t9Digits ? activeT9Candidate : '') : pendingChar
+    modState.phoneMode === 't9' ? (t9Digits ? activeT9Candidate : '') : pendingChar
   );
 
   onDestroy(() => {
@@ -299,21 +290,24 @@
 
 <ModuleShell
   title="Mobil"
-  onReset={handleClearAll}
-  onPaste={(pasted) => (text += pasted.toUpperCase())}
+  onReset={() => {
+    handleClearAll();
+    resetModState();
+  }}
+  onPaste={(pasted) => (modState.text += pasted.toUpperCase())}
 >
   {#snippet menuOptions()}
     <div class="menu-group">
       <div class="menu-group-title">Režim zadávání</div>
       <SegmentedControl
         options={phoneModeOptions}
-        value={phoneInputMode}
+        value={modState.phoneMode}
         ariaLabel="Režim klávesnice mobilu"
         onChange={handlePhoneModeChange}
       />
     </div>
 
-    {#if phoneInputMode === 't9' && !versionService.state.isDbInstalled}
+    {#if modState.phoneMode === 't9' && !versionService.state.isDbInstalled}
       <div class="nonstandard-banner" role="alert">
         <div class="banner-top">
           <span class="banner-icon"><Warning size={20} weight="fill" /></span>
@@ -330,7 +324,7 @@
           onclick={() => {
             settings.vibrate(20);
             navigation.closeSubView();
-            navigation.navigate('settings');
+            navigation.openModule('settings');
           }}
         >
           Přejít do Nastavení
@@ -345,9 +339,9 @@
 
   {#snippet output()}
     <TranslationCard
-      {text}
+      text={modState.text}
       pendingText={pendingDisplay}
-      emptyHint={phoneInputMode === 't9'
+      emptyHint={modState.phoneMode === 't9'
         ? 'Každou klávesu stiskněte jen jednou, slova doplňuje slovník.'
         : 'Vícečetným stiskem číslic volíte písmena abecedy.'}
     />
@@ -357,7 +351,7 @@
     <div class="zone-input-flow">
       <!-- 1. Sub-Toolbar: Kontextoví kandidáti T9, nebo přepínač režimů -->
       <div class="subtoolbar-container">
-        {#if phoneInputMode === 't9' && t9Digits}
+        {#if modState.phoneMode === 't9' && t9Digits}
           <div class="t9-candidates-bar">
             {#each t9Candidates as cand, idx}
               <button
@@ -376,7 +370,7 @@
         {:else}
           <SegmentedControl
             options={phoneModeOptions}
-            value={phoneInputMode}
+            value={modState.phoneMode}
             size="sm"
             ariaLabel="Režim zadávání"
             onChange={handlePhoneModeChange}
@@ -419,17 +413,17 @@
       <!-- 3. Utilitní trojblok: Clear | Space/Commit | Backspace -->
       <div class="keypad-utility-row-3col">
         <SlideToAction
-          disabled={!text && !pendingDisplay}
+          disabled={!modState.text && !pendingDisplay}
           onAction={handleClearAll}
           ariaLabel="Vymazat text podržením"
         />
 
         <SpaceCommitButton
-          pendingChar={phoneInputMode === 't9' && t9Digits ? activeT9Candidate : pendingChar}
+          pendingChar={modState.phoneMode === 't9' && t9Digits ? activeT9Candidate : pendingChar}
           disabled={false}
           onSpace={handleSpace}
           onCommit={() => {
-            if (phoneInputMode === 't9' && t9Digits) {
+            if (modState.phoneMode === 't9' && t9Digits) {
               commitT9Word(activeT9Candidate, true);
             } else if (pendingChar) {
               commitPendingChar();
@@ -438,7 +432,7 @@
         />
 
         <BackspaceButton
-          disabled={!text && !pendingDisplay}
+          disabled={!modState.text && !pendingDisplay}
           hasActiveSelection={!!pendingDisplay}
           onAction={handleBackspace}
         />

@@ -316,5 +316,4 @@ export class LocalSettingsService extends KeyValueScope {
 }
 
 export const localSettingsService = new LocalSettingsService();
-export const localSettings = localSettingsService;
 

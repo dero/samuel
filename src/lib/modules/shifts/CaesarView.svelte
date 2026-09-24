@@ -79,14 +79,12 @@
     {/if}
 
     <!-- Scrollable list of all shifts with color indicator -->
-    <div class="caesar-scroll-list" role="list" aria-label="Seznam všech Caesarových posunů">
+    <div class="caesar-scroll-list" aria-label="Seznam všech Caesarových posunů">
       {#each shifts as item (item.shift)}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <div
+        <button
+          type="button"
           class="shift-row"
           class:is-best={item.isBest && showBestHighlight}
-          role="listitem"
           onclick={() => handleCopy(item)}
           title="Klepnutím zkopírovat posun +{item.shift}"
         >
@@ -110,7 +108,7 @@
               aria-hidden="true"
             ></div>
           </div>
-        </div>
+        </button>
       {/each}
     </div>
   {/if}
@@ -283,6 +281,10 @@
     transition: background-color 0.08s ease, border-color 0.08s ease;
     box-sizing: border-box;
     min-height: 40px;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
   }
 
   .shift-row:hover {

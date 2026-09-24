@@ -25,9 +25,10 @@
   import { versionService } from '../../services/versionService.svelte';
   import { navigation } from '../../state/navigation.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { localSettingsService } from '../../services/localSettingsService';
-  import { Warning, X, ClipboardText, PencilSimple } from 'phosphor-svelte';
+  import { X, ClipboardText, PencilSimple } from 'phosphor-svelte';
   import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
+  import NonStandardAlphabetBanner from '../../components/ui/NonStandardAlphabetBanner.svelte';
+  import { localSettingsService } from '../../services/localSettingsService';
 
   const modSettings = localSettingsService.forModule('shifts');
 
@@ -73,13 +74,6 @@
   const isNonStandardAlphabet = $derived(
     !['english-26', 'english-ch-27'].includes(alphabetId)
   );
-
-  $effect(() => {
-    navigation.setMenuWarning(isNonStandardAlphabet);
-    return () => {
-      navigation.setMenuWarning(false);
-    };
-  });
 
   // Dynamic Lexicon from SQLite DB
   let isLexiconLoaded = $state<boolean>(false);
@@ -304,14 +298,12 @@
           </div>
 
           <!-- Easter egg: Caesar's 23 daggers in the reserved spacer slot -->
-          <!-- svelte-ignore a11y_click_events_have_key_events -->
-          <!-- svelte-ignore a11y_no_static_element_interactions -->
-          <div
+          <button
+            type="button"
             class="input-row input-row-spacer"
             class:daggers-shaking={isDaggersShaking}
             onclick={handleDaggerClick}
-            role="presentation"
-            aria-hidden="true"
+            aria-label="Skrytá funkce: Cézarovy dýky"
           >
             {#if daggerCount === 0}
               <span class="spacer-ghost font-mono">&nbsp;</span>
@@ -333,7 +325,7 @@
                 {/each}
               </div>
             {/if}
-          </div>
+          </button>
         </div>
 
       {:else if activeSubmodule === 'vigenere'}
@@ -543,14 +535,10 @@
   {#snippet menuOptions()}
     <div class="menu-group">
       <div class="menu-group-title">Abeceda modulu</div>
-      {#if isNonStandardAlphabet}
-        <div class="nonstandard-banner" role="alert">
-          <span class="banner-icon"><Warning size={18} weight="fill" /></span>
-          <div class="banner-text">
-            Pro Posuny je nastavena <strong>{currentLayout.name}</strong>. Běžně se používá <strong>Anglická (26)</strong> nebo <strong>Anglická + CH (27)</strong>.
-          </div>
-        </div>
-      {/if}
+      <NonStandardAlphabetBanner
+        isWarning={isNonStandardAlphabet}
+        description="Pro Posuny je nastavena {currentLayout.name}. Běžně se používá Anglická (26) nebo Anglická + CH (27)."
+      />
       <AlphabetSelect
         value={alphabetId}
         onChange={(id) => {
@@ -655,13 +643,16 @@
   .input-row-spacer {
     min-height: 42px;
     height: 42px;
-    border-color: transparent;
+    border: none;
     background: transparent;
     cursor: pointer;
     user-select: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    font: inherit;
+    color: inherit;
+    width: 100%;
     position: relative;
     overflow: hidden;
     padding: 0 4px;
@@ -834,25 +825,4 @@
     letter-spacing: 0.5px;
   }
 
-  .nonstandard-banner {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-sm);
-    background-color: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    border-radius: var(--radius-sm);
-    color: var(--color-accent-warning);
-    font-size: var(--text-xs);
-    line-height: 1.4;
-  }
-
-  .banner-icon {
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  .banner-text {
-    flex: 1;
-  }
 </style>

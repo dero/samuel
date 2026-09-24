@@ -10,6 +10,7 @@ export type ModuleId =
   | 'shifts'
   | 'substitution'
   | 'freq'
+  // PLANNED: Future modules (render GenericModulePlaceholder)
   | 'grille'
   | 'words'
   | 'calendar'
