@@ -12,9 +12,11 @@ Aplikace přináší multiplatformní podporu (iOS, Android, desktop), okamžito
 - **Morseovka s inteligentním solverem:**
   - Dedikovaná rychlá klávesnice (`.`, `-`, `/`) a paralelní zobrazení variant (inverze, reverz, prohození oddělovačů).
   - **Auto-bruteforce solver bez mezer:** Kombinuje vyhledávání v DAG grafu slovníku, frekvenční vážení z Českého národního korpusu, bodování šifrových klíčových slov a místopisných názvů z RÚIAN a 4-gramový jazykový model češtiny s backoffem pro neznámá slova.
-- **Rozsáhlá offline databáze slov (přes 500 000 záznamů):**
-  - Česká podstatná jména s předpočítanými anagramovými klíči.
-  - Všechny tvary slov z ČNK s frekvencemi.
+- **Slovník & přesmyčky:** Vyhledávání podle délky a křížovkářské masky (`.`, `*`), anagramový solver s bleskovou odezvou, podpora regulárních výrazů a volitelná filtrace podstatných a vlastních jmen.
+- **Rozsáhlá offline databáze slov (1,8 milionu záznamů pod 100 MB):**
+  - Sjednocená optimalizovaná tabulka s 26bitovým písmenným indexem a metadaty.
+  - Podstatná jména a vlastní jména z ÚFAL MorfFlex 2.0 a ČNK.
+  - Všechny tvary slov z ČNK s frekvencemi výskytu.
   - RÚIAN (databáze ulic, obcí a katastrálních území ČR).
   - Speciální šifrový slovník (`puzzle_words`).
 - **Ergonomie do terénu:** Tmavé schéma šetřící baterii v noci, rychlý launcher modulů (klávesa `/` nebo tlačítko v hlavičce) a optimalizované zobrazení pro mobily i tablety.
@@ -65,6 +67,9 @@ yarn db:build
 
 # Vynucené sestavení databáze i při nezměněných zdrojích
 yarn db:build:force
+
+# Volitelné přegenerování podstatných jmen z MorfFlex 2.0 TSV (temp/czech-morfflex2.0.pdt.tsv.xz)
+python3 scripts/build-database/build_substantives_morfflex.py
 ```
 
 ---
