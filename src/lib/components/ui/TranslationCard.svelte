@@ -10,6 +10,7 @@
     emptyHint?: string;
     emptyTitle?: string;
     class?: string;
+    children?: import('svelte').Snippet;
   }
 
   let {
@@ -18,7 +19,8 @@
     placeholder = '',
     emptyHint = '',
     emptyTitle = '',
-    class: customClass = ''
+    class: customClass = '',
+    children
   }: Props = $props();
 
   let textEl = $state<HTMLDivElement | null>(null);
@@ -65,7 +67,11 @@
       class:is-empty={!hasContent}
     >
       {#if hasContent}
-        {text}{#if pendingText}<span class="pending-highlight">{pendingText}</span>{/if}
+        {#if children}
+          {@render children()}
+        {:else}
+          {text}{#if pendingText}<span class="pending-highlight">{pendingText}</span>{/if}
+        {/if}
       {:else if !displayHint}
         <span class="placeholder-text">{placeholder}</span>
       {/if}
@@ -203,5 +209,10 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     max-width: 100%;
+  }
+
+  :global(.unmapped-char) {
+    color: var(--color-text-secondary);
+    opacity: 0.65;
   }
 </style>

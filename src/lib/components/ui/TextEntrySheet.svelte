@@ -75,7 +75,7 @@
         autocomplete="off"
         autocapitalize="characters"
         spellcheck="false"
-        rows={6}
+        rows={3}
       ></textarea>
 
       {#if draftText.length > 0}
@@ -113,7 +113,7 @@
       class="confirm-btn"
       onclick={handleConfirm}
     >
-      <Check size={20} weight="bold" />
+      <Check size={18} weight="bold" />
       <span>Hotovo</span>
     </button>
   </div>
@@ -123,7 +123,7 @@
   .text-entry-container {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-sm);
     width: 100%;
   }
 
@@ -134,17 +134,18 @@
 
   .entry-textarea {
     width: 100%;
-    min-height: 140px;
+    min-height: 64px;
+    height: clamp(64px, 20dvh, 120px);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
-    font-size: var(--text-base);
+    font-size: 14px;
     font-weight: 600;
-    line-height: 1.4;
-    padding: var(--space-sm) var(--space-md) 28px var(--space-md);
+    line-height: 1.35;
+    padding: 8px 12px 20px 12px;
     box-sizing: border-box;
-    resize: vertical;
+    resize: none;
     outline: none;
     transition: border-color 0.12s ease;
   }
@@ -157,15 +158,15 @@
   .entry-textarea::placeholder {
     color: var(--color-text-muted);
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     font-weight: 400;
   }
 
   .char-counter {
     position: absolute;
-    bottom: 8px;
-    right: 12px;
-    font-size: var(--text-2xs);
+    bottom: 5px;
+    right: 8px;
+    font-size: 11px;
     font-family: var(--font-mono);
     color: var(--color-text-muted);
     pointer-events: none;
@@ -182,8 +183,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm);
-    height: var(--utility-row-height, 42px);
+    gap: var(--space-xs);
+    height: 38px;
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
@@ -205,17 +206,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm);
-    height: var(--tap-min-size, 48px);
+    gap: var(--space-xs);
+    height: 40px;
     width: 100%;
     background-color: var(--color-accent-primary);
     color: #000000;
     border: none;
     border-radius: var(--radius-sm);
-    font-size: var(--text-base);
+    font-size: var(--text-sm);
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0, 210, 255, 0.35);
+    box-shadow: 0 2px 10px rgba(0, 210, 255, 0.3);
     transition: opacity 0.12s ease, transform 0.08s ease;
   }
 
