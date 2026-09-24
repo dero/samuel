@@ -52,6 +52,7 @@
     numbers: Calculator,
     shifts: ArrowsClockwise,
     substitution: TextAa,
+    freq: ChartBar,
     'freq-ocr': ChartBar,
     grille: SquaresFour,
     words: BookOpen,

@@ -1,15 +1,14 @@
 <script lang="ts">
   import BottomSheet from './BottomSheet.svelte';
-  import SlideToAction from './SlideToAction.svelte';
   import { settings } from '../../state/settings.svelte';
-  import { pasteFromClipboard } from '../../utils/clipboard';
-  import { TextT, ClipboardText, Check } from 'phosphor-svelte';
+  import { TextT, Check } from 'phosphor-svelte';
 
   interface Props {
     open: boolean;
     title: string;
     value: string;
     placeholder?: string;
+    options?: import('svelte').Snippet;
     onSave: (val: string) => void;
     onClose: () => void;
   }
@@ -19,6 +18,7 @@
     title = 'Zadání textu',
     value = '',
     placeholder = 'Zadejte nebo vložte text...',
+    options,
     onSave,
     onClose
   }: Props = $props();
@@ -38,18 +38,6 @@
       }, 120);
     }
   });
-
-  async function handlePaste() {
-    settings.vibrate(20);
-    const clip = await pasteFromClipboard();
-    if (clip) {
-      draftText = (draftText ? draftText + ' ' : '') + clip;
-    }
-  }
-
-  function handleClear() {
-    draftText = '';
-  }
 
   function handleConfirm() {
     settings.vibrate(25);
@@ -85,27 +73,11 @@
       {/if}
     </div>
 
-    <!-- Quick Actions in Sheet -->
-    <div class="sheet-actions-row">
-      <button
-        type="button"
-        class="paste-btn"
-        onclick={handlePaste}
-        title="Vložit text ze schránky"
-      >
-        <ClipboardText size={18} weight="duotone" />
-        <span>Vložit</span>
-      </button>
-
-      <SlideToAction
-        disabled={!draftText}
-        onAction={handleClear}
-        showLabel={true}
-        label="Vymazat"
-        ariaLabel="Vymazat text podržením"
-        holdDuration={400}
-      />
-    </div>
+    {#if options}
+      <div class="sheet-options-container">
+        {@render options()}
+      </div>
+    {/if}
 
     <!-- Primary Confirm Button -->
     <button
@@ -125,6 +97,13 @@
     flex-direction: column;
     gap: var(--space-sm);
     width: 100%;
+  }
+
+  .sheet-options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 2px 0;
   }
 
   .textarea-wrapper {
@@ -170,36 +149,6 @@
     font-family: var(--font-mono);
     color: var(--color-text-muted);
     pointer-events: none;
-  }
-
-  .sheet-actions-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-sm);
-    align-items: center;
-  }
-
-  .paste-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-xs);
-    height: 38px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--color-accent-primary);
-    font-size: var(--text-sm);
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.4);
-    transition: background-color 0.12s ease;
-  }
-
-  .paste-btn:active {
-    background-color: var(--color-surface-active);
   }
 
   .confirm-btn {

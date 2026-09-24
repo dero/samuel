@@ -15,6 +15,7 @@
   import NumbersModule from './lib/modules/numbers/NumbersModule.svelte';
   import ShiftsModule from './lib/modules/shifts/ShiftsModule.svelte';
   import SubstitutionModule from './lib/modules/substitution/SubstitutionModule.svelte';
+  import FrequencyModule from './lib/modules/frequency/FrequencyModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -87,6 +88,8 @@
     <ShiftsModule />
   {:else if navigation.activeModuleId === 'substitution'}
     <SubstitutionModule />
+  {:else if navigation.activeModuleId === 'freq'}
+    <FrequencyModule />
   {:else if navigation.activeModuleId === 'settings'}
     <SettingsModule />
   {:else if navigation.activeModuleId === 'help'}

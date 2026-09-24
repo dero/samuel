@@ -9,7 +9,7 @@ export type ModuleId =
   | 'numbers'
   | 'shifts'
   | 'substitution'
-  | 'freq-ocr'
+  | 'freq'
   | 'grille'
   | 'words'
   | 'calendar'
@@ -39,7 +39,7 @@ export const MODULES: ModuleMeta[] = [
   { id: 'numbers', name: 'Čísla', icon: 'Calculator', hasAlphabet: true },
   { id: 'shifts', name: 'Posuny', icon: 'ArrowsClockwise', hasAlphabet: true },
   { id: 'substitution', name: 'Substituce', icon: 'TextAa', hasAlphabet: true },
-  { id: 'freq-ocr', name: 'Frekvence', icon: 'ChartBar' },
+  { id: 'freq', name: 'Frekvence', icon: 'ChartBar' },
   { id: 'grille', name: 'Mřížka', icon: 'SquaresFour' },
   { id: 'words', name: 'Slovník', icon: 'BookOpen' },
   { id: 'calendar', name: 'Kalendář', icon: 'CalendarBlank' },
