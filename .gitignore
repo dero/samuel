@@ -72,3 +72,7 @@ public/words.db
 dev-certs/
 *.pem
 
+# Local raw datasets and temporary files
+temp/
+*.xz
+

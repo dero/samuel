@@ -3,6 +3,7 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
+  import StatusBar from '../../components/ui/StatusBar.svelte';
   import MonogramsView from './MonogramsView.svelte';
   import FrequencyReference from './FrequencyReference.svelte';
   import IocDetailModal from './IocDetailModal.svelte';
@@ -151,41 +152,43 @@
         </button>
       {:else}
         <!-- Active Analysis: Simplified 1-line status bar -->
-        <button
-          type="button"
-          class="status-summary-bar"
+        <StatusBar
           onclick={() => {
             settings.vibrate(15);
             showIocModal = true;
           }}
           title="Klepnutím zobrazit vysvětlení a hodnotu Indexu koincidence"
-          aria-label="Klepnutím zobrazit vysvětlení a hodnotu Indexu koincidence"
+          ariaLabel="Klepnutím zobrazit vysvětlení a hodnotu Indexu koincidence"
         >
-          <span class="status-counts font-mono">
-            {analysis.totalChars} znaků • {analysis.uniqueChars} různých
-          </span>
-
-          <span class="status-badge-wrap">
-            <span
-              class="nature-pill font-mono"
-              class:nature-mono={analysis.ioc.classification === 'mono'}
-              class:nature-poly={analysis.ioc.classification === 'poly'}
-              class:nature-high={analysis.ioc.classification === 'high'}
-              class:nature-low={analysis.ioc.classification === 'low'}
-            >
-              {#if analysis.ioc.classification === 'mono'}
-                ✓ Přirozený text
-              {:else if analysis.ioc.classification === 'poly'}
-                ~ Polyalfabetická
-              {:else if analysis.ioc.classification === 'high'}
-                ! Repetitivní
-              {:else}
-                Méně dat
-              {/if}
+          {#snippet left()}
+            <span class="status-counts font-mono">
+              {analysis.totalChars} znaků • {analysis.uniqueChars} různých
             </span>
-            <Info size={14} weight="bold" class="status-info-icon" />
-          </span>
-        </button>
+          {/snippet}
+
+          {#snippet right()}
+            <span class="status-badge-wrap">
+              <span
+                class="nature-pill font-mono"
+                class:nature-mono={analysis.ioc.classification === 'mono'}
+                class:nature-poly={analysis.ioc.classification === 'poly'}
+                class:nature-high={analysis.ioc.classification === 'high'}
+                class:nature-low={analysis.ioc.classification === 'low'}
+              >
+                {#if analysis.ioc.classification === 'mono'}
+                  ✓ Přirozený text
+                {:else if analysis.ioc.classification === 'poly'}
+                  ~ Polyalfabetická
+                {:else if analysis.ioc.classification === 'high'}
+                  ! Repetitivní
+                {:else}
+                  Méně dat
+                {/if}
+              </span>
+              <Info size={14} weight="bold" class="status-info-icon" />
+            </span>
+          {/snippet}
+        </StatusBar>
 
         <!-- Scrollable Letter Histogram -->
         <div class="histogram-wrapper">
@@ -392,30 +395,6 @@
     color: var(--color-text-secondary);
     max-width: 280px;
     line-height: 1.4;
-  }
-
-  /* Single-line Status Bar */
-  .status-summary-bar {
-    appearance: none;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 32px;
-    padding: 0 8px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    margin-bottom: 6px;
-    flex-shrink: 0;
-    gap: 8px;
-    cursor: pointer;
-    box-sizing: border-box;
-    transition: background-color 0.12s ease;
-  }
-
-  .status-summary-bar:hover {
-    background-color: var(--color-surface-3);
   }
 
   .status-counts {

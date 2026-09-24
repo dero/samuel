@@ -9,6 +9,10 @@
     value: string;
     placeholder?: string;
     options?: import('svelte').Snippet;
+    quickInsertChars?: string[];
+    discardSpaces?: boolean;
+    autocapitalize?: 'none' | 'characters' | 'words' | 'sentences' | 'off' | 'on';
+    inputmode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
     onSave: (val: string) => void;
     onClose: () => void;
   }
@@ -19,6 +23,10 @@
     value = '',
     placeholder = 'Zadejte nebo vložte text...',
     options,
+    quickInsertChars = [],
+    discardSpaces = false,
+    autocapitalize,
+    inputmode,
     onSave,
     onClose
   }: Props = $props();
@@ -28,7 +36,7 @@
 
   $effect(() => {
     if (open) {
-      draftText = value;
+      draftText = discardSpaces ? value.replace(/\s+/g, '') : value;
       // Focus textarea on open
       setTimeout(() => {
         if (textareaEl) {
@@ -39,9 +47,62 @@
     }
   });
 
+  function handleInput(e: Event) {
+    if (!discardSpaces) return;
+    const target = e.target as HTMLTextAreaElement;
+    const raw = target.value;
+    const clean = raw.replace(/\s+/g, '');
+    if (clean !== raw) {
+      const pos = target.selectionStart
+        ? Math.max(0, target.selectionStart - (raw.length - clean.length))
+        : clean.length;
+      draftText = clean;
+      target.value = clean;
+      target.setSelectionRange(pos, pos);
+    }
+  }
+
+  function handleBeforeInput(e: InputEvent) {
+    if (!discardSpaces) return;
+    // Intercept mobile OS auto-spacing after dot or user space key
+    if (e.data === ' ') {
+      e.preventDefault();
+      return;
+    }
+    if (e.data && e.data.includes(' ')) {
+      e.preventDefault();
+      const cleanData = e.data.replace(/\s+/g, '');
+      if (cleanData && typeof document !== 'undefined') {
+        document.execCommand('insertText', false, cleanData);
+      }
+    }
+  }
+
+  function handleQuickInsert(char: string) {
+    settings.vibrate(20);
+    if (!textareaEl) {
+      draftText += char;
+      return;
+    }
+    const start = textareaEl.selectionStart ?? draftText.length;
+    const end = textareaEl.selectionEnd ?? draftText.length;
+    draftText = draftText.slice(0, start) + char + draftText.slice(end);
+    if (discardSpaces) {
+      draftText = draftText.replace(/\s+/g, '');
+    }
+    const nextPos = start + char.length;
+    setTimeout(() => {
+      if (textareaEl) {
+        textareaEl.focus();
+        textareaEl.setSelectionRange(nextPos, nextPos);
+      }
+    }, 0);
+  }
+
   function handleConfirm() {
     settings.vibrate(25);
-    onSave(draftText);
+    const finalVal = discardSpaces ? draftText.replace(/\s+/g, '') : draftText;
+    onSave(finalVal);
     onClose();
   }
 </script>
@@ -61,8 +122,11 @@
         class="entry-textarea font-mono"
         {placeholder}
         autocomplete="off"
-        autocapitalize="characters"
+        autocapitalize={autocapitalize ?? (discardSpaces ? 'none' : 'characters')}
         spellcheck="false"
+        inputmode={inputmode ?? (discardSpaces ? 'search' : 'text')}
+        oninput={handleInput}
+        onbeforeinput={handleBeforeInput}
         rows={3}
       ></textarea>
 
@@ -72,6 +136,21 @@
         </div>
       {/if}
     </div>
+
+    {#if quickInsertChars && quickInsertChars.length > 0}
+      <div class="quick-chars-bar">
+        {#each quickInsertChars as char}
+          <button
+            type="button"
+            class="quick-char-btn"
+            onclick={() => handleQuickInsert(char)}
+          >
+            <span class="char-symbol font-mono">{char}</span>
+            <span class="char-desc">{char === '.' ? '1 znak' : char === '*' ? 'libovolně' : ''}</span>
+          </button>
+        {/each}
+      </div>
+    {/if}
 
     {#if options}
       <div class="sheet-options-container">
@@ -109,6 +188,45 @@
   .textarea-wrapper {
     position: relative;
     width: 100%;
+  }
+
+  .quick-chars-bar {
+    display: flex;
+    gap: var(--space-xs);
+    width: 100%;
+  }
+
+  .quick-char-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    padding: 0 8px;
+    transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+  }
+
+  .quick-char-btn:active {
+    background-color: var(--color-surface-active);
+    transform: scale(0.97);
+  }
+
+  .char-symbol {
+    color: var(--color-accent-primary);
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .char-desc {
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 500;
   }
 
   .entry-textarea {

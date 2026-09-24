@@ -93,74 +93,34 @@ self.onmessage = async (e: MessageEvent) => {
       const seen = new Set<string>();
       const candidates: string[] = [];
 
-      // 1. Puzzle words
-      try {
-        const stmtPuzzle = db.prepare(
-          `SELECT word FROM puzzle_words WHERE len = :len AND word_nodiac GLOB :glob LIMIT 5`
-        );
-        stmtPuzzle.bind({ ':len': digits.length, ':glob': globExact });
-        while (stmtPuzzle.step()) {
-          const row = stmtPuzzle.getAsObject() as { word: string };
-          const upper = row.word.toUpperCase();
-          if (!seen.has(upper)) {
-            seen.add(upper);
-            candidates.push(upper);
-          }
-        }
-        stmtPuzzle.free();
-      } catch {
-        // Ignore
-      }
-
-      // 2. Main dictionary exact matches (cap at 7 to guarantee room for prefix completions)
+      // 1. Exact matches (puzzle words with freq >= 100000 appear first, followed by corpus words)
       const exactLimit = Math.min(limit, 7);
       try {
-        const stmtAll = db.prepare(
-          `SELECT word FROM cs_all WHERE len = :len AND word_nodiac GLOB :glob ORDER BY freq DESC LIMIT :limit`
+        const stmtExact = db.prepare(
+          `SELECT word FROM words WHERE len = :len AND word_nodiac GLOB :glob ORDER BY freq DESC LIMIT :limit`
         );
-        stmtAll.bind({ ':len': digits.length, ':glob': globExact, ':limit': exactLimit });
-        while (stmtAll.step()) {
-          const row = stmtAll.getAsObject() as { word: string };
+        stmtExact.bind({ ':len': digits.length, ':glob': globExact, ':limit': exactLimit });
+        while (stmtExact.step()) {
+          const row = stmtExact.getAsObject() as { word: string };
           const upper = row.word.toUpperCase();
           if (!seen.has(upper)) {
             seen.add(upper);
             candidates.push(upper);
           }
         }
-        stmtAll.free();
+        stmtExact.free();
       } catch {
         // Ignore
       }
 
-      // 3. Prefix completions (longer words matching the digit prefix)
+      // 2. Prefix completions (longer words matching the digit prefix)
       if (candidates.length < limit) {
         const globPrefix = globExact + '*';
-
-        // 3a. Cipher keywords prefix
-        try {
-          const stmtPuzzlePre = db.prepare(
-            `SELECT word FROM puzzle_words WHERE len > :len AND word_nodiac GLOB :globPrefix LIMIT 2`
-          );
-          stmtPuzzlePre.bind({ ':len': digits.length, ':globPrefix': globPrefix });
-          while (stmtPuzzlePre.step()) {
-            const row = stmtPuzzlePre.getAsObject() as { word: string };
-            const upper = row.word.toUpperCase();
-            if (!seen.has(upper)) {
-              seen.add(upper);
-              candidates.push(upper);
-            }
-          }
-          stmtPuzzlePre.free();
-        } catch {
-          // Ignore
-        }
-
-        // 3b. Main dictionary prefix by specific lengths (uses idx_all_len_freq for sub-millisecond lookups)
         const maxLen = Math.min(digits.length + 4, 18);
         for (let l = digits.length + 1; l <= maxLen && candidates.length < limit; l++) {
           try {
             const stmtPrefix = db.prepare(
-              `SELECT word FROM cs_all WHERE len = :len AND word_nodiac GLOB :globPrefix ORDER BY freq DESC LIMIT 2`
+              `SELECT word FROM words WHERE len = :len AND word_nodiac GLOB :globPrefix ORDER BY freq DESC LIMIT 2`
             );
             stmtPrefix.bind({ ':len': l, ':globPrefix': globPrefix });
             while (stmtPrefix.step()) {

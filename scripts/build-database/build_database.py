@@ -29,6 +29,15 @@ def remove_diacritics(s: str) -> str:
     s = s.replace('ß', 'ss')
     return ''.join(c for c in unicodedata.normalize('NFKD', s) if not unicodedata.combining(c))
 
+def compute_mask_nodiac(s_nodiac: str) -> int:
+    """Computes a 26-bit integer mask indicating present letters (a=0, z=25)."""
+    mask = 0
+    for ch in s_nodiac.lower():
+        o = ord(ch) - 97
+        if 0 <= o <= 25:
+            mask |= (1 << o)
+    return mask
+
 def compute_sha256(file_path: str) -> str:
     """Computes full SHA-256 hex digest for a file."""
     h = hashlib.sha256()
@@ -103,121 +112,59 @@ def main():
     cur.execute("PRAGMA synchronous = 0")
 
     # =========================================================================
-    # 1. TABLE: puzzle_words (from data/puzzle_words.json)
+    # 1. TABLE: words (unified canonical dictionary with PoS & cipher metadata)
     # =========================================================================
-    puzzle_json = 'data/puzzle_words.json'
-    print(f"\n--- Building table: puzzle_words ({puzzle_json}) ---")
+    print(f"\n--- Building unified table: words ---")
     cur.execute('''
-        CREATE TABLE puzzle_words (
+        CREATE TABLE words (
             id INTEGER PRIMARY KEY,
             word TEXT NOT NULL,
             word_nodiac TEXT NOT NULL,
-            len INTEGER NOT NULL
+            freq INTEGER NOT NULL,
+            len INTEGER NOT NULL,
+            mask_nodiac INTEGER NOT NULL,
+            is_subst INTEGER NOT NULL DEFAULT 0,
+            is_name INTEGER NOT NULL DEFAULT 0,
+            is_puzzle INTEGER NOT NULL DEFAULT 0
         )
     ''')
 
+    # Load puzzle keywords (exact lowercase word forms)
+    puzzle_json = 'data/puzzle_words.json'
+    puzzle_exact = set()
     if os.path.exists(puzzle_json):
         with open(puzzle_json, 'r', encoding='utf-8') as f:
-            words = json.load(f)
+            for w in json.load(f):
+                w_str = str(w).strip()
+                if w_str:
+                    puzzle_exact.add(w_str.lower())
 
-        puzzle_entries = []
-        for w in words:
-            w_clean = str(w).strip()
-            if not w_clean:
-                continue
-            w_nodiac = remove_diacritics(w_clean).lower()
-            puzzle_entries.append((w_clean, w_nodiac, len(w_nodiac)))
-
-        cur.executemany('''
-            INSERT INTO puzzle_words (word, word_nodiac, len)
-            VALUES (?, ?, ?)
-        ''', puzzle_entries)
-        print(f"Inserted {len(puzzle_entries)} rows into puzzle_words")
-    else:
-        print(f"WARNING: {puzzle_json} not found!")
-
-    cur.execute('CREATE INDEX idx_puzzle_words_nodiac ON puzzle_words(word_nodiac COLLATE NOCASE)')
-
-    # =========================================================================
-    # 2. TABLE: cs_substantives (from data/cs_substantives.csv)
-    # =========================================================================
+    # Load substantives from MorfFlex dataset (exact lowercase word forms)
     subst_csv = 'data/cs_substantives.csv'
-    print(f"\n--- Building table: cs_substantives ({subst_csv}) ---")
-    cur.execute('''
-        CREATE TABLE cs_substantives (
-            id INTEGER PRIMARY KEY,
-            word TEXT NOT NULL,
-            word_nodiac TEXT NOT NULL,
-            freq INTEGER NOT NULL,
-            is_name INTEGER NOT NULL,
-            is_unique_letters INTEGER NOT NULL,
-            is_unique_letters_nodiac INTEGER NOT NULL,
-            letters TEXT NOT NULL,
-            letters_nodiac TEXT NOT NULL,
-            len INTEGER NOT NULL
-        )
-    ''')
-
+    subst_exact = {}  # w_lower -> (raw_word, freq, is_name)
     if os.path.exists(subst_csv):
-        subst_entries = []
         with open(subst_csv, 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
-            header = next(reader, None)
+            next(reader, None)
             for row in reader:
-                if len(row) < 8:
-                    continue
-                w = row[0].strip()
-                w_nodiac = row[1].strip()
-                freq = int(row[2].strip().strip('"'))
-                is_name = int(row[3].strip().strip('"'))
-                is_uniq = int(row[4].strip().strip('"'))
-                is_uniq_nod = int(row[5].strip().strip('"'))
-                letters = row[6].strip()
-                letters_nodiac = row[7].strip()
-                length = len(w_nodiac)
-                subst_entries.append((w, w_nodiac, freq, is_name, is_uniq, is_uniq_nod, letters, letters_nodiac, length))
+                if len(row) >= 4:
+                    raw_w = row[0].strip()
+                    w_low = raw_w.lower()
+                    freq_val = int(row[2].strip().strip('"'))
+                    is_n = int(row[3].strip().strip('"'))
+                    subst_exact[w_low] = (raw_w, freq_val, is_n)
 
-        cur.executemany('''
-            INSERT INTO cs_substantives (
-                word, word_nodiac, freq, is_name, is_unique_letters, is_unique_letters_nodiac,
-                letters, letters_nodiac, len
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', subst_entries)
-        print(f"Inserted {len(subst_entries)} rows into cs_substantives")
-    else:
-        print(f"WARNING: {subst_csv} not found!")
-
-    cur.execute('CREATE INDEX idx_subst_word_nodiac ON cs_substantives(word_nodiac COLLATE NOCASE)')
-    cur.execute('CREATE INDEX idx_subst_letters_nodiac ON cs_substantives(letters_nodiac)')
-    cur.execute('CREATE INDEX idx_subst_letters ON cs_substantives(letters)')
-    cur.execute('CREATE INDEX idx_subst_len_freq ON cs_substantives(len, freq DESC)')
-
-    # =========================================================================
-    # 3. TABLE: cs_all (from data/cs_all.csv)
-    # =========================================================================
+    # Load cs_all corpus words
     all_csv = 'data/cs_all.csv'
-    print(f"\n--- Building table: cs_all ({all_csv}) ---")
-    cur.execute('''
-        CREATE TABLE cs_all (
-            id INTEGER PRIMARY KEY,
-            word TEXT NOT NULL,
-            word_nodiac TEXT NOT NULL,
-            freq INTEGER NOT NULL,
-            len INTEGER NOT NULL
-        )
-    ''')
-
+    all_words_map = {}
     if os.path.exists(all_csv):
-        # Aggregate duplicates (e.g. if hyphen removal merges forms)
-        all_words_map = {}
         with open(all_csv, 'r', encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
-            next(reader, None) # skip header
+            next(reader, None)
             for row in reader:
                 if len(row) < 3:
                     continue
                 raw_word = row[1].strip().strip('"')
-                # Remove hyphens and dashes between words (e.g. Müller-Thurgau -> MüllerThurgau)
                 clean_word = re.sub(r'[\-\–\—\‑]+', '', raw_word)
                 if clean_word and all(c.isalpha() for c in clean_word):
                     try:
@@ -226,21 +173,55 @@ def main():
                         continue
                     all_words_map[clean_word] = all_words_map.get(clean_word, 0) + freq
 
-        all_entries = []
-        for w, freq in sorted(all_words_map.items()):
-            w_nodiac = remove_diacritics(w).lower()
-            all_entries.append((w, w_nodiac, freq, len(w_nodiac)))
+    entries = []
+    seen_exact = set()
 
-        cur.executemany('''
-            INSERT INTO cs_all (word, word_nodiac, freq, len)
-            VALUES (?, ?, ?, ?)
-        ''', all_entries)
-        print(f"Inserted {len(all_entries)} rows into cs_all")
-    else:
-        print(f"WARNING: {all_csv} not found!")
+    for w, freq in sorted(all_words_map.items()):
+        w_low = w.lower()
+        w_nodiac = remove_diacritics(w).lower()
 
-    cur.execute('CREATE INDEX idx_all_word_nodiac ON cs_all(word_nodiac COLLATE NOCASE)')
-    cur.execute('CREATE INDEX idx_all_len_freq ON cs_all(len, freq DESC)')
+        # Strict exact substantive check (prevents false matches like každá -> kazda)
+        is_subst = 1 if w_low in subst_exact else 0
+        is_name = subst_exact[w_low][2] if is_subst else (1 if w[0].isupper() else 0)
+        is_puz = 1 if w_low in puzzle_exact else 0
+        if is_puz:
+            freq = max(freq, 100000)
+
+        # Filter: preserve all substantives (even freq=1), all puzzle words, but require freq >= 2 for general non-nouns
+        if is_subst == 0 and is_puz == 0 and freq < 2:
+            continue
+
+        seen_exact.add(w_low)
+        mask = compute_mask_nodiac(w_nodiac)
+        entries.append((w, w_nodiac, freq, len(w_nodiac), mask, is_subst, is_name, is_puz))
+
+    # Include any puzzle words not present in cs_all
+    for p_word in sorted(puzzle_exact):
+        if p_word not in seen_exact:
+            seen_exact.add(p_word)
+            p_nod = remove_diacritics(p_word).lower()
+            p_subst = 1 if p_word in subst_exact else 0
+            p_name = subst_exact[p_word][2] if p_subst else 0
+            entries.append((p_word, p_nod, 100000, len(p_nod), compute_mask_nodiac(p_nod), p_subst, p_name, 1))
+
+    # Include any substantives from MorfFlex not present in cs_all
+    for s_low, (s_raw, s_freq, s_name) in sorted(subst_exact.items()):
+        if s_low not in seen_exact:
+            seen_exact.add(s_low)
+            s_nod = remove_diacritics(s_raw).lower()
+            s_puz = 1 if s_low in puzzle_exact else 0
+            s_freq_final = max(s_freq, 100000) if s_puz else s_freq
+            entries.append((s_raw, s_nod, s_freq_final, len(s_nod), compute_mask_nodiac(s_nod), 1, s_name, s_puz))
+
+    cur.executemany('''
+        INSERT INTO words (word, word_nodiac, freq, len, mask_nodiac, is_subst, is_name, is_puzzle)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', entries)
+    print(f"Inserted {len(entries)} rows into words")
+
+    cur.execute('CREATE INDEX idx_words_nodiac ON words(word_nodiac COLLATE NOCASE)')
+    cur.execute('CREATE INDEX idx_words_len_freq ON words(len, freq DESC)')
+    cur.execute('CREATE INDEX idx_words_len_mask ON words(len, mask_nodiac, freq DESC)')
 
     # =========================================================================
     # 4. TABLE: ruian (from data/RUIAN/*.csv)
@@ -253,7 +234,8 @@ def main():
             word TEXT NOT NULL,
             word_nodiac TEXT NOT NULL,
             type TEXT NOT NULL,
-            len INTEGER NOT NULL
+            len INTEGER NOT NULL,
+            mask_nodiac INTEGER NOT NULL
         )
     ''')
 
@@ -291,11 +273,12 @@ def main():
         ruian_entries = []
         for name, t in sorted(unique_ruian):
             w_nodiac = remove_diacritics(name).lower()
-            ruian_entries.append((name, w_nodiac, t, len(w_nodiac)))
+            mask = compute_mask_nodiac(w_nodiac)
+            ruian_entries.append((name, w_nodiac, t, len(w_nodiac), mask))
 
         cur.executemany('''
-            INSERT INTO ruian (word, word_nodiac, type, len)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO ruian (word, word_nodiac, type, len, mask_nodiac)
+            VALUES (?, ?, ?, ?, ?)
         ''', ruian_entries)
         print(f"Inserted {len(ruian_entries)} deduplicated rows into ruian")
     else:
@@ -304,6 +287,7 @@ def main():
     cur.execute('CREATE INDEX idx_ruian_word_nodiac ON ruian(word_nodiac COLLATE NOCASE)')
     cur.execute('CREATE INDEX idx_ruian_type ON ruian(type)')
     cur.execute('CREATE INDEX idx_ruian_type_nodiac ON ruian(type, word_nodiac COLLATE NOCASE)')
+    cur.execute('CREATE INDEX idx_ruian_len_mask ON ruian(len, mask_nodiac)')
 
     # =========================================================================
     # 5. TABLE: world_flags (from data/world_flags.json)

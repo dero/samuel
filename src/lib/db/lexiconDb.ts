@@ -13,20 +13,13 @@ export interface RawLexiconWord {
 export const LEXICON_SQL_QUERY = `
   SELECT w, MAX(is_cipher) as is_cipher, MAX(is_ruian) as is_ruian, MAX(freq) as freq
   FROM (
-    SELECT UPPER(word_nodiac) AS w, 1 AS is_cipher, 0 AS is_ruian, 10000 AS freq
-    FROM puzzle_words
+    SELECT UPPER(word_nodiac) AS w, is_puzzle AS is_cipher, 0 AS is_ruian, freq
+    FROM words
+    WHERE (len >= 2 OR is_puzzle = 1) AND (is_subst = 1 OR freq >= 30 OR is_puzzle = 1)
     UNION ALL
     SELECT UPPER(REPLACE(REPLACE(word_nodiac, ' ', ''), '-', '')) AS w, 0 AS is_cipher, 1 AS is_ruian, 100 AS freq
     FROM ruian
     WHERE type IN ('ulice', 'cast_obce', 'obec') AND len >= 2
-    UNION ALL
-    SELECT UPPER(word_nodiac) AS w, 0 AS is_cipher, 0 AS is_ruian, freq
-    FROM cs_substantives
-    WHERE len >= 2 AND freq >= 10
-    UNION ALL
-    SELECT UPPER(word_nodiac) AS w, 0 AS is_cipher, 0 AS is_ruian, freq
-    FROM cs_all
-    WHERE len >= 2 AND freq >= 30
   )
   WHERE (length(w) >= 2 OR is_cipher = 1) AND w NOT GLOB '*[^A-Z]*'
   GROUP BY w

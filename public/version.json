@@ -1,23 +1,24 @@
 {
   "appVersion": "0.1.0",
-  "buildTime": 1790268051774,
-  "dbVersion": "2026.09.16-2124",
-  "dbHash": "7e81da4745219cfc",
-  "dbSizeBytes": 106483712,
-  "dbUpdated": "2026-09-16T21:24:13Z",
-  "sourceHash": "3f566a3b15cd3d11",
-  "entryJs": "/assets/index-BqxAgXki.js",
+  "buildTime": 1790279549445,
+  "dbVersion": "2026.09.24-1923",
+  "dbHash": "f42d4bf14c39cfdc",
+  "dbSizeBytes": 102944768,
+  "dbUpdated": "2026-09-24T19:23:00Z",
+  "sourceHash": "5bba8f9adc2a7422",
+  "entryJs": "/assets/index-goX62UQp.js",
   "appAssets": [
     "/",
     "/index.html",
     "/manifest.webmanifest",
     "/favicon.svg",
     "/sw.js",
-    "/assets/index-BqxAgXki.js",
-    "/assets/main-UJSVMvhs.js",
-    "/assets/main-C3OJSZXp.css",
-    "/assets/morse.worker-BOKTKCNN.js",
+    "/assets/index-goX62UQp.js",
+    "/assets/main-CeyfgP9W.js",
+    "/assets/main-D9qkkHmd.css",
+    "/assets/morse.worker-Ch-NfToh.js",
     "/assets/sql-wasm-DfANybxk.wasm",
-    "/assets/t9.worker-CZ5VDiQ7.js"
+    "/assets/t9.worker-CjhzCLf9.js",
+    "/assets/words.worker-CbH_IPBl.js"
   ]
 }
