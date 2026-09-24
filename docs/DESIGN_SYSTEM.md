@@ -69,8 +69,8 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 ```
 
 ### Povinnosti snippetů:
-- `output()`: Vykresluje `<TranslationCard>`. Zákaz celostránkového scrollu; scrollovat smí pouze vnitřek výstupní karty (`overflow-y: auto`).
-- `input()`: Obsahuje Sub-Toolbar (je-li potřeba), zadávací matici v zapuštěném šasi a utilitní trojblok. Součet výšek nesmí překročit **326 px**.
+- `output()`: Vykresluje výstup modulu (překlad v `<TranslationCard>`, grafy, frekvenční histogram apod.). Výstup je VŽDY nahoře (`flex: 1`, min. 84 px). Zákaz celostránkového scrollu; scrollovat smí pouze vnitřek výstupní zóny (`overflow-y: auto`).
+- `input()`: Obsahuje Sub-Toolbar (je-li potřeba), zadávací matici v zapuštěném šasi, utilitní trojblok či textové triggery. Vstup je VŽDY dole na dosah palce (thumb zone). Součet výšek nesmí překročit **326 px**.
 - `menuOptions()`: Vykresluje položky `<OptionRow>` a `<AlphabetSelect>`.
 - `reference()`: Vykresluje komponentu taháku modulu.
 
@@ -79,14 +79,15 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 ## 3. Závazná pravidla pro AI agenty (POKUD ..., POTOM ...)
 
 ### Layout & Viewport
-- **POKUD** skládáš modul, **POTOM** použij `<ModuleShell>` a dodrž hierarchii: Header (52 px), `<TranslationCard>` (`flex: 1`, min. 84 px), `ZONE-INPUT` (max. 326 px). Žádný celostránkový scroll (`overflow: hidden`).
+- **POKUD** skládáš modul, **POTOM** použij `<ModuleShell>` a dodrž hierarchii: Header (52 px), `<TranslationCard>` či vizualizace (`flex: 1`, min. 84 px), `ZONE-INPUT` (max. 326 px). Žádný celostránkový scroll (`overflow: hidden`).
+- **POKUD** navrhuješ jakýkoliv modul (včetně analytických, šifrovacích či textových), **POTOM** výstup / výsledky / luštěný text patří VŽDY do horní zóny (`ZONE-OUTPUT`) a veškeré zadávání / klávesnice / voliče VŽDY do spodní zóny (`ZONE-INPUT`) na dosah palce (thumb zone). V celé aplikaci je striktně zakázáno obracet tok (vstup nahoře a výstup dole je nepřípustný).
 - **POKUD** navrhuješ rozhraní, **POTOM** minimální garantovaný viewport je **320 × 540 px** (portrait-only). Při landscape s výškou < 540 px se zobrazí overlay `<LandscapeWarning>`.
 - **POKUD** má nástroj odlišné vstupní médium (kříž vs polybius vs mobil), **POTOM** vytvoř samostatný modul v Launcheru. NIKDY neslučuj odlišná zadávací média do jednoho modulu.
 - **POKUD** skládáš prvky ve vstupní zóně (`ZONE-INPUT`), **POTOM** použij jednotný kontejner `.zone-input-flow` se striktním odstupem `--zone-input-gap: var(--space-sm)` (8 px) mezi všemi souslednými prvky: `[Sub-Toolbar (36 px)] ➔ 8 px ➔ [Stage / Keypad] ➔ 8 px ➔ [.keypad-utility-row-3col (42 px)]`. NIKDY nepřidávej ad hoc vertikální marginy nebo paddingy, které by tento 8px rytmus narušily.
 - **POKUD** renderuješ Sub-Toolbar, **POTOM** použij kontejner `.subtoolbar-container` (výška přesně 36 px, `overflow: hidden`) a komponenty v něm musí držet výšku 36 px (např. `<SegmentedControl size="sm">`, `.t9-candidate-pill` výška 30 px). Žádný prvek nesmí přetékat.
 - **POKUD** modul nabízí příbuzné varianty téhož nástroje (flavours), **POTOM** umísti `<SegmentedControl size="sm">` do Sub-Toolbaru (36 px, 100% full-width) přímo nad klávesnici.
 - **POKUD** má modul rozepsaný stav vyžadující kontextové akce (např. T9 predikce slov), **POTOM** Sub-Toolbar plynule přepni z nabídky flavours na kontextové akce.
-- **POKUD** uživatel zadává delší text nebo edituje řetězec systémovou klávesnicí, **POTOM** použij `<TextEntrySheet>`. NIKDY nenechávej inline textové inputy deformovat hlavní obrazovku.
+- **POKUD** uživatel zadává text systémovou klávesnicí, **POTOM** řádek v `ZONE-INPUT` realizuj jako pasivní klikatelný trigger (tlačítko `button.cipher-input-trigger`), který otevírá `<TextEntrySheet>`. V `ZONE-INPUT` NIKDY neumisťuj focusovatelný `<input>` ani `<textarea>`, který by inline otevíral softwarovou klávesnici OS a deformoval layout.
 - **POKUD** otevíráš kontextové menu (`ModuleMenu`), **POTOM** záhlaví VŽDY nese název `<Název modulu>: nastavení` (např. `Kříže: nastavení`), NIKDY generické `Menu modulu`.
 
 ### Klávesnice & Tlačítka
