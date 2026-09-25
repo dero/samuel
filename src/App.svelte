@@ -38,11 +38,16 @@
     }
 
     // 2. Translation card (output field) must allow context menu for text selection / copying
+    // (except on interactive buttons inside them)
     if (
       target.closest(
         '.translation-card, .output-container, .result-card, .result-text, [data-allow-contextmenu]'
       )
     ) {
+      if (target.closest('button, [role="button"]')) {
+        e.preventDefault();
+        return;
+      }
       return;
     }
 

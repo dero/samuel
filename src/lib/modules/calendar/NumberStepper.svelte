@@ -55,7 +55,7 @@
   }
 </script>
 
-<div class="number-stepper" data-allow-contextmenu>
+<div class="number-stepper">
   <button
     type="button"
     class="stepper-btn minus-btn"
@@ -120,6 +120,9 @@
     flex-shrink: 0;
     padding: 0;
     touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
     transition: background-color 0.08s ease, color 0.08s ease;
   }
 

@@ -1,7 +1,5 @@
 <script lang="ts">
   import { calendarState, type CalcMode } from './calendarState.svelte';
-  import { copyToClipboard } from '../../utils/clipboard';
-  import { settings } from '../../state/settings.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
   import CalendarDetailCard from './CalendarDetailCard.svelte';
   import NumberStepper from './NumberStepper.svelte';
@@ -13,14 +11,9 @@
   let { view }: Props = $props();
 
   const calcModeOptions: SegmentOption<CalcMode>[] = [
-    { id: 'offset', label: 'Posun data (± dny)' },
-    { id: 'diff', label: 'Rozdíl dat (A − B)' }
+    { id: 'offset', label: 'Posun data' },
+    { id: 'diff', label: 'Interval' }
   ];
-
-  function copyText(val: string | number, label: string) {
-    settings.vibrate(25);
-    copyToClipboard(String(val), `${label} zkopírováno`);
-  }
 
   let offsetTimer: ReturnType<typeof setTimeout> | null = null;
   let offsetInterval: ReturnType<typeof setInterval> | null = null;
@@ -59,78 +52,63 @@
     absDiff === 1 ? 'den' : absDiff >= 2 && absDiff <= 4 ? 'dny' : 'dní'
   );
 
-  const diffWeeks = $derived(calendarState.diffResult.weeks);
-  const diffWeeksLabel = $derived(
-    diffWeeks === 1 ? 'týden' : diffWeeks >= 2 && diffWeeks <= 4 ? 'týdny' : 'týdnů'
-  );
-
-  const diffRemDays = $derived(calendarState.diffResult.remainingDays);
-  const diffRemDaysLabel = $derived(
-    diffRemDays === 1 ? 'den' : diffRemDays >= 2 && diffRemDays <= 4 ? 'dny' : 'dní'
-  );
+  const intervalDisplay = $derived.by(() => {
+    const d = calendarState.diffResult.days;
+    if (d > 0) return `+${d}`;
+    if (d < 0) return `−${Math.abs(d)}`;
+    return '0';
+  });
 </script>
 
 {#if view === 'output'}
   <div class="calc-output-container">
     {#if calendarState.calcMode === 'offset'}
-      <!-- Equation: Base Date + N dní = [Detail Card] -->
-      <div class="equation-flow">
-        <div class="eq-line-base">
+      <!-- Equation: Base Date -> Offset -> [=] -> [Detail Card] -->
+      <div class="equation-flow offset-flow">
+        <div class="eq-date-line">
           <span class="eq-dow">{calendarState.currentDayDetail.dayOfWeekName}</span>
           <span class="eq-date">
             {calendarState.currentDayDetail.day}. {calendarState.currentDayDetail.monthNameGenitive} {calendarState.currentDayDetail.year}
           </span>
         </div>
 
-        <div class="eq-line-math">
-          <span class="eq-op">{calendarState.offsetDays >= 0 ? '+' : '−'}</span>
-          <span class="eq-qty">{absOffset}</span>
-          <span class="eq-unit">{offsetUnitLabel}</span>
-          <span class="eq-equals">=</span>
+        <div class="eq-math-line">
+          <span class="eq-offset-highlight">
+            {calendarState.offsetDays >= 0 ? `+ ${calendarState.offsetDays}` : `− ${absOffset}`}
+          </span>
+          <span class="eq-math-label">{offsetUnitLabel}</span>
         </div>
 
-        <div class="eq-result-card-wrap">
+        <div class="eq-equals-large">=</div>
+
+        <div class="eq-card-wrap">
           <CalendarDetailCard detail={calendarState.offsetTargetDetail} variant="compact" />
         </div>
       </div>
     {:else}
-      <!-- Equation: Date To - Date From = Result Card -->
-      <div class="equation-flow">
-        <div class="eq-line-base">
+      <!-- Interval: Start Date (input) -> Large Days Result (output) -> End Date (input) -->
+      <div class="equation-flow interval-flow">
+        <!-- 1. Výchozí den (vstup) -->
+        <div class="eq-date-line">
+          <span class="eq-dow">{calendarState.diffFromDetail.dayOfWeekName}</span>
+          <span class="eq-date">
+            {calendarState.diffFromDetail.day}. {calendarState.diffFromDetail.monthNameGenitive} {calendarState.diffFromDetail.year}
+          </span>
+        </div>
+
+        <!-- 2. Počet dnů (výstup - velký, výrazný) -->
+        <div class="interval-hero-line">
+          <span class="interval-hero-val">{intervalDisplay}</span>
+          <span class="interval-hero-unit">{diffUnitLabel}</span>
+        </div>
+
+        <!-- 3. Finální den (vstup - shodné formátování s výchozím dnem) -->
+        <div class="eq-date-line">
           <span class="eq-dow">{calendarState.diffToDetail.dayOfWeekName}</span>
           <span class="eq-date">
             {calendarState.diffToDetail.day}. {calendarState.diffToDetail.monthNameGenitive} {calendarState.diffToDetail.year}
           </span>
         </div>
-
-        <div class="eq-line-math">
-          <span class="eq-op">−</span>
-          <span class="eq-sub-date">
-            {calendarState.diffFromDetail.day}. {calendarState.diffFromDetail.monthNameGenitive} {calendarState.diffFromDetail.year}
-          </span>
-          <span class="eq-equals">=</span>
-        </div>
-
-        <button
-          type="button"
-          class="diff-result-card"
-          title="Kopírovat počet dní"
-          onclick={() => copyText(calendarState.diffResult.days, 'Počet dní')}
-        >
-          <div class="diff-result-main">
-            <span class="diff-days-num">
-              {calendarState.diffResult.days > 0 ? `+${calendarState.diffResult.days}` : calendarState.diffResult.days}
-            </span>
-            <span class="diff-days-unit">{diffUnitLabel}</span>
-          </div>
-
-          <div class="diff-result-sub">
-            {diffWeeks} {diffWeeksLabel}
-            {#if diffRemDays > 0}
-              a {diffRemDays} {diffRemDaysLabel}
-            {/if}
-          </div>
-        </button>
       </div>
     {/if}
   </div>
@@ -148,7 +126,7 @@
 
     {#if calendarState.calcMode === 'offset'}
       <!-- Single row of 7 buttons: [-30] [-7] [-1] [ Reset ] [+1] [+7] [+30] -->
-      <div class="offset-stepper-row" data-allow-contextmenu>
+      <div class="offset-stepper-row">
         <button
           type="button"
           class="offset-btn neg"
@@ -156,6 +134,7 @@
           onpointerup={clearOffsetTimers}
           onpointerleave={clearOffsetTimers}
           onpointercancel={clearOffsetTimers}
+          oncontextmenu={(e) => e.preventDefault()}
         >
           -30
         </button>
@@ -166,6 +145,7 @@
           onpointerup={clearOffsetTimers}
           onpointerleave={clearOffsetTimers}
           onpointercancel={clearOffsetTimers}
+          oncontextmenu={(e) => e.preventDefault()}
         >
           -7
         </button>
@@ -176,6 +156,7 @@
           onpointerup={clearOffsetTimers}
           onpointerleave={clearOffsetTimers}
           onpointercancel={clearOffsetTimers}
+          oncontextmenu={(e) => e.preventDefault()}
         >
           -1
         </button>
@@ -184,6 +165,7 @@
           class="offset-btn reset"
           class:is-dimmed={calendarState.offsetDays === 0}
           onclick={() => calendarState.resetOffset()}
+          oncontextmenu={(e) => e.preventDefault()}
           title="Resetovat posun na 0"
         >
           Reset
@@ -195,6 +177,7 @@
           onpointerup={clearOffsetTimers}
           onpointerleave={clearOffsetTimers}
           onpointercancel={clearOffsetTimers}
+          oncontextmenu={(e) => e.preventDefault()}
         >
           +1
         </button>
@@ -205,6 +188,7 @@
           onpointerup={clearOffsetTimers}
           onpointerleave={clearOffsetTimers}
           onpointercancel={clearOffsetTimers}
+          oncontextmenu={(e) => e.preventDefault()}
         >
           +7
         </button>
@@ -215,6 +199,7 @@
           onpointerup={clearOffsetTimers}
           onpointerleave={clearOffsetTimers}
           onpointercancel={clearOffsetTimers}
+          oncontextmenu={(e) => e.preventDefault()}
         >
           +30
         </button>
@@ -282,130 +267,117 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    align-items: center;
     width: 100%;
     box-sizing: border-box;
-    padding-bottom: 2px;
+    padding-bottom: 4px;
   }
 
   .equation-flow {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    text-align: center;
     width: 100%;
     box-sizing: border-box;
   }
 
-  .eq-line-base {
+  .offset-flow {
+    gap: 3px;
+  }
+
+  .interval-flow {
+    gap: 6px;
+    padding-bottom: 4px;
+  }
+
+  /* Date line: gray, centered (both inputs in interval & base in offset) */
+  .eq-date-line {
     display: flex;
     align-items: baseline;
+    justify-content: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: 14.5px;
     color: var(--color-text-secondary, #b3b3b3);
-    line-height: 1.2;
-    padding-left: 2px;
+    line-height: 1.25;
   }
 
   .eq-dow {
-    font-weight: 800;
+    font-weight: 700;
     text-transform: uppercase;
-    color: var(--color-accent-primary, #00d2ff);
-    font-size: 10.5px;
-    letter-spacing: 0.04em;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    color: var(--color-text-secondary, #b3b3b3);
   }
 
   .eq-date {
-    font-weight: 700;
-    color: var(--color-text-primary, #ffffff);
-  }
-
-  .eq-line-math {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    font-family: var(--font-mono, monospace);
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--color-accent-primary, #00d2ff);
-    line-height: 1.2;
-    padding-left: 2px;
-  }
-
-  .eq-op {
-    font-size: 15px;
-    font-weight: 900;
-  }
-
-  .eq-qty {
-    font-size: 15px;
-    font-weight: 900;
-  }
-
-  .eq-unit {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--color-text-secondary, #b3b3b3);
-  }
-
-  .eq-sub-date {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--color-text-primary, #ffffff);
-  }
-
-  .eq-equals {
-    margin-left: 2px;
-    color: var(--color-text-muted, #828282);
-  }
-
-  .eq-result-card-wrap {
-    width: 100%;
-  }
-
-  /* Result card for Diff */
-  .diff-result-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 48px;
-    padding: 0 14px;
-    background-color: var(--color-surface-1, #121212);
-    border: 1px solid var(--color-border-subtle, #2a2a2a);
-    border-radius: var(--radius-sm, 6px);
-    cursor: pointer;
-    box-sizing: border-box;
-    width: 100%;
-    transition: background-color 0.1s ease, border-color 0.1s ease;
-    text-align: left;
-  }
-
-  .diff-result-card:active {
-    background-color: var(--color-surface-active, #333333);
-    border-color: var(--color-accent-primary, #00d2ff);
-  }
-
-  .diff-result-main {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    font-family: var(--font-mono, monospace);
-  }
-
-  .diff-days-num {
-    font-size: 20px;
-    font-weight: 900;
-    color: var(--color-accent-primary, #00d2ff);
-  }
-
-  .diff-days-unit {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--color-text-secondary, #b3b3b3);
-  }
-
-  .diff-result-sub {
-    font-size: 12px;
     font-weight: 600;
-    color: var(--color-text-muted, #828282);
+    color: var(--color-text-secondary, #b3b3b3);
+  }
+
+  /* Math line: centered, only number is blue */
+  .eq-math-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 6px;
+    line-height: 1.25;
+  }
+
+  .eq-offset-highlight {
+    font-family: var(--font-mono, monospace);
+    font-size: 19px;
+    font-weight: 900;
+    color: var(--color-accent-primary, #00d2ff);
+  }
+
+  .eq-math-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-secondary, #b3b3b3);
+  }
+
+  /* Big gray equals sign */
+  .eq-equals-large {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-text-muted, #666666);
+    margin: 2px 0 0 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Card wrapper with much larger gap from '=' */
+  .eq-card-wrap {
+    width: 100%;
+    margin-top: var(--space-2xl, 24px);
+  }
+
+  /* Hero line in Interval: large prominent output */
+  .interval-hero-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 0;
+  }
+
+  .interval-hero-val {
+    font-family: var(--font-mono, monospace);
+    font-size: 34px;
+    font-weight: 900;
+    color: var(--color-accent-primary, #00d2ff);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .interval-hero-unit {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-accent-primary, #00d2ff);
+    line-height: 1;
   }
 
   /* ZONE-INPUT styling */
@@ -453,6 +425,9 @@
     color: var(--color-text-primary, #ffffff);
     cursor: pointer;
     touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
     padding: 0;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
