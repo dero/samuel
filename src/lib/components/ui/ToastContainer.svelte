@@ -45,7 +45,7 @@
     gap: var(--space-sm);
     padding: 7px 18px;
     border-radius: var(--radius-full);
-    background: rgba(18, 18, 22, 0.94);
+    background: rgba(18, 18, 18, 0.94);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.14);

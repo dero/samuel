@@ -124,7 +124,7 @@
   }
 
   .letter-key:disabled .letter-label {
-    opacity: 0.35;
+    opacity: 0.48;
   }
 
   .letter-label {

@@ -187,12 +187,15 @@ Vizuální styl je navržen pro noční les, déšť a svícení čelovkou s nul
 | Token | Hodnota | Využití |
 |---|---|---|
 | `--color-bg-canvas` | `#000000` | 100% OLED černá, nulový odběr displeje |
-| `--color-surface-1` | `#121214` | Těla keypadů, zadávací panely, karty |
-| `--color-surface-2` | `#1e1e24` | Zvýrazněná tlačítka, modaly, flyout panel |
-| `--color-surface-active` | `#2e2e38` | Stisknutý stav klávesy (active feedback) |
-| `--color-border-subtle` | `#2a2a34` | 1px dělicí linky a rámečky |
-| `--color-text-primary` | `#FFFFFF` | Dekódovaný text, hodnoty tlačítek (100% kontrast) |
-| `--color-text-secondary` | `#8E8E9A` | Popisky, nápovědy, neaktivní prvky |
+| `--color-surface-sunken` | `#0a0a0a` | Zapuštěné kruhové sloty (Braille, semafor) |
+| `--color-surface-1` | `#121212` | Těla keypadů, zadávací panely, karty |
+| `--color-surface-2` | `#1c1c1c` | Tlačítka, keycaps, sekundární panely |
+| `--color-surface-3` | `#262626` | Aktivní přepínače, vložená tlačítka, štítky |
+| `--color-surface-active` | `#333333` | Stisknutý stav klávesy (active feedback) |
+| `--color-border-subtle` | `#2a2a2a` | 1px dělicí linky a rámečky |
+| `--color-text-primary` | `#ffffff` | Dekódovaný text, hodnoty tlačítek (100% kontrast) |
+| `--color-text-secondary` | `#9e9e9e` | Popisky, nápovědy, neaktivní prvky |
+| `--color-text-muted` | `#666666` | Tlumené doplňkové texty |
 | `--color-accent-primary` | `#00D2FF` | Neonová azurová: aktivní body Brailla, vybraná barva, fokus |
 | `--color-accent-success` | `#10B981` | Smaragdová zelená: Markov tajenkovitost, potvrzení kopírování |
 | `--color-accent-danger` | `#EF4444` | Výstražná červená: reset, smazání, neznámý/chybný znak |

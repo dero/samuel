@@ -44,7 +44,10 @@
     min-height: 0;
     height: 100%;
     padding: var(--space-md) var(--space-lg) var(--space-lg);
-    overflow: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     box-sizing: border-box;
   }
 

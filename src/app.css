@@ -5,23 +5,25 @@
 
   /* Surface & Canvas (Pure black for OLED field power savings) */
   --color-bg-canvas: #000000;
-  --color-surface-1: #121214;
-  --color-surface-2: #1c1c22;
-  --color-surface-3: #262630;
-  --color-surface-active: #323240;
-  --color-surface-elevated: #161820;
-  --color-surface-system: #161820;
+  --color-surface-sunken: #0a0a0a;
+  --color-surface-1: #121212;
+  --color-surface-2: #1c1c1c;
+  --color-surface-3: #262626;
+  --color-surface-active: #333333;
+  --color-surface-elevated: #161616;
+  --color-surface-system: #161616;
 
   /* Borders */
-  --color-border-subtle: #2a2a34;
-  --color-border-medium: #3a3a48;
+  --color-border-sunken: #222222;
+  --color-border-subtle: #2e2e2e;
+  --color-border-medium: #424242;
   --color-border-focus: #00d2ff;
-  --color-border-system: #2e3042;
+  --color-border-system: #363636;
 
   /* Typography Colors */
   --color-text-primary: #ffffff;
-  --color-text-secondary: #9da0af;
-  --color-text-muted: #626474;
+  --color-text-secondary: #b3b3b3;
+  --color-text-muted: #828282;
   --color-text-inverse: #000000;
 
   /* Semantic Accents & Alpha Tints */
@@ -167,6 +169,7 @@ textarea:focus, input:focus {
   padding: 0;
   overflow: hidden;
 }
+
 
 /* Common Keypad Layouts */
 .keypad-utility-row {

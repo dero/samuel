@@ -126,7 +126,7 @@
 
   .dominant-btn:disabled .btn-symbol,
   .dominant-btn:disabled .btn-name {
-    opacity: 0.35;
+    opacity: 0.48;
   }
 
   .btn-symbol {

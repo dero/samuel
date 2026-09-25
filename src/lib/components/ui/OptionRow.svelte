@@ -7,6 +7,7 @@
     checked: boolean;
     type?: 'checkbox' | 'switch';
     disabled?: boolean;
+    isNonStandard?: boolean;
     onChange: (checked: boolean) => void;
   }
 
@@ -16,6 +17,7 @@
     checked,
     type = 'checkbox',
     disabled = false,
+    isNonStandard = false,
     onChange
   }: Props = $props();
 
@@ -31,6 +33,7 @@
 <label
   class="option-row"
   class:is-disabled={disabled}
+  class:is-nonstandard={isNonStandard}
   onclick={(e) => {
     // If clicked on input itself, native change fires; otherwise toggle manually
     if ((e.target as HTMLElement).tagName !== 'INPUT') {
@@ -40,7 +43,12 @@
   }}
 >
   <div class="option-content">
-    <span class="option-label">{label}</span>
+    <span class="option-label">
+      {label}
+      {#if isNonStandard}
+        <span class="nonstandard-badge" title="Nestandardní nastavení" aria-label="Nestandardní nastavení">⚠</span>
+      {/if}
+    </span>
     {#if hint}
       <span class="option-hint">{hint}</span>
     {/if}
@@ -91,8 +99,22 @@
   }
 
   .option-row.is-disabled {
-    opacity: 0.4;
+    opacity: 0.52;
     cursor: not-allowed;
+  }
+
+  .option-row.is-nonstandard {
+    border-left: 3px solid var(--color-accent-warning, #f59e0b);
+    padding-left: var(--space-sm);
+    background-color: rgba(245, 158, 11, 0.05);
+    border-radius: var(--radius-xs);
+  }
+
+  .nonstandard-badge {
+    color: var(--color-accent-warning, #f59e0b);
+    font-size: 0.85em;
+    margin-left: 4px;
+    font-weight: 700;
   }
 
   .option-content {

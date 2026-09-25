@@ -317,7 +317,7 @@
             width="8"
             height="8"
             rx="2"
-            fill="#f1f5f9"
+            fill="#ffffff"
             filter="url(#glowSlash)"
           />
         {/if}

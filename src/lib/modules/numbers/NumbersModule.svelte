@@ -367,7 +367,7 @@
   {#snippet output()}
     <TranslationCard
       text={decodedText}
-      emptyHint="Soustavy a režimy volí lišta nahoře."
+      emptyHint="Soustavy a režimy volí lišta níže."
     />
   {/snippet}
 

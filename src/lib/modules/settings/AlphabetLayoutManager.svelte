@@ -150,7 +150,7 @@
 
 <style>
   .card {
-    background-color: var(--color-surface-2);
+    background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
     padding: var(--space-md);
@@ -182,7 +182,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: var(--color-surface-1);
+    background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     padding: 6px 10px;
@@ -243,7 +243,7 @@
     flex-direction: column;
     gap: var(--space-sm);
     padding: var(--space-md);
-    background-color: var(--color-surface-1);
+    background-color: var(--color-surface-2);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-subtle);
   }
@@ -276,7 +276,7 @@
 
   .letter-chip {
     padding: 4px 8px;
-    background-color: var(--color-surface-2);
+    background-color: var(--color-surface-3);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-xs);
     font-family: var(--font-mono);
@@ -292,7 +292,7 @@
 
   .secondary-btn {
     padding: 10px 14px;
-    background-color: var(--color-surface-1);
+    background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     font-size: var(--text-sm);
@@ -320,7 +320,7 @@
   .new-layout-form input {
     padding: 10px 12px;
     font-size: var(--text-sm);
-    background-color: var(--color-surface-1);
+    background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
@@ -345,7 +345,7 @@
 
   .cancel-btn {
     padding: 10px 16px;
-    background-color: var(--color-surface-1);
+    background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     font-size: var(--text-sm);

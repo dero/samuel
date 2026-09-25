@@ -252,7 +252,7 @@
   }
 
   .action-transfer-btn:disabled {
-    opacity: 0.35;
+    opacity: 0.48;
     cursor: not-allowed;
   }
 </style>

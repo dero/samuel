@@ -265,7 +265,7 @@
   }
 
   .hold-btn:disabled .btn-content {
-    opacity: 0.35;
+    opacity: 0.48;
     color: var(--color-text-secondary);
   }
 

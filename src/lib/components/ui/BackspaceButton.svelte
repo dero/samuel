@@ -157,7 +157,7 @@
 
   .utility-btn:disabled .btn-icon,
   .utility-btn:disabled .btn-label {
-    opacity: 0.35;
+    opacity: 0.48;
     color: var(--color-text-secondary);
   }
 

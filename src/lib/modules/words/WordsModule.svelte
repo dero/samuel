@@ -23,6 +23,7 @@
     DownloadSimple,
     SpinnerGap
   } from 'phosphor-svelte';
+  import EmptyHint from '../../components/ui/EmptyHint.svelte';
 
   const modSettings = localSettingsService.forModule('words');
 
@@ -238,35 +239,18 @@
             {/if}
           </button>
         </div>
-      {:else if !query.trim()}
-        <!-- Empty State Prompt -->
-        <button
-          type="button"
-          class="empty-hint-card"
-          onclick={() => {
-            settings.vibrate(20);
-            showTextSheet = true;
-          }}
-          aria-label="Klepnutím zadat vzor nebo písmena"
-        >
-          <div class="empty-hint-title">
-            {#if activeSubmodule === 'mask'}
-              Zadej masku s tečkami (např. k..k.a)
-            {:else}
-              Zadej písmena pro složení přesmyčky
-            {/if}
-          </div>
-          <div class="empty-hint-sub">
-            {#if activeSubmodule === 'mask'}
-              Tečka <code>.</code> nahrazuje 1 znak, hvězdička <code>*</code> libovolně mnoho znaků.
-            {:else}
-              Např. <code>KOTELNA</code> najde přesné přesmyčky i kratší podslova.
-            {/if}
-          </div>
-        </button>
       {:else}
-        <!-- Results Stage Header using universal StatusBar -->
-        <StatusBar>
+        <!-- Contextual tooltip: seated directly above input zone, dissolves on input -->
+        <EmptyHint
+          text={activeSubmodule === 'mask'
+            ? 'Tečka nahrazuje písmeno, hvězdička libovolně mnoho znaků.'
+            : 'Zadejte písmena pro vyhledání přesmyček a podslov.'}
+          hidden={!!query.trim()}
+        />
+
+        {#if query.trim()}
+          <!-- Results Stage Header using universal StatusBar -->
+          <StatusBar>
           {#snippet left()}
             {#if isLoading}
               <span class="loading-label font-mono">
@@ -315,7 +299,8 @@
           {/each}
         </div>
       {/if}
-    </div>
+    {/if}
+  </div>
   {/snippet}
 
   <!-- BOTTOM ZONE: Sub-Toolbar & Single-line Input Trigger -->
@@ -482,42 +467,7 @@
     box-sizing: border-box;
     background-color: var(--color-bg-canvas);
     overflow: hidden;
-  }
-
-  /* Empty State Card */
-  .empty-hint-card {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: var(--space-lg);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    gap: var(--space-xs);
-  }
-
-  .empty-hint-title {
-    color: var(--color-text-secondary);
-    font-size: var(--text-base);
-    font-weight: 600;
-  }
-
-  .empty-hint-sub {
-    color: var(--color-text-muted);
-    font-size: var(--text-xs);
-    max-width: 320px;
-    line-height: 1.4;
-  }
-
-  .empty-hint-sub code {
-    color: var(--color-accent-primary);
-    background-color: var(--color-surface-2);
-    padding: 2px 5px;
-    border-radius: var(--radius-xs);
-    font-family: var(--font-mono);
+    position: relative;
   }
 
   /* DB Uninstalled Card */
@@ -701,7 +651,7 @@
     letter-spacing: 0.04em;
     padding: 1px 4.5px;
     border-radius: 3px;
-    background-color: rgba(255, 255, 255, 0.07);
+    background-color: var(--color-surface-3);
     color: var(--color-text-secondary);
     border: 1px solid var(--color-border-subtle);
     flex-shrink: 0;

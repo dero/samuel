@@ -20,6 +20,7 @@
     Trash,
     Info
   } from 'phosphor-svelte';
+  import EmptyHint from '../../components/ui/EmptyHint.svelte';
 
   const modSettings = localSettingsService.forModule('freq');
 
@@ -133,24 +134,13 @@
   <!-- TOP ZONE: Output (Letter frequency histogram and status bar) -->
   {#snippet output()}
     <div class="freq-output-stage">
-      {#if !rawText.trim()}
-        <!-- Empty State Prompt -->
-        <button
-          type="button"
-          class="empty-hint-card"
-          onclick={() => {
-            settings.vibrate(20);
-            showTextSheet = true;
-          }}
-          aria-label="Otevřít textový editor"
-        >
-          <div class="empty-icon">📊</div>
-          <div class="empty-title">Frekvenční analýza</div>
-          <div class="empty-desc">
-            Vložte šifrový text do spodního řádku nebo klepněte sem pro otevření editoru.
-          </div>
-        </button>
-      {:else}
+      <!-- Contextual tooltip: seated directly above input zone, dissolves on input -->
+      <EmptyHint
+        text="Vložte šifrový text pro zobrazení četnosti znaků."
+        hidden={!!rawText.trim()}
+      />
+
+      {#if rawText.trim()}
         <!-- Active Analysis: Simplified 1-line status bar -->
         <StatusBar
           onclick={() => {
@@ -353,48 +343,7 @@
     flex-direction: column;
     overflow: hidden;
     box-sizing: border-box;
-  }
-
-  .empty-hint-card {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 24px;
-    background-color: #000000;
-    border: 1px dashed var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    gap: 8px;
-    box-sizing: border-box;
-    transition: border-color 0.15s;
-    font: inherit;
-    color: inherit;
-    width: 100%;
-  }
-
-  .empty-hint-card:hover {
-    border-color: var(--color-border-focus);
-  }
-
-  .empty-icon {
-    font-size: 32px;
-    margin-bottom: 2px;
-  }
-
-  .empty-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--color-text-primary);
-  }
-
-  .empty-desc {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    max-width: 280px;
-    line-height: 1.4;
+    position: relative;
   }
 
   .status-counts {

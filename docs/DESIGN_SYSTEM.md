@@ -97,7 +97,7 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** renderuješ keycaps uvnitř šasi, **POTOM** mají `border: none`, `border-radius: 2px`, pozadí `var(--color-surface-2)`, horní plastický odlesk `inset 0 1px 0 rgba(255, 255, 255, 0.10)` a spodní stín `inset 0 -1px 0 rgba(0, 0, 0, 0.5)`. Při stisku (`:active`) vnitřní stín `inset 0 1.5px 3px rgba(0, 0, 0, 0.7)` a `var(--color-surface-active)`.
 - **POKUD** mřížka nekončí na celém řádku, **POTOM** doplň záslepku `.grid-filler` (`grid-column: span X`, `var(--color-surface-2)`, `opacity: 0.35`, `border-radius: 2px`).
 - **POKUD** implementuješ zadávání znaků, **POTOM** použij `onpointerdown` s `e.preventDefault()` a kontejneru nastav `touch-action: none`.
-- **POKUD** má tlačítko stav `disabled`, **POTOM** NIKDY nenastavuj `opacity` na kořenový prvek. Povrch drží plnou barvu `var(--color-surface-2)`, tlumí se pouze vnitřní obsah na `opacity: 0.35`.
+- **POKUD** má tlačítko stav `disabled`, **POTOM** NIKDY nenastavuj `opacity` na kořenový prvek. Povrch drží plnou barvu `var(--color-surface-2)`, tlumí se pouze vnitřní obsah na `opacity: 0.48`.
 - **POKUD** implementuješ haptiku, **POTOM** volej synchronně `settings.vibrate(ms)` z `state/settings.svelte.ts`. NIKDY nevolej `navigator.vibrate` přímo ani nezdvojuj vibrace u tlačítek, která vibrují sama.
 - **POKUD** umisťuješ easter egg, **POTOM** smí fungovat pouze jako pasivní záslepka mřížky (`.grid-filler`) nebo spodní buffer; nesmí zabírat vlastní ovládací řádek.
 

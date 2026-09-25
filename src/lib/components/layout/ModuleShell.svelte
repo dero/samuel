@@ -1,11 +1,13 @@
 <script lang="ts">
   import ModuleMenu from './ModuleMenu.svelte';
   import ReferenceModal from './ReferenceModal.svelte';
+  import { navigation } from '../../state/navigation.svelte';
 
   interface Props {
     title?: string;
     hasAlphabet?: boolean;
     alphabetHint?: string;
+    hasWarning?: boolean;
     onReset?: () => void;
     onPaste?: (text: string) => void;
     layoutMode?: 'default' | 'compact-output' | 'fullscreen-input';
@@ -19,6 +21,7 @@
     title,
     hasAlphabet = false,
     alphabetHint,
+    hasWarning = false,
     onReset,
     onPaste,
     layoutMode = 'default',
@@ -27,6 +30,13 @@
     menuOptions,
     reference
   }: Props = $props();
+
+  $effect(() => {
+    navigation.setMenuWarning(hasWarning);
+    return () => {
+      navigation.setMenuWarning(false);
+    };
+  });
 </script>
 
 <div

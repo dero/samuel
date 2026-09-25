@@ -165,9 +165,9 @@
   }
 
   .key-btn:disabled {
-    opacity: 0.25;
+    opacity: 0.45;
     cursor: not-allowed;
-    background-color: var(--color-surface-1);
+    background-color: var(--color-surface-2);
     border-color: transparent;
   }
 </style>

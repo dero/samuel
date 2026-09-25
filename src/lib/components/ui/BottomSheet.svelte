@@ -258,6 +258,7 @@
     animation: sheetSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: var(--shadow-sheet);
     overscroll-behavior: contain;
+    touch-action: auto;
   }
 
   @media (min-width: 600px) {
@@ -384,12 +385,14 @@
     user-select: text;
     -webkit-user-select: text;
     -webkit-touch-callout: default;
+    touch-action: pan-y;
   }
 
   .sheet-body.is-scrollable {
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     gap: var(--space-md);
   }
 

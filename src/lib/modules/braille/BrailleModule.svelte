@@ -362,8 +362,8 @@
     width: 68px;
     height: 68px;
     border-radius: var(--radius-full);
-    background-color: #0a0a0e;
-    border: 1.5px solid #22222a;
+    background-color: var(--color-surface-sunken);
+    border: 1.5px solid var(--color-border-sunken);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -407,8 +407,8 @@
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
     }
     100% {
-      background-color: #0a0a0e;
-      border-color: #22222a;
+      background-color: var(--color-surface-sunken);
+      border-color: var(--color-border-sunken);
       box-shadow: 
         inset 0 4px 8px rgba(0, 0, 0, 0.95),
         inset 0 1.5px 3px rgba(0, 0, 0, 0.9),

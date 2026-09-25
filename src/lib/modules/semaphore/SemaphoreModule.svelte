@@ -7,6 +7,7 @@
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
+  import NonStandardSettingsBanner from '../../components/ui/NonStandardSettingsBanner.svelte';
   import {
     SEMAPHORE_DIRECTIONS,
     type SemaphoreEntry
@@ -54,6 +55,17 @@
   let currentChar = $derived<string>(
     currentEntry ? getCharForEntry(currentEntry, decodeOptions) : ''
   );
+
+  const nonStandardCount = $derived(
+    (modState.mirror ? 1 : 0) +
+    (modState.direct_nums ? 1 : 0)
+  );
+
+  function resetSettingsToDefaults() {
+    modState.mirror = false;
+    modState.direct_nums = false;
+    toast.show('Výchozí nastavení obnoveno', { type: 'success' });
+  }
 
   function triggerHaptic(type: 'tap' | 'commit' | 'clear' = 'tap') {
     if (type === 'tap') settings.vibrate(15);
@@ -242,7 +254,11 @@
   }
 </script>
 
-<ModuleShell onReset={handleReset} onPaste={handlePaste}>
+<ModuleShell
+  hasWarning={nonStandardCount > 0}
+  onReset={handleReset}
+  onPaste={handlePaste}
+>
   {#snippet output()}
     <TranslationCard
       text={modState.input}
@@ -359,6 +375,11 @@
   {/snippet}
 
   {#snippet menuOptions()}
+    <NonStandardSettingsBanner
+      count={nonStandardCount}
+      onResetDefaults={resetSettingsToDefaults}
+    />
+
     <OptionRow
       label="Okamžité zadávání (bez potvrzování)"
       hint="Znak se automaticky vloží ihned po navolení 2 ramen (tahem i klepnutím)."
@@ -369,12 +390,14 @@
       label="Režim čísel (1–9, 0 místo písmen)"
       hint="Dekóduje znaky A–I, K jako číslice 1–9, 0."
       checked={modState.direct_nums}
+      isNonStandard={modState.direct_nums}
       onChange={(v) => (modState.direct_nums = v)}
     />
     <OptionRow
       label="Zrcadlení (Pohled vysílajícího)"
       hint="Zrcadlí horizontální směr ramen (vlevo ↔ vpravo)."
       checked={modState.mirror}
+      isNonStandard={modState.mirror}
       onChange={(v) => (modState.mirror = v)}
     />
   {/snippet}
@@ -490,8 +513,8 @@
     width: 60px;
     height: 60px;
     border-radius: var(--radius-full);
-    background-color: #0a0a0e;
-    border: 1.5px solid #22222a;
+    background-color: var(--color-surface-sunken);
+    border: 1.5px solid var(--color-border-sunken);
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
@@ -560,8 +583,8 @@
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
     }
     100% {
-      background-color: #0a0a0e;
-      border-color: #22222a;
+      background-color: var(--color-surface-sunken);
+      border-color: var(--color-border-sunken);
       box-shadow: 
         inset 0 3px 6px rgba(0, 0, 0, 0.95),
         inset 0 1.5px 3px rgba(0, 0, 0, 0.9),

@@ -164,7 +164,7 @@
 
   .space-commit-btn:disabled .btn-symbol,
   .space-commit-btn:disabled .space-svg {
-    opacity: 0.35;
+    opacity: 0.48;
     color: var(--color-text-secondary);
   }
 
