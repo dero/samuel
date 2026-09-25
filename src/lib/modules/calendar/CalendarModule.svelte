@@ -55,7 +55,7 @@
 <ModuleShell
   title="Kalendář"
   hasAlphabet={false}
-  layoutMode={calendarState.activeFlavour === 'calendar' ? 'compact-output' : 'default'}
+  layoutMode="default"
   onReset={() => calendarState.resetModule()}
 >
   <!-- ZONE-OUTPUT: Dynamic per Flavour -->
@@ -168,6 +168,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: 100%;
     min-height: var(--output-min-height, 84px);
     overflow: hidden;
     position: relative;
@@ -178,9 +179,10 @@
   .calendar-detail-fit {
     flex: 1;
     width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-end;
     overflow: hidden;
   }
 

@@ -127,13 +127,13 @@
 
   /* Compact Mode: Main Tool Output Zone (Strictly <= 64px, zero scroll) */
   .calendar-detail-root.is-compact-mode {
-    height: 100%;
+    height: auto;
     max-height: 64px;
     overflow: hidden;
   }
 
   .calendar-detail-root.is-compact-mode .card-container {
-    height: 100%;
+    height: auto;
     max-height: 64px;
     gap: 4px;
   }
