@@ -4,6 +4,7 @@ import {
   searchCalendar,
   calculateDateDifference,
   addDays,
+  getDaysInMonth,
   type DayDetail,
   type SearchMatch
 } from './calendarData';
@@ -87,6 +88,14 @@ class CalendarState {
 
   diffResult = $derived(
     calculateDateDifference(this.diffFrom, this.diffTo)
+  );
+
+  diffFromDetail = $derived<DayDetail>(
+    getDayDetail(this.diffFrom.year, this.diffFrom.month, this.diffFrom.day)
+  );
+
+  diffToDetail = $derived<DayDetail>(
+    getDayDetail(this.diffTo.year, this.diffTo.month, this.diffTo.day)
   );
 
   constructor() {
@@ -174,6 +183,36 @@ class CalendarState {
   resetOffset() {
     settings.vibrate(25);
     this.offsetDays = 0;
+  }
+
+  adjustDatePart(target: 'from' | 'to', part: 'day' | 'month' | 'year', delta: number) {
+    settings.vibrate(15);
+    const current = target === 'from' ? { ...this.diffFrom } : { ...this.diffTo };
+
+    if (part === 'year') {
+      current.year = Math.max(1, current.year + delta);
+      const maxDays = getDaysInMonth(current.year, current.month);
+      if (current.day > maxDays) current.day = maxDays;
+    } else if (part === 'month') {
+      let m = current.month + delta;
+      if (m > 12) m = 1;
+      else if (m < 1) m = 12;
+      current.month = m;
+      const maxDays = getDaysInMonth(current.year, current.month);
+      if (current.day > maxDays) current.day = maxDays;
+    } else if (part === 'day') {
+      const maxDays = getDaysInMonth(current.year, current.month);
+      let d = current.day + delta;
+      if (d > maxDays) d = 1;
+      else if (d < 1) d = maxDays;
+      current.day = d;
+    }
+
+    if (target === 'from') {
+      this.diffFrom = current;
+    } else {
+      this.diffTo = current;
+    }
   }
 
   adjustDiffActive(delta: number) {

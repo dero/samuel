@@ -188,9 +188,13 @@
 
   .calendar-card-scroll {
     flex: 1;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
     overflow-y: auto;
     overscroll-behavior: contain;
-    width: 100%;
   }
 
   .search-empty-container {
