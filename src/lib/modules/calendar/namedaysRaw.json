@@ -1,0 +1,3823 @@
+[
+  {
+    "month": 1,
+    "day": 1,
+    "namesCz": [
+      "Nový rok"
+    ],
+    "namesSk": [
+      "Nový rok"
+    ],
+    "holidayCz": "Den obnovy samostatného českého státu / Nový rok",
+    "holidaySk": "Deň vzniku Slovenskej republiky"
+  },
+  {
+    "month": 1,
+    "day": 2,
+    "namesCz": [
+      "Karina"
+    ],
+    "namesSk": [
+      "Alexandra",
+      "Karina"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 3,
+    "namesCz": [
+      "Radmila",
+      "Radomil"
+    ],
+    "namesSk": [
+      "Daniela"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 4,
+    "namesCz": [
+      "Diana"
+    ],
+    "namesSk": [
+      "Drahoslav"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 5,
+    "namesCz": [
+      "Dalimil"
+    ],
+    "namesSk": [
+      "Andrea"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 6,
+    "namesCz": [
+      "Kašpar",
+      "Melichar",
+      "Baltazar"
+    ],
+    "namesSk": [
+      "Antónia"
+    ],
+    "holidaySk": "Zjavenie Pána (Traja králi)"
+  },
+  {
+    "month": 1,
+    "day": 7,
+    "namesCz": [
+      "Vilma"
+    ],
+    "namesSk": [
+      "Bohuslava"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 8,
+    "namesCz": [
+      "Čestmír"
+    ],
+    "namesSk": [
+      "Severín"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 9,
+    "namesCz": [
+      "Vladan",
+      "Valtr"
+    ],
+    "namesSk": [
+      "Alexej"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 10,
+    "namesCz": [
+      "Břetislav"
+    ],
+    "namesSk": [
+      "Dáša"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 11,
+    "namesCz": [
+      "Bohdana"
+    ],
+    "namesSk": [
+      "Malvína"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 12,
+    "namesCz": [
+      "Pravoslav"
+    ],
+    "namesSk": [
+      "Ernest"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 13,
+    "namesCz": [
+      "Edita"
+    ],
+    "namesSk": [
+      "Rastislav"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 14,
+    "namesCz": [
+      "Radovan"
+    ],
+    "namesSk": [
+      "Radovan"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 15,
+    "namesCz": [
+      "Alice"
+    ],
+    "namesSk": [
+      "Dobroslav"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 16,
+    "namesCz": [
+      "Ctirad"
+    ],
+    "namesSk": [
+      "Kristína"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 17,
+    "namesCz": [
+      "Drahoslav"
+    ],
+    "namesSk": [
+      "Nataša"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 18,
+    "namesCz": [
+      "Vladislav",
+      "Vladislava"
+    ],
+    "namesSk": [
+      "Bohdana"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 19,
+    "namesCz": [
+      "Doubravka"
+    ],
+    "namesSk": [
+      "Drahomíra"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 20,
+    "namesCz": [
+      "Ilona",
+      "Sebastián"
+    ],
+    "namesSk": [
+      "Dalibor"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 21,
+    "namesCz": [
+      "Běla"
+    ],
+    "namesSk": [
+      "Vincent"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 22,
+    "namesCz": [
+      "Slavomír",
+      "Slavomíra"
+    ],
+    "namesSk": [
+      "Zora"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 23,
+    "namesCz": [
+      "Zdeněk"
+    ],
+    "namesSk": [
+      "Miloš"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 24,
+    "namesCz": [
+      "Milena"
+    ],
+    "namesSk": [
+      "Timotej"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 25,
+    "namesCz": [
+      "Miloš"
+    ],
+    "namesSk": [
+      "Gejza"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 26,
+    "namesCz": [
+      "Zora"
+    ],
+    "namesSk": [
+      "Tamara"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 27,
+    "namesCz": [
+      "Ingrid"
+    ],
+    "namesSk": [
+      "Bohuš"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 28,
+    "namesCz": [
+      "Otýlie"
+    ],
+    "namesSk": [
+      "Alfonz"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 29,
+    "namesCz": [
+      "Zdislava"
+    ],
+    "namesSk": [
+      "Gašpar"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 30,
+    "namesCz": [
+      "Robin",
+      "Erna"
+    ],
+    "namesSk": [
+      "Ema"
+    ]
+  },
+  {
+    "month": 1,
+    "day": 31,
+    "namesCz": [
+      "Marika",
+      "Spytihněv"
+    ],
+    "namesSk": [
+      "Emil"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 1,
+    "namesCz": [
+      "Hynek"
+    ],
+    "namesSk": [
+      "Tatiana"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 2,
+    "namesCz": [
+      "Nela",
+      "Hromnice"
+    ],
+    "namesSk": [
+      "Erik",
+      "Erika"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 3,
+    "namesCz": [
+      "Blažej"
+    ],
+    "namesSk": [
+      "Blažej"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 4,
+    "namesCz": [
+      "Jarmila"
+    ],
+    "namesSk": [
+      "Veronika"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 5,
+    "namesCz": [
+      "Dobromila"
+    ],
+    "namesSk": [
+      "Agáta"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 6,
+    "namesCz": [
+      "Vanda"
+    ],
+    "namesSk": [
+      "Dorota"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 7,
+    "namesCz": [
+      "Veronika"
+    ],
+    "namesSk": [
+      "Vanda"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 8,
+    "namesCz": [
+      "Milada"
+    ],
+    "namesSk": [
+      "Zoja"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 9,
+    "namesCz": [
+      "Apolena"
+    ],
+    "namesSk": [
+      "Zdenko"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 10,
+    "namesCz": [
+      "Mojmír"
+    ],
+    "namesSk": [
+      "Gabriela"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 11,
+    "namesCz": [
+      "Božena"
+    ],
+    "namesSk": [
+      "Dezider"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 12,
+    "namesCz": [
+      "Slavěna",
+      "Slávka"
+    ],
+    "namesSk": [
+      "Perla"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 13,
+    "namesCz": [
+      "Věnceslav",
+      "Věnceslava"
+    ],
+    "namesSk": [
+      "Arpád"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 14,
+    "namesCz": [
+      "Valentýn",
+      "Valentýna"
+    ],
+    "namesSk": [
+      "Valentín"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 15,
+    "namesCz": [
+      "Jiřina"
+    ],
+    "namesSk": [
+      "Pravoslav"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 16,
+    "namesCz": [
+      "Ljuba"
+    ],
+    "namesSk": [
+      "Ida",
+      "Liana"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 17,
+    "namesCz": [
+      "Miloslava"
+    ],
+    "namesSk": [
+      "Miloslava"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 18,
+    "namesCz": [
+      "Gizela"
+    ],
+    "namesSk": [
+      "Jaromír"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 19,
+    "namesCz": [
+      "Patrik"
+    ],
+    "namesSk": [
+      "Vlasta"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 20,
+    "namesCz": [
+      "Oldřich"
+    ],
+    "namesSk": [
+      "Lívia"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 21,
+    "namesCz": [
+      "Lenka",
+      "Eleonora"
+    ],
+    "namesSk": [
+      "Eleonóra"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 22,
+    "namesCz": [
+      "Petr"
+    ],
+    "namesSk": [
+      "Etela"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 23,
+    "namesCz": [
+      "Svatopluk"
+    ],
+    "namesSk": [
+      "Roman",
+      "Romana"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 24,
+    "namesCz": [
+      "Matěj",
+      "Matyáš"
+    ],
+    "namesSk": [
+      "Matej"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 25,
+    "namesCz": [
+      "Liliana"
+    ],
+    "namesSk": [
+      "Frederik",
+      "Frederika"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 26,
+    "namesCz": [
+      "Dorota"
+    ],
+    "namesSk": [
+      "Viktor"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 27,
+    "namesCz": [
+      "Alexandr"
+    ],
+    "namesSk": [
+      "Alexander"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 28,
+    "namesCz": [
+      "Lumír"
+    ],
+    "namesSk": [
+      "Zlatica"
+    ]
+  },
+  {
+    "month": 2,
+    "day": 29,
+    "namesCz": [
+      "Horymír"
+    ],
+    "namesSk": [
+      "Radomír"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 1,
+    "namesCz": [
+      "Bedřich",
+      "Bedřiška"
+    ],
+    "namesSk": [
+      "Albín"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 2,
+    "namesCz": [
+      "Anežka"
+    ],
+    "namesSk": [
+      "Anežka"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 3,
+    "namesCz": [
+      "Kamil",
+      "Kunhuta"
+    ],
+    "namesSk": [
+      "Bohumil"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 4,
+    "namesCz": [
+      "Stela"
+    ],
+    "namesSk": [
+      "Kazimír"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 5,
+    "namesCz": [
+      "Kazimír"
+    ],
+    "namesSk": [
+      "Fridrich"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 6,
+    "namesCz": [
+      "Miroslav"
+    ],
+    "namesSk": [
+      "Radoslav",
+      "Radoslava"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 7,
+    "namesCz": [
+      "Tomáš"
+    ],
+    "namesSk": [
+      "Tomáš"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 8,
+    "namesCz": [
+      "Gabriela",
+      "Zoltán"
+    ],
+    "namesSk": [
+      "Alan",
+      "Alana"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 9,
+    "namesCz": [
+      "Františka"
+    ],
+    "namesSk": [
+      "Františka"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 10,
+    "namesCz": [
+      "Viktorie"
+    ],
+    "namesSk": [
+      "Branislav",
+      "Bruno"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 11,
+    "namesCz": [
+      "Anděla"
+    ],
+    "namesSk": [
+      "Angela",
+      "Angelika"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 12,
+    "namesCz": [
+      "Řehoř"
+    ],
+    "namesSk": [
+      "Gregor"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 13,
+    "namesCz": [
+      "Růžena"
+    ],
+    "namesSk": [
+      "Vlastimil"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 14,
+    "namesCz": [
+      "Rút",
+      "Matylda"
+    ],
+    "namesSk": [
+      "Matilda"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 15,
+    "namesCz": [
+      "Ida"
+    ],
+    "namesSk": [
+      "Svetlana"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 16,
+    "namesCz": [
+      "Elena",
+      "Herbert"
+    ],
+    "namesSk": [
+      "Boleslav"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 17,
+    "namesCz": [
+      "Vlastimil",
+      "Vlastimila"
+    ],
+    "namesSk": [
+      "Ľubica"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 18,
+    "namesCz": [
+      "Eduard"
+    ],
+    "namesSk": [
+      "Eduard"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 19,
+    "namesCz": [
+      "Josef",
+      "Josefa"
+    ],
+    "namesSk": [
+      "Jozef"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 20,
+    "namesCz": [
+      "Světlana"
+    ],
+    "namesSk": [
+      "Víťazoslav",
+      "Klaudius"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 21,
+    "namesCz": [
+      "Radek"
+    ],
+    "namesSk": [
+      "Blahoslav"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 22,
+    "namesCz": [
+      "Leona",
+      "Leontina",
+      "Lea"
+    ],
+    "namesSk": [
+      "Beňadik"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 23,
+    "namesCz": [
+      "Ivona"
+    ],
+    "namesSk": [
+      "Adrián"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 24,
+    "namesCz": [
+      "Gabriel"
+    ],
+    "namesSk": [
+      "Gabriel"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 25,
+    "namesCz": [
+      "Marián"
+    ],
+    "namesSk": [
+      "Marián"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 26,
+    "namesCz": [
+      "Emanuel"
+    ],
+    "namesSk": [
+      "Emanuel"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 27,
+    "namesCz": [
+      "Dita"
+    ],
+    "namesSk": [
+      "Alena"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 28,
+    "namesCz": [
+      "Soňa"
+    ],
+    "namesSk": [
+      "Soňa"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 29,
+    "namesCz": [
+      "Taťána"
+    ],
+    "namesSk": [
+      "Miroslav"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 30,
+    "namesCz": [
+      "Arnošt",
+      "Ernest"
+    ],
+    "namesSk": [
+      "Vieroslava"
+    ]
+  },
+  {
+    "month": 3,
+    "day": 31,
+    "namesCz": [
+      "Kvido"
+    ],
+    "namesSk": [
+      "Benjamín"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 1,
+    "namesCz": [
+      "Hugo"
+    ],
+    "namesSk": [
+      "Hugo"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 2,
+    "namesCz": [
+      "Erika"
+    ],
+    "namesSk": [
+      "Zita"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 3,
+    "namesCz": [
+      "Richard"
+    ],
+    "namesSk": [
+      "Richard"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 4,
+    "namesCz": [
+      "Ivana"
+    ],
+    "namesSk": [
+      "Izidor"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 5,
+    "namesCz": [
+      "Miroslava",
+      "Mirka"
+    ],
+    "namesSk": [
+      "Miroslava"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 6,
+    "namesCz": [
+      "Vendula",
+      "Venuše"
+    ],
+    "namesSk": [
+      "Irena"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 7,
+    "namesCz": [
+      "Heřman",
+      "Hermína"
+    ],
+    "namesSk": [
+      "Zoltán"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 8,
+    "namesCz": [
+      "Ema"
+    ],
+    "namesSk": [
+      "Albert"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 9,
+    "namesCz": [
+      "Dušan"
+    ],
+    "namesSk": [
+      "Milena"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 10,
+    "namesCz": [
+      "Darja"
+    ],
+    "namesSk": [
+      "Igor"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 11,
+    "namesCz": [
+      "Izabela"
+    ],
+    "namesSk": [
+      "Július"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 12,
+    "namesCz": [
+      "Julius"
+    ],
+    "namesSk": [
+      "Estera"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 13,
+    "namesCz": [
+      "Aleš"
+    ],
+    "namesSk": [
+      "Aleš"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 14,
+    "namesCz": [
+      "Vincenc"
+    ],
+    "namesSk": [
+      "Justína"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 15,
+    "namesCz": [
+      "Anastázie"
+    ],
+    "namesSk": [
+      "Fedor"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 16,
+    "namesCz": [
+      "Irena",
+      "Bernadeta"
+    ],
+    "namesSk": [
+      "Dana",
+      "Danica"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 17,
+    "namesCz": [
+      "Rudolf"
+    ],
+    "namesSk": [
+      "Rudolf",
+      "Rudolfa"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 18,
+    "namesCz": [
+      "Valérie"
+    ],
+    "namesSk": [
+      "Valér"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 19,
+    "namesCz": [
+      "Rostislav"
+    ],
+    "namesSk": [
+      "Jela"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 20,
+    "namesCz": [
+      "Marcela"
+    ],
+    "namesSk": [
+      "Marcel"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 21,
+    "namesCz": [
+      "Alexandra"
+    ],
+    "namesSk": [
+      "Ervín"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 22,
+    "namesCz": [
+      "Evženie"
+    ],
+    "namesSk": [
+      "Slavomír"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 23,
+    "namesCz": [
+      "Vojtěch"
+    ],
+    "namesSk": [
+      "Vojtech"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 24,
+    "namesCz": [
+      "Jiří"
+    ],
+    "namesSk": [
+      "Juraj"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 25,
+    "namesCz": [
+      "Marek"
+    ],
+    "namesSk": [
+      "Marek"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 26,
+    "namesCz": [
+      "Oto"
+    ],
+    "namesSk": [
+      "Jaroslava"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 27,
+    "namesCz": [
+      "Jaroslav"
+    ],
+    "namesSk": [
+      "Jaroslav"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 28,
+    "namesCz": [
+      "Vlastislav"
+    ],
+    "namesSk": [
+      "Jarmila"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 29,
+    "namesCz": [
+      "Robert"
+    ],
+    "namesSk": [
+      "Lea"
+    ]
+  },
+  {
+    "month": 4,
+    "day": 30,
+    "namesCz": [
+      "Blahoslav"
+    ],
+    "namesSk": [
+      "Anastázia"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 1,
+    "namesCz": [
+      "Svátek práce"
+    ],
+    "namesSk": [
+      "Sviatok práce"
+    ],
+    "holidayCz": "Svátek práce",
+    "holidaySk": "Sviatok práce"
+  },
+  {
+    "month": 5,
+    "day": 2,
+    "namesCz": [
+      "Zikmund"
+    ],
+    "namesSk": [
+      "Žigmund"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 3,
+    "namesCz": [
+      "Alexej",
+      "Alex"
+    ],
+    "namesSk": [
+      "Galina",
+      "Timea"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 4,
+    "namesCz": [
+      "Květoslav"
+    ],
+    "namesSk": [
+      "Florián"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 5,
+    "namesCz": [
+      "Klaudie"
+    ],
+    "namesSk": [
+      "Lesana",
+      "Lesia"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 6,
+    "namesCz": [
+      "Radoslav"
+    ],
+    "namesSk": [
+      "Hermína"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 7,
+    "namesCz": [
+      "Stanislav"
+    ],
+    "namesSk": [
+      "Monika"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 8,
+    "namesCz": [
+      "Den vítězství"
+    ],
+    "namesSk": [
+      "Ingrida"
+    ],
+    "holidayCz": "Den vítězství",
+    "holidaySk": "Deň víťazstva nad fašizmom"
+  },
+  {
+    "month": 5,
+    "day": 9,
+    "namesCz": [
+      "Ctibor"
+    ],
+    "namesSk": [
+      "Roland"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 10,
+    "namesCz": [
+      "Blažena"
+    ],
+    "namesSk": [
+      "Viktória"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 11,
+    "namesCz": [
+      "Svatava"
+    ],
+    "namesSk": [
+      "Blažena"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 12,
+    "namesCz": [
+      "Pankrác"
+    ],
+    "namesSk": [
+      "Pankrác"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 13,
+    "namesCz": [
+      "Servác"
+    ],
+    "namesSk": [
+      "Servác"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 14,
+    "namesCz": [
+      "Bonifác"
+    ],
+    "namesSk": [
+      "Bonifác"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 15,
+    "namesCz": [
+      "Žofie",
+      "Sofie"
+    ],
+    "namesSk": [
+      "Žofia"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 16,
+    "namesCz": [
+      "Přemysl"
+    ],
+    "namesSk": [
+      "Svetozár"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 17,
+    "namesCz": [
+      "Aneta"
+    ],
+    "namesSk": [
+      "Gizela",
+      "Aneta"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 18,
+    "namesCz": [
+      "Nataša"
+    ],
+    "namesSk": [
+      "Viola"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 19,
+    "namesCz": [
+      "Ivo"
+    ],
+    "namesSk": [
+      "Gertrúda"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 20,
+    "namesCz": [
+      "Zbyšek"
+    ],
+    "namesSk": [
+      "Bernard"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 21,
+    "namesCz": [
+      "Monika"
+    ],
+    "namesSk": [
+      "Zina"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 22,
+    "namesCz": [
+      "Emil"
+    ],
+    "namesSk": [
+      "Júlia",
+      "Juliána"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 23,
+    "namesCz": [
+      "Vladimír",
+      "Vladimíra"
+    ],
+    "namesSk": [
+      "Želmíra"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 24,
+    "namesCz": [
+      "Jana",
+      "Vanesa"
+    ],
+    "namesSk": [
+      "Ela"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 25,
+    "namesCz": [
+      "Viola"
+    ],
+    "namesSk": [
+      "Urban"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 26,
+    "namesCz": [
+      "Filip"
+    ],
+    "namesSk": [
+      "Dušan"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 27,
+    "namesCz": [
+      "Valdemar"
+    ],
+    "namesSk": [
+      "Iveta"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 28,
+    "namesCz": [
+      "Vilém"
+    ],
+    "namesSk": [
+      "Viliam"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 29,
+    "namesCz": [
+      "Maxmilián",
+      "Maxim"
+    ],
+    "namesSk": [
+      "Vilma"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 30,
+    "namesCz": [
+      "Ferdinand"
+    ],
+    "namesSk": [
+      "Ferdinand"
+    ]
+  },
+  {
+    "month": 5,
+    "day": 31,
+    "namesCz": [
+      "Kamila"
+    ],
+    "namesSk": [
+      "Petrana",
+      "Petronela"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 1,
+    "namesCz": [
+      "Laura"
+    ],
+    "namesSk": [
+      "Žaneta"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 2,
+    "namesCz": [
+      "Jarmil"
+    ],
+    "namesSk": [
+      "Oxana",
+      "Xénia"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 3,
+    "namesCz": [
+      "Tamara",
+      "Kevin"
+    ],
+    "namesSk": [
+      "Karolína"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 4,
+    "namesCz": [
+      "Dalibor"
+    ],
+    "namesSk": [
+      "Lenka"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 5,
+    "namesCz": [
+      "Dobroslav",
+      "Dobroslava"
+    ],
+    "namesSk": [
+      "Laura"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 6,
+    "namesCz": [
+      "Norbert"
+    ],
+    "namesSk": [
+      "Norbert"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 7,
+    "namesCz": [
+      "Iveta",
+      "Slavoj"
+    ],
+    "namesSk": [
+      "Róbert",
+      "Róberta"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 8,
+    "namesCz": [
+      "Medard"
+    ],
+    "namesSk": [
+      "Medard"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 9,
+    "namesCz": [
+      "Stanislava"
+    ],
+    "namesSk": [
+      "Stanislava"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 10,
+    "namesCz": [
+      "Gita",
+      "Margita"
+    ],
+    "namesSk": [
+      "Margaréta"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 11,
+    "namesCz": [
+      "Bruno"
+    ],
+    "namesSk": [
+      "Dobroslava"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 12,
+    "namesCz": [
+      "Antonie"
+    ],
+    "namesSk": [
+      "Zlatko"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 13,
+    "namesCz": [
+      "Antonín"
+    ],
+    "namesSk": [
+      "Anton"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 14,
+    "namesCz": [
+      "Roland",
+      "Herta"
+    ],
+    "namesSk": [
+      "Vasil"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 15,
+    "namesCz": [
+      "Vít"
+    ],
+    "namesSk": [
+      "Vít"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 16,
+    "namesCz": [
+      "Zbyněk"
+    ],
+    "namesSk": [
+      "Bianka",
+      "Blanka"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 17,
+    "namesCz": [
+      "Adolf"
+    ],
+    "namesSk": [
+      "Adolf"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 18,
+    "namesCz": [
+      "Milan",
+      "Milana"
+    ],
+    "namesSk": [
+      "Vratislav"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 19,
+    "namesCz": [
+      "Leoš",
+      "Leo"
+    ],
+    "namesSk": [
+      "Alfréd"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 20,
+    "namesCz": [
+      "Květa",
+      "Květuše"
+    ],
+    "namesSk": [
+      "Valéria"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 21,
+    "namesCz": [
+      "Alois",
+      "Aloisie"
+    ],
+    "namesSk": [
+      "Alojz"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 22,
+    "namesCz": [
+      "Pavla"
+    ],
+    "namesSk": [
+      "Paulína"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 23,
+    "namesCz": [
+      "Zdeňka"
+    ],
+    "namesSk": [
+      "Sidónia"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 24,
+    "namesCz": [
+      "Jan"
+    ],
+    "namesSk": [
+      "Ján"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 25,
+    "namesCz": [
+      "Ivan"
+    ],
+    "namesSk": [
+      "Tadeáš",
+      "Olívia"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 26,
+    "namesCz": [
+      "Adriana",
+      "Adrian"
+    ],
+    "namesSk": [
+      "Adriána"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 27,
+    "namesCz": [
+      "Ladislav",
+      "Ladislava"
+    ],
+    "namesSk": [
+      "Ladislav",
+      "Ladislava"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 28,
+    "namesCz": [
+      "Lubomír"
+    ],
+    "namesSk": [
+      "Beáta"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 29,
+    "namesCz": [
+      "Petr",
+      "Pavel"
+    ],
+    "namesSk": [
+      "Peter",
+      "Pavol",
+      "Petra"
+    ]
+  },
+  {
+    "month": 6,
+    "day": 30,
+    "namesCz": [
+      "Šárka"
+    ],
+    "namesSk": [
+      "Melánia"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 1,
+    "namesCz": [
+      "Jaroslava"
+    ],
+    "namesSk": [
+      "Diana"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 2,
+    "namesCz": [
+      "Patricie"
+    ],
+    "namesSk": [
+      "Berta"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 3,
+    "namesCz": [
+      "Radomír",
+      "Radomíra"
+    ],
+    "namesSk": [
+      "Miloslav"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 4,
+    "namesCz": [
+      "Prokop"
+    ],
+    "namesSk": [
+      "Prokop"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 5,
+    "namesCz": [
+      "Cyril",
+      "Metoděj"
+    ],
+    "namesSk": [
+      "Cyril",
+      "Metod"
+    ],
+    "holidayCz": "Den slovanských věrozvěstů Cyrila a Metoděje",
+    "holidaySk": "Sviatok sv. Cyrila a Metoda"
+  },
+  {
+    "month": 7,
+    "day": 6,
+    "namesCz": [
+      "Jan Hus"
+    ],
+    "namesSk": [
+      "Patrik",
+      "Patrícia"
+    ],
+    "holidayCz": "Den upálení mistra Jana Husa"
+  },
+  {
+    "month": 7,
+    "day": 7,
+    "namesCz": [
+      "Bohuslava"
+    ],
+    "namesSk": [
+      "Oliver"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 8,
+    "namesCz": [
+      "Nora"
+    ],
+    "namesSk": [
+      "Ivan"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 9,
+    "namesCz": [
+      "Drahoslava",
+      "Drahuše"
+    ],
+    "namesSk": [
+      "Lujza"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 10,
+    "namesCz": [
+      "Libuše",
+      "Amálie"
+    ],
+    "namesSk": [
+      "Amália"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 11,
+    "namesCz": [
+      "Olga",
+      "Helga"
+    ],
+    "namesSk": [
+      "Milota"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 12,
+    "namesCz": [
+      "Bořek"
+    ],
+    "namesSk": [
+      "Nina"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 13,
+    "namesCz": [
+      "Markéta"
+    ],
+    "namesSk": [
+      "Margita"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 14,
+    "namesCz": [
+      "Karolína"
+    ],
+    "namesSk": [
+      "Kamil"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 15,
+    "namesCz": [
+      "Jindřich"
+    ],
+    "namesSk": [
+      "Henrich"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 16,
+    "namesCz": [
+      "Luboš"
+    ],
+    "namesSk": [
+      "Drahomír",
+      "Karmela",
+      "Rút"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 17,
+    "namesCz": [
+      "Martina"
+    ],
+    "namesSk": [
+      "Bohuslav"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 18,
+    "namesCz": [
+      "Drahomíra",
+      "Drahomír"
+    ],
+    "namesSk": [
+      "Kamila"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 19,
+    "namesCz": [
+      "Čeněk"
+    ],
+    "namesSk": [
+      "Dušana"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 20,
+    "namesCz": [
+      "Ilja"
+    ],
+    "namesSk": [
+      "Eliáš",
+      "Iľja"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 21,
+    "namesCz": [
+      "Vítězslav",
+      "Vítězslava"
+    ],
+    "namesSk": [
+      "Daniel"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 22,
+    "namesCz": [
+      "Magdaléna",
+      "Magda"
+    ],
+    "namesSk": [
+      "Magdaléna"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 23,
+    "namesCz": [
+      "Libor"
+    ],
+    "namesSk": [
+      "Oľga"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 24,
+    "namesCz": [
+      "Kristýna"
+    ],
+    "namesSk": [
+      "Vladimír"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 25,
+    "namesCz": [
+      "Jakub"
+    ],
+    "namesSk": [
+      "Jakub",
+      "Timur"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 26,
+    "namesCz": [
+      "Anna",
+      "Anita"
+    ],
+    "namesSk": [
+      "Anna",
+      "Hana",
+      "Anita"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 27,
+    "namesCz": [
+      "Věroslav"
+    ],
+    "namesSk": [
+      "Božena"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 28,
+    "namesCz": [
+      "Viktor",
+      "Alina"
+    ],
+    "namesSk": [
+      "Krištof"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 29,
+    "namesCz": [
+      "Marta"
+    ],
+    "namesSk": [
+      "Marta"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 30,
+    "namesCz": [
+      "Bořivoj"
+    ],
+    "namesSk": [
+      "Libuša"
+    ]
+  },
+  {
+    "month": 7,
+    "day": 31,
+    "namesCz": [
+      "Ignác"
+    ],
+    "namesSk": [
+      "Ignác"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 1,
+    "namesCz": [
+      "Oskar"
+    ],
+    "namesSk": [
+      "Božidara"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 2,
+    "namesCz": [
+      "Gustav"
+    ],
+    "namesSk": [
+      "Gustáv"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 3,
+    "namesCz": [
+      "Miluše"
+    ],
+    "namesSk": [
+      "Jerguš"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 4,
+    "namesCz": [
+      "Dominik",
+      "Dominika"
+    ],
+    "namesSk": [
+      "Dominik",
+      "Dominika"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 5,
+    "namesCz": [
+      "Kristián"
+    ],
+    "namesSk": [
+      "Hortenzia"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 6,
+    "namesCz": [
+      "Oldřiška"
+    ],
+    "namesSk": [
+      "Jozefína"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 7,
+    "namesCz": [
+      "Lada"
+    ],
+    "namesSk": [
+      "Štefánia"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 8,
+    "namesCz": [
+      "Soběslav"
+    ],
+    "namesSk": [
+      "Oskar"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 9,
+    "namesCz": [
+      "Roman"
+    ],
+    "namesSk": [
+      "Ľubomíra"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 10,
+    "namesCz": [
+      "Vavřinec"
+    ],
+    "namesSk": [
+      "Vavrinec"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 11,
+    "namesCz": [
+      "Zuzana"
+    ],
+    "namesSk": [
+      "Zuzana"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 12,
+    "namesCz": [
+      "Klára"
+    ],
+    "namesSk": [
+      "Darina"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 13,
+    "namesCz": [
+      "Alena"
+    ],
+    "namesSk": [
+      "Ľubomír"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 14,
+    "namesCz": [
+      "Alan"
+    ],
+    "namesSk": [
+      "Mojmír"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 15,
+    "namesCz": [
+      "Hana"
+    ],
+    "namesSk": [
+      "Marcela"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 16,
+    "namesCz": [
+      "Jáchym"
+    ],
+    "namesSk": [
+      "Leonard"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 17,
+    "namesCz": [
+      "Petra"
+    ],
+    "namesSk": [
+      "Milica"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 18,
+    "namesCz": [
+      "Helena",
+      "Jelena"
+    ],
+    "namesSk": [
+      "Elena",
+      "Helena"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 19,
+    "namesCz": [
+      "Ludvík"
+    ],
+    "namesSk": [
+      "Lýdia"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 20,
+    "namesCz": [
+      "Bernard"
+    ],
+    "namesSk": [
+      "Anabela",
+      "Liliana"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 21,
+    "namesCz": [
+      "Johana"
+    ],
+    "namesSk": [
+      "Jana"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 22,
+    "namesCz": [
+      "Bohuslav"
+    ],
+    "namesSk": [
+      "Tichomír"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 23,
+    "namesCz": [
+      "Sandra"
+    ],
+    "namesSk": [
+      "Filip"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 24,
+    "namesCz": [
+      "Bartoloměj"
+    ],
+    "namesSk": [
+      "Bartolomej"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 25,
+    "namesCz": [
+      "Radim"
+    ],
+    "namesSk": [
+      "Ľudovít"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 26,
+    "namesCz": [
+      "Luděk"
+    ],
+    "namesSk": [
+      "Samuel"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 27,
+    "namesCz": [
+      "Otakar"
+    ],
+    "namesSk": [
+      "Silvia"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 28,
+    "namesCz": [
+      "Augustýn"
+    ],
+    "namesSk": [
+      "Augustín"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 29,
+    "namesCz": [
+      "Evelína"
+    ],
+    "namesSk": [
+      "Nikola",
+      "Nikolaj"
+    ],
+    "holidaySk": "Výročie SNP"
+  },
+  {
+    "month": 8,
+    "day": 30,
+    "namesCz": [
+      "Vladěna"
+    ],
+    "namesSk": [
+      "Ružena"
+    ]
+  },
+  {
+    "month": 8,
+    "day": 31,
+    "namesCz": [
+      "Pavlína"
+    ],
+    "namesSk": [
+      "Nora"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 1,
+    "namesCz": [
+      "Linda",
+      "Samuel"
+    ],
+    "namesSk": [
+      "Drahoslava"
+    ],
+    "holidaySk": "Deň Ústavy SR"
+  },
+  {
+    "month": 9,
+    "day": 2,
+    "namesCz": [
+      "Adéla"
+    ],
+    "namesSk": [
+      "Linda",
+      "Rebeka"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 3,
+    "namesCz": [
+      "Bronislav",
+      "Bronislava"
+    ],
+    "namesSk": [
+      "Belo"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 4,
+    "namesCz": [
+      "Jindřiška",
+      "Rozálie"
+    ],
+    "namesSk": [
+      "Rozália"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 5,
+    "namesCz": [
+      "Boris"
+    ],
+    "namesSk": [
+      "Regína"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 6,
+    "namesCz": [
+      "Boleslav"
+    ],
+    "namesSk": [
+      "Alica"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 7,
+    "namesCz": [
+      "Regína"
+    ],
+    "namesSk": [
+      "Marianna"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 8,
+    "namesCz": [
+      "Mariana"
+    ],
+    "namesSk": [
+      "Miriama"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 9,
+    "namesCz": [
+      "Daniela"
+    ],
+    "namesSk": [
+      "Martina"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 10,
+    "namesCz": [
+      "Irma"
+    ],
+    "namesSk": [
+      "Oleg"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 11,
+    "namesCz": [
+      "Denisa",
+      "Denis"
+    ],
+    "namesSk": [
+      "Bystrík"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 12,
+    "namesCz": [
+      "Marie"
+    ],
+    "namesSk": [
+      "Mária",
+      "Marlena"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 13,
+    "namesCz": [
+      "Lubor"
+    ],
+    "namesSk": [
+      "Ctibor"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 14,
+    "namesCz": [
+      "Radka"
+    ],
+    "namesSk": [
+      "Ľudomil"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 15,
+    "namesCz": [
+      "Jolana"
+    ],
+    "namesSk": [
+      "Jolana"
+    ],
+    "holidaySk": "Sedembolestná Panna Mária"
+  },
+  {
+    "month": 9,
+    "day": 16,
+    "namesCz": [
+      "Ludmila",
+      "Lidmila"
+    ],
+    "namesSk": [
+      "Ľudmila"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 17,
+    "namesCz": [
+      "Naděžda",
+      "Naďa"
+    ],
+    "namesSk": [
+      "Olympia"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 18,
+    "namesCz": [
+      "Kryštof"
+    ],
+    "namesSk": [
+      "Eugénia"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 19,
+    "namesCz": [
+      "Zita"
+    ],
+    "namesSk": [
+      "Konštantín"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 20,
+    "namesCz": [
+      "Oleg"
+    ],
+    "namesSk": [
+      "Ľuboslav",
+      "Ľuboslava"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 21,
+    "namesCz": [
+      "Matouš"
+    ],
+    "namesSk": [
+      "Matúš"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 22,
+    "namesCz": [
+      "Darina"
+    ],
+    "namesSk": [
+      "Móric"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 23,
+    "namesCz": [
+      "Berta"
+    ],
+    "namesSk": [
+      "Zdenka"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 24,
+    "namesCz": [
+      "Jaromír",
+      "Jaromíra"
+    ],
+    "namesSk": [
+      "Ľubor",
+      "Ľuboš"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 25,
+    "namesCz": [
+      "Zlata",
+      "Zlatuše"
+    ],
+    "namesSk": [
+      "Vladislav",
+      "Vladislava"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 26,
+    "namesCz": [
+      "Andrea"
+    ],
+    "namesSk": [
+      "Edita"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 27,
+    "namesCz": [
+      "Jonáš"
+    ],
+    "namesSk": [
+      "Cyprián",
+      "Damián"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 28,
+    "namesCz": [
+      "Václav",
+      "Václava"
+    ],
+    "namesSk": [
+      "Václav"
+    ],
+    "holidayCz": "Den české státnosti"
+  },
+  {
+    "month": 9,
+    "day": 29,
+    "namesCz": [
+      "Michal",
+      "Michael"
+    ],
+    "namesSk": [
+      "Michal",
+      "Michaela"
+    ]
+  },
+  {
+    "month": 9,
+    "day": 30,
+    "namesCz": [
+      "Jeroným",
+      "Ráchel"
+    ],
+    "namesSk": [
+      "Jarolím"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 1,
+    "namesCz": [
+      "Igor"
+    ],
+    "namesSk": [
+      "Arnold"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 2,
+    "namesCz": [
+      "Olívie",
+      "Oliver"
+    ],
+    "namesSk": [
+      "Levoslav"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 3,
+    "namesCz": [
+      "Bohumil"
+    ],
+    "namesSk": [
+      "Stela"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 4,
+    "namesCz": [
+      "František"
+    ],
+    "namesSk": [
+      "František"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 5,
+    "namesCz": [
+      "Eliška"
+    ],
+    "namesSk": [
+      "Viera"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 6,
+    "namesCz": [
+      "Hanuš"
+    ],
+    "namesSk": [
+      "Natália"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 7,
+    "namesCz": [
+      "Justýna"
+    ],
+    "namesSk": [
+      "Eliška"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 8,
+    "namesCz": [
+      "Věra"
+    ],
+    "namesSk": [
+      "Brigita"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 9,
+    "namesCz": [
+      "Štefan",
+      "Sára"
+    ],
+    "namesSk": [
+      "Dionýz"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 10,
+    "namesCz": [
+      "Marina"
+    ],
+    "namesSk": [
+      "Slavomíra"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 11,
+    "namesCz": [
+      "Andrej"
+    ],
+    "namesSk": [
+      "Valentína"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 12,
+    "namesCz": [
+      "Marcel"
+    ],
+    "namesSk": [
+      "Maximilián"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 13,
+    "namesCz": [
+      "Renáta"
+    ],
+    "namesSk": [
+      "Koloman"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 14,
+    "namesCz": [
+      "Agáta"
+    ],
+    "namesSk": [
+      "Boris"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 15,
+    "namesCz": [
+      "Tereza",
+      "Terezie"
+    ],
+    "namesSk": [
+      "Terézia"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 16,
+    "namesCz": [
+      "Havel",
+      "Galina"
+    ],
+    "namesSk": [
+      "Vladimíra"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 17,
+    "namesCz": [
+      "Hedvika"
+    ],
+    "namesSk": [
+      "Hedviga"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 18,
+    "namesCz": [
+      "Lukáš"
+    ],
+    "namesSk": [
+      "Lukáš"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 19,
+    "namesCz": [
+      "Michaela",
+      "Michala"
+    ],
+    "namesSk": [
+      "Kristián"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 20,
+    "namesCz": [
+      "Vendelín"
+    ],
+    "namesSk": [
+      "Vendelín"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 21,
+    "namesCz": [
+      "Brigita"
+    ],
+    "namesSk": [
+      "Uršuľa"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 22,
+    "namesCz": [
+      "Sabina"
+    ],
+    "namesSk": [
+      "Sergej"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 23,
+    "namesCz": [
+      "Teodor"
+    ],
+    "namesSk": [
+      "Alojzia"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 24,
+    "namesCz": [
+      "Nina"
+    ],
+    "namesSk": [
+      "Kvetoslava"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 25,
+    "namesCz": [
+      "Beáta"
+    ],
+    "namesSk": [
+      "Aurel"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 26,
+    "namesCz": [
+      "Erik"
+    ],
+    "namesSk": [
+      "Demeter"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 27,
+    "namesCz": [
+      "Šarlota",
+      "Zoe"
+    ],
+    "namesSk": [
+      "Sabína"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 28,
+    "namesCz": [
+      "Jidáš",
+      "Alfréd"
+    ],
+    "namesSk": [
+      "Dobromila"
+    ],
+    "holidayCz": "Den vzniku samostatného československého státu"
+  },
+  {
+    "month": 10,
+    "day": 29,
+    "namesCz": [
+      "Silvie",
+      "Sylva"
+    ],
+    "namesSk": [
+      "Klára"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 30,
+    "namesCz": [
+      "Tadeáš"
+    ],
+    "namesSk": [
+      "Šimon",
+      "Simona"
+    ]
+  },
+  {
+    "month": 10,
+    "day": 31,
+    "namesCz": [
+      "Štěpánka"
+    ],
+    "namesSk": [
+      "Aurélia"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 1,
+    "namesCz": [
+      "Felix"
+    ],
+    "namesSk": [
+      "Denis",
+      "Denisa"
+    ],
+    "holidaySk": "Sviatok Všetkých svätých"
+  },
+  {
+    "month": 11,
+    "day": 2,
+    "namesCz": [
+      "Tobiáš"
+    ],
+    "namesSk": [
+      "Pamiatka zosnulých"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 3,
+    "namesCz": [
+      "Hubert"
+    ],
+    "namesSk": [
+      "Hubert"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 4,
+    "namesCz": [
+      "Karel",
+      "Karla"
+    ],
+    "namesSk": [
+      "Karol"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 5,
+    "namesCz": [
+      "Miriam"
+    ],
+    "namesSk": [
+      "Imrich"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 6,
+    "namesCz": [
+      "Liběna",
+      "Leonard"
+    ],
+    "namesSk": [
+      "Renáta"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 7,
+    "namesCz": [
+      "Saskie"
+    ],
+    "namesSk": [
+      "René"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 8,
+    "namesCz": [
+      "Bohumír",
+      "Bohumíra"
+    ],
+    "namesSk": [
+      "Bohumír"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 9,
+    "namesCz": [
+      "Bohdan"
+    ],
+    "namesSk": [
+      "Teodor"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 10,
+    "namesCz": [
+      "Evžen"
+    ],
+    "namesSk": [
+      "Tibor"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 11,
+    "namesCz": [
+      "Martin"
+    ],
+    "namesSk": [
+      "Maroš",
+      "Martin"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 12,
+    "namesCz": [
+      "Benedikt"
+    ],
+    "namesSk": [
+      "Svätopluk"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 13,
+    "namesCz": [
+      "Tibor"
+    ],
+    "namesSk": [
+      "Stanislav"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 14,
+    "namesCz": [
+      "Sáva"
+    ],
+    "namesSk": [
+      "Irma"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 15,
+    "namesCz": [
+      "Leopold"
+    ],
+    "namesSk": [
+      "Leopold"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 16,
+    "namesCz": [
+      "Otmar"
+    ],
+    "namesSk": [
+      "Agnesa"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 17,
+    "namesCz": [
+      "Mahulena",
+      "Gertruda"
+    ],
+    "namesSk": [
+      "Klaudia"
+    ],
+    "holidayCz": "Den boje za svobodu a demokracii",
+    "holidaySk": "Deň boja za slobodu a demokraciu"
+  },
+  {
+    "month": 11,
+    "day": 18,
+    "namesCz": [
+      "Romana"
+    ],
+    "namesSk": [
+      "Eugen"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 19,
+    "namesCz": [
+      "Alžběta"
+    ],
+    "namesSk": [
+      "Alžbeta"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 20,
+    "namesCz": [
+      "Nikola"
+    ],
+    "namesSk": [
+      "Félix"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 21,
+    "namesCz": [
+      "Albert"
+    ],
+    "namesSk": [
+      "Elvíra"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 22,
+    "namesCz": [
+      "Cecílie"
+    ],
+    "namesSk": [
+      "Cecília"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 23,
+    "namesCz": [
+      "Klement"
+    ],
+    "namesSk": [
+      "Klement"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 24,
+    "namesCz": [
+      "Emílie"
+    ],
+    "namesSk": [
+      "Emília"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 25,
+    "namesCz": [
+      "Kateřina"
+    ],
+    "namesSk": [
+      "Katarína"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 26,
+    "namesCz": [
+      "Artur"
+    ],
+    "namesSk": [
+      "Kornel"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 27,
+    "namesCz": [
+      "Xenie"
+    ],
+    "namesSk": [
+      "Milan"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 28,
+    "namesCz": [
+      "René"
+    ],
+    "namesSk": [
+      "Henrieta"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 29,
+    "namesCz": [
+      "Zina"
+    ],
+    "namesSk": [
+      "Vratko"
+    ]
+  },
+  {
+    "month": 11,
+    "day": 30,
+    "namesCz": [
+      "Ondřej"
+    ],
+    "namesSk": [
+      "Andrej",
+      "Ondrej"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 1,
+    "namesCz": [
+      "Iva"
+    ],
+    "namesSk": [
+      "Edmund"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 2,
+    "namesCz": [
+      "Blanka"
+    ],
+    "namesSk": [
+      "Bibiána"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 3,
+    "namesCz": [
+      "Svatoslav"
+    ],
+    "namesSk": [
+      "Oldrich"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 4,
+    "namesCz": [
+      "Barbora"
+    ],
+    "namesSk": [
+      "Barbora",
+      "Barbara"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 5,
+    "namesCz": [
+      "Jitka"
+    ],
+    "namesSk": [
+      "Oto"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 6,
+    "namesCz": [
+      "Mikuláš"
+    ],
+    "namesSk": [
+      "Mikuláš"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 7,
+    "namesCz": [
+      "Ambrož",
+      "Benjamín"
+    ],
+    "namesSk": [
+      "Ambróz"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 8,
+    "namesCz": [
+      "Květoslava"
+    ],
+    "namesSk": [
+      "Marína"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 9,
+    "namesCz": [
+      "Vratislav"
+    ],
+    "namesSk": [
+      "Izabela"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 10,
+    "namesCz": [
+      "Julie"
+    ],
+    "namesSk": [
+      "Radúz"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 11,
+    "namesCz": [
+      "Dana",
+      "Danuše"
+    ],
+    "namesSk": [
+      "Hilda"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 12,
+    "namesCz": [
+      "Simona"
+    ],
+    "namesSk": [
+      "Otília"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 13,
+    "namesCz": [
+      "Lucie"
+    ],
+    "namesSk": [
+      "Lucia"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 14,
+    "namesCz": [
+      "Lýdie"
+    ],
+    "namesSk": [
+      "Branislava",
+      "Bronislava"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 15,
+    "namesCz": [
+      "Radana",
+      "Radan"
+    ],
+    "namesSk": [
+      "Ivica"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 16,
+    "namesCz": [
+      "Albína"
+    ],
+    "namesSk": [
+      "Albína"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 17,
+    "namesCz": [
+      "Daniel"
+    ],
+    "namesSk": [
+      "Kornélia"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 18,
+    "namesCz": [
+      "Miloslav"
+    ],
+    "namesSk": [
+      "Sláva"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 19,
+    "namesCz": [
+      "Ester"
+    ],
+    "namesSk": [
+      "Judita"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 20,
+    "namesCz": [
+      "Dagmar"
+    ],
+    "namesSk": [
+      "Dagmara"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 21,
+    "namesCz": [
+      "Natálie"
+    ],
+    "namesSk": [
+      "Bohdan"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 22,
+    "namesCz": [
+      "Šimon"
+    ],
+    "namesSk": [
+      "Adela"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 23,
+    "namesCz": [
+      "Vlasta"
+    ],
+    "namesSk": [
+      "Nadežda",
+      "Naďa"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 24,
+    "namesCz": [
+      "Adam",
+      "Eva"
+    ],
+    "namesSk": [
+      "Adam",
+      "Eva"
+    ],
+    "holidayCz": "Štědrý den",
+    "holidaySk": "Štedrý deň"
+  },
+  {
+    "month": 12,
+    "day": 25,
+    "namesCz": [
+      "1. svátek vánoční"
+    ],
+    "namesSk": [
+      "1. sviatok vianočný"
+    ],
+    "holidayCz": "1. svátek vánoční",
+    "holidaySk": "Prvý sviatok vianočný"
+  },
+  {
+    "month": 12,
+    "day": 26,
+    "namesCz": [
+      "Štěpán"
+    ],
+    "namesSk": [
+      "Štefan"
+    ],
+    "holidayCz": "2. svátek vánoční",
+    "holidaySk": "Druhý sviatok vianočný"
+  },
+  {
+    "month": 12,
+    "day": 27,
+    "namesCz": [
+      "Žaneta"
+    ],
+    "namesSk": [
+      "Filoména"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 28,
+    "namesCz": [
+      "Bohumila"
+    ],
+    "namesSk": [
+      "Ivana",
+      "Ivona"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 29,
+    "namesCz": [
+      "Judita"
+    ],
+    "namesSk": [
+      "Milada"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 30,
+    "namesCz": [
+      "David"
+    ],
+    "namesSk": [
+      "Dávid"
+    ]
+  },
+  {
+    "month": 12,
+    "day": 31,
+    "namesCz": [
+      "Silvestr"
+    ],
+    "namesSk": [
+      "Silvester"
+    ]
+  }
+]

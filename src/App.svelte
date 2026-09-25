@@ -18,6 +18,7 @@
   import FrequencyModule from './lib/modules/frequency/FrequencyModule.svelte';
   import WordsModule from './lib/modules/words/WordsModule.svelte';
   import GrilleModule from './lib/modules/grille/GrilleModule.svelte';
+  import CalendarModule from './lib/modules/calendar/CalendarModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -96,6 +97,8 @@
     <WordsModule />
   {:else if navigation.activeModuleId === 'grille'}
     <GrilleModule />
+  {:else if navigation.activeModuleId === 'calendar'}
+    <CalendarModule />
   {:else if navigation.activeModuleId === 'settings'}
     <SettingsModule />
   {:else if navigation.activeModuleId === 'help'}
