@@ -113,6 +113,16 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** píšeš nápovědu prázdného stavu (`emptyHint`), **POTOM** formuluj 1 údernou větu bez vatových úvodů („Zde se zobrazuje...“). Při psaní se plynule rozostří (0.7s blur), při vymazání znovu zaostří.
 - **POKUD** zobrazuješ toast, **POTOM** max. **30 znaků + až 2 emoji** v imperativním tvaru (*„Zkopírováno“*, *„Vyčištěno“*).
 
+### Tabulky a encyklopedická data (Fakta & Reference)
+- **POKUD** formátuješ data a stupnice s popisy (Fakta, Reference), **POTOM** delší textové popisy NIKDY nedávej do úzkého samostatného sloupce, ale jako spojený řádek `<tr class="desc-row"><td colspan="...">` přímo pod primární řádek záznamu.
+- **POKUD** záznam nese číselný index / stupeň / rank, **POTOM** ho umísti do prvního sloupce `<td rowspan="2" class="col-num">`, který vertikálně sváže oba řádky záznamu jako kotevní badge.
+- **POKUD** buňka obsahuje číselné hodnoty, intervaly či vzorce, **POTOM** použij třídu `.col-val` (resp. `.col-code`), čísla formátuj bez mezer kolem spojovníku (typografický rozsah: `0–0,2`, `10,8–13,8`), se spojovacími mezerami u relačních operátorů (`&ge;&nbsp;118`, `&lt;&nbsp;1`) a v CSS striktně `white-space: nowrap; font-variant-numeric: tabular-nums;`.
+- **POKUD** tabulka obsahuje dvouřádkové záznamy s `tr.desc-row`, **POTOM** zebra striping musí střídat celé dvojice záznamů (`tbody tr:nth-child(4n-1)`, `tbody tr:nth-child(4n)`), uvnitř záznamu nesmí být dělící linka a mezi záznamy musí být zřetelný předěl (`1px solid var(--color-border-medium)`).
+- **POKUD** definuješ šířky sloupců tabulky, **POTOM** NIKDY nepoužívej rigidní inline procenta (např. `width: 20%`), která na úzkém viewportu (320–360 px) lámou čísla. Použij sémantické třídy: `.col-num`, `.col-val`, `.col-code` mají `width: 1%; white-space: nowrap;` (shrink-to-fit) a hlavní textový sloupec `.col-name` přirozeně získá veškerý zbývající prostor (`width: auto`).
+- **POKUD** navrhuješ sloupce v primárním řádku mobilní tabulky (viewport 320–360 px), **POTOM** počet souběžných textových sloupců nesmí překročit **2** (např. *Pojem A* vs *Pojem B*, nebo 1 textový sloupec + 1–2 úzké číselné hodnoty `.col-val`). Třetí textový sloupec (doména, sféra, latinský název, kategorie apod.) se na 320 px nevejde a VŽDY patří do spodního řádku záznamu jako `<tr class="desc-row">`.
+
+
+
 ---
 
 ## 4. Layoutové & Dimenzionální konstanty

@@ -1,10 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import { settings } from '../../state/settings.svelte';
   import { versionService } from '../../services/versionService.svelte';
   import { navigation } from '../../state/navigation.svelte';
-  import { matchesSearch } from '../../utils/search';
-  import SearchInput from '../../components/ui/SearchInput.svelte';
   import FlagDetailModal from './FlagDetailModal.svelte';
   import WorldFlagsFilterDashboard from './WorldFlagsFilterDashboard.svelte';
   import { getWorldFlags, type WorldFlagRecord } from '../../db/database.svelte';
@@ -20,7 +19,6 @@
   let isLoading = $state(true);
 
   // Filter states
-  let searchQuery = $state('');
   let selectedContinent = $state<WorldContinent>('all');
   let selectedColors = $state<WorldFlagColorId[]>([]);
   let selectedFeatures = $state<WorldFlagFeatureId[]>([]);
@@ -44,15 +42,13 @@
   });
 
   const hasActiveFilters = $derived(
-    searchQuery.trim().length > 0 ||
-      selectedContinent !== 'all' ||
+    selectedContinent !== 'all' ||
       selectedColors.length > 0 ||
       selectedFeatures.length > 0
   );
 
   function resetAllFilters() {
     settings.vibrate(20);
-    searchQuery = '';
     selectedContinent = 'all';
     selectedColors = [];
     selectedFeatures = [];
@@ -107,197 +103,167 @@
         if (!hasAllFeatures) return false;
       }
 
-      // 4. Text search query
-      if (searchQuery.trim()) {
-        const matches = matchesSearch(
-          [
-            flag.name_cs,
-            flag.name_cs_nodiac,
-            flag.name_en,
-            flag.capital_cs,
-            flag.capital_cs_nodiac,
-            flag.capital_en,
-            flag.code,
-            flag.code3
-          ],
-          searchQuery
-        );
-        if (!matches) return false;
-      }
-
       return true;
     });
   });
 </script>
 
-<div class="world-flags-view" data-allow-copy>
-  <!-- Top Section: Search Bar + Filter Count & Reset -->
-  <div class="world-header-zone">
-    <SearchInput
-      bind:value={searchQuery}
-      placeholder="Hledat stát, hlavní město, kód..."
-    />
-    <div class="filter-status-row">
-      <div class="count-badge">
-        Nalezeno <strong class="text-accent">{filteredFlags.length}</strong> / {allFlags.length} států
+<ModuleShell title="Státy" layoutMode="fullscreen-input">
+  {#snippet input()}
+    <div class="states-view" data-allow-copy>
+      <!-- Top Section: Filter Count & Reset -->
+      <div class="states-header-zone">
+        <div class="filter-status-row">
+          <div class="count-badge">
+            Nalezeno <strong class="text-accent">{filteredFlags.length}</strong> / {allFlags.length} států
+          </div>
+          {#if hasActiveFilters}
+            <button
+              type="button"
+              class="reset-filters-btn"
+              onclick={resetAllFilters}
+              aria-label="Resetovat všechny filtry"
+            >
+              <ArrowCounterClockwise size={13} />
+              <span>Resetovat filtry</span>
+            </button>
+          {/if}
+        </div>
       </div>
-      {#if hasActiveFilters}
-        <button
-          type="button"
-          class="reset-filters-btn"
-          onclick={resetAllFilters}
-          aria-label="Resetovat všechny filtry"
-        >
-          <ArrowCounterClockwise size={13} />
-          <span>Resetovat filtry</span>
-        </button>
-      {/if}
+
+      <!-- Middle Section: Scrollable Results Grid with 1x1 Flags -->
+      <div class="flags-scroll-zone">
+        {#if !versionService.state.isDbInstalled}
+          <div class="empty-state">
+            <span class="empty-title">Slovníková data nejsou stažena</span>
+            <span class="empty-hint text-muted">Katalog států a vlajek je součástí offline balíčku (~102 MB).</span>
+            <button type="button" class="empty-reset-btn" onclick={() => navigation.openModule('settings')}>
+              Stáhnout v Nastavení
+            </button>
+          </div>
+        {:else if isLoading}
+          <div class="loading-state">
+            <Globe size={32} class="spin-icon text-muted" />
+            <span class="text-muted">Načítám státy světa...</span>
+          </div>
+        {:else if filteredFlags.length === 0}
+          <div class="empty-state">
+            <span class="empty-title">Žádný stát neodpovídá filtrům</span>
+            <span class="empty-hint text-muted">Zkuste odebrat některé barvy nebo prvky</span>
+            <button type="button" class="empty-reset-btn" onclick={resetAllFilters}>
+              Obnovit všechny filtry
+            </button>
+          </div>
+        {:else}
+          <div class="flags-result-grid">
+            {#each filteredFlags as flag (flag.code)}
+              <button
+                type="button"
+                class="world-flag-card"
+                onclick={() => openDetail(flag)}
+                aria-label="{flag.name_cs} ({flag.code.toUpperCase()})"
+              >
+                <div class="flag-thumb-wrap">
+                  {@html flag.svg_1x1 || flag.svg_4x3}
+                </div>
+                <div class="flag-card-info">
+                  <span class="flag-card-code font-mono">{flag.code.toUpperCase()}</span>
+                  <span class="flag-card-name" title={flag.name_cs}>{flag.name_cs}</span>
+                </div>
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
+
+      <!-- Bottom Filter Dashboard (Fixed Thumb Zone) -->
+      <WorldFlagsFilterDashboard
+        {selectedContinent}
+        {selectedFeatures}
+        {selectedColors}
+        onToggleContinent={toggleContinent}
+        onToggleFeature={toggleFeature}
+        onToggleColor={toggleColor}
+      />
+
+      <!-- Detail Modal -->
+      <FlagDetailModal
+        open={isDetailOpen}
+        flag={selectedFlagForDetail}
+        onClose={() => (isDetailOpen = false)}
+      />
     </div>
-  </div>
-
-  <!-- Middle Section: Scrollable Results Grid with 1x1 Flags -->
-  <div class="flags-scroll-zone">
-    {#if !versionService.state.isDbInstalled}
-      <div class="empty-state">
-        <span class="empty-title">Slovníková data nejsou stažena</span>
-        <span class="empty-hint text-muted">Katalog státních vlajek je součástí slovníkového balíčku (~102 MB).</span>
-        <button type="button" class="empty-reset-btn" onclick={() => navigation.openModule('settings')}>
-          Stáhnout v Nastavení
-        </button>
-      </div>
-    {:else if isLoading}
-      <div class="loading-state">
-        <Globe size={32} class="spin-icon text-muted" />
-        <span class="text-muted">Načítám státy světa...</span>
-      </div>
-    {:else if filteredFlags.length === 0}
-      <div class="empty-state">
-        <span class="empty-title">Žádná vlajka neodpovídá filtrům</span>
-        <span class="empty-hint text-muted">Zkuste odebrat některé barvy nebo prvky</span>
-        <button type="button" class="empty-reset-btn" onclick={resetAllFilters}>
-          Obnovit všechny filtry
-        </button>
-      </div>
-    {:else}
-      <div class="flags-result-grid">
-        {#each filteredFlags as flag (flag.code)}
-          <button
-            type="button"
-            class="world-flag-card"
-            onclick={() => openDetail(flag)}
-            aria-label="{flag.name_cs} ({flag.code.toUpperCase()})"
-          >
-            <div class="flag-thumb-wrap">
-              {@html flag.svg_1x1 || flag.svg_4x3}
-            </div>
-            <div class="flag-card-info">
-              <span class="flag-card-code font-mono">{flag.code.toUpperCase()}</span>
-              <span class="flag-card-name" title={flag.name_cs}>{flag.name_cs}</span>
-            </div>
-          </button>
-        {/each}
-      </div>
-    {/if}
-  </div>
-
-  <!-- Bottom Section: Filters Dashboard (Thumb Reach) -->
-  <WorldFlagsFilterDashboard
-    {selectedContinent}
-    {selectedFeatures}
-    {selectedColors}
-    onToggleContinent={toggleContinent}
-    onToggleFeature={toggleFeature}
-    onToggleColor={toggleColor}
-  />
-</div>
-
-<FlagDetailModal
-  open={isDetailOpen}
-  flag={selectedFlagForDetail}
-  onClose={() => {
-    isDetailOpen = false;
-  }}
-/>
+  {/snippet}
+</ModuleShell>
 
 <style>
-  .world-flags-view {
+  .states-view {
     display: flex;
     flex-direction: column;
     height: 100%;
     width: 100%;
-    max-width: 100%;
-    gap: var(--space-xs);
-    overflow-x: hidden;
-    overflow-y: hidden;
-    box-sizing: border-box;
-    user-select: none;
+    overflow: hidden;
+    background-color: var(--color-bg-canvas);
+    color: var(--color-text-primary);
   }
 
-  /* Header zone */
-  .world-header-zone {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2xs);
+  .states-header-zone {
     flex-shrink: 0;
-    width: 100%;
-    box-sizing: border-box;
+    padding: var(--space-xs) var(--space-sm);
+    background-color: var(--color-bg-surface);
+    border-bottom: 1px solid var(--color-border-subtle);
   }
 
   .filter-status-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 2px;
-    font-size: var(--text-xs);
+    min-height: 28px;
   }
 
   .count-badge {
+    font-size: 12px;
     color: var(--color-text-secondary);
     font-weight: 500;
   }
 
   .text-accent {
     color: var(--color-accent-primary);
-    font-weight: 700;
-  }
-
-  .text-muted {
-    color: var(--color-text-secondary);
-  }
-
-  .font-mono {
-    font-family: var(--font-mono, monospace);
   }
 
   .reset-filters-btn {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background-color: var(--color-surface-2);
+    background: transparent;
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-xs);
-    padding: 2px 8px;
-    font-size: var(--text-xs);
-    color: var(--color-text-primary);
-    transition: background-color 0.12s;
-    touch-action: manipulation;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
   }
 
   .reset-filters-btn:active {
     background-color: var(--color-surface-active);
+    color: var(--color-text-primary);
   }
 
-  /* Middle flags scroll zone */
   .flags-scroll-zone {
     flex: 1;
-    min-height: 0;
-    width: 100%;
-    max-width: 100%;
     overflow-y: auto;
-    overflow-x: hidden;
     overscroll-behavior: contain;
-    box-sizing: border-box;
-    padding: 2px 1px;
+    padding: var(--space-xs);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .flags-result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+    gap: 6px;
+    padding-bottom: var(--space-md);
   }
 
   .loading-state,
@@ -307,63 +273,49 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: var(--space-xs);
+    min-height: 180px;
+    gap: var(--space-sm);
     text-align: center;
     padding: var(--space-md);
   }
 
   .empty-title {
-    font-size: var(--text-sm);
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-text-primary);
   }
 
   .empty-hint {
-    font-size: var(--text-xs);
+    font-size: 12px;
+    line-height: 1.4;
+    max-width: 260px;
   }
 
   .empty-reset-btn {
     margin-top: var(--space-xs);
     background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-medium);
+    border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    padding: 6px 14px;
-    font-size: var(--text-xs);
-    font-weight: 600;
     color: var(--color-accent-primary);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    cursor: pointer;
   }
 
-  /* Flags Result Grid (Uniform 1:1 square tiles, perfectly aligned) */
-  .flags-result-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  @media (min-width: 520px) {
-    .flags-result-grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-  }
-
-  @media (min-width: 680px) {
-    .flags-result-grid {
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-    }
+  .empty-reset-btn:active {
+    background-color: var(--color-surface-active);
   }
 
   .world-flag-card {
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 4px;
     background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    padding: 3px;
-    gap: 3px;
-    min-width: 0;
+    cursor: pointer;
     width: 100%;
     box-sizing: border-box;
     transition: background-color 0.12s, border-color 0.12s, transform 0.06s;
@@ -423,5 +375,4 @@
     text-align: center;
     line-height: 1.2;
   }
-
 </style>

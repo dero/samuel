@@ -250,16 +250,22 @@
         <!-- Caesar Single-line Input Row with Spacer -->
         <div class="inputs-column">
           <div class="input-row">
-            <input
-              type="text"
-              class="cipher-input font-mono"
-              placeholder="Šifrový text..."
-              bind:value={text}
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="characters"
-              spellcheck="false"
-            />
+            <button
+              type="button"
+              class="cipher-input-trigger font-mono"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'text';
+              }}
+              title="Klepnutím zadat nebo upravit šifrový text"
+              aria-label="Klepnutím zadat nebo upravit šifrový text"
+            >
+              {#if text}
+                <span class="trigger-text">{text}</span>
+              {:else}
+                <span class="trigger-placeholder">Klepnutím zadat text...</span>
+              {/if}
+            </button>
             {#if text}
               <button
                 type="button"
@@ -332,16 +338,22 @@
         <!-- Vigenere Inputs: Text & Key -->
         <div class="inputs-column">
           <div class="input-row">
-            <input
-              type="text"
-              class="cipher-input font-mono"
-              placeholder="Šifrový text..."
-              bind:value={text}
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="characters"
-              spellcheck="false"
-            />
+            <button
+              type="button"
+              class="cipher-input-trigger font-mono"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'text';
+              }}
+              title="Klepnutím zadat nebo upravit šifrový text"
+              aria-label="Klepnutím zadat nebo upravit šifrový text"
+            >
+              {#if text}
+                <span class="trigger-text">{text}</span>
+              {:else}
+                <span class="trigger-placeholder">Klepnutím zadat text...</span>
+              {/if}
+            </button>
             {#if text}
               <button
                 type="button"
@@ -380,16 +392,22 @@
           </div>
 
           <div class="input-row">
-            <input
-              type="text"
-              class="cipher-input font-mono"
-              placeholder="Klíč (heslo / čísla)..."
-              bind:value={keyText}
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="characters"
-              spellcheck="false"
-            />
+            <button
+              type="button"
+              class="cipher-input-trigger font-mono"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'key';
+              }}
+              title="Klepnutím zadat nebo upravit klíč"
+              aria-label="Klepnutím zadat nebo upravit klíč"
+            >
+              {#if keyText}
+                <span class="trigger-text">{keyText}</span>
+              {:else}
+                <span class="trigger-placeholder">Klíč (heslo / čísla)...</span>
+              {/if}
+            </button>
             {#if keyText}
               <button
                 type="button"
@@ -432,16 +450,22 @@
         <!-- Autokey Inputs: Text & Primer -->
         <div class="inputs-column">
           <div class="input-row">
-            <input
-              type="text"
-              class="cipher-input font-mono"
-              placeholder="Šifrový text..."
-              bind:value={text}
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="characters"
-              spellcheck="false"
-            />
+            <button
+              type="button"
+              class="cipher-input-trigger font-mono"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'text';
+              }}
+              title="Klepnutím zadat nebo upravit šifrový text"
+              aria-label="Klepnutím zadat nebo upravit šifrový text"
+            >
+              {#if text}
+                <span class="trigger-text">{text}</span>
+              {:else}
+                <span class="trigger-placeholder">Klepnutím zadat text...</span>
+              {/if}
+            </button>
             {#if text}
               <button
                 type="button"
@@ -480,16 +504,22 @@
           </div>
 
           <div class="input-row">
-            <input
-              type="text"
-              class="cipher-input font-mono"
-              placeholder="Heslo (klíč)..."
-              bind:value={autokeyPrimer}
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="characters"
-              spellcheck="false"
-            />
+            <button
+              type="button"
+              class="cipher-input-trigger font-mono"
+              onclick={() => {
+                settings.vibrate(20);
+                activeTextSheet = 'primer';
+              }}
+              title="Klepnutím zadat nebo upravit heslo"
+              aria-label="Klepnutím zadat nebo upravit heslo"
+            >
+              {#if autokeyPrimer}
+                <span class="trigger-text">{autokeyPrimer}</span>
+              {:else}
+                <span class="trigger-placeholder">Heslo (klíč)...</span>
+              {/if}
+            </button>
             {#if autokeyPrimer}
               <button
                 type="button"
@@ -725,25 +755,36 @@
     box-shadow: 0 0 8px rgba(0, 210, 255, 0.15);
   }
 
-  .cipher-input {
+  .cipher-input-trigger {
     flex: 1;
     min-width: 0;
+    height: 100%;
     background: transparent;
     border: none;
     outline: none;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    padding: 0 4px;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  .trigger-text {
     color: var(--color-text-primary);
     font-size: var(--text-base);
     font-weight: 700;
-    padding: 6px 4px;
-    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     letter-spacing: 0.5px;
   }
 
-  .cipher-input::placeholder {
+  .trigger-placeholder {
     color: var(--color-text-muted);
-    font-weight: 400;
-    font-family: var(--font-sans);
     font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    font-weight: 400;
   }
 
   .input-clear-btn {

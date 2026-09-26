@@ -8,24 +8,6 @@
     BRAILLE_PUNCTUATION,
     type BrailleEntry
   } from './brailleData';
-  import { matchesSearch } from '../../utils/search';
-  import SearchInput from '../../components/ui/SearchInput.svelte';
-
-  let searchQuery = $state('');
-
-  // Search filter
-  let filteredEntries = $derived.by(() => {
-    if (!searchQuery.trim()) return null;
-    const q = searchQuery.trim().toLowerCase();
-    return ALL_BRAILLE_ENTRIES.filter((e) => {
-      const dotStr = e.dots.join('');
-      const dotCommaStr = e.dots.join(', ');
-      return (
-        matchesSearch([e.char, dotStr, dotCommaStr, e.unicode, e.description || ''], q)
-      );
-    });
-  });
-
   const sections = [
     { title: 'Základní abeceda (A–Z)', items: BRAILLE_LETTERS },
     { title: 'Česká diakritika (Á–Ž)', items: BRAILLE_CZECH_DIACRITICS },
@@ -35,58 +17,30 @@
 </script>
 
 <div class="ref-container">
-  <!-- Search filter -->
-  <SearchInput
-    bind:value={searchQuery}
-    placeholder="Hledat znak, čísla bodů (např. 135)..."
-  />
-
   <!-- Symbols list -->
   <div class="table-scroll">
-    {#if filteredEntries}
-      <div class="entries-grid">
-        {#each filteredEntries as entry}
-          <div class="symbol-card">
-            <span class="symbol-char">{entry.char}</span>
-            <div class="dot-matrix" aria-hidden="true">
-              <div class="dot" class:is-on={entry.dots.includes(1)}></div>
-              <div class="dot" class:is-on={entry.dots.includes(4)}></div>
-              <div class="dot" class:is-on={entry.dots.includes(2)}></div>
-              <div class="dot" class:is-on={entry.dots.includes(5)}></div>
-              <div class="dot" class:is-on={entry.dots.includes(3)}></div>
-              <div class="dot" class:is-on={entry.dots.includes(6)}></div>
-            </div>
-          </div>
-        {:else}
-          <div class="empty-state">
-            Nenalezen žádný znak odpovídající „{searchQuery}“.
-          </div>
-        {/each}
-      </div>
-    {:else}
-      <div class="sections-container">
-        {#each sections as sec}
-          <div class="section-group">
-            <div class="section-title">{sec.title}</div>
-            <div class="entries-grid">
-              {#each sec.items as entry}
-                <div class="symbol-card" title="{entry.char} – body: {entry.dots.join(', ')}">
-                  <span class="symbol-char">{entry.char}</span>
-                  <div class="dot-matrix" aria-hidden="true">
-                    <div class="dot" class:is-on={entry.dots.includes(1)}></div>
-                    <div class="dot" class:is-on={entry.dots.includes(4)}></div>
-                    <div class="dot" class:is-on={entry.dots.includes(2)}></div>
-                    <div class="dot" class:is-on={entry.dots.includes(5)}></div>
-                    <div class="dot" class:is-on={entry.dots.includes(3)}></div>
-                    <div class="dot" class:is-on={entry.dots.includes(6)}></div>
-                  </div>
+    <div class="sections-container">
+      {#each sections as sec}
+        <div class="section-group">
+          <div class="section-title">{sec.title}</div>
+          <div class="entries-grid">
+            {#each sec.items as entry}
+              <div class="symbol-card" title="{entry.char} – body: {entry.dots.join(', ')}">
+                <span class="symbol-char">{entry.char}</span>
+                <div class="dot-matrix" aria-hidden="true">
+                  <div class="dot" class:is-on={entry.dots.includes(1)}></div>
+                  <div class="dot" class:is-on={entry.dots.includes(4)}></div>
+                  <div class="dot" class:is-on={entry.dots.includes(2)}></div>
+                  <div class="dot" class:is-on={entry.dots.includes(5)}></div>
+                  <div class="dot" class:is-on={entry.dots.includes(3)}></div>
+                  <div class="dot" class:is-on={entry.dots.includes(6)}></div>
                 </div>
-              {/each}
-            </div>
+              </div>
+            {/each}
           </div>
-        {/each}
-      </div>
-    {/if}
+        </div>
+      {/each}
+    </div>
   </div>
 </div>
 
@@ -184,11 +138,4 @@
     box-shadow: 0 0 4px var(--color-accent-primary);
   }
 
-  .empty-state {
-    text-align: center;
-    color: var(--color-text-muted);
-    padding: 24px 16px;
-    font-size: 14px;
-    grid-column: 1 / -1;
-  }
 </style>

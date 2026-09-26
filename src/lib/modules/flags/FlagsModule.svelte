@@ -5,10 +5,8 @@
   import SpaceButton from '../../components/ui/SpaceButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
-  import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
   import FlagSvg from './FlagSvg.svelte';
   import FlagsReference from './FlagsReference.svelte';
-  import WorldFlagsView from './WorldFlagsView.svelte';
   import SailboatEasterEgg from './SailboatEasterEgg.svelte';
   import {
     LETTER_FLAGS,
@@ -22,8 +20,6 @@
   const modSettings = localSettingsService.forModule('flags');
 
   // Persisted state
-  type FlagMode = 'maritime' | 'world';
-  let flagMode = $state<FlagMode>((modSettings.getString('flag_mode', 'maritime') as FlagMode) || 'maritime');
   let inputLetters = $state(modSettings.getString('text', ''));
   let autoResetFilter = $state(modSettings.getBoolean('auto_reset_filter', false));
   let showSailboat = $state(modSettings.getBoolean('show_sailboat', true));
@@ -33,7 +29,6 @@
 
   // Update storage
   $effect(() => {
-    modSettings.setString('flag_mode', flagMode);
     modSettings.setString('text', inputLetters);
     modSettings.setBoolean('auto_reset_filter', autoResetFilter);
     modSettings.setBoolean('show_sailboat', showSailboat);
@@ -96,136 +91,114 @@
 </script>
 
 <ModuleShell
-  layoutMode={flagMode === 'world' ? 'fullscreen-input' : 'default'}
-  onReset={flagMode === 'maritime' ? handleClearAll : undefined}
-  onPaste={flagMode === 'maritime' ? handlePaste : undefined}
+  onReset={handleClearAll}
+  onPaste={handlePaste}
 >
   {#snippet output()}
-    {#if flagMode === 'maritime'}
-      <div class="flags-output-container">
-        <TranslationCard
-          text={inputLetters}
-          emptyHint="Filtrujte vlajky barvami dole."
-        />
-      </div>
-    {/if}
+    <div class="flags-output-container">
+      <TranslationCard
+        text={inputLetters}
+        emptyHint="Filtrujte vlajky barvami dole."
+      />
+    </div>
   {/snippet}
 
   {#snippet input()}
-    {#if flagMode === 'maritime'}
-      <div class="flags-keypad">
-        <!-- 26 Flags Grid (A–Z) with Sailboat Easter Egg in Top-Left Corner (2x2) -->
-        <div class="flags-grid">
-          {#if showSailboat}
-            <SailboatEasterEgg />
-          {/if}
-          {#each LETTER_FLAGS as flag (flag.code)}
-            {@const isMatching = matchesFilter(flag)}
-            <button
-              type="button"
-              class="flag-tile"
-              class:is-dimmed={!isMatching}
-              onpointerdown={(e) => {
-                if (e.button !== 0) return;
-                e.preventDefault();
-                handleFlagClick(flag);
-              }}
-              aria-label="{flag.code} - {flag.name}"
-            >
-              <div class="flag-tile-preview">
-                <FlagSvg {flag} dimmed={!isMatching} />
-              </div>
-              <span class="flag-tile-code">{flag.code}</span>
-            </button>
-          {/each}
-          {#if !showSailboat}
-            <div class="grid-filler" style="grid-column: span 4;" aria-hidden="true"></div>
-          {/if}
-        </div>
-
-        <!-- Utility Row: SlideToAction (Vymazat) + Mezera + Backspace (1.2fr 1fr 1fr) -->
-        <div class="keypad-utility-row-3col">
-          <SlideToAction
-            disabled={!inputLetters && selectedColors.length === 0}
-            onAction={handleClearAll}
-            label="Vymazat"
-            ariaLabel="Vymazat text tažením"
-          />
-
-          <SpaceButton
-            onAction={handleSpace}
-          />
-
-          <BackspaceButton
-            disabled={!inputLetters && selectedColors.length === 0}
-            hasActiveSelection={selectedColors.length > 0}
-            cancelLabel="Zrušit filtr"
-            cancelTitle="Zrušit aktivní filtr barev"
-            onAction={handleBackspace}
-          />
-        </div>
-
-        <!-- Dominant Row: 5 Large Color Filter Buttons (Bottom Thumb Reach) -->
-        <div class="color-filter-row">
-          {#each FLAG_COLORS as color (color.id)}
-            {@const isActive = selectedColors.includes(color.id)}
-            <button
-              type="button"
-              class="color-filter-btn"
-              class:is-active={isActive}
-              onpointerdown={(e) => {
-                if (e.button !== 0) return;
-                e.preventDefault();
-                toggleColor(color.id);
-              }}
-              aria-pressed={isActive}
-              aria-label="Filtrovat barvu {color.name}"
-            >
-              <span
-                class="color-swatch"
-                style:background-color={color.hex}
-                style:border-color={color.borderHex || color.hex}
-              ></span>
-              <span class="color-name">{color.name}</span>
-            </button>
-          {/each}
-        </div>
+    <div class="flags-keypad">
+      <!-- 26 Flags Grid (A–Z) with Sailboat Easter Egg in Top-Left Corner (2x2) -->
+      <div class="flags-grid">
+        {#if showSailboat}
+          <SailboatEasterEgg />
+        {/if}
+        {#each LETTER_FLAGS as flag (flag.code)}
+          {@const isMatching = matchesFilter(flag)}
+          <button
+            type="button"
+            class="flag-tile"
+            class:is-dimmed={!isMatching}
+            onpointerdown={(e) => {
+              if (e.button !== 0) return;
+              e.preventDefault();
+              handleFlagClick(flag);
+            }}
+            aria-label="{flag.code} - {flag.name}"
+          >
+            <div class="flag-tile-preview">
+              <FlagSvg {flag} dimmed={!isMatching} />
+            </div>
+            <span class="flag-tile-code">{flag.code}</span>
+          </button>
+        {/each}
+        {#if !showSailboat}
+          <div class="grid-filler" style="grid-column: span 4;" aria-hidden="true"></div>
+        {/if}
       </div>
-    {:else}
-      <WorldFlagsView />
-    {/if}
+
+      <!-- Utility Row: SlideToAction (Vymazat) + Mezera + Backspace (1.2fr 1fr 1fr) -->
+      <div class="keypad-utility-row-3col">
+        <SlideToAction
+          disabled={!inputLetters && selectedColors.length === 0}
+          onAction={handleClearAll}
+          label="Vymazat"
+          ariaLabel="Vymazat text tažením"
+        />
+
+        <SpaceButton
+          onAction={handleSpace}
+        />
+
+        <BackspaceButton
+          disabled={!inputLetters && selectedColors.length === 0}
+          hasActiveSelection={selectedColors.length > 0}
+          cancelLabel="Zrušit filtr"
+          cancelTitle="Zrušit aktivní filtr barev"
+          onAction={handleBackspace}
+        />
+      </div>
+
+      <!-- Dominant Row: 5 Large Color Filter Buttons (Bottom Thumb Reach) -->
+      <div class="color-filter-row">
+        {#each FLAG_COLORS as color (color.id)}
+          {@const isActive = selectedColors.includes(color.id)}
+          <button
+            type="button"
+            class="color-filter-btn"
+            class:is-active={isActive}
+            onpointerdown={(e) => {
+              if (e.button !== 0) return;
+              e.preventDefault();
+              toggleColor(color.id);
+            }}
+            aria-pressed={isActive}
+            aria-label="Filtrovat barvu {color.name}"
+          >
+            <span
+              class="color-swatch"
+              style:background-color={color.hex}
+              style:border-color={color.borderHex || color.hex}
+            ></span>
+            <span class="color-name">{color.name}</span>
+          </button>
+        {/each}
+      </div>
+    </div>
   {/snippet}
 
   {#snippet menuOptions()}
-    <div class="menu-mode-section">
-      <span class="menu-mode-title">Kategorie vlajek</span>
-      <SegmentedControl
-        options={[
-          { id: 'maritime', label: 'Námořní (ICS)' },
-          { id: 'world', label: 'Vlajky světa' }
-        ]}
-        value={flagMode}
-        ariaLabel="Režim vlajek"
-        onChange={(v) => (flagMode = v)}
-      />
-    </div>
-
-    {#if flagMode === 'maritime'}
-      <OptionRow
-        label="Zobrazovat lodičku"
-        hint="Dekorativní námořní motiv v levém horním rohu mřížky vlajek"
-        type="switch"
-        checked={showSailboat}
-        onChange={(val) => (showSailboat = val)}
-      />
-      <OptionRow
-        label="Resetovat filtr po zadání"
-        hint="Po klepnutí na vlajku automaticky zrušit zvolený filtr barev"
-        type="switch"
-        checked={autoResetFilter}
-        onChange={(val) => (autoResetFilter = val)}
-      />
-    {/if}
+    <OptionRow
+      label="Zobrazovat lodičku"
+      hint="Dekorativní námořní motiv v levém horním rohu mřížky vlajek"
+      type="switch"
+      checked={showSailboat}
+      onChange={(val) => (showSailboat = val)}
+    />
+    <OptionRow
+      label="Resetovat filtr po zadání"
+      hint="Po klepnutí na vlajku automaticky zrušit zvolený filtr barev"
+      type="switch"
+      checked={autoResetFilter}
+      onChange={(val) => (autoResetFilter = val)}
+    />
   {/snippet}
 
   {#snippet reference()}
@@ -401,21 +374,5 @@
   .color-filter-btn.is-active .color-name {
     color: var(--color-accent-primary);
     font-weight: 700;
-  }
-
-  .menu-mode-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    padding: var(--space-xs) 0 var(--space-sm);
-    border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .menu-mode-title {
-    font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
   }
 </style>

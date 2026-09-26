@@ -127,9 +127,10 @@
     flex: 1;
     min-height: 0;
     height: 100%;
+    max-height: none;
     border-top: none;
     background-color: var(--color-bg-canvas);
-    padding: var(--space-xs) var(--space-sm) calc(var(--space-xs) + env(safe-area-inset-bottom, 0px)) var(--space-sm);
+    padding: 0;
     overflow: hidden;
   }
 </style>

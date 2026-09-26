@@ -3,6 +3,7 @@
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
 
   let newLayoutName = $state('');
   let isCreatingLayout = $state(false);
@@ -21,13 +22,13 @@
     toast.show('Abeceda smazána', { type: 'info' });
   }
 
-  function handleCreateLayout() {
-    if (!newLayoutName.trim()) {
+  function handleSaveLayout(name: string) {
+    if (!name.trim()) {
       toast.show('Zadejte název abecedy', { type: 'danger' });
       return;
     }
     const id = alphabet.addCustomLayout(
-      newLayoutName.trim(),
+      name.trim(),
       [...inspectedLayout.letters]
     );
     inspectedLayoutId = id;
@@ -122,31 +123,30 @@
   </div>
 
   <!-- Create Custom Layout -->
-  {#if !isCreatingLayout}
-    <button
-      type="button"
-      class="secondary-btn"
-      onclick={() => {
-        settings.vibrate(25);
-        isCreatingLayout = true;
-      }}
-    >
-      + Vytvořit vlastní abecedu (kopie: {inspectedLayout.name})
-    </button>
-  {:else}
-    <div class="new-layout-form">
-      <input
-        type="text"
-        placeholder="Název nové abecedy (např. S heslem KOS)"
-        bind:value={newLayoutName}
-      />
-      <div class="form-actions">
-        <button type="button" class="save-btn" onclick={handleCreateLayout}>Uložit</button>
-        <button type="button" class="cancel-btn" onclick={() => (isCreatingLayout = false)}>Zrušit</button>
-      </div>
-    </div>
-  {/if}
+  <button
+    type="button"
+    class="secondary-btn"
+    onclick={() => {
+      settings.vibrate(25);
+      newLayoutName = '';
+      isCreatingLayout = true;
+    }}
+  >
+    + Vytvořit vlastní abecedu (kopie: {inspectedLayout.name})
+  </button>
 </section>
+
+<TextEntrySheet
+  open={isCreatingLayout}
+  title="Vytvořit vlastní abecedu"
+  value={newLayoutName}
+  placeholder="Název nové abecedy (např. S heslem KOS)..."
+  autocapitalize="sentences"
+  onSave={handleSaveLayout}
+  onClose={() => {
+    isCreatingLayout = false;
+  }}
+/>
 
 <style>
   .card {
@@ -311,46 +311,4 @@
     background-color: var(--color-surface-active);
   }
 
-  .new-layout-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .new-layout-form input {
-    padding: 10px 12px;
-    font-size: var(--text-sm);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-  }
-
-  .form-actions {
-    display: flex;
-    gap: var(--space-sm);
-  }
-
-  .save-btn {
-    flex: 1;
-    padding: 10px;
-    background-color: var(--color-accent-primary);
-    color: var(--color-text-inverse);
-    font-weight: 700;
-    border-radius: var(--radius-sm);
-    border: none;
-    cursor: pointer;
-    font: inherit;
-  }
-
-  .cancel-btn {
-    padding: 10px 16px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    cursor: pointer;
-    font: inherit;
-    color: inherit;
-  }
 </style>

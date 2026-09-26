@@ -1,7 +1,5 @@
 <script lang="ts">
   import { alphabet } from '../../state/alphabet.svelte';
-  import { matchesSearch } from '../../utils/search';
-  import SearchInput from '../../components/ui/SearchInput.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
 
   interface Props {
@@ -13,7 +11,6 @@
   type TabType = 'alphabet' | 'roman' | 'ascii';
 
   let activeTab = $state<TabType>('alphabet');
-  let searchQuery = $state('');
 
   const tabs: SegmentOption<TabType>[] = [
     { id: 'alphabet', label: 'Abeceda' },
@@ -48,22 +45,6 @@
     });
   });
 
-  const filteredLetters = $derived.by(() => {
-    if (!searchQuery.trim()) return letterRows;
-    return letterRows.filter((row) =>
-      matchesSearch(
-        [
-          row.char,
-          row.num.toString(),
-          row.bin,
-          row.oct,
-          row.hex
-        ],
-        searchQuery
-      )
-    );
-  });
-
   // ASCII table printable chars (32 to 126) - Znak, DEC, HEX
   const asciiRows = Array.from({ length: 95 }, (_, i) => {
     const code = 32 + i;
@@ -73,13 +54,6 @@
       char,
       hex: code.toString(16).toUpperCase()
     };
-  });
-
-  const filteredAscii = $derived.by(() => {
-    if (!searchQuery.trim()) return asciiRows;
-    return asciiRows.filter((row) =>
-      matchesSearch([row.char, row.code.toString(), row.hex], searchQuery)
-    );
   });
 </script>
 
@@ -91,12 +65,6 @@
       ariaLabel="Přepínač referenčních tabulek"
       onChange={(v) => (activeTab = v)}
     />
-    {#if activeTab === 'alphabet' || activeTab === 'ascii'}
-      <SearchInput
-        bind:value={searchQuery}
-        placeholder={activeTab === 'alphabet' ? 'Hledat písmeno či číslo...' : 'Hledat znak či kód...'}
-      />
-    {/if}
   </div>
 
   <div class="ref-scroll-body">
@@ -113,7 +81,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each filteredLetters as row (row.char + row.num)}
+            {#each letterRows as row (row.char + row.num)}
               <tr>
                 <td class="col-num font-mono font-bold text-accent">{row.num}</td>
                 <td class="col-char font-accent">{row.char}</td>
@@ -324,7 +292,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each filteredAscii as row (row.code)}
+            {#each asciiRows as row (row.code)}
               <tr>
                 <td class="col-ascii-char font-accent">{row.char}</td>
                 <td class="col-num font-mono">{row.code}</td>

@@ -3,6 +3,7 @@ export type ModuleId =
   | 'braille'
   | 'semaphore'
   | 'flags'
+  | 'states'
   | 'cross'
   | 'polybius'
   | 'mobile'
@@ -34,6 +35,7 @@ export const MODULES: ModuleMeta[] = [
   { id: 'braille', name: 'Braille', icon: 'DotsSixVertical' },
   { id: 'semaphore', name: 'Semafor', icon: 'FlagBanner' },
   { id: 'flags', name: 'Vlajky', icon: 'FlagCheckered' },
+  { id: 'states', name: 'Státy', icon: 'GlobeSimple' },
   { id: 'cross', name: 'Kříže', icon: 'Hash', hasAlphabet: true },
   { id: 'polybius', name: 'Polybius', icon: 'GridFour', hasAlphabet: true },
   { id: 'mobile', name: 'Mobil', icon: 'DeviceMobile' },

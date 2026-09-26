@@ -9,6 +9,7 @@
   import BrailleModule from './lib/modules/braille/BrailleModule.svelte';
   import SemaphoreModule from './lib/modules/semaphore/SemaphoreModule.svelte';
   import FlagsModule from './lib/modules/flags/FlagsModule.svelte';
+  import StatesModule from './lib/modules/states/StatesModule.svelte';
   import CrossModule from './lib/modules/cross/CrossModule.svelte';
   import PolybiusModule from './lib/modules/polybius/PolybiusModule.svelte';
   import MobileModule from './lib/modules/mobile/MobileModule.svelte';
@@ -19,6 +20,7 @@
   import WordsModule from './lib/modules/words/WordsModule.svelte';
   import GrilleModule from './lib/modules/grille/GrilleModule.svelte';
   import CalendarModule from './lib/modules/calendar/CalendarModule.svelte';
+  import FactsModule from './lib/modules/facts/FactsModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -84,6 +86,8 @@
     <SemaphoreModule />
   {:else if navigation.activeModuleId === 'flags'}
     <FlagsModule />
+  {:else if navigation.activeModuleId === 'states'}
+    <StatesModule />
   {:else if navigation.activeModuleId === 'cross'}
     <CrossModule />
   {:else if navigation.activeModuleId === 'polybius'}
@@ -104,6 +108,8 @@
     <GrilleModule />
   {:else if navigation.activeModuleId === 'calendar'}
     <CalendarModule />
+  {:else if navigation.activeModuleId === 'facts'}
+    <FactsModule />
   {:else if navigation.activeModuleId === 'settings'}
     <SettingsModule />
   {:else if navigation.activeModuleId === 'help'}

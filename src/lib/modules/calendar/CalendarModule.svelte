@@ -1,9 +1,7 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
-  import AlphabetGrid from '../../components/ui/AlphabetGrid.svelte';
-  import SlideToAction from '../../components/ui/SlideToAction.svelte';
-  import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
+  import SimpleKeyboard from '../../components/ui/SimpleKeyboard.svelte';
   import EmptyHint from '../../components/ui/EmptyHint.svelte';
   import CalendarDetailCard from './CalendarDetailCard.svelte';
   import CalendarMatrix from './CalendarMatrix.svelte';
@@ -11,15 +9,6 @@
   import CalendarSearchList from './CalendarSearchList.svelte';
   import CalendarReference from './CalendarReference.svelte';
   import { calendarState, type CalendarFlavour } from './calendarState.svelte';
-
-  const A36_LETTERS = [
-    'A', 'B', 'C', 'D', 'E', 'F',
-    'G', 'H', 'I', 'J', 'K', 'L',
-    'M', 'N', 'O', 'P', 'Q', 'R',
-    'S', 'T', 'U', 'V', 'W', 'X',
-    'Y', 'Z', '0', '1', '2', '3',
-    '4', '5', '6', '7', '8', '9'
-  ];
 
   const flavourOptions: SegmentOption<CalendarFlavour>[] = [
     { id: 'calendar', label: 'Kalendář' },
@@ -116,40 +105,13 @@
           onYearChange={handleYearChange}
         />
       {:else if calendarState.activeFlavour === 'search'}
-        <!-- Alphanumeric 36 Touch Keypad -->
-        <AlphabetGrid
-          letters={A36_LETTERS}
-          onLetter={handleLetter}
+        <SimpleKeyboard
+          includeNumbers={true}
+          hasInput={!!calendarState.searchQuery}
+          onChar={handleLetter}
+          onBackspace={handleBackspace}
+          onClear={handleClearSearch}
         />
-
-        <!-- Utilitní trojblok (42px) -->
-        <div class="keypad-utility-row-3col">
-          <SlideToAction
-            disabled={!calendarState.searchQuery}
-            onAction={handleClearSearch}
-            ariaLabel="Vymazat hledání tažením"
-          />
-
-          <button
-            type="button"
-            class="utility-btn next-action-btn"
-            class:is-active={!!calendarState.searchQuery}
-            disabled={!calendarState.searchQuery}
-            onclick={handleClearSearch}
-            title="Další hledání (vymazat dotaz)"
-            aria-label="Další hledání (vymazat)"
-          >
-            <span class="next-label">Dál</span>
-            {#if calendarState.searchQuery}
-              <span class="next-query-badge">{calendarState.searchQuery}</span>
-            {/if}
-          </button>
-
-          <BackspaceButton
-            disabled={!calendarState.searchQuery}
-            onAction={handleBackspace}
-          />
-        </div>
       {:else if calendarState.activeFlavour === 'calc'}
         <CalendarCalculator view="input" />
       {/if}
@@ -224,74 +186,5 @@
 
   .no-matches-msg {
     font-size: var(--text-xs, 12px);
-  }
-
-  /* Next 1-tap clear button inside 3-col utility row */
-  .next-action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    height: 100%;
-    width: 100%;
-    background-color: var(--color-surface-2, #1c1c1c);
-    border: none;
-    border-radius: 2px;
-    padding: 0 8px;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.4);
-    transition: background-color 0.12s ease, box-shadow 0.08s ease;
-    box-sizing: border-box;
-    min-width: 0;
-  }
-
-  .next-action-btn:active:not(:disabled) {
-    background-color: var(--color-surface-active, #333333);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  }
-
-  .next-action-btn:disabled {
-    cursor: not-allowed;
-  }
-
-  .next-label {
-    font-size: var(--text-sm, 13px);
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary, #b3b3b3);
-    line-height: 1;
-    flex-shrink: 0;
-    transition: color 0.12s ease;
-  }
-
-  .next-action-btn.is-active .next-label {
-    color: var(--color-accent-primary, #00d2ff);
-  }
-
-  .next-action-btn:disabled .next-label {
-    color: var(--color-text-muted, #666666);
-    opacity: 0.5;
-  }
-
-  .next-query-badge {
-    font-family: var(--font-mono, monospace);
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--color-text-primary, #ffffff);
-    background-color: var(--color-surface-1, #121212);
-    border: 1px solid var(--color-border-subtle, #2a2a2a);
-    border-radius: var(--radius-xs, 4px);
-    padding: 1px 5px;
-    max-width: 65px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.2;
-    flex-shrink: 1;
   }
 </style>

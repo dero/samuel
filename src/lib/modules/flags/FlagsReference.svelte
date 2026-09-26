@@ -6,31 +6,14 @@
     type FlagItem
   } from './flagsData';
   import FlagSvg from './FlagSvg.svelte';
-  import { matchesSearch } from '../../utils/search';
-  import SearchInput from '../../components/ui/SearchInput.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
 
-  let searchQuery = $state('');
   let activeTab = $state<'letters' | 'numbers'>('letters');
 
-  const filteredLetters = $derived.by(() => {
-    if (!searchQuery.trim()) return LETTER_FLAGS;
-    return LETTER_FLAGS.filter((f) =>
-      matchesSearch([f.code, f.name, f.meaning, ...f.colors], searchQuery)
-    );
-  });
-
-  const filteredNumbers = $derived.by(() => {
-    if (!searchQuery.trim()) return NUMBER_FLAGS;
-    return NUMBER_FLAGS.filter((f) =>
-      matchesSearch([f.code, f.name, f.meaning, ...f.colors], searchQuery)
-    );
-  });
-
-  const tabs = $derived<SegmentOption<'letters' | 'numbers'>[]>([
-    { id: 'letters', label: 'Písmena (A–Z)', badge: filteredLetters.length },
-    { id: 'numbers', label: 'Číslice (0–9)', badge: filteredNumbers.length }
-  ]);
+  const tabs: SegmentOption<'letters' | 'numbers'>[] = [
+    { id: 'letters', label: 'Písmena (A–Z)', badge: LETTER_FLAGS.length },
+    { id: 'numbers', label: 'Číslice (0–9)', badge: NUMBER_FLAGS.length }
+  ];
 
   function getColorHex(colorId: string): string {
     return FLAG_COLORS.find((c) => c.id === colorId)?.hex ?? '#888';
@@ -42,13 +25,8 @@
 </script>
 
 <div class="ref-container">
-  <!-- Pinned Top: Search and Tabs -->
+  <!-- Pinned Top: Tabs -->
   <div class="pinned-header">
-    <SearchInput
-      bind:value={searchQuery}
-      placeholder="Hledat vlajku, písmeno, NATO kód, význam..."
-    />
-
     <SegmentedControl
       options={tabs}
       value={activeTab}
@@ -59,46 +37,39 @@
   <!-- Scrollable entries area -->
   <div class="table-scroll">
     {#if activeTab === 'letters'}
-      {#if filteredLetters.length === 0}
-        <div class="empty-state">Žádná písmenná vlajka neodpovídá hledání.</div>
-      {:else}
-        <div class="flags-list">
-          {#each filteredLetters as flag (flag.code)}
-            <div class="flag-card">
-              <div class="flag-preview-box">
-                <FlagSvg {flag} />
+      <div class="flags-list">
+        {#each LETTER_FLAGS as flag (flag.code)}
+          <div class="flag-card">
+            <div class="flag-preview-box">
+              <FlagSvg {flag} />
+            </div>
+
+            <div class="flag-info">
+              <div class="flag-title-row">
+                <span class="flag-code">{flag.code}</span>
+                <span class="flag-nato">{flag.name}</span>
               </div>
 
-              <div class="flag-info">
-                <div class="flag-title-row">
-                  <span class="flag-code">{flag.code}</span>
-                  <span class="flag-nato">{flag.name}</span>
-                </div>
+              <div class="flag-meaning">
+                {flag.meaning}
+              </div>
 
-                <div class="flag-meaning">
-                  {flag.meaning}
-                </div>
-
-                <div class="flag-colors-row">
-                  {#each flag.colors as c}
-                    <span
-                      class="color-dot"
-                      style:background-color={getColorHex(c)}
-                      title={getColorName(c)}
-                    ></span>
-                  {/each}
-                </div>
+              <div class="flag-colors-row">
+                {#each flag.colors as c}
+                  <span
+                    class="color-dot"
+                    style:background-color={getColorHex(c)}
+                    title={getColorName(c)}
+                  ></span>
+                {/each}
               </div>
             </div>
-          {/each}
-        </div>
-      {/if}
+          </div>
+        {/each}
+      </div>
     {:else}
-      {#if filteredNumbers.length === 0}
-        <div class="empty-state">Žádný číslicový praporek neodpovídá hledání.</div>
-      {:else}
-        <div class="flags-list">
-          {#each filteredNumbers as flag (flag.code)}
+      <div class="flags-list">
+        {#each NUMBER_FLAGS as flag (flag.code)}
             <div class="flag-card">
               <div class="flag-preview-box pennant">
                 <FlagSvg {flag} />
@@ -127,7 +98,6 @@
             </div>
           {/each}
         </div>
-      {/if}
     {/if}
   </div>
 </div>
@@ -238,10 +208,4 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
-  .empty-state {
-    text-align: center;
-    padding: var(--space-2xl) var(--space-md);
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-  }
 </style>

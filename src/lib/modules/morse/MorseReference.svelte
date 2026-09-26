@@ -1,23 +1,13 @@
 <script lang="ts">
   import { CZECH_MNEMONICS, type MorseEntry } from "./morseData";
-  import { matchesSearch } from "../../utils/search";
-  import SearchInput from "../../components/ui/SearchInput.svelte";
   import SegmentedControl, { type SegmentOption } from "../../components/ui/SegmentedControl.svelte";
 
   let activeTab = $state<"list" | "tree">("list");
-  let searchQuery = $state("");
 
   const tabs: SegmentOption<"list" | "tree">[] = [
     { id: "list", label: `Přehled znaků (${CZECH_MNEMONICS.length})` },
     { id: "tree", label: "Morseův strom" }
   ];
-
-  let filteredEntries = $derived.by(() => {
-    if (!searchQuery.trim()) return CZECH_MNEMONICS;
-    return CZECH_MNEMONICS.filter((e) =>
-      matchesSearch([e.char, e.code, e.mnemonic], searchQuery),
-    );
-  });
 
   // Binary tree levels for visualization
   // Level 1: 1 char
@@ -88,26 +78,16 @@
   />
 
   {#if activeTab === "list"}
-    <!-- Search filter -->
-    <SearchInput
-      bind:value={searchQuery}
-      placeholder="Hledat písmeno, kód nebo slovo..."
-    />
-
     <!-- Mnemonic table -->
     <div class="table-scroll">
       <div class="entries-grid">
-        {#each filteredEntries as entry}
+        {#each CZECH_MNEMONICS as entry}
           <div class="entry-row">
             <div class="entry-char">{entry.char}</div>
             <div class="entry-code">{entry.code}</div>
             <div class="entry-mnemonic">
               <span class="word">{entry.mnemonic}</span>
             </div>
-          </div>
-        {:else}
-          <div class="empty-state">
-            Nenalezen žádný znak odpovídající „{searchQuery}“.
           </div>
         {/each}
       </div>
@@ -218,14 +198,6 @@
     font-weight: 600;
     color: var(--color-text-primary);
     word-break: break-word;
-  }
-
-  .empty-state {
-    grid-column: 1 / -1;
-    text-align: center;
-    color: var(--color-text-muted);
-    padding: 24px 16px;
-    font-size: 14px;
   }
 
   /* Tree View */

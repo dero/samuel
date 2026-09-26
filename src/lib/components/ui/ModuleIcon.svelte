@@ -18,7 +18,8 @@
     Question,
     Gear,
     DeviceMobile,
-    SquaresFour
+    SquaresFour,
+    GlobeSimple
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
 
@@ -46,6 +47,7 @@
     braille: DotsSixVertical,
     semaphore: FlagBanner,
     flags: FlagCheckered,
+    states: GlobeSimple,
     cross: Hash,
     polybius: GridFour,
     mobile: DeviceMobile,
@@ -67,6 +69,8 @@
     dotssixvertical: DotsSixVertical,
     flagbanner: FlagBanner,
     flagcheckered: FlagCheckered,
+    globesimple: GlobeSimple,
+    globe: GlobeSimple,
     hash: Hash,
     calculator: Calculator,
     arrowsclockwise: ArrowsClockwise,

@@ -533,6 +533,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/marked@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "@types/marked@npm:6.0.0"
+  dependencies:
+    marked: "npm:*"
+  checksum: 10c0/1a831af52413b1a208c91539d3bdda9be83d5451dc094c3cbc07e3e07186970673b9ec3ad5edd6c136b1249875c41e22c39eacb3c00ea7c59d0873c35c273035
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:*":
   version: 26.5.1
   resolution: "@types/node@npm:26.5.1"
@@ -958,6 +967,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"marked@npm:*, marked@npm:^18.0.13":
+  version: 18.0.13
+  resolution: "marked@npm:18.0.13"
+  bin:
+    marked: bin/marked.js
+  checksum: 10c0/420039a67d7cebddee022cfc4766fa9b4f965b83848d0f252d6782dcbdca06c972a83f6dc0242dfbd392652aa1f7ef25eaecf18856c7ec80da61d3176342e20f
+  languageName: node
+  linkType: hard
+
 "minipass@npm:^7.0.4, minipass@npm:^7.1.2":
   version: 7.1.3
   resolution: "minipass@npm:7.1.3"
@@ -1156,7 +1174,9 @@ __metadata:
   dependencies:
     "@resvg/resvg-js": "npm:^2.6.2"
     "@sveltejs/vite-plugin-svelte": "npm:^7.3.0"
+    "@types/marked": "npm:^6.0.0"
     "@types/sql.js": "npm:^1.4.11"
+    marked: "npm:^18.0.13"
     phosphor-svelte: "npm:^3.1.0"
     sql.js: "npm:^1.14.2"
     svelte: "npm:^5.57.0"

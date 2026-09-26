@@ -1,10 +1,5 @@
 <script lang="ts">
   import { SEMAPHORE_ENTRIES, SEMAPHORE_DIRECTIONS, type SemaphoreEntry } from './semaphoreData';
-  import { matchesSearch } from '../../utils/search';
-  import SearchInput from '../../components/ui/SearchInput.svelte';
-
-  let searchQuery = $state('');
-
   // 8 positions on 48x48 SVG
   // center = (24, 24), radius = 17
   const SVG_POINTS = SEMAPHORE_DIRECTIONS.map((dir) => ({
@@ -17,150 +12,76 @@
     .filter((e) => e.char.length === 1 && e.char >= 'A' && e.char <= 'Z')
     .sort((a, b) => a.char.localeCompare(b.char));
 
-  const digitsList = SEMAPHORE_ENTRIES.filter((e) => !!e.digit).sort((a, b) => {
-    const da = a.digit === '0' ? '99' : a.digit!;
-    const db = b.digit === '0' ? '99' : b.digit!;
-    return da.localeCompare(db);
-  });
   const specialList = SEMAPHORE_ENTRIES.filter((e) => e.char === '#');
-
-  let filteredLetters = $derived.by(() => {
-    if (!searchQuery.trim()) return lettersList;
-    return lettersList.filter((e) =>
-      matchesSearch([e.char, e.digit || '', e.name, e.key], searchQuery)
-    );
-  });
-
-  let filteredDigits = $derived.by(() => {
-    if (!searchQuery.trim()) return digitsList;
-    return digitsList.filter((e) =>
-      matchesSearch([e.char, e.digit || '', e.name, e.key], searchQuery)
-    );
-  });
-
-  let filteredSpecial = $derived.by(() => {
-    if (!searchQuery.trim()) return specialList;
-    return specialList.filter((e) =>
-      matchesSearch([e.char, e.name, e.key], searchQuery)
-    );
-  });
-
-  let totalVisible = $derived(
-    filteredLetters.length + filteredDigits.length + filteredSpecial.length
-  );
 </script>
 
 <div class="ref-container">
-  <!-- Search Bar -->
-  <SearchInput
-    bind:value={searchQuery}
-    placeholder="Hledat znak, číslici, směr..."
-  />
-
   <!-- Scrollable entries area -->
   <div class="table-scroll">
-    {#if totalVisible === 0}
-      <div class="no-results">
-        Žádný znak neodpovídá zadání „{searchQuery}“
-      </div>
-    {/if}
-
-    <!-- Letters Section (A–Z) -->
-    {#if filteredLetters.length > 0}
-      <div class="section-title">Písmena (A–Z)</div>
-      <div class="ref-grid">
-        {#each filteredLetters as entry (entry.key)}
-          <div class="ref-card">
-            <div class="card-text">
-              <span class="card-char">{entry.char}</span>
-              {#if entry.digit}
-                <span class="card-digit">/{entry.digit}</span>
+    <!-- Letters & Digits Section (A–Z) -->
+    <div class="section-title">Písmena a číslice (A–Z, 1–9, 0)</div>
+    <div class="ref-grid">
+      {#each lettersList as entry (entry.key)}
+        <div class="ref-card">
+          <div class="card-text">
+            <span class="card-char">{entry.char}</span>
+            {#if entry.digit}
+              <span class="card-digit">/{entry.digit}</span>
+            {/if}
+          </div>
+          <svg class="mini-diagram" viewBox="0 0 48 48" aria-hidden="true">
+            <!-- Inactive dots -->
+            {#each SVG_POINTS as pt}
+              {#if !entry.pair.includes(pt.index)}
+                <circle cx={pt.x} cy={pt.y} r="2" class="dot-inactive" />
               {/if}
-            </div>
-            <svg class="mini-diagram" viewBox="0 0 48 48" aria-hidden="true">
-              <!-- Inactive dots -->
-              {#each SVG_POINTS as pt}
-                {#if !entry.pair.includes(pt.index)}
-                  <circle cx={pt.x} cy={pt.y} r="2" class="dot-inactive" />
-                {/if}
-              {/each}
+            {/each}
 
-              <!-- Center dot -->
-              <circle cx="24" cy="24" r="3" class="dot-center" />
+            <!-- Center dot -->
+            <circle cx="24" cy="24" r="3" class="dot-center" />
 
-              <!-- Active Arms -->
-              {#each entry.pair as armIdx}
-                {@const pt = SVG_POINTS[armIdx]}
-                <line
-                  x1="24"
-                  y1="24"
-                  x2={pt.x}
-                  y2={pt.y}
-                  class="arm-active"
-                />
-                <circle cx={pt.x} cy={pt.y} r="4" class="dot-active" />
-              {/each}
-            </svg>
-          </div>
-        {/each}
-      </div>
-    {/if}
-
-    <!-- Digits Section (1–9, 0) -->
-    {#if filteredDigits.length > 0 && searchQuery.trim().length > 0}
-      <div class="section-title">Číslice (1–9, 0 s prefixem #)</div>
-      <div class="ref-grid">
-        {#each filteredDigits as entry (entry.digit)}
-          <div class="ref-card">
-            <div class="card-text">
-              <span class="card-char">{entry.digit}</span>
-              <span class="card-digit">({entry.char})</span>
-            </div>
-            <svg class="mini-diagram" viewBox="0 0 48 48" aria-hidden="true">
-              {#each SVG_POINTS as pt}
-                {#if !entry.pair.includes(pt.index)}
-                  <circle cx={pt.x} cy={pt.y} r="2" class="dot-inactive" />
-                {/if}
-              {/each}
-              <circle cx="24" cy="24" r="3" class="dot-center" />
-              {#each entry.pair as armIdx}
-                {@const pt = SVG_POINTS[armIdx]}
-                <line x1="24" y1="24" x2={pt.x} y2={pt.y} class="arm-active" />
-                <circle cx={pt.x} cy={pt.y} r="4" class="dot-active" />
-              {/each}
-            </svg>
-          </div>
-        {/each}
-      </div>
-    {/if}
+            <!-- Active Arms -->
+            {#each entry.pair as armIdx}
+              {@const pt = SVG_POINTS[armIdx]}
+              <line
+                x1="24"
+                y1="24"
+                x2={pt.x}
+                y2={pt.y}
+                class="arm-active"
+              />
+              <circle cx={pt.x} cy={pt.y} r="4" class="dot-active" />
+            {/each}
+          </svg>
+        </div>
+      {/each}
+    </div>
 
     <!-- Special Signals -->
-    {#if filteredSpecial.length > 0}
-      <div class="section-title">Speciální signály</div>
-      <div class="ref-grid">
-        {#each filteredSpecial as entry (entry.key)}
-          <div class="ref-card ref-card-special">
-            <div class="card-text">
-              <span class="card-char special-char">{entry.char}</span>
-              <span class="special-name">{entry.name}</span>
-            </div>
-            <svg class="mini-diagram" viewBox="0 0 48 48" aria-hidden="true">
-              {#each SVG_POINTS as pt}
-                {#if !entry.pair.includes(pt.index)}
-                  <circle cx={pt.x} cy={pt.y} r="2" class="dot-inactive" />
-                {/if}
-              {/each}
-              <circle cx="24" cy="24" r="3" class="dot-center" />
-              {#each entry.pair as armIdx}
-                {@const pt = SVG_POINTS[armIdx]}
-                <line x1="24" y1="24" x2={pt.x} y2={pt.y} class="arm-active special-arm" />
-                <circle cx={pt.x} cy={pt.y} r="4" class="dot-active special-dot" />
-              {/each}
-            </svg>
+    <div class="section-title">Speciální signály</div>
+    <div class="ref-grid">
+      {#each specialList as entry (entry.key)}
+        <div class="ref-card ref-card-special">
+          <div class="card-text">
+            <span class="card-char special-char">{entry.char}</span>
+            <span class="special-name">{entry.name}</span>
           </div>
-        {/each}
-      </div>
-    {/if}
+          <svg class="mini-diagram" viewBox="0 0 48 48" aria-hidden="true">
+            {#each SVG_POINTS as pt}
+              {#if !entry.pair.includes(pt.index)}
+                <circle cx={pt.x} cy={pt.y} r="2" class="dot-inactive" />
+              {/if}
+            {/each}
+            <circle cx="24" cy="24" r="3" class="dot-center" />
+            {#each entry.pair as armIdx}
+              {@const pt = SVG_POINTS[armIdx]}
+              <line x1="24" y1="24" x2={pt.x} y2={pt.y} class="arm-active special-arm" />
+              <circle cx={pt.x} cy={pt.y} r="4" class="dot-active special-dot" />
+            {/each}
+          </svg>
+        </div>
+      {/each}
+    </div>
   </div>
 </div>
 
@@ -292,10 +213,4 @@
     fill: var(--color-accent-warning);
   }
 
-  .no-results {
-    padding: var(--space-xl);
-    text-align: center;
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-  }
 </style>
