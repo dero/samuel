@@ -14,7 +14,8 @@
   import { toast } from '../../state/toast.svelte';
   import { versionService } from '../../services/versionService.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
-  import { onMount, onDestroy } from 'svelte';
+  import { dbClient, SupersededError } from '../../db/dbClient';
+  import { onDestroy } from 'svelte';
   import {
     PencilSimple,
     ClipboardText,
@@ -91,47 +92,17 @@
     }
   }
 
-  // Worker communication
-  let worker: Worker | null = null;
+  // DB worker search (shared, single-flight gated in dbClient)
   let results = $state<WordMatch[]>([]);
   let hasMore = $state<boolean>(false);
   let isLoading = $state<boolean>(false);
   let searchError = $state<string | null>(null);
   let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-  let nextRequestId = 0;
+  let latestSearchSeq = 0;
   let activeCopiedWord = $state<string | null>(null);
-
-  onMount(() => {
-    worker = new Worker(new URL('./words.worker.ts', import.meta.url), {
-      type: 'module'
-    });
-
-    worker.onmessage = (e: MessageEvent) => {
-      const { type, results: res, hasMore: more, error } = e.data;
-      if (type === 'result') {
-        isLoading = false;
-        searchError = error || null;
-        results = res || [];
-        hasMore = Boolean(more);
-      } else if (type === 'error') {
-        isLoading = false;
-        searchError = error || 'Chyba vyhledávání';
-        results = [];
-        hasMore = false;
-      }
-    };
-
-    if (versionService.state.isDbInstalled) {
-      worker.postMessage({ id: nextRequestId++, type: 'init' });
-    }
-  });
 
   onDestroy(() => {
     if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
-    if (worker) {
-      worker.terminate();
-      worker = null;
-    }
   });
 
   // Re-run search when query, mode, or settings change
@@ -146,6 +117,7 @@
     const dbReady = versionService.state.isDbInstalled;
 
     if (!dbReady || !q.trim()) {
+      latestSearchSeq++; // invalidate any in-flight search
       results = [];
       isLoading = false;
       searchError = null;
@@ -157,19 +129,32 @@
 
     if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
-      if (!worker) return;
-      worker.postMessage({
-        id: nextRequestId++,
-        type: 'search',
-        query: q,
-        mode: m,
-        useRegex: reg,
-        ignoreDiacritics: diac,
-        onlySubstantives: subs,
-        includeProperNames: prop,
-        includeRuian: rui,
-        limit: 1000
-      });
+      const seq = ++latestSearchSeq;
+      dbClient
+        .searchWords({
+          query: q,
+          mode: m,
+          useRegex: reg,
+          ignoreDiacritics: diac,
+          onlySubstantives: subs,
+          includeProperNames: prop,
+          includeRuian: rui,
+          limit: 1000
+        })
+        .then((res) => {
+          if (seq !== latestSearchSeq) return; // an older in-flight search finished late
+          isLoading = false;
+          searchError = null;
+          results = res.results;
+          hasMore = res.hasMore;
+        })
+        .catch((err) => {
+          if (err instanceof SupersededError || seq !== latestSearchSeq) return; // superseded
+          isLoading = false;
+          searchError = err?.message || 'Chyba vyhledávání';
+          results = [];
+          hasMore = false;
+        });
     }, 120);
   });
 
@@ -196,9 +181,6 @@
       toast.show('Stahuji slovníkovou databázi...', { type: 'info' });
       await versionService.downloadDb();
       toast.show('Databáze byla stažena', { type: 'success' });
-      if (worker) {
-        worker.postMessage({ id: nextRequestId++, type: 'init' });
-      }
     } catch (err: any) {
       toast.show(`Chyba stažení: ${err?.message || 'Neznámá chyba'}`, { type: 'danger' });
     }

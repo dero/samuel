@@ -8,7 +8,7 @@ Idempotently creates separate tables:
 3. cs_all          <- data/cs_all.csv (All Czech words with frequencies)
 4. ruian           <- data/RUIAN/*.csv (Czech territorial names categorized by type)
 
-Generates public/words.db and ensures public/sql-wasm*.wasm files are present.
+Generates public/words.db (loaded client-side via @sqlite.org/sqlite-wasm, OPFS sahpool VFS).
 """
 
 import os
@@ -17,7 +17,6 @@ import csv
 import re
 import json
 import glob
-import shutil
 import sqlite3
 import unicodedata
 import hashlib
@@ -62,16 +61,6 @@ def compute_sources_hash() -> str:
                 h.update(chunk)
     return h.hexdigest()[:16]
 
-def ensure_wasm_files():
-    """Ensures sql.js wasm files are copied to public/ if available in node_modules."""
-    for wasm_name in ['sql-wasm.wasm', 'sql-wasm-browser.wasm']:
-        wasm_src = os.path.join('node_modules/sql.js/dist', wasm_name)
-        wasm_dst = os.path.join('public', wasm_name)
-        if os.path.exists(wasm_src):
-            if not os.path.exists(wasm_dst) or os.path.getsize(wasm_src) != os.path.getsize(wasm_dst):
-                shutil.copyfile(wasm_src, wasm_dst)
-                print(f"Copied {wasm_src} -> {wasm_dst}")
-
 def main():
     force = '--force' in sys.argv
     rebuild_version = '--rebuild-version' in sys.argv
@@ -79,9 +68,6 @@ def main():
     db_path = 'public/words.db'
     db_tmp_path = 'public/words.db.tmp'
     version_file = 'public/version.json'
-
-    # Ensure required wasm files are present
-    ensure_wasm_files()
 
     sources_hash = compute_sources_hash()
 
@@ -219,9 +205,16 @@ def main():
     ''', entries)
     print(f"Inserted {len(entries)} rows into words")
 
-    cur.execute('CREATE INDEX idx_words_nodiac ON words(word_nodiac COLLATE NOCASE)')
+    # NOTE: word_nodiac and word are always compared with GLOB (binary, case-sensitive)
+    # against already-lowercased/nodiac-normalized query strings, never with LIKE/= under
+    # NOCASE semantics. A COLLATE NOCASE index cannot be used by GLOB's prefix-search
+    # optimization (SQLite requires the query and the index to share the same collation
+    # for the range-scan rewrite of `col GLOB 'prefix*'`), so a default BINARY-collated
+    # index is required here for `kr*`-style prefix masks to avoid a full `SCAN words`.
+    cur.execute('CREATE INDEX idx_words_nodiac_glob ON words(word_nodiac)')
     cur.execute('CREATE INDEX idx_words_len_freq ON words(len, freq DESC)')
     cur.execute('CREATE INDEX idx_words_len_mask ON words(len, mask_nodiac, freq DESC)')
+    cur.execute('CREATE INDEX idx_words_len_nodiac ON words(len, word_nodiac)')
 
     # =========================================================================
     # 4. TABLE: ruian (from data/RUIAN/*.csv)
@@ -284,7 +277,9 @@ def main():
     else:
         print(f"WARNING: {ruian_dir} directory not found!")
 
-    cur.execute('CREATE INDEX idx_ruian_word_nodiac ON ruian(word_nodiac COLLATE NOCASE)')
+    # See comment above idx_words_nodiac_glob: BINARY collation is required for GLOB
+    # prefix-search to use the index (COLLATE NOCASE indexes are ignored by GLOB).
+    cur.execute('CREATE INDEX idx_ruian_word_nodiac_glob ON ruian(word_nodiac)')
     cur.execute('CREATE INDEX idx_ruian_type ON ruian(type)')
     cur.execute('CREATE INDEX idx_ruian_type_nodiac ON ruian(type, word_nodiac COLLATE NOCASE)')
     cur.execute('CREATE INDEX idx_ruian_len_mask ON ruian(len, mask_nodiac)')

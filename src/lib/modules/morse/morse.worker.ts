@@ -1,95 +1,32 @@
 /**
  * Web Worker for Morse Unspaced Solver (Bruteforce & DAG Beam Search)
- * Runs heavy lexicon loading and graph decoding in background thread.
+ * Runs heavy graph decoding in a background thread.
+ *
+ * This worker no longer opens its own copy of words.db (that used to mean a
+ * second full sql.js instance, on top of the main-thread and Words-module
+ * copies). Instead, morseService.svelte.ts fetches the shared lexicon rows
+ * once from the single shared DB worker (via dbClient.getLexiconWords()) and
+ * posts them here with a 'setLexicon' message; this worker only builds the
+ * morse-code-annotated LexiconItem[] and runs the solver.
  */
 
-import initSqlJs, { type Database as SqlDatabase } from 'sql.js';
-import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
-import {
-  LEXICON_SQL_QUERY,
-  RUIAN_MULTIWORD_SQL_QUERY,
-  parseLexiconRows,
-  type RawLexiconWord
-} from '../../db/lexiconDb';
 import {
   buildLexiconItems,
   solveMorseWithoutSpaces,
   type LexiconItem,
   type MorseSolverWeights
 } from './morseSolver';
+import type { RawLexiconWord } from '../../db/lexiconDb';
 
-const DB_CACHE_NAME = 'samuel-db';
-
-async function getCachedDbBuffer(): Promise<ArrayBuffer | null> {
-  try {
-    if (typeof self === 'undefined' || !('caches' in self)) return null;
-    const cache = await self.caches.open(DB_CACHE_NAME);
-    const match = await cache.match('/words.db');
-    if (!match) return null;
-    return await match.arrayBuffer();
-  } catch {
-    return null;
-  }
-}
-
-let dbInstance: SqlDatabase | null = null;
 let cachedLexicon: LexiconItem[] | null = null;
-let initPromise: Promise<LexiconItem[]> | null = null;
-
-async function getWorkerLexicon(): Promise<LexiconItem[]> {
-  if (cachedLexicon) return cachedLexicon;
-  if (initPromise) return initPromise;
-
-  initPromise = (async () => {
-    const SQL = await initSqlJs({
-      locateFile: () => sqlWasmUrl
-    });
-
-    const buffer = await getCachedDbBuffer();
-    if (!buffer) {
-      initPromise = null;
-      throw new Error('Slovníková databáze není lokálně stažena. Stáhněte ji v Nastavení.');
-    }
-
-    const db = new SQL.Database(new Uint8Array(buffer));
-    dbInstance = db;
-
-    // 1. Run main lexicon query
-    const rows: Array<{ w: string | number; is_cipher: number; is_ruian: number; freq: number }> = [];
-    const stmt = db.prepare(LEXICON_SQL_QUERY);
-    while (stmt.step()) {
-      rows.push(stmt.getAsObject() as any);
-    }
-    stmt.free();
-
-    // 2. Run multi-word RUIAN query
-    const multiRows: Array<{ word_nodiac: string }> = [];
-    try {
-      const stmtRuian = db.prepare(RUIAN_MULTIWORD_SQL_QUERY);
-      while (stmtRuian.step()) {
-        multiRows.push(stmtRuian.getAsObject() as any);
-      }
-      stmtRuian.free();
-    } catch {
-      // Ignore if ruian not available
-    }
-
-    const rawWords: RawLexiconWord[] = parseLexiconRows(rows, multiRows);
-    const items = buildLexiconItems(rawWords);
-    cachedLexicon = items;
-    return items;
-  })();
-
-  return initPromise;
-}
 
 self.onmessage = async (e: MessageEvent) => {
-  const { id, type, code, maxResults = 50, weights } = e.data;
+  const { id, type, code, maxResults = 50, weights, words } = e.data;
 
-  if (type === 'init') {
+  if (type === 'setLexicon') {
     try {
-      await getWorkerLexicon();
-      self.postMessage({ id, type: 'init_done' });
+      cachedLexicon = buildLexiconItems(words as RawLexiconWord[]);
+      self.postMessage({ id, type: 'lexicon_ready' });
     } catch (err: any) {
       self.postMessage({ id, type: 'error', error: err?.message || String(err) });
     }
@@ -98,8 +35,10 @@ self.onmessage = async (e: MessageEvent) => {
 
   if (type === 'solve') {
     try {
-      const lexicon = await getWorkerLexicon();
-      const result = await solveMorseWithoutSpaces(code, maxResults, weights as Partial<MorseSolverWeights>, lexicon);
+      if (!cachedLexicon) {
+        throw new Error('Lexikon nebyl načten. Zkuste to prosím znovu.');
+      }
+      const result = await solveMorseWithoutSpaces(code, maxResults, weights as Partial<MorseSolverWeights>, cachedLexicon);
       self.postMessage({
         id,
         type: 'result',

@@ -1,6 +1,7 @@
 /**
  * Pure TypeScript SQL definitions and parser for Samuel lexicon vocabulary.
- * Shared between browser client (sql.js) and Node.js benchmark (node:sqlite).
+ * Shared between the browser client (shared DB worker, dbWorker.ts) and the
+ * Node.js benchmark (node:sqlite / sql.js fallback).
  */
 
 export interface RawLexiconWord {

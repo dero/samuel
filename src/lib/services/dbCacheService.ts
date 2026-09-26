@@ -1,10 +1,15 @@
 /**
- * Database Cache Service for Samuel (Offline SQLite WASM)
- * Manages CacheStorage for dictionary database (words.db) and metadata.
+ * Database Cache Service for Samuel (Offline SQLite via OPFS)
+ * Thin orchestration layer over the shared DB worker client (`dbClient.ts`):
+ * install-state checks, verified streaming download, and local DB metadata
+ * (still kept in localStorage on the main thread for versionService's update
+ * detection).
  */
 
 import type { AppVersionInfo } from './appCacheService';
+import { dbClient } from '../db/dbClient';
 
+/** @deprecated Legacy CacheStorage name, kept only for reference/migration in dbWorker.ts. */
 export const DB_CACHE_NAME = 'samuel-db';
 export const DB_META_KEY = 'samuel_words_db_meta';
 
@@ -17,19 +22,12 @@ export interface LocalDbMeta {
 }
 
 /**
- * Checks if the 102MB dictionary database (words.db) is cached offline.
+ * Checks if the dictionary database (words.db) is installed and openable,
+ * asking the shared DB worker (which knows whether it found a file in OPFS
+ * or, as a fallback, in memory).
  */
 export async function isDbInstalled(): Promise<boolean> {
-  try {
-    if (!('caches' in window)) return false;
-    const hasCache = await caches.has(DB_CACHE_NAME);
-    if (!hasCache) return false;
-    const cache = await caches.open(DB_CACHE_NAME);
-    const match = await cache.match('/words.db');
-    return Boolean(match);
-  } catch {
-    return false;
-  }
+  return dbClient.isDbInstalled();
 }
 
 /**
@@ -67,87 +65,44 @@ export function saveDbMetaFromVersion(remoteVersion?: AppVersionInfo | null, siz
 }
 
 /**
- * Downloads words.db into CacheStorage (samuel-db) with streaming progress tracking.
+ * Downloads words.db and streams it directly into OPFS inside the shared DB
+ * worker (never buffering the whole ~100+ MB file on the main thread), with
+ * progress reporting, byte-length + SHA-256 verification against
+ * `remoteVersion`, and a `PRAGMA quick_check` before the new DB is activated.
+ * On any verification failure the previous DB (if any) is left untouched and
+ * an Error with a Czech message is thrown.
  */
 export async function downloadDatabase(
   remoteVersion?: AppVersionInfo | null,
   onProgress?: (percent: number, loadedBytes: number, totalBytes: number) => void
-): Promise<ArrayBuffer> {
-  if (!('caches' in window)) {
-    throw new Error('CacheStorage API is not supported in this browser.');
-  }
-
+): Promise<void> {
   const dbUrl = '/words.db?sw-strategy=network&t=' + Date.now();
-  const response = await fetch(dbUrl);
-  if (!response.ok) {
-    throw new Error(`Chyba při stahování slovníku: ${response.status} ${response.statusText}`);
-  }
 
-  const contentLength = response.headers.get('content-length');
-  const expectedTotal = contentLength
-    ? parseInt(contentLength, 10)
-    : remoteVersion?.dbSizeBytes || 106483712;
-
-  if (!response.body) {
-    const buffer = await response.arrayBuffer();
-    const cache = await caches.open(DB_CACHE_NAME);
-    await cache.put(
-      '/words.db',
-      new Response(buffer, {
-        headers: { 'Content-Type': 'application/x-sqlite3' }
-      })
-    );
-    saveDbMetaFromVersion(remoteVersion, buffer.byteLength);
-    if (onProgress) onProgress(100, buffer.byteLength, buffer.byteLength);
-    return buffer;
-  }
-
-  const reader = response.body.getReader();
-  let received = 0;
-  const chunks: Uint8Array[] = [];
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) {
-      chunks.push(value);
-      received += value.length;
-      if (onProgress && expectedTotal > 0) {
-        const percent = Math.min(99, Math.round((received / expectedTotal) * 100));
-        onProgress(percent, received, expectedTotal);
-      }
+  const result = await dbClient.downloadDatabase(
+    dbUrl,
+    { sizeBytes: remoteVersion?.dbSizeBytes, hash: remoteVersion?.dbHash },
+    (progress) => {
+      onProgress?.(progress.percent, progress.loadedBytes, progress.totalBytes);
     }
-  }
-
-  const result = new Uint8Array(received);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  const buffer = result.buffer as ArrayBuffer;
-  const cache = await caches.open(DB_CACHE_NAME);
-  await cache.put(
-    '/words.db',
-    new Response(buffer, {
-      headers: { 'Content-Type': 'application/x-sqlite3' }
-    })
   );
 
-  saveDbMetaFromVersion(remoteVersion, buffer.byteLength);
-  if (onProgress) onProgress(100, buffer.byteLength, buffer.byteLength);
-  return buffer;
+  saveDbMetaFromVersion(remoteVersion, result.sizeBytes);
+  if (onProgress) onProgress(100, result.sizeBytes, result.sizeBytes);
 }
 
 /**
- * Removes the dictionary database from CacheStorage.
+ * Removes the dictionary database (OPFS and/or legacy CacheStorage) and its
+ * local metadata.
  */
 export async function clearDatabaseCache(): Promise<void> {
   try {
-    await caches.delete(DB_CACHE_NAME);
-    localStorage.removeItem(DB_META_KEY);
+    await dbClient.deleteDb();
   } catch (e) {
     console.warn('Failed to clear database cache:', e);
+  }
+  try {
+    localStorage.removeItem(DB_META_KEY);
+  } catch (e) {
+    console.warn('Failed to clear DB metadata:', e);
   }
 }
