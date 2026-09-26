@@ -1,15 +1,24 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import AlphabetLayoutManager from './AlphabetLayoutManager.svelte';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import { versionService } from '../../services/versionService.svelte';
+  import {
+    isStoragePersisted,
+    requestStoragePersistence,
+    getStorageEstimate,
+    isLikelyIos
+  } from '../../services/storageService';
   import SlideToAction from '../../components/ui/SlideToAction.svelte';
   import {
     ArrowsClockwise,
     RocketLaunch,
     SpinnerGap,
     CheckCircle,
-    DownloadSimple
+    DownloadSimple,
+    ShieldCheck,
+    ShieldWarning
   } from 'phosphor-svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
 
@@ -100,6 +109,46 @@
       toast.show('Slovník byl smazán z paměti', { type: 'info' });
     } catch {
       toast.show('Chyba při mazání slovníku', { type: 'danger' });
+    }
+  }
+
+  // --- Persistentní úložiště (ochrana proti automatickému smazání mezipaměti) ---
+  let storagePersisted = $state(false);
+  let storageUsageBytes = $state<number | null>(null);
+  let storageQuotaBytes = $state<number | null>(null);
+  let isRequestingPersistence = $state(false);
+  const iosDevice = isLikelyIos();
+
+  function formatMegabytes(bytes: number | null): string {
+    if (bytes === null) return '?';
+    return `${Math.round(bytes / (1024 * 1024))} MB`;
+  }
+
+  async function refreshStorageStatus() {
+    storagePersisted = await isStoragePersisted();
+    const estimate = await getStorageEstimate();
+    storageUsageBytes = estimate.usageBytes;
+    storageQuotaBytes = estimate.quotaBytes;
+  }
+
+  onMount(() => {
+    refreshStorageStatus();
+  });
+
+  async function handleRequestPersistence() {
+    settings.vibrate(20);
+    isRequestingPersistence = true;
+    try {
+      const granted = await requestStoragePersistence();
+      await refreshStorageStatus();
+      toast.show(
+        granted ? 'Úložiště je nyní trvalé' : 'Prohlížeč trvalé úložiště nepovolil',
+        { type: granted ? 'success' : 'warning' }
+      );
+    } catch {
+      toast.show('Chyba při žádosti o úložiště', { type: 'danger' });
+    } finally {
+      isRequestingPersistence = false;
     }
   }
 
@@ -254,9 +303,62 @@
       />
     </section>
 
-    <!-- 4. Reset a správa úložiště -->
+    <!-- 4. Trvalé úložiště -->
     <section class="card">
-      <h2 class="card-title">Správa úložiště</h2>
+      <div class="card-header-row">
+        <div>
+          <h2 class="card-title">Trvalé úložiště</h2>
+          <p class="card-desc">
+            Ochrana offline dat proti automatickému smazání prohlížečem při nedostatku místa nebo delší neaktivitě.
+          </p>
+        </div>
+        {#if storagePersisted}
+          <span class="badge-status online">
+            <ShieldCheck size={14} weight="fill" />
+            <span>Trvalé</span>
+          </span>
+        {/if}
+      </div>
+
+      <div class="version-box">
+        <div class="sys-row">
+          <span>Stav úložiště</span>
+          <span class="version-badge">{storagePersisted ? 'Trvalé' : 'Dočasné'}</span>
+        </div>
+        <div class="sys-row">
+          <span>Využito místa</span>
+          <span class="version-badge">
+            {formatMegabytes(storageUsageBytes)} / {formatMegabytes(storageQuotaBytes)}
+          </span>
+        </div>
+      </div>
+
+      {#if !storagePersisted}
+        <button
+          class="secondary-btn"
+          disabled={isRequestingPersistence}
+          onclick={handleRequestPersistence}
+        >
+          {#if isRequestingPersistence}
+            <SpinnerGap size={16} class="spin" />
+            <span>Žádám o trvalé úložiště...</span>
+          {:else}
+            <ShieldWarning size={16} weight="bold" />
+            <span>Povolit trvalé úložiště</span>
+          {/if}
+        </button>
+        {#if iosDevice}
+          <p class="card-desc">
+            Na iPhonu/iPadu prohlížeč trvalé úložiště téměř nikdy nepovolí sám. Přidejte si Samuela na plochu
+            (Sdílet → Přidat na plochu) – jako nainstalovaná aplikace jsou data mnohem lépe chráněna proti smazání.
+          </p>
+        {/if}
+      {/if}
+    </section>
+
+    <!-- 5. Reset a správa úložiště -->
+    <section class="card">
+      <h2 class="card-title">Reset dat</h2>
       <p class="card-desc">
         Odstraní všechna data aplikace i slovníku z offline mezipaměti a vrátí aplikaci do výchozího stavu prvního spuštění.
       </p>

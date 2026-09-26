@@ -11,7 +11,7 @@ import {
   isAppInstalled,
   isDbInstalled,
   fetchRemoteVersion,
-  downloadAppAssets,
+  installAppVersion,
   downloadDatabase as downloadDbCore,
   clearDatabaseCache,
   resetAllOfflineData,
@@ -145,7 +145,10 @@ class VersionService {
     this.state.progress = 0;
 
     try {
-      await downloadAppAssets(remote.appAssets, (percent) => {
+      // Atomic install: downloads into a fresh versioned cache, verifies it,
+      // then switches the active pointer. A network drop mid-update leaves
+      // the currently running (old) version fully intact and bootable.
+      await installAppVersion(remote, (percent) => {
         this.state.progress = percent;
         if (onProgress) onProgress(percent);
       });
