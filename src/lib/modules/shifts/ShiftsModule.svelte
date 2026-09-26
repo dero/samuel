@@ -12,14 +12,15 @@
     SHIFT_SEGMENT_OPTIONS
   } from './shiftsData';
   import { onMount } from 'svelte';
-  import { getLexiconWords } from '../../db/database.svelte';
+  import { dbClient, SupersededError } from '../../db/dbClient';
   import {
     getAllCaesarShifts,
+    buildCaesarShiftTexts,
+    assembleCaesarResults,
     solveVigenere,
-    solveAutokey,
-    setCaesarLexicon
+    solveAutokey
   } from './shiftsSolver';
-  import { buildCaesarLexicon } from './caesarScorer';
+  import type { CaesarShiftResult } from './shiftsData';
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { versionService } from '../../services/versionService.svelte';
@@ -75,27 +76,44 @@
     !['english-26', 'english-ch-27'].includes(alphabetId)
   );
 
-  // Dynamic Lexicon from SQLite DB
-  let isLexiconLoaded = $state<boolean>(false);
-
+  // Caesar scoring: the built-in keyword lexicon gives an instant result on
+  // the main thread; full-dictionary scoring runs in the DB worker and its
+  // latest result is shown once available (possibly one keystroke stale
+  // while the next request is in flight - avoids score flicker).
   onMount(() => {
-    if (!versionService.state.isDbInstalled) return;
-    getLexiconWords()
-      .then((words) => {
-        setCaesarLexicon(buildCaesarLexicon(words));
-        isLexiconLoaded = true;
-      })
-      .catch((err) => {
-        console.warn('ShiftsModule: could not load words lexicon from database:', err);
-      });
+    if (versionService.state.isDbInstalled) dbClient.warmLexicon('caesar');
   });
 
-  // Solver calculations
+  const caesarShiftTexts = $derived(
+    activeSubmodule === 'caesar' ? buildCaesarShiftTexts(text, currentLetters, preserveSpecialChars) : []
+  );
+
+  let dictionaryShifts = $state<CaesarShiftResult[] | null>(null);
+
+  $effect(() => {
+    const texts = caesarShiftTexts;
+    const alphabetSize = currentLetters.length;
+    if (texts.length === 0 || !versionService.state.isDbInstalled) {
+      dictionaryShifts = null;
+      return;
+    }
+    dbClient.caesarScore(texts).then(
+      (evaluated) => {
+        if (texts === caesarShiftTexts) {
+          dictionaryShifts = assembleCaesarResults(texts, evaluated, alphabetSize);
+        }
+      },
+      (err) => {
+        if (err instanceof SupersededError) return;
+        console.warn('ShiftsModule: dictionary scoring failed, using keyword lexicon:', err);
+        dictionaryShifts = null;
+      }
+    );
+  });
+
   const caesarShifts = $derived.by(() => {
-    // Explicitly track isLexiconLoaded so shifts recalculate once full DB lexicon loads
-    const _loaded = isLexiconLoaded;
-    if (activeSubmodule !== 'caesar') return [];
-    return getAllCaesarShifts(text, currentLetters, preserveSpecialChars);
+    if (caesarShiftTexts.length === 0) return [];
+    return dictionaryShifts ?? getAllCaesarShifts(text, currentLetters, preserveSpecialChars);
   });
 
   const vigenereResult = $derived(

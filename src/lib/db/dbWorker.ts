@@ -27,6 +27,9 @@
  * 3. If the query is a simple ad-hoc read-only SELECT with no server-side
  *    post-processing, you don't need a new op at all - use the existing
  *    generic `query` op via `dbClient.query(sql, params)`.
+ *
+ * Heavy lexicon-based solvers (Morse unspaced, Caesar scoring) also run here,
+ * sharing one lexicon built per session - see `getMorseLexicon()`.
  */
 
 import sqlite3InitModule, {
@@ -38,6 +41,19 @@ import { removeDiacritics } from '../utils/text';
 import { computeMaskNodiac, isExactAnagram, isSubAnagram, type WordMatch } from '../modules/words/wordsData';
 import { T9_PUNCTUATION, DIGIT_TO_GLOB, getFallbackT9Word } from '../modules/mobile/t9Data';
 import { Sha256Incremental } from './sha256';
+import { LEXICON_SQL_QUERY, RUIAN_MULTIWORD_SQL_QUERY, parseLexiconRows } from './lexiconDb';
+import {
+  buildLexiconItems,
+  solveMorseWithoutSpaces,
+  type BruteforceResult,
+  type LexiconItem,
+  type MorseSolverWeights
+} from '../modules/morse/morseSolver';
+import {
+  buildCaesarLexicon,
+  scoreAllCaesarCandidates,
+  type CaesarLexicon
+} from '../modules/shifts/caesarScorer';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -163,6 +179,17 @@ async function handleOp(op: string, payload: any, id: number): Promise<unknown> 
     case 't9Query':
       await ensureInit();
       return opT9Query(payload);
+    case 'warmLexicon':
+      await ensureInit();
+      if (payload.kind === 'caesar') getCaesarLexicon();
+      else getMorseLexicon();
+      return null;
+    case 'morseSolve':
+      await ensureInit();
+      return opMorseSolve(payload);
+    case 'caesarScore':
+      await ensureInit();
+      return scoreAllCaesarCandidates(payload.shiftedTexts, getCaesarLexicon());
     case 'getWorldFlags':
       await ensureInit();
       return opGetWorldFlags();
@@ -841,6 +868,51 @@ function opT9Query(payload: { digits: string; limit?: number }): { digits: strin
 }
 
 // ---------------------------------------------------------------------------
+// Lexicon for Morse unspaced solving and Caesar scoring
+// ---------------------------------------------------------------------------
+
+// Built once per session from the DB and shared: Morse items carry every field
+// the Caesar map needs, so the ~480k raw rows are dropped after the build.
+let morseLexicon: LexiconItem[] | null = null;
+let caesarLexicon: CaesarLexicon | null = null;
+
+function invalidateLexicon(): void {
+  morseLexicon = null;
+  caesarLexicon = null;
+}
+
+function getMorseLexicon(): LexiconItem[] {
+  if (morseLexicon) return morseLexicon;
+  const db2 = requireDb();
+  const rows = db2
+    .selectArrays(LEXICON_SQL_QUERY)
+    .map(([w, isCipher, isRuian, freq]) => ({
+      w: String(w),
+      is_cipher: Number(isCipher),
+      is_ruian: Number(isRuian),
+      freq: Number(freq) || 0
+    }));
+  const multiRows = db2
+    .selectArrays(RUIAN_MULTIWORD_SQL_QUERY)
+    .map(([w]) => ({ word_nodiac: String(w) }));
+  morseLexicon = buildLexiconItems(parseLexiconRows(rows, multiRows));
+  return morseLexicon;
+}
+
+function getCaesarLexicon(): CaesarLexicon {
+  if (!caesarLexicon) caesarLexicon = buildCaesarLexicon(getMorseLexicon());
+  return caesarLexicon;
+}
+
+async function opMorseSolve(payload: {
+  code: string;
+  maxResults?: number;
+  weights?: Partial<MorseSolverWeights>;
+}): Promise<BruteforceResult> {
+  return solveMorseWithoutSpaces(payload.code, payload.maxResults ?? 50, payload.weights, getMorseLexicon());
+}
+
+// ---------------------------------------------------------------------------
 // Op: world flags
 // ---------------------------------------------------------------------------
 
@@ -946,6 +1018,7 @@ async function opDownloadDb(payload: DownloadPayload, id: number): Promise<{ siz
   }
   db = new poolUtil.OpfsSAHPoolDb(target);
   registerRegexFunction(db);
+  invalidateLexicon();
   storageMode = 'opfs';
   unlinkPoolFilesExcept(target);
 
@@ -1030,6 +1103,7 @@ async function downloadIntoMemory(payload: DownloadPayload, id: number): Promise
     sqlite3.capi.SQLITE_DESERIALIZE_FREEONCLOSE | sqlite3.capi.SQLITE_DESERIALIZE_RESIZEABLE
   );
   registerRegexFunction(db);
+  invalidateLexicon();
   storageMode = 'memory';
 
   postProgress(id, { percent: 100, loadedBytes: received, totalBytes: totalBytes || received });
@@ -1041,6 +1115,7 @@ async function downloadIntoMemory(payload: DownloadPayload, id: number): Promise
 // ---------------------------------------------------------------------------
 
 async function opDeleteDb(): Promise<void> {
+  invalidateLexicon();
   if (db) {
     try {
       db.close();

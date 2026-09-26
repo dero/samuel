@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import MorseReference from './MorseReference.svelte';
   import TelegraphWire, { type PulseEvent } from './TelegraphWire.svelte';
@@ -130,8 +130,9 @@
     isPermutationsOpen = true;
   }
 
-  onDestroy(() => {
-    morseService.terminate();
+  onMount(() => {
+    // Build the dictionary lexicon in the background so the first solve is fast.
+    if (versionService.state.isDbInstalled) morseService.warmUp();
   });
 
   async function runBruteforce() {

@@ -7,18 +7,9 @@ import type {
 import {
   scoreAllCaesarCandidates,
   getFallbackCaesarLexicon,
-  type CaesarLexicon
+  type CaesarLexicon,
+  type CaesarCandidateRawScore
 } from './caesarScorer';
-
-let activeCaesarLexicon: CaesarLexicon | null = null;
-
-export function setCaesarLexicon(lexicon: CaesarLexicon) {
-  activeCaesarLexicon = lexicon;
-}
-
-export function getActiveCaesarLexicon(): CaesarLexicon {
-  return activeCaesarLexicon || getFallbackCaesarLexicon();
-}
 
 import { mod, tokenizeText, type ParsedToken } from '../../utils/cipher';
 export { mod, tokenizeText, type ParsedToken };
@@ -53,32 +44,35 @@ export function shiftCaesar(
 }
 
 /**
- * Computes all N-1 Caesar shifts and scores each with the dedicated Caesar lexicon and Markov scorer.
+ * Returns the N-1 shifted variants of `text` (shift k = index + 1).
  */
-export function getAllCaesarShifts(
+export function buildCaesarShiftTexts(
   text: string,
   alphabetLetters: string[],
-  preserveSpecialChars = true,
-  customLexicon?: CaesarLexicon
-): CaesarShiftResult[] {
+  preserveSpecialChars = true
+): string[] {
   if (!text || alphabetLetters.length <= 1) return [];
-  const N = alphabetLetters.length;
   const shiftedTexts: string[] = [];
-  const shiftValues: number[] = [];
-
-  for (let k = 1; k < N; k++) {
+  for (let k = 1; k < alphabetLetters.length; k++) {
     shiftedTexts.push(shiftCaesar(text, k, alphabetLetters, preserveSpecialChars));
-    shiftValues.push(k);
   }
+  return shiftedTexts;
+}
 
-  const lexicon = customLexicon || getActiveCaesarLexicon();
-  const evaluated = scoreAllCaesarCandidates(shiftedTexts, lexicon);
-
-  const results: CaesarShiftResult[] = evaluated.map((cand, idx) => {
-    const k = shiftValues[idx];
+/**
+ * Combines shifted texts with their scores (from scoreAllCaesarCandidates,
+ * possibly computed in the DB worker) into display results.
+ */
+export function assembleCaesarResults(
+  shiftedTexts: string[],
+  evaluated: Array<CaesarCandidateRawScore & { isBest: boolean }>,
+  alphabetSize: number
+): CaesarShiftResult[] {
+  return evaluated.map((cand, idx) => {
+    const k = idx + 1;
     return {
       shift: k,
-      reverseShift: N - k,
+      reverseShift: alphabetSize - k,
       shiftedText: shiftedTexts[idx],
       score: cand.rawPlausibility,
       percentage: cand.percentage,
@@ -87,8 +81,23 @@ export function getAllCaesarShifts(
       isBest: cand.isBest
     };
   });
+}
 
-  return results;
+/**
+ * Computes all N-1 Caesar shifts and scores each synchronously. Without a
+ * custom lexicon it uses the small built-in keyword lexicon; full-dictionary
+ * scoring runs in the DB worker (dbClient.caesarScore).
+ */
+export function getAllCaesarShifts(
+  text: string,
+  alphabetLetters: string[],
+  preserveSpecialChars = true,
+  customLexicon?: CaesarLexicon
+): CaesarShiftResult[] {
+  const shiftedTexts = buildCaesarShiftTexts(text, alphabetLetters, preserveSpecialChars);
+  if (shiftedTexts.length === 0) return [];
+  const evaluated = scoreAllCaesarCandidates(shiftedTexts, customLexicon || getFallbackCaesarLexicon());
+  return assembleCaesarResults(shiftedTexts, evaluated, alphabetLetters.length);
 }
 
 export interface KeyToken {

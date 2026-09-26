@@ -14,7 +14,7 @@ let cachedRawWords: RawLexiconWord[] | null = null;
 /**
  * Loads vocabulary from public/words.db using node:sqlite (Node 22+)
  * with fallback to sql.js (Node 20).
- * Mirrors getLexiconWords() in src/lib/db/database.svelte.ts using shared lexiconDb queries.
+ * Mirrors getMorseLexicon() in src/lib/db/dbWorker.ts using shared lexiconDb queries.
  */
 export async function loadLexiconRawWords(dbPath?: string): Promise<RawLexiconWord[]> {
   if (cachedRawWords) return cachedRawWords;

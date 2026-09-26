@@ -5,13 +5,9 @@
  * full architecture rationale and instructions on adding new DB-backed ops.
  */
 
-import {
-  LEXICON_SQL_QUERY,
-  RUIAN_MULTIWORD_SQL_QUERY,
-  parseLexiconRows,
-  type RawLexiconWord
-} from './lexiconDb';
 import type { WordMatch } from '../modules/words/wordsData';
+import type { BruteforceResult, MorseSolverWeights } from '../modules/morse/morseSolver';
+import type { CaesarCandidateRawScore } from '../modules/shifts/caesarScorer';
 
 export interface WorldFlagRecord {
   id: number;
@@ -30,12 +26,7 @@ export interface WorldFlagRecord {
   svg_1x1: string;
 }
 
-export interface LexiconWordItem {
-  word: string;
-  isCipher: boolean;
-  isRuian: boolean;
-  freq: number;
-}
+export type CaesarScoredCandidate = CaesarCandidateRawScore & { shift: number; isBest: boolean };
 
 export interface WordsSearchParams {
   query: string;
@@ -185,11 +176,15 @@ const wordsSearchGate = new SingleFlightGate<WordsSearchParams, WordsSearchResul
   callWorker<WordsSearchResult>('wordsSearch', params as unknown as Record<string, unknown>)
 );
 
+// Caesar re-scores on every keystroke; only the latest text matters.
+const caesarScoreGate = new SingleFlightGate<string[], CaesarScoredCandidate[]>((shiftedTexts) =>
+  callWorker<CaesarScoredCandidate[]>('caesarScore', { shiftedTexts })
+);
+
 // ---------------------------------------------------------------------------
 // Public client API
 // ---------------------------------------------------------------------------
 
-let cachedLexiconWords: LexiconWordItem[] | null = null;
 let cachedWorldFlags: WorldFlagRecord[] | null = null;
 
 class DbClient {
@@ -245,28 +240,27 @@ class DbClient {
   }
 
   /**
-   * Loads the shared lexicon vocabulary (puzzle keywords + RUIAN place names +
-   * Czech substantives/corpus words) used by Morse's unspaced solver and the
-   * Caesar/Vigenere/Autokey scorer in Shifts. Both previously opened their own
-   * copy of the whole DB in a dedicated worker; now they fetch the same rows
-   * from the one shared DB worker through the generic `query` op.
+   * Starts building the shared Morse/Caesar lexicon in the DB worker ahead of
+   * use (the first build takes a few seconds on phones). Fire-and-forget.
    */
-  async getLexiconWords(): Promise<LexiconWordItem[]> {
-    if (cachedLexiconWords) return cachedLexiconWords;
+  warmLexicon(kind: 'morse' | 'caesar'): void {
+    callWorker('warmLexicon', { kind }).catch(() => {
+      // DB not installed - the solvers report that themselves when used.
+    });
+  }
 
-    const rows = await this.query<{ w: string | number; is_cipher: number; is_ruian: number; freq: number }>(
-      LEXICON_SQL_QUERY
-    );
-    const multiRows = await this.query<{ word_nodiac: string }>(RUIAN_MULTIWORD_SQL_QUERY);
+  /** Unspaced Morse solve against the dictionary lexicon, run in the DB worker. */
+  morseSolve(code: string, maxResults = 50, weights?: Partial<MorseSolverWeights>): Promise<BruteforceResult> {
+    return callWorker<BruteforceResult>('morseSolve', { code, maxResults, weights });
+  }
 
-    const raw: RawLexiconWord[] = parseLexiconRows(rows, multiRows);
-    cachedLexiconWords = raw.map((r) => ({
-      word: r.word,
-      isCipher: r.isCipher,
-      isRuian: r.isRuian,
-      freq: r.freq
-    }));
-    return cachedLexiconWords;
+  /**
+   * Scores Caesar shift candidates against the dictionary lexicon in the DB
+   * worker. Single-flight like searchWords(): superseded calls reject with
+   * SupersededError.
+   */
+  caesarScore(shiftedTexts: string[]): Promise<CaesarScoredCandidate[]> {
+    return caesarScoreGate.run(shiftedTexts);
   }
 
   /** Generic read-only SELECT passthrough - see dbWorker.ts for how to add a dedicated op instead. */
@@ -317,9 +311,8 @@ class DbClient {
     this.resetCaches();
   }
 
-  /** Clears client-side caches (lexicon words, world flags) after a DB swap/delete. */
+  /** Clears client-side caches (world flags) after a DB swap/delete. */
   resetCaches(): void {
-    cachedLexiconWords = null;
     cachedWorldFlags = null;
   }
 }
