@@ -345,6 +345,148 @@
     </div>
 
     <div id="app"></div>
+    <script>
+      // Recovery safety net: if the app never signals a successful boot (or the
+      // bootstrap module script itself fails to load - e.g. a 504 from the
+      // cache-only Service Worker for a chunk an interrupted update never
+      // downloaded) within a generous timeout, offer an in-app recovery action
+      // instead of leaving a permanent white screen. Disarmed by bootstrap.ts
+      // as soon as it legitimately shows the first-run download screen (which
+      // owns its own error handling from that point on) or signals success.
+      (function () {
+        var RECOVERY_TIMEOUT_MS = 15000;
+        var armed = true;
+        var timeoutId = null;
+
+        function disarm() {
+          armed = false;
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+        }
+
+        // bootstrap.ts calls these to communicate with this safety net.
+        window.__samuelBootSuccess = disarm;
+        window.__samuelBootFirstRun = disarm;
+        window.__samuelShowRecovery = function (reason) {
+          showRecovery(reason);
+        };
+
+        function showRecovery(reason) {
+          if (document.getElementById('recovery-overlay')) return;
+          disarm();
+          console.warn('Samuel recovery overlay shown:', reason);
+
+          var overlay = document.createElement('div');
+          overlay.id = 'recovery-overlay';
+          overlay.style.cssText =
+            'position:fixed;inset:0;z-index:999999;background:#000000;color:#ffffff;' +
+            'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+            'gap:16px;padding:24px;text-align:center;box-sizing:border-box;' +
+            'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;';
+          overlay.innerHTML =
+            '<div style="font-size:16px;font-weight:700;">Aplikaci se nepodařilo spustit</div>' +
+            '<div style="font-size:13px;line-height:1.5;color:#b3b3b3;max-width:320px;">' +
+            'Offline mezipaměť je pravděpodobně neúplná po přerušené aktualizaci. ' +
+            'Obnova ji smaže a stáhne aplikaci znovu &ndash; je nutné aktivní připojení k internetu.' +
+            '</div>' +
+            '<button id="recovery-btn" type="button" style="min-height:52px;padding:0 24px;' +
+            'background-color:#00d2ff;color:#000000;font-size:15px;font-weight:700;border:none;' +
+            'border-radius:6px;cursor:pointer;">Obnovit aplikaci</button>';
+          document.body.appendChild(overlay);
+
+          document.getElementById('recovery-btn').addEventListener('click', function () {
+            var btn = document.getElementById('recovery-btn');
+            if (btn) {
+              btn.disabled = true;
+              btn.textContent = 'Obnovuji…';
+              btn.style.opacity = '0.6';
+            }
+            recoverAndReload();
+          });
+        }
+
+        function recoverAndReload() {
+          var done = function () {
+            window.location.href = '/?sw-strategy=network';
+          };
+
+          var deleteAppCaches = function () {
+            if (!('caches' in window)) return Promise.resolve();
+            return caches
+              .keys()
+              .then(function (names) {
+                // Only wipe app-related caches + the pointer; leave the
+                // (potentially 100MB+) dictionary DB cache untouched so the
+                // user doesn't need to re-download it after an app hiccup.
+                var toDelete = names.filter(function (name) {
+                  return name === 'samuel-app' || name === 'samuel-meta' || name.indexOf('samuel-app-') === 0;
+                });
+                // allSettled (not all): one stubborn cache failing to delete
+                // must never block the others or the eventual reload.
+                return Promise.allSettled(
+                  toDelete.map(function (name) {
+                    return caches.delete(name).then(function (ok) {
+                      if (!ok) console.warn('Recovery: cache.delete() reported false for', name);
+                    });
+                  })
+                );
+              })
+              .catch(function (e) {
+                console.warn('Recovery: cache deletion failed', e);
+              });
+          };
+
+          var unregisterServiceWorker = function () {
+            // Deleting the caches alone is not enough: this page is still
+            // CONTROLLED by the existing Service Worker, which serves
+            // everything (except the exact bypassed URL below) strictly
+            // cache-only. Without unregistering it, the fresh index.html we
+            // navigate to would load fine (bypassed), but its own entry
+            // script request would NOT carry the bypass and would 504
+            // against the now-empty cache, breaking the very screen this
+            // recovery is supposed to restore. Unregistering makes the next
+            // navigation fully uncontrolled, like a brand new visitor.
+            if (!('serviceWorker' in navigator)) return Promise.resolve();
+            return navigator.serviceWorker
+              .getRegistrations()
+              .then(function (regs) {
+                return Promise.allSettled(regs.map(function (reg) { return reg.unregister(); }));
+              })
+              .catch(function (e) {
+                console.warn('Recovery: service worker unregister failed', e);
+              });
+          };
+
+          try {
+            Promise.allSettled([deleteAppCaches(), unregisterServiceWorker()]).then(done).catch(done);
+          } catch (e) {
+            done();
+          }
+        }
+
+        // Catch the bootstrap module script (or any script) failing to load -
+        // this fires even if bootstrap.ts itself never got to execute a single
+        // line. Resource load errors don't bubble, so this must be capturing.
+        window.addEventListener(
+          'error',
+          function (event) {
+            var target = event && event.target;
+            if (target && target.tagName === 'SCRIPT') {
+              showRecovery('script-load-error');
+            }
+          },
+          true
+        );
+
+        // Backstop: only fires if nothing has disarmed us by then (normal boot,
+        // even on a slow low-end phone, or the legitimate first-run screen).
+        timeoutId = setTimeout(function () {
+          if (armed) showRecovery('timeout');
+        }, RECOVERY_TIMEOUT_MS);
+      })();
+    </script>
     <script type="module" src="/src/bootstrap.ts"></script>
   </body>
 </html>

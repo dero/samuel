@@ -8,9 +8,21 @@
 import {
   isAppInstalled,
   fetchRemoteVersion,
-  downloadAppAssets,
+  installAppVersion,
   downloadDatabase
 } from './lib/services/offlineCacheService';
+import { requestStoragePersistence, isStoragePersisted } from './lib/services/storageService';
+
+declare global {
+  interface Window {
+    /** Called by bootstrap once the app has actually booted; disarms the recovery safety net in index.html. */
+    __samuelBootSuccess?: () => void;
+    /** Called by bootstrap when it legitimately shows the first-run download screen; disarms the passive safety net (that screen has its own error handling). */
+    __samuelBootFirstRun?: () => void;
+    /** Called by bootstrap to force-show the recovery overlay immediately on a caught boot error. */
+    __samuelShowRecovery?: (reason?: string) => void;
+  }
+}
 
 async function registerServiceWorker(): Promise<void> {
   if ('serviceWorker' in navigator) {
@@ -19,6 +31,21 @@ async function registerServiceWorker(): Promise<void> {
     } catch (e) {
       console.warn('ServiceWorker registration error:', e);
     }
+  }
+}
+
+/**
+ * Best-effort, silent persistent storage request. Never blocks or throws.
+ * Safe to call on every boot - the browser no-ops if already persisted.
+ */
+async function maybeRequestPersistentStorage(): Promise<void> {
+  try {
+    const persisted = await isStoragePersisted();
+    if (!persisted) {
+      await requestStoragePersistence();
+    }
+  } catch {
+    // ignore - persistence is a best-effort enhancement
   }
 }
 
@@ -34,6 +61,8 @@ async function startApp(): Promise<void> {
   }
   // Dynamically import the main Svelte app bundle
   await import('./main');
+  // Boot succeeded - disarm the index.html recovery safety net
+  window.__samuelBootSuccess?.();
 }
 
 async function initBootstrap(): Promise<void> {
@@ -44,6 +73,7 @@ async function initBootstrap(): Promise<void> {
 
   // In development mode, bypass the bootstrap shell entirely and run with HMR
   if (import.meta.env.DEV) {
+    window.__samuelBootSuccess?.();
     await startApp();
     return;
   }
@@ -55,8 +85,20 @@ async function initBootstrap(): Promise<void> {
   const appCached = await isAppInstalled();
 
   if (appCached) {
+    // Silently (re)request persistent storage on every boot until granted.
+    // Never blocks or delays startup.
+    void maybeRequestPersistentStorage();
+
     // Already installed! Boot directly into Svelte app (Cache-Only)
-    await startApp();
+    try {
+      await startApp();
+    } catch (err) {
+      // Cache is present but corrupted/incomplete (e.g. interrupted update
+      // in an older version of this mechanism) - offer in-app recovery
+      // instead of leaving a permanent white screen.
+      console.error('Failed to start installed app:', err);
+      window.__samuelShowRecovery?.('boot-failed');
+    }
     return;
   }
 
@@ -71,6 +113,11 @@ async function initBootstrap(): Promise<void> {
 
   if (checkingEl) checkingEl.style.display = 'none';
   if (firstRunEl) firstRunEl.style.display = 'flex';
+
+  // This screen legitimately owns error handling from here on (it has its
+  // own inline retry UI below) - disarm the generic timeout/script-error
+  // safety net so it can't show a redundant overlay on top of it.
+  window.__samuelBootFirstRun?.();
 
   if (!downloadBtn || !progressBox) return;
 
@@ -87,11 +134,13 @@ async function initBootstrap(): Promise<void> {
       if (progressFill) progressFill.style.width = '5%';
 
       const remoteVersion = await fetchRemoteVersion();
-      const assets = remoteVersion?.appAssets || [];
+      if (!remoteVersion) {
+        throw new Error('Nepodařilo se načíst informace o verzi. Zkontrolujte připojení k internetu.');
+      }
 
-      // Download Application assets
+      // Download Application assets atomically (fresh versioned cache, verified, then switched)
       if (progressText) progressText.textContent = 'Stahuji aplikaci (0 %)…';
-      await downloadAppAssets(assets, (percent) => {
+      await installAppVersion(remoteVersion, (percent) => {
         if (progressFill) {
           const fillWidth = wantDb ? Math.round(percent * 0.35) : percent;
           progressFill.style.width = `${Math.max(5, fillWidth)}%`;
@@ -120,8 +169,16 @@ async function initBootstrap(): Promise<void> {
       if (progressFill) progressFill.style.width = '100%';
       if (progressText) progressText.textContent = 'Hotovo! Spouštím…';
 
+      // Best-effort, inside the user gesture flow of this click handler.
+      await maybeRequestPersistentStorage();
+
       setTimeout(async () => {
-        await startApp();
+        try {
+          await startApp();
+        } catch (err) {
+          console.error('Failed to start app after fresh install:', err);
+          window.__samuelShowRecovery?.('post-install-start-failed');
+        }
       }, 300);
     } catch (err: any) {
       console.error('Download error:', err);
