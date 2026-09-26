@@ -6,6 +6,7 @@
     loadFactArticles,
     searchFacts,
     highlightMatches,
+    getArticleSnippet,
     type FactArticle
   } from './factsService';
   import { settings } from '../../state/settings.svelte';
@@ -141,7 +142,7 @@
                       {/each}
                     </span>
                     <span class="card-preview text-muted">
-                      {#each highlightMatches(article.previewText, searchQuery) as seg}
+                      {#each highlightMatches(getArticleSnippet(article, searchQuery), searchQuery) as seg}
                         {#if seg.isMatch}
                           <mark class="match-highlight">{seg.text}</mark>
                         {:else}
@@ -320,10 +321,14 @@
   .card-preview {
     font-size: 11.5px;
     line-height: 1.35;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    word-break: break-word;
   }
 
   .card-right {

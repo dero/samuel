@@ -8,6 +8,8 @@ export interface FactArticle {
   keywords: string[];
   html: string;
   previewText: string;
+  plainBody: string;
+  normPlainBody: string;
   searchTarget: string;
 }
 
@@ -86,6 +88,7 @@ export function loadFactArticles(): FactArticle[] {
 
     const html = marked.parse(body, { gfm: true, breaks: true }) as string;
     const plainBody = stripMarkdown(body);
+    const normPlainBody = removeDiacritics(plainBody).toLowerCase();
     const previewText = plainBody.slice(0, 160) + (plainBody.length > 160 ? '…' : '');
 
     // Combine all fields into a single pre-normalized search target for instant lookups
@@ -100,6 +103,8 @@ export function loadFactArticles(): FactArticle[] {
       keywords,
       html,
       previewText,
+      plainBody,
+      normPlainBody,
       searchTarget
     });
   }
@@ -230,3 +235,84 @@ export function highlightMatches(original: string, query: string): HighlightSegm
 
   return segments;
 }
+
+/**
+ * Extracts a dynamic contextual snippet around the matched search terms within an article.
+ * Centers around the first matched occurrence with clean word boundary snapping.
+ */
+export function getArticleSnippet(article: FactArticle, query: string, maxLength = 110): string {
+  if (!query || !query.trim()) {
+    return article.previewText;
+  }
+
+  const normQuery = removeDiacritics(query.trim()).toLowerCase();
+  const queryTokens = normQuery.split(/\s+/).filter(Boolean);
+  if (queryTokens.length === 0) {
+    return article.previewText;
+  }
+
+  // 1. Try to find the full query in plainBody first
+  let matchIdx = article.normPlainBody.indexOf(normQuery);
+  let matchLen = normQuery.length;
+
+  // 2. If not found, find the earliest matching query token
+  if (matchIdx === -1) {
+    let earliestIdx = -1;
+    let earliestTokenLen = 0;
+
+    for (const token of queryTokens) {
+      const idx = article.normPlainBody.indexOf(token);
+      if (idx !== -1 && (earliestIdx === -1 || idx < earliestIdx)) {
+        earliestIdx = idx;
+        earliestTokenLen = token.length;
+      }
+    }
+
+    if (earliestIdx !== -1) {
+      matchIdx = earliestIdx;
+      matchLen = earliestTokenLen;
+    }
+  }
+
+  // 3. If no match in plainBody (e.g. matched in title or keywords only), fallback to default preview
+  if (matchIdx === -1) {
+    return article.previewText;
+  }
+
+  // 4. Position window so the match is clearly visible
+  // Give ~26 chars of context before match, and rest after
+  const charsBefore = 26;
+  let start = Math.max(0, matchIdx - charsBefore);
+  let end = Math.min(article.plainBody.length, start + maxLength);
+
+  if (end === article.plainBody.length) {
+    start = Math.max(0, end - maxLength);
+  }
+
+  // Snap start to word boundary
+  if (start > 0) {
+    const spaceIdx = article.plainBody.indexOf(' ', start);
+    if (spaceIdx !== -1 && spaceIdx < matchIdx) {
+      start = spaceIdx + 1;
+    }
+  }
+
+  // Snap end to word boundary
+  if (end < article.plainBody.length) {
+    const spaceIdx = article.plainBody.lastIndexOf(' ', end);
+    if (spaceIdx !== -1 && spaceIdx > matchIdx + matchLen) {
+      end = spaceIdx;
+    }
+  }
+
+  let snippet = article.plainBody.slice(start, end).trim();
+  if (start > 0) {
+    snippet = '… ' + snippet;
+  }
+  if (end < article.plainBody.length) {
+    snippet = snippet + ' …';
+  }
+
+  return snippet;
+}
+
