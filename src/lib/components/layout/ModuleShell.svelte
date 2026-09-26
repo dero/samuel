@@ -61,18 +61,22 @@
   </div>
 
   <!-- Contextual Menu -->
-  <ModuleMenu {title} {hasAlphabet} {alphabetHint} {onReset} {onPaste}>
-    {#if menuOptions}
-      {@render menuOptions()}
-    {/if}
-  </ModuleMenu>
+  {#if navigation.activeModule?.hasMenu !== false}
+    <ModuleMenu {title} {hasAlphabet} {alphabetHint} {onReset} {onPaste}>
+      {#if menuOptions}
+        {@render menuOptions()}
+      {/if}
+    </ModuleMenu>
+  {/if}
 
   <!-- Reference Modal -->
-  <ReferenceModal>
-    {#if reference}
-      {@render reference()}
-    {/if}
-  </ReferenceModal>
+  {#if navigation.activeModule?.hasReference !== false}
+    <ReferenceModal>
+      {#if reference}
+        {@render reference()}
+      {/if}
+    </ReferenceModal>
+  {/if}
 </div>
 
 <style>

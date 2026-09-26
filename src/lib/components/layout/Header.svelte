@@ -33,37 +33,41 @@
 
   <div class="header-actions">
     {#if !active?.isSystem}
-      <button
-        type="button"
-        class="header-btn"
-        aria-label="Reference a tahák"
-        title="Reference a tahák"
-        onclick={() => {
-          settings.vibrate(20);
-          navigation.toggleRef();
-        }}
-      >
-        <span class="icon"><BookOpen size={20} weight="duotone" /></span>
-      </button>
+      {#if active?.hasReference !== false}
+        <button
+          type="button"
+          class="header-btn"
+          aria-label="Reference a tahák"
+          title="Reference a tahák"
+          onclick={() => {
+            settings.vibrate(20);
+            navigation.toggleRef();
+          }}
+        >
+          <span class="icon"><BookOpen size={20} weight="duotone" /></span>
+        </button>
+      {/if}
 
-      <button
-        type="button"
-        class="header-btn"
-        class:has-warning={navigation.hasMenuWarning}
-        aria-label={navigation.hasMenuWarning ? `Nastavení modulu (${active?.name ?? ''} - upozornění)` : `Nastavení modulu (${active?.name ?? ''})`}
-        title={navigation.hasMenuWarning ? `Nastavení: ${active?.name ?? ''} (upozornění: nestandardní abeceda)` : `Nastavení: ${active?.name ?? ''}`}
-        onclick={() => {
-          settings.vibrate(20);
-          navigation.toggleMenu();
-        }}
-      >
-        <span class="icon-wrapper">
-          <span class="icon"><List size={22} weight="bold" /></span>
-          {#if navigation.hasMenuWarning}
-            <span class="warning-dot" aria-hidden="true"></span>
-          {/if}
-        </span>
-      </button>
+      {#if active?.hasMenu !== false}
+        <button
+          type="button"
+          class="header-btn"
+          class:has-warning={navigation.hasMenuWarning}
+          aria-label={navigation.hasMenuWarning ? `Nastavení modulu (${active?.name ?? ''} - upozornění)` : `Nastavení modulu (${active?.name ?? ''})`}
+          title={navigation.hasMenuWarning ? `Nastavení: ${active?.name ?? ''} (upozornění: nestandardní abeceda)` : `Nastavení: ${active?.name ?? ''}`}
+          onclick={() => {
+            settings.vibrate(20);
+            navigation.toggleMenu();
+          }}
+        >
+          <span class="icon-wrapper">
+            <span class="icon"><List size={22} weight="bold" /></span>
+            {#if navigation.hasMenuWarning}
+              <span class="warning-dot" aria-hidden="true"></span>
+            {/if}
+          </span>
+        </button>
+      {/if}
     {/if}
   </div>
 

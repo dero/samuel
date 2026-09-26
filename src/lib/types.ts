@@ -28,6 +28,8 @@ export interface ModuleMeta {
   icon: string;
   hasAlphabet?: boolean;
   isSystem?: boolean;
+  hasReference?: boolean;
+  hasMenu?: boolean;
 }
 
 export const MODULES: ModuleMeta[] = [
@@ -35,7 +37,7 @@ export const MODULES: ModuleMeta[] = [
   { id: 'braille', name: 'Braille', icon: 'DotsSixVertical' },
   { id: 'semaphore', name: 'Semafor', icon: 'FlagBanner' },
   { id: 'flags', name: 'Vlajky', icon: 'FlagCheckered' },
-  { id: 'states', name: 'Státy', icon: 'GlobeSimple' },
+  { id: 'states', name: 'Státy', icon: 'GlobeSimple', hasReference: false, hasMenu: false },
   { id: 'cross', name: 'Kříže', icon: 'Hash', hasAlphabet: true },
   { id: 'polybius', name: 'Polybius', icon: 'GridFour', hasAlphabet: true },
   { id: 'mobile', name: 'Mobil', icon: 'DeviceMobile' },
@@ -45,9 +47,9 @@ export const MODULES: ModuleMeta[] = [
   { id: 'freq', name: 'Frekvence', icon: 'ChartBar' },
   { id: 'grille', name: 'Mřížka', icon: 'SquaresFour' },
   { id: 'words', name: 'Slovník', icon: 'BookOpen' },
-  { id: 'calendar', name: 'Kalendář', icon: 'CalendarBlank' },
-  { id: 'facts', name: 'Fakta', icon: 'Lightbulb' },
-  { id: 'colors', name: 'Barvy', icon: 'Palette' },
+  { id: 'calendar', name: 'Kalendář', icon: 'CalendarBlank', hasMenu: false },
+  { id: 'facts', name: 'Fakta', icon: 'Lightbulb', hasReference: false, hasMenu: false },
+  { id: 'colors', name: 'Barvy', icon: 'Palette', hasReference: true, hasMenu: false },
   { id: 'help', name: 'Nápověda', icon: 'Question', isSystem: true },
   { id: 'settings', name: 'Nastavení', icon: 'Gear', isSystem: true }
 ];

@@ -58,14 +58,26 @@ class NavigationState {
     const modId = parts[0] as ModuleId;
     const sub = (parts[1] as SubView) || 'none';
 
-    if (MODULES.some((m) => m.id === modId)) {
+    const mod = MODULES.find((m) => m.id === modId);
+    if (mod) {
       if (this.activeModuleId !== modId) {
         this.hasMenuWarning = false;
         this.isLauncherOpen = false;
       }
       this.activeModuleId = modId;
-      this.subView = sub === 'menu' || sub === 'ref' ? sub : 'none';
+
+      let validSub: SubView = 'none';
+      if (sub === 'menu' && mod.hasMenu !== false && !mod.isSystem) {
+        validSub = 'menu';
+      } else if (sub === 'ref' && mod.hasReference !== false && !mod.isSystem) {
+        validSub = 'ref';
+      }
+
+      this.subView = validSub;
       this.persistModule(modId);
+      if (sub !== 'none' && validSub === 'none') {
+        window.history.replaceState(null, '', `#/${modId}`);
+      }
     } else {
       // Invalid module id in URL: fallback to persisted or help
       const target = this.getPersistedModule();
@@ -96,6 +108,9 @@ class NavigationState {
    * Open module contextual menu (pushes state: Module > Menu)
    */
   openMenu() {
+    if (this.activeModule.hasMenu === false || this.activeModule.isSystem) {
+      return;
+    }
     this.isLauncherOpen = false;
     this.subView = 'menu';
     const targetHash = `#/${this.activeModuleId}/menu`;
@@ -119,6 +134,9 @@ class NavigationState {
    * Open module reference cheat sheet (pushes state: Module > Ref)
    */
   openRef() {
+    if (this.activeModule.hasReference === false || this.activeModule.isSystem) {
+      return;
+    }
     this.isLauncherOpen = false;
     this.subView = 'ref';
     const targetHash = `#/${this.activeModuleId}/ref`;
