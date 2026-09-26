@@ -8,12 +8,16 @@ export * from './dbCacheService';
 export * from './legacyCleanup';
 
 import { cleanupLegacyIndexedDb } from './legacyCleanup';
+import { clearDatabaseCache } from './dbCacheService';
 
 /**
  * Deletes all caches, unregisters service workers, cleans legacy databases,
  * and clears cache metadata, returning the app to the first-run state.
  */
 export async function resetAllOfflineData(): Promise<void> {
+  // 0. Remove the dictionary DB from OPFS (the DB worker holds its file handles)
+  await clearDatabaseCache();
+
   // 1. Delete all CacheStorage caches
   if (typeof window !== 'undefined' && 'caches' in window) {
     try {

@@ -152,6 +152,10 @@ async function handleOp(op: string, payload: any, id: number): Promise<unknown> 
       await ensureInit();
       return { storageMode };
     case 'status':
+      // Opening the active OPFS DB (or migrating a legacy one) is what makes
+      // it "installed", so status must initialize first. Init failures just
+      // report "not installed".
+      await ensureInit().catch((err) => console.warn('[dbWorker] init failed:', err));
       return opStatus();
     case 'wordsSearch':
       await ensureInit();
@@ -212,20 +216,47 @@ async function ensureInit(): Promise<void> {
   }
 }
 
+// When the page reloads, the previous page's DB worker can keep its OPFS
+// access handles for a moment after the new worker starts; another open tab
+// holds them indefinitely. Retry for a while before giving up.
+const SAHPOOL_LOCK_RETRY_MS = [100, 200, 400, 800, 1200, 1600, 2000, 2500];
+
+class OpfsLockedError extends Error {}
+
+/**
+ * Returns true when the OPFS pool is ready, false when the browser lacks the
+ * required APIs (caller falls back to an in-memory DB). Throws when OPFS
+ * exists but stays locked by another tab - falling back to memory there
+ * would wrongly report the installed dictionary as missing.
+ */
 async function tryInstallSahPool(): Promise<boolean> {
   if (!sqlite3 || typeof sqlite3.installOpfsSAHPoolVfs !== 'function') return false;
-  try {
-    poolUtil = await sqlite3.installOpfsSAHPoolVfs({
-      name: SAHPOOL_VFS_NAME,
-      // 2 slots per DB file (main + journal); during an update the old and
-      // the new DB coexist briefly, so reserve room for both plus spare.
-      initialCapacity: 8
-    });
-    return true;
-  } catch (err) {
-    console.warn('[dbWorker] installOpfsSAHPoolVfs failed:', err);
-    poolUtil = null;
-    return false;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const options = {
+        name: SAHPOOL_VFS_NAME,
+        // 2 slots per DB file (main + journal); during an update the old and
+        // the new DB coexist briefly, so reserve room for both plus spare.
+        initialCapacity: 8,
+        // The library caches a failed install; allow retrying after a lock.
+        // Supported at runtime but missing from the bundled typings.
+        forceReinitIfPreviouslyFailed: true
+      };
+      poolUtil = await sqlite3.installOpfsSAHPoolVfs(options);
+      return true;
+    } catch (err: any) {
+      poolUtil = null;
+      if (err?.name !== 'NoModificationAllowedError') {
+        console.warn('[dbWorker] installOpfsSAHPoolVfs failed:', err);
+        return false;
+      }
+      if (attempt >= SAHPOOL_LOCK_RETRY_MS.length) {
+        throw new OpfsLockedError(
+          'Slovník je právě používán v jiné záložce. Zavřete ostatní záložky se Samuelem a aplikaci obnovte.'
+        );
+      }
+      await new Promise((r) => setTimeout(r, SAHPOOL_LOCK_RETRY_MS[attempt]));
+    }
   }
 }
 
@@ -301,8 +332,9 @@ async function openInMemoryDb(): Promise<void> {
 }
 
 function registerRegexFunction(target: Database): void {
-  target.createFunction('REGEXP', (_ctx: number, ...values: unknown[]) => {
-    const [pattern, text] = values;
+  // Arity is explicit: sqlite-wasm otherwise derives it from fn.length, which
+  // rest parameters would make 0 ("wrong number of arguments to REGEXP").
+  const regexpFn = (_ctx: number, pattern: unknown, text: unknown) => {
     if (pattern == null || text == null) return 0;
     const patternStr = String(pattern);
     let re = regexCache.get(patternStr);
@@ -316,7 +348,8 @@ function registerRegexFunction(target: Database): void {
     }
     if (!re) return 0;
     return re.test(String(text)) ? 1 : 0;
-  });
+  };
+  target.createFunction('REGEXP', regexpFn, { arity: 2, deterministic: true });
 }
 
 // ---------------------------------------------------------------------------
@@ -559,9 +592,11 @@ function executeMaskSearch(
       throw new Error('Neplatný regulární výraz');
     }
 
+    // Cheap column filters first: SQLite evaluates these terms in order, so the
+    // JS REGEXP callback only runs on rows that pass them (~3x fewer calls).
     sql = `
       SELECT word, freq, len, is_name FROM words
-      WHERE ${col} REGEXP $pattern AND ${filterCond}
+      WHERE ${filterCond} AND ${col} REGEXP $pattern
       ${includeRuian ? `UNION ALL SELECT word, 150 as freq, len, 1 as is_name FROM ruian WHERE ${col} REGEXP $pattern` : ''}
       ORDER BY freq DESC
       LIMIT $fetchLimit
