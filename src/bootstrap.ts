@@ -66,6 +66,11 @@ async function startApp(): Promise<void> {
 }
 
 async function initBootstrap(): Promise<void> {
+  // The layout never scrolls the document; don't let a reload (e.g. after an
+  // app update) restore a stale scroll offset left behind by the soft keyboard.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
+
   // Clean up ?sw-strategy query parameter from address bar if present
   if (typeof window !== 'undefined' && window.location.search.includes('sw-strategy')) {
     window.history.replaceState(null, '', window.location.pathname);

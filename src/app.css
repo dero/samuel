@@ -111,10 +111,18 @@ html, body {
   user-select: none;
 }
 
+/*
+ * Pinned to the viewport instead of 100dvh: a fixed box always tracks the
+ * current viewport and is immune to stray document scroll (e.g. left over
+ * after the soft keyboard, then restored by the browser on reload).
+ * Top/side insets keep the header out of the iOS status bar / notch
+ * (viewport-fit=cover + black-translucent status bar); the bottom inset is
+ * handled by ModuleShell.
+ */
 #app {
-  height: 100%;
-  height: 100dvh;
-  width: 100%;
+  position: fixed;
+  inset: 0;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
