@@ -408,82 +408,78 @@
           overlay.innerHTML =
             '<div style="font-size:16px;font-weight:700;">Aplikaci se nepodařilo spustit</div>' +
             '<div style="font-size:13px;line-height:1.5;color:#b3b3b3;max-width:320px;">' +
-            'Offline data jsou nejspíš neúplná po přerušené aktualizaci. ' +
-            'Obnova je smaže a stáhne znovu &ndash; vyžaduje připojení.' +
+            'Offline data jsou nejspíš poškozená. Smažte je včetně slovníku ' +
+            'a stáhněte aplikaci znovu &ndash; vyžaduje připojení.' +
             '</div>' +
+            (navigator.onLine
+              ? ''
+              : '<div style="font-size:13px;line-height:1.5;color:#fbbf24;max-width:320px;">' +
+                'Jste offline. Po smazání půjde aplikace stáhnout až s připojením.</div>') +
             '<button id="recovery-btn" type="button" style="min-height:52px;padding:0 24px;' +
             'background-color:#00d2ff;color:#000000;font-size:15px;font-weight:700;border:none;' +
-            'border-radius:6px;cursor:pointer;">Obnovit aplikaci</button>';
+            'border-radius:6px;cursor:pointer;">Smazat vše a stáhnout znovu</button>';
           document.body.appendChild(overlay);
 
           document.getElementById('recovery-btn').addEventListener('click', function () {
             var btn = document.getElementById('recovery-btn');
             if (btn) {
               btn.disabled = true;
-              btn.textContent = 'Obnovuji…';
+              btn.textContent = 'Mažu…';
               btn.style.opacity = '0.6';
             }
-            recoverAndReload();
+            wipeAllAndRestart();
           });
         }
 
-        function recoverAndReload() {
-          var done = function () {
-            window.location.href = '/?sw-strategy=network';
-          };
-
-          var deleteAppCaches = function () {
-            if (!('caches' in window)) return Promise.resolve();
-            return caches
-              .keys()
-              .then(function (names) {
-                // Only wipe app-related caches + the pointer; leave the
-                // (potentially 100MB+) dictionary DB cache untouched so the
-                // user doesn't need to re-download it after an app hiccup.
-                var toDelete = names.filter(function (name) {
-                  return name === 'samuel-app' || name === 'samuel-meta' || name.indexOf('samuel-app-') === 0;
-                });
-                // allSettled (not all): one stubborn cache failing to delete
-                // must never block the others or the eventual reload.
-                return Promise.allSettled(
-                  toDelete.map(function (name) {
-                    return caches.delete(name).then(function (ok) {
-                      if (!ok) console.warn('Recovery: cache.delete() reported false for', name);
-                    });
-                  })
-                );
-              })
-              .catch(function (e) {
-                console.warn('Recovery: cache deletion failed', e);
-              });
-          };
-
-          var unregisterServiceWorker = function () {
-            // Deleting the caches alone is not enough: this page is still
-            // CONTROLLED by the existing Service Worker, which serves
-            // everything (except the exact bypassed URL below) strictly
-            // cache-only. Without unregistering it, the fresh index.html we
-            // navigate to would load fine (bypassed), but its own entry
-            // script request would NOT carry the bypass and would 504
-            // against the now-empty cache, breaking the very screen this
-            // recovery is supposed to restore. Unregistering makes the next
-            // navigation fully uncontrolled, like a brand new visitor.
-            if (!('serviceWorker' in navigator)) return Promise.resolve();
-            return navigator.serviceWorker
-              .getRegistrations()
-              .then(function (regs) {
-                return Promise.allSettled(regs.map(function (reg) { return reg.unregister(); }));
-              })
-              .catch(function (e) {
-                console.warn('Recovery: service worker unregister failed', e);
-              });
-          };
-
-          try {
-            Promise.allSettled([deleteAppCaches(), unregisterServiceWorker()]).then(done).catch(done);
-          } catch (e) {
-            done();
+        // Wipes ALL offline data (app caches, dictionary DB, SW registration)
+        // and restarts onboarding from the network. User settings in
+        // localStorage are kept. Must stay in sync with wipeAll() embedded in
+        // public/sw.js - neither place can share code, as both run when the
+        // app itself can no longer load.
+        function wipeAllAndRestart() {
+          var tasks = [];
+          if ('caches' in window) {
+            tasks.push(caches.keys().then(function (names) {
+              return Promise.all(names.map(function (n) { return caches.delete(n); }));
+            }));
           }
+          if (navigator.storage && navigator.storage.getDirectory) {
+            tasks.push(navigator.storage.getDirectory().then(function (root) {
+              // Pointer first: a plain file that is never locked, and without
+              // it the dictionary counts as not installed even if a DB worker
+              // still holds the pool files.
+              return root.removeEntry('samuel-db-active.txt').catch(function () {}).then(function () {
+                if (!root.keys) return;
+                var names = [];
+                var it = root.keys();
+                function step() {
+                  return it.next().then(function (r) {
+                    if (r.done) return;
+                    names.push(r.value);
+                    return step();
+                  });
+                }
+                return step().then(function () {
+                  return Promise.all(names.map(function (n) {
+                    return root.removeEntry(n, { recursive: true }).catch(function () {});
+                  }));
+                });
+              });
+            }));
+          }
+          try { localStorage.removeItem('samuel_words_db_meta'); } catch (e) {}
+          try { indexedDB.deleteDatabase('samuel_offline_storage'); } catch (e) {}
+          if ('serviceWorker' in navigator) {
+            // Unregister so the next load is uncontrolled like a brand new
+            // visitor; otherwise the cache-only worker would 504 its scripts.
+            tasks.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
+              return Promise.all(regs.map(function (r) { return r.unregister(); }));
+            }));
+          }
+          var restart = function () { location.href = '/?sw-strategy=network'; };
+          Promise.all(tasks.map(function (t) {
+            return t.catch(function (e) { console.warn('Wipe step failed', e); });
+          })).then(restart, restart);
         }
 
         // Catch the bootstrap module script (or any script) failing to load -

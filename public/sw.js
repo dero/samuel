@@ -4,6 +4,9 @@
 // - If ?sw-strategy=network is present, it explicitly bypasses cache to fetch from network.
 // - For all other same-origin requests, it serves STRICTLY from CacheStorage.
 // - If an asset is not in cache, it returns 504 Gateway Timeout (NEVER hangs on network in the field).
+//   Exceptions, so the app can never brick itself (see handleFetch): while the app is not installed
+//   at all, a miss falls back to the network; if it is installed but the page itself is missing, a
+//   self-contained page offers to wipe everything and restart onboarding.
 //
 // App cache versioning: the client (src/lib/services/appCacheService.ts) downloads
 // each new app version into its own cache `samuel-app-<buildTime>` and, only once every
@@ -129,12 +132,166 @@ async function handleFetch(request) {
     // fall through to 504 below
   }
 
+  // 3. Installed, but the page itself is missing: the cache is corrupt. Don't
+  // mix in a (possibly newer) index.html from the network against older
+  // cached scripts - offer a full wipe and a clean onboarding instead.
+  if (activeName && request.mode === 'navigate') {
+    return brokenCachePage();
+  }
+
+  // 4. Not installed at all (first run never finished, the app was closed
+  // before downloading, or iOS evicted CacheStorage while keeping this
+  // registration). There is nothing to serve cache-only - a 504 here would
+  // brick the app, as index.html with its first-run screen could never load
+  // again. Go to the network; offline, navigations get a retry page.
+  if (!activeName) {
+    try {
+      return await fetchWithTimeout(request, NETWORK_FALLBACK_TIMEOUT_MS);
+    } catch {
+      if (request.mode === 'navigate') return offlinePage();
+    }
+  }
+
   // Return 504 Gateway Timeout if not in cache (guarantees 0ms hang when offline)
   return new Response('Asset not found in offline cache', {
     status: 504,
     statusText: 'Gateway Timeout (Cache Only)'
   });
 }
+
+const NETWORK_FALLBACK_TIMEOUT_MS = 10000;
+
+function fetchWithTimeout(request, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    fetch(request).then(
+      (res) => {
+        clearTimeout(timer);
+        resolve(res);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
+// Self-contained status pages: in these states nothing else can be loaded.
+function statusPage(title, text, buttonLabel, script) {
+  const html = `<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#000000" />
+<title>Samuel</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+    box-sizing: border-box; text-align: center; }
+  h1 { font-size: 16px; margin: 0; }
+  p { font-size: 13px; line-height: 1.5; color: #b3b3b3; max-width: 320px; margin: 0; }
+  .warn { color: #fbbf24; }
+  button { min-height: 52px; padding: 0 24px; background: #00d2ff; color: #000; font-size: 15px;
+    font-weight: 700; border: none; border-radius: 6px; }
+  button:disabled { opacity: 0.6; }
+</style>
+</head>
+<body>
+  <h1>${title}</h1>
+  <p>${text}</p>
+  <p id="offline-warn" class="warn" hidden>Jste offline. Po smazání půjde aplikace stáhnout až s připojením.</p>
+  <button id="action" type="button">${buttonLabel}</button>
+  <script>${script}</script>
+</body>
+</html>`;
+  return new Response(html, {
+    status: 503,
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
+  });
+}
+
+// The app is not stored on the device and the network is down.
+function offlinePage() {
+  return statusPage(
+    'Samuel není v zařízení uložen',
+    'Připojte se k internetu a zkuste to znovu. Aplikace se stáhne a pak poběží offline.',
+    'Zkusit znovu',
+    "document.getElementById('action').onclick = function () { location.reload(); };"
+  );
+}
+
+// Must stay in sync with wipeAllAndRestart() in index.html - neither place
+// can share code, as both run when the app itself can no longer load.
+// Wipes ALL offline data (app caches, dictionary DB, SW registration) and
+// restarts onboarding from the network. User settings in localStorage stay.
+const WIPE_ALL_SCRIPT = `
+function wipeAllAndRestart() {
+  var tasks = [];
+  if ('caches' in window) {
+    tasks.push(caches.keys().then(function (names) {
+      return Promise.all(names.map(function (n) { return caches.delete(n); }));
+    }));
+  }
+  if (navigator.storage && navigator.storage.getDirectory) {
+    tasks.push(navigator.storage.getDirectory().then(function (root) {
+      // Pointer first: a plain file that is never locked, and without
+      // it the dictionary counts as not installed even if a DB worker
+      // still holds the pool files.
+      return root.removeEntry('samuel-db-active.txt').catch(function () {}).then(function () {
+        if (!root.keys) return;
+        var names = [];
+        var it = root.keys();
+function step() {
+          return it.next().then(function (r) {
+            if (r.done) return;
+            names.push(r.value);
+            return step();
+          });
+        }
+        return step().then(function () {
+          return Promise.all(names.map(function (n) {
+            return root.removeEntry(n, { recursive: true }).catch(function () {});
+          }));
+        });
+      });
+    }));
+  }
+  try { localStorage.removeItem('samuel_words_db_meta'); } catch (e) {}
+  try { indexedDB.deleteDatabase('samuel_offline_storage'); } catch (e) {}
+  if ('serviceWorker' in navigator) {
+    // Unregister so the next load is uncontrolled like a brand new
+    // visitor; otherwise the cache-only worker would 504 its scripts.
+    tasks.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
+      return Promise.all(regs.map(function (r) { return r.unregister(); }));
+    }));
+  }
+  var restart = function () { location.href = '/?sw-strategy=network'; };
+  Promise.all(tasks.map(function (t) {
+    return t.catch(function (e) { console.warn('Wipe step failed', e); });
+  })).then(restart, restart);
+}
+if (!navigator.onLine) document.getElementById('offline-warn').hidden = false;
+document.getElementById('action').onclick = function () {
+  this.disabled = true;
+  this.textContent = 'Mažu…';
+  wipeAllAndRestart();
+};
+`;
+
+// Installed, but the offline data is corrupt.
+function brokenCachePage() {
+  return statusPage(
+    'Offline data jsou poškozená',
+    'Smažte je včetně slovníku a stáhněte aplikaci znovu. Stažení vyžaduje připojení.',
+    'Smazat vše a stáhnout znovu',
+    WIPE_ALL_SCRIPT
+  );
+}
+
 
 self.addEventListener('fetch', (event) => {
   // Only intercept GET requests
