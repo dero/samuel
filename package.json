@@ -10,6 +10,7 @@
     "build": "yarn db:build && vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
+    "icons": "tsx scripts/generate-icons/generate_icons.ts",
     "benchmark:morse": "tsx scripts/benchmark-morse/benchmark.ts",
     "benchmark:caesar": "tsx scripts/benchmark-caesar/benchmark.ts",
     "deploy": "bash scripts/deploy.sh"
