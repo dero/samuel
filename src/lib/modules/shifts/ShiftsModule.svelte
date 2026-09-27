@@ -281,7 +281,7 @@
               {#if text}
                 <span class="trigger-text">{text}</span>
               {:else}
-                <span class="trigger-placeholder">Klepnutím zadat text...</span>
+                <span class="trigger-placeholder">Zadat text…</span>
               {/if}
             </button>
             {#if text}
@@ -369,7 +369,7 @@
               {#if text}
                 <span class="trigger-text">{text}</span>
               {:else}
-                <span class="trigger-placeholder">Klepnutím zadat text...</span>
+                <span class="trigger-placeholder">Zadat text…</span>
               {/if}
             </button>
             {#if text}
@@ -423,7 +423,7 @@
               {#if keyText}
                 <span class="trigger-text">{keyText}</span>
               {:else}
-                <span class="trigger-placeholder">Klíč (heslo / čísla)...</span>
+                <span class="trigger-placeholder">Heslo nebo čísla…</span>
               {/if}
             </button>
             {#if keyText}
@@ -481,7 +481,7 @@
               {#if text}
                 <span class="trigger-text">{text}</span>
               {:else}
-                <span class="trigger-placeholder">Klepnutím zadat text...</span>
+                <span class="trigger-placeholder">Zadat text…</span>
               {/if}
             </button>
             {#if text}
@@ -535,7 +535,7 @@
               {#if autokeyPrimer}
                 <span class="trigger-text">{autokeyPrimer}</span>
               {:else}
-                <span class="trigger-placeholder">Heslo (klíč)...</span>
+                <span class="trigger-placeholder">Heslo…</span>
               {/if}
             </button>
             {#if autokeyPrimer}
@@ -585,7 +585,7 @@
       <div class="menu-group-title">Abeceda modulu</div>
       <NonStandardAlphabetBanner
         isWarning={isNonStandardAlphabet}
-        description="Pro Posuny je nastavena {currentLayout.name}. Běžně se používá Anglická (26) nebo Anglická + CH (27)."
+        description="Obvykle anglická (26) nebo s CH (27)."
       />
       <AlphabetSelect
         value={alphabetId}
@@ -596,10 +596,10 @@
     </div>
 
     <div class="menu-group">
-      <div class="menu-group-title">Nastavení zobrazení</div>
+      <div class="menu-group-title">Zobrazení</div>
       {#if activeSubmodule === 'caesar'}
         <OptionRow
-          label="Zvýraznit nejlepší shodu (Cézar)"
+          label="Zvýraznit nejlepší posun"
           checked={showBestHighlight}
           onChange={(val) => {
             showBestHighlight = val;

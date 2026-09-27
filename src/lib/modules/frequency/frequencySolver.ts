@@ -126,7 +126,7 @@ export function classifyIoc(
       ioc,
       classification: 'low',
       label: 'Nedostatek dat',
-      description: 'Zadejte alespoň 15–20 znaků pro spolehlivější odhad.'
+      description: 'Zadejte aspoň 20 znaků.'
     };
   }
 
@@ -138,7 +138,7 @@ export function classifyIoc(
       ioc,
       classification: 'high',
       label: 'Vysoká periodicita',
-      description: 'Text je silně repetitivní nebo obsahuje málo unikátních symbolů.'
+      description: 'Hodně opakování nebo málo různých znaků.'
     };
   }
 
@@ -146,8 +146,8 @@ export function classifyIoc(
     return {
       ioc,
       classification: 'mono',
-      label: 'Přirozený jazyk (Mono)',
-      description: 'Odpovídá přirozenému jazyku (substituce, posun, transpozice).'
+      label: 'Přirozený jazyk',
+      description: 'Substituce, posun nebo transpozice.'
     };
   }
 
@@ -155,8 +155,8 @@ export function classifyIoc(
     return {
       ioc,
       classification: 'poly',
-      label: 'Náhodná / Polyalfabetická',
-      description: 'Plochá distribuce četností (Vigenère s delším klíčem nebo šum).'
+      label: 'Polyalfabetická / náhodná',
+      description: 'Ploché četnosti: Vigenère nebo šum.'
     };
   }
 
@@ -164,7 +164,7 @@ export function classifyIoc(
     ioc,
     classification: 'poly',
     label: 'Mezilehlý IoC',
-    description: 'Hodnota leží mezi přirozeným jazykem a plochou náhodností.'
+    description: 'Mezi jazykem a náhodou.'
   };
 }
 

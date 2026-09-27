@@ -19,7 +19,7 @@
   <!-- Scrollable entries area -->
   <div class="table-scroll">
     <!-- Letters & Digits Section (A–Z) -->
-    <div class="section-title">Písmena a číslice (A–Z, 1–9, 0)</div>
+    <div class="section-title">Písmena a číslice</div>
     <div class="ref-grid">
       {#each lettersList as entry (entry.key)}
         <div class="ref-card">
@@ -58,7 +58,7 @@
     </div>
 
     <!-- Special Signals -->
-    <div class="section-title">Speciální signály</div>
+    <div class="section-title">Speciální</div>
     <div class="ref-grid">
       {#each specialList as entry (entry.key)}
         <div class="ref-card ref-card-special">

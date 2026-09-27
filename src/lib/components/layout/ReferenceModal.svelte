@@ -11,7 +11,7 @@
   let { title, children }: Props = $props();
 
   let sheetTitle = $derived(
-    title ?? (navigation.activeModule?.name ? `Reference: ${navigation.activeModule.name}` : 'Reference a tahák')
+    title ?? (navigation.activeModule?.name ? `Reference: ${navigation.activeModule.name}` : 'Reference')
   );
 </script>
 

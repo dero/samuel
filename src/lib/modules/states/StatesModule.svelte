@@ -135,8 +135,8 @@
       <div class="flags-scroll-zone">
         {#if !versionService.state.isDbInstalled}
           <div class="empty-state">
-            <span class="empty-title">Slovníková data nejsou stažena</span>
-            <span class="empty-hint text-muted">Katalog států a vlajek je součástí offline balíčku (~102 MB).</span>
+            <span class="empty-title">Slovník není stažen</span>
+            <span class="empty-hint text-muted">Státy jsou součástí offline slovníku (102 MB).</span>
             <button type="button" class="empty-reset-btn" onclick={() => navigation.openModule('settings')}>
               Stáhnout v Nastavení
             </button>
@@ -144,14 +144,14 @@
         {:else if isLoading}
           <div class="loading-state">
             <Globe size={32} class="spin-icon text-muted" />
-            <span class="text-muted">Načítám státy světa...</span>
+            <span class="text-muted">Načítám…</span>
           </div>
         {:else if filteredFlags.length === 0}
           <div class="empty-state">
             <span class="empty-title">Žádný stát neodpovídá filtrům</span>
-            <span class="empty-hint text-muted">Zkuste odebrat některé barvy nebo prvky</span>
+            <span class="empty-hint text-muted">Uberte některý filtr</span>
             <button type="button" class="empty-reset-btn" onclick={resetAllFilters}>
-              Obnovit všechny filtry
+              Zrušit filtry
             </button>
           </div>
         {:else}

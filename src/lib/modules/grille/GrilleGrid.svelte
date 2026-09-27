@@ -141,8 +141,8 @@
     <div class="grille-placeholder">
       <div class="placeholder-box">
         <span class="placeholder-icon">⊞</span>
-        <span class="placeholder-title">Žádná podkladová data</span>
-        <span class="placeholder-desc">Vložte data níže pro automatické sestavení mřížky</span>
+        <span class="placeholder-title">Žádná data</span>
+        <span class="placeholder-desc">Vložte obsah tabulky níže</span>
       </div>
     </div>
   {:else}

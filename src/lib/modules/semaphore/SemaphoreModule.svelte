@@ -381,21 +381,21 @@
     />
 
     <OptionRow
-      label="Okamžité zadávání (bez potvrzování)"
-      hint="Znak se automaticky vloží ihned po navolení 2 ramen (tahem i klepnutím)."
+      label="Okamžité vkládání"
+      hint="Znak se vloží hned po zvolení obou ramen."
       checked={modState.auto_insert}
       onChange={(v) => (modState.auto_insert = v)}
     />
     <OptionRow
-      label="Režim čísel (1–9, 0 místo písmen)"
-      hint="Dekóduje znaky A–I, K jako číslice 1–9, 0."
+      label="Režim čísel"
+      hint="A–I, K čte jako 1–9, 0."
       checked={modState.direct_nums}
       isNonStandard={modState.direct_nums}
       onChange={(v) => (modState.direct_nums = v)}
     />
     <OptionRow
-      label="Zrcadlení (Pohled vysílajícího)"
-      hint="Zrcadlí horizontální směr ramen (vlevo ↔ vpravo)."
+      label="Pohled vysílajícího"
+      hint="Prohodí levou a pravou stranu."
       checked={modState.mirror}
       isNonStandard={modState.mirror}
       onChange={(v) => (modState.mirror = v)}

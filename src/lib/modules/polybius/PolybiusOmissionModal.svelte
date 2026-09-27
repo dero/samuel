@@ -64,7 +64,7 @@
 
 <BottomSheet
   {open}
-  title="Vynechaná písmena pro Polybia"
+  title="Vynechaná písmena"
   icon={TextAa}
   zIndex={240}
   maxWidth="520px"
@@ -77,7 +77,7 @@
   <div class="omission-modal-body">
     <div class="info-banner">
       <div class="info-text">
-        Pro velikost <strong>{targetCapacity === 25 ? '5×5 (25 polí)' : '6×6 (36 polí)'}</strong> má abeceda <strong>{alphabetName}</strong> ({allLetters.length} znaků) více znaků než mřížka. Klepnutím vyškrtněte písmena, která se nemají použít.
+        Abeceda <strong>{alphabetName}</strong> má víc znaků než mřížka {targetCapacity === 25 ? '5×5' : '6×6'}. Klepnutím vyškrtněte nepoužitá písmena.
       </div>
     </div>
 
@@ -92,11 +92,11 @@
       </span>
       <div class="status-label">
         {#if excessCount > 0}
-          <span>Povolených znaků: <strong>{enabledCount} / {targetCapacity}</strong> · Vyřaďte ještě <strong>{excessCount} {excessCount === 1 ? 'znak' : excessCount < 5 ? 'znaky' : 'znaků'}</strong></span>
+          <span><strong>{enabledCount} / {targetCapacity}</strong> · vyřaďte ještě <strong>{excessCount} {excessCount === 1 ? 'znak' : excessCount < 5 ? 'znaky' : 'znaků'}</strong></span>
         {:else if excessCount === 0}
-          <span>Přesně <strong>{targetCapacity}</strong> povolených znaků pro mřížku</span>
+          <span><strong>{enabledCount} / {targetCapacity}</strong></span>
         {:else}
-          <span>Povolených znaků: <strong>{enabledCount} / {targetCapacity}</strong> (zbylá pole budou prázdná)</span>
+          <span><strong>{enabledCount} / {targetCapacity}</strong> · zbylá pole zůstanou prázdná</span>
         {/if}
       </div>
     </div>
@@ -132,7 +132,7 @@
         onclick={handleConfirm}
       >
         <Check size={18} weight="bold" />
-        <span>Potvrdit výběr ({enabledCount} / {targetCapacity})</span>
+        <span>Potvrdit</span>
       </button>
     </div>
   </div>

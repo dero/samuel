@@ -29,106 +29,85 @@
   <div class="reference-scroll-content" data-allow-copy>
     {#if activeTab === 'mask'}
       <section class="ref-section">
-        <h3 class="ref-heading">Vyhledávání podle masky (Křížovka)</h3>
-        <p class="ref-text">
-          Slouží k doplnění neznámých písmen, pokud znáte délku slova nebo část jeho pozic.
-        </p>
-
         <div class="examples-table">
           <div class="example-row">
             <span class="example-code font-mono">.</span>
-            <span class="example-desc">Právě jedno libovolné písmeno</span>
+            <span class="example-desc">jedno písmeno</span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">*</span>
-            <span class="example-desc">Libovolný počet písmen (nula nebo více)</span>
+            <span class="example-desc">libovolný počet písmen</span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">K..KA</span>
-            <span class="example-desc">5písmenné slovo: začíná K, končí KA (např. <em>KOČKA</em>, <em>KAPKA</em>, <em>KLIKA</em>, <em>KULKA</em>)</span>
-          </div>
-          <div class="example-row">
-            <span class="example-code font-mono">K...KA</span>
-            <span class="example-desc">6písmenné slovo: začíná K, končí KA (např. <em>KOSTKA</em>, <em>KLAPKA</em>, <em>KNÍŽKA</em>)</span>
+            <span class="example-desc"><em>KOČKA</em>, <em>KAPKA</em>, <em>KLIKA</em></span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">P..ÍZE</span>
-            <span class="example-desc">6písmenné slovo se známým začátkem a koncem (např. <em>PENÍZE</em>)</span>
+            <span class="example-desc"><em>PENÍZE</em></span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">POD*</span>
-            <span class="example-desc">Slova začínající předponou POD- (např. <em>PODZEMÍ</em>, <em>PODCHOD</em>, <em>PODPIS</em>)</span>
+            <span class="example-desc"><em>PODZEMÍ</em>, <em>PODCHOD</em>, <em>PODPIS</em></span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">P*KA</span>
-            <span class="example-desc">Slova začínající P a končící KA (např. <em>POHÁDKA</em>, <em>POLÉVKA</em>, <em>PASTILKA</em>)</span>
+            <span class="example-desc"><em>POHÁDKA</em>, <em>POLÉVKA</em></span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">*LES</span>
-            <span class="example-desc">Slova končící na -LES (např. <em>PRALES</em>, <em>BEZLES</em>)</span>
+            <span class="example-desc"><em>PRALES</em></span>
           </div>
         </div>
 
         <div class="tip-box">
-          <strong>Tip pro terén:</strong> Ve výchozím nastavení modul ignoruje diakritiku. Dotaz <code>k..ka</code> najde tvary s háčky i bez nich (např. <em>KOČKA</em>). V menu lze zapnout <strong>Pouze podstatná jména</strong>, <strong>Zahrnout vlastní jména</strong> (např. Karel, Praha) i <strong>Zahrnout místopis</strong> (RÚIAN).
+          Diakritika se ignoruje: <code>k..ka</code> najde i <em>KOČKA</em>. Vlastní jména a místopis lze zapnout v menu.
         </div>
       </section>
     {:else if activeTab === 'anagram'}
       <section class="ref-section">
-        <h3 class="ref-heading">Anagramy (Přesmyčky)</h3>
-        <p class="ref-text">
-          Hledá platná česká slova složená ze zadané sady písmen bez ohledu na jejich pořadí. Využívá optimalizovaný 26bitový index s okamžitou odezvou.
-        </p>
+        <p class="ref-text">Slova ze zadaných písmen v libovolném pořadí.</p>
 
         <div class="examples-table">
           <div class="example-row">
             <span class="example-code font-mono">K O T E L</span>
-            <span class="example-desc">Přesné anagramy: <em>KOTEL</em>, <em>LOKET</em></span>
-          </div>
-          <div class="example-row">
-            <span class="example-code font-mono">P E N I Z E</span>
-            <span class="example-desc">Přesný anagram: <em>PENÍZE</em></span>
+            <span class="example-desc"><em>KOTEL</em>, <em>LOKET</em></span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">K O T E L N A</span>
             <span class="example-desc">
-              Přesné anagramy: <em>KOTELNA</em>, <em>KONATEL</em><br />
-              Kratší podslova: <em>KLENOT</em> (6), <em>ETANOL</em> (6), <em>LOKET</em> (5), <em>KOTEL</em> (5), <em>LENKA</em> (5)...
+              <em>KOTELNA</em>, <em>KONATEL</em><br />
+              kratší: <em>KLENOT</em>, <em>ETANOL</em>, <em>LENKA</em>…
             </span>
           </div>
         </div>
 
-        <p class="ref-note">
-          Výsledky jsou řazeny primárně sestupně podle délky slova a sekundárně podle frekvence výskytu v českém jazyce. Šifrová klíčová slova jsou upřednostněna.
-        </p>
+        <p class="ref-note">Řazeno podle délky, pak podle četnosti. Šifrovací hesla mají přednost.</p>
       </section>
     {:else if activeTab === 'regex'}
       <section class="ref-section">
-        <h3 class="ref-heading">Regulární výrazy (Regex syntax)</h3>
-        <p class="ref-text">
-          Po zapnutí volby <em>„Používat regex syntaxi“</em> v menu modulu můžete zadávat standardní regulární výrazy JavaScriptu:
-        </p>
+        <p class="ref-text">Po zapnutí regexu v menu platí syntaxe JavaScriptu.</p>
 
         <div class="examples-table">
           <div class="example-row">
             <span class="example-code font-mono">^[k-m].*a$</span>
-            <span class="example-desc">Slova začínající písmenem K, L nebo M a končící na A (např. <em>KOČKA</em>, <em>LOUKA</em>, <em>MAPA</em>)</span>
+            <span class="example-desc">začíná K–M, končí A: <em>KOČKA</em>, <em>MAPA</em></span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">(ik|ek)$</span>
-            <span class="example-desc">Slova končící na koncovku -ík nebo -ek (např. <em>LESÍK</em>, <em>DOMEK</em>, <em>ZÁMEK</em>)</span>
+            <span class="example-desc">končí -ík/-ek: <em>LESÍK</em>, <em>DOMEK</em></span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">[aeiouyáéíóúůýě]{3}</span>
-            <span class="example-desc">Slova obsahující 3 samohlásky za sebou (např. <em>SOUOSTROVÍ</em> [ouo], <em>SPOLUAUTOR</em> [uau], <em>RADIOAKTIVITA</em> [ioa])</span>
+            <span class="example-desc">3 samohlásky za sebou: <em>SOUOSTROVÍ</em></span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">^[^aeiouyáéíóúůýě]+$</span>
-            <span class="example-desc">Čistě souhlásková slova bez samohlásek (např. <em>SMRK</em>, <em>PRST</em>, <em>TVRZ</em>, <em>VLK</em>, <em>CHRT</em>)</span>
+            <span class="example-desc">bez samohlásek: <em>SMRK</em>, <em>PRST</em>, <em>VLK</em></span>
           </div>
           <div class="example-row">
             <span class="example-code font-mono">^.a.a.a$</span>
-            <span class="example-desc">6písmenná slova se střídavým A na sudých pozicích (např. <em>BALADA</em>, <em>KANADA</em>)</span>
+            <span class="example-desc"><em>BALADA</em>, <em>KANADA</em></span>
           </div>
         </div>
       </section>
@@ -173,12 +152,6 @@
     gap: var(--space-xs);
   }
 
-  .ref-heading {
-    font-size: var(--text-base);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    margin: 0;
-  }
 
   .ref-text {
     font-size: var(--text-sm);

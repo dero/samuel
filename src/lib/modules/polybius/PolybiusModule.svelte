@@ -97,7 +97,7 @@
   });
 
   const omittedPillText = $derived.by(() => {
-    if (omittedLetters.length === 0) return '(žádné)';
+    if (omittedLetters.length === 0) return '—';
     if (omittedLetters.length <= 3) return omittedLetters.join(', ');
     return omittedLetters.slice(0, 3).join(', ') + '... (+' + (omittedLetters.length - 3) + ')';
   });
@@ -200,8 +200,8 @@
       <div class="menu-group-title">Popisky souřadnic</div>
       <SegmentedControl
         options={[
-          { id: 'numbers', label: polybiusSize === '6x6' ? 'Čísla (1–6)' : 'Čísla (1–5)' },
-          { id: 'letters', label: polybiusSize === '6x6' ? 'Písmena (A–F)' : 'Písmena (A–E)' }
+          { id: 'numbers', label: polybiusSize === '6x6' ? '1–6' : '1–5' },
+          { id: 'letters', label: polybiusSize === '6x6' ? 'A–F' : 'A–E' }
         ]}
         value={polybiusCoordLabels}
         ariaLabel="Popisky souřadnic"
@@ -210,12 +210,12 @@
     </div>
 
     <div class="menu-group">
-      <div class="menu-group-title">Abeceda nástroje</div>
+      <div class="menu-group-title">Abeceda</div>
       <NonStandardAlphabetBanner
         isWarning={isNonStandardAlphabet}
-        description="Pro mřížku {polybiusSize} je obvyklá {polybiusSize === '6x6'
-          ? 'Alfanumerická (36 znaků)'
-          : 'Anglická (26 znaků)'}."
+        description="Obvykle {polybiusSize === '6x6'
+          ? 'alfanumerická (36)'
+          : 'anglická (26)'}."
       />
 
       <AlphabetSelect
@@ -226,7 +226,7 @@
 
     {#if currentLayout.letters.length > activeConfig.capacity}
       <div class="menu-group">
-        <div class="menu-group-title">Vynechaná písmena do matice</div>
+        <div class="menu-group-title">Vynechaná písmena</div>
         <button
           type="button"
           class="omission-open-btn"
@@ -253,7 +253,7 @@
     <TranslationCard
       {text}
       pendingText={pendingChar ?? ''}
-      emptyHint="Dvojice souřadnic (1–5 či A–E) přeloží znak v matici."
+      emptyHint="Zadejte řádek a sloupec."
     />
   {/snippet}
 

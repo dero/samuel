@@ -37,8 +37,8 @@ class MorseService {
     } catch (err: any) {
       throw new Error(
         err?.message === 'DB_NOT_INSTALLED'
-          ? 'Slovníková databáze není lokálně stažena. Stáhněte ji v Nastavení.'
-          : err?.message || 'Nepodařilo se vyřešit Morseovku'
+          ? 'Chybí slovník – stáhněte ho v Nastavení.'
+          : err?.message || 'Řešení selhalo'
       );
     } finally {
       this.pending--;

@@ -59,11 +59,11 @@ export const SEMAPHORE_ENTRIES: SemaphoreEntry[] = [
   { char: 'T', pair: [0, 7], key: '0_7', name: 'Písmeno T', series: 4 },
   { char: 'U', pair: [1, 7], key: '1_7', name: 'Písmeno U', series: 4 },
   { char: 'Y', pair: [2, 7], key: '2_7', name: 'Písmeno Y', series: 4 },
-  { char: 'CANCEL', pair: [3, 7], key: '3_7', name: 'Omyl / Zrušit (Annul)', series: 4 },
+  { char: 'CANCEL', pair: [3, 7], key: '3_7', name: 'Omyl', series: 4 },
 
   // Zbývající kombinace z {0, 1, 2, 3}
-  { char: '#', pair: [0, 1], key: '0_1', name: 'Číslice (Numerals prefix)', series: 5 },
-  { char: 'J', pair: [0, 2], key: '0_2', name: 'Písmeno J (Písmena / Letters)', series: 5 },
+  { char: '#', pair: [0, 1], key: '0_1', name: 'Přepnutí na číslice', series: 5 },
+  { char: 'J', pair: [0, 2], key: '0_2', name: 'Písmeno J, přepnutí na písmena', series: 5 },
   { char: 'V', pair: [0, 3], key: '0_3', name: 'Písmeno V', series: 5 },
   { char: 'W', pair: [1, 2], key: '1_2', name: 'Písmeno W', series: 6 },
   { char: 'X', pair: [1, 3], key: '1_3', name: 'Písmeno X', series: 6 },

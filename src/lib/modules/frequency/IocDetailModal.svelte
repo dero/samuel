@@ -2,6 +2,7 @@
   import BottomSheet from '../../components/ui/BottomSheet.svelte';
   import { Info } from 'phosphor-svelte';
   import type { FrequencyAnalysisResult } from './frequencySolver';
+  import { IOC_EXPECTED } from './frequencyData';
 
   interface Props {
     open: boolean;
@@ -14,7 +15,7 @@
 
 <BottomSheet
   {open}
-  title="Statistika textu & IoC"
+  title="Statistika textu"
   icon={Info}
   {onClose}
 >
@@ -40,28 +41,28 @@
         <span class="summary-card-val">{analysis.totalChars}</span>
       </div>
       <div class="ioc-summary-card">
-        <span class="summary-card-label">Různých symbolů</span>
+        <span class="summary-card-label">Různých znaků</span>
         <span class="summary-card-val">{analysis.uniqueChars}</span>
       </div>
     </div>
 
     <div class="ioc-scale-guide">
-      <div class="scale-guide-title">Orientační hodnoty Indexu koincidence:</div>
+      <div class="scale-guide-title">Orientační IoC</div>
       <div class="scale-guide-row">
-        <span class="scale-val font-mono">~ 0.060</span>
-        <span class="scale-desc">Čeština bez diakritiky (přirozený text, substituce, posun)</span>
+        <span class="scale-val font-mono">~ {IOC_EXPECTED.csUnaccented.toFixed(3)}</span>
+        <span class="scale-desc">Čeština bez diakritiky, substituce, posun</span>
       </div>
       <div class="scale-guide-row">
-        <span class="scale-val font-mono">~ 0.048</span>
-        <span class="scale-desc">Čeština s diakritikou (42 písmen)</span>
+        <span class="scale-val font-mono">~ {IOC_EXPECTED.csDiacritics42.toFixed(3)}</span>
+        <span class="scale-desc">Čeština s diakritikou</span>
       </div>
       <div class="scale-guide-row">
         <span class="scale-val font-mono">~ 0.038 – 0.045</span>
-        <span class="scale-desc">Polyalfabetická šifra (Vigenère s delším heslem)</span>
+        <span class="scale-desc">Vigenère s delším heslem</span>
       </div>
       <div class="scale-guide-row">
-        <span class="scale-val font-mono">0.0385</span>
-        <span class="scale-desc">Uniformní náhodný šum (1 / 26)</span>
+        <span class="scale-val font-mono">{IOC_EXPECTED.uniform26}</span>
+        <span class="scale-desc">Náhodný text</span>
       </div>
     </div>
   </div>

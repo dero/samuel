@@ -23,8 +23,8 @@
   }: Props = $props();
 
   const SORT_SEGMENT_OPTIONS: SegmentOption<'freq' | 'alpha'>[] = [
-    { id: 'freq', label: 'Podle četnosti ▾' },
-    { id: 'alpha', label: 'Abecedně (A–Z)' }
+    { id: 'freq', label: 'Četnost ▾' },
+    { id: 'alpha', label: 'Abecedně' }
   ];
 </script>
 
@@ -52,7 +52,7 @@
       {#if rawText}
         <span class="trigger-text">{rawText}</span>
       {:else}
-        <span class="trigger-placeholder">Klepnutím zadat text...</span>
+        <span class="trigger-placeholder">Zadat text…</span>
       {/if}
     </button>
     {#if rawText}

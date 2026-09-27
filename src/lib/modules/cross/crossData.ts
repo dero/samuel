@@ -56,7 +56,7 @@ export const CROSS_TYPES: CrossTypeConfig[] = [
     id: 'small-polish',
     name: 'Pigpen',
     shortName: '9+9+4+4',
-    description: 'aka Malý polský kříž',
+    description: 'Malý polský kříž',
     hasAlphabet: true,
     capacity: 26,
     defaultAlphabetId: 'english-26',
@@ -71,7 +71,7 @@ export const CROSS_TYPES: CrossTypeConfig[] = [
     axis2Short: 'Var',
     axis2Options: [
       { value: 1, label: 'Bez', sub: 'Bez tečky' },
-      { value: 2, label: 'S tečkou', sub: 'S tečkou (•)' }
+      { value: 2, label: '•', sub: 'S tečkou' }
     ]
   }
 ];

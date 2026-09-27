@@ -1,19 +1,15 @@
 <script lang="ts">
+  import LetterFrequencyTable from '../frequency/LetterFrequencyTable.svelte';
+  import {
+    CZECH_27_UNACCENTED_FREQUENCIES,
+    ENGLISH_26_FREQUENCIES
+  } from '../frequency/frequencyData';
 </script>
 
 <div class="ref-wrapper">
   <div class="ref-content" data-allow-copy>
     <section class="ref-section">
-      <h3>Jednoduchá (monoalfabetická) substituce</h3>
-      <p>
-        Šifra, kde je každé písmeno abecedy jednoznačně nahrazeno jiným symbolem či písmenem.
-        Zachovává se frekvenční profil jazyka a délky slov.
-      </p>
-    </section>
-
-    <section class="ref-section">
-      <h4>Jednopísmenná slova v češtině</h4>
-      <p>Pokud jsou v šifře oddělena slova, samostatně stojící písmena jsou téměř jistě:</p>
+      <h4>Jednopísmenná slova</h4>
       <div class="letters-pill-list font-mono">
         <span class="pill">A</span>
         <span class="pill">I</span>
@@ -27,7 +23,7 @@
     </section>
 
     <section class="ref-section">
-      <h4>Nejčastější dvoupísmenná slova</h4>
+      <h4>Častá dvoupísmenná slova</h4>
       <div class="words-grid font-mono">
         <span class="word-tag">DO</span>
         <span class="word-tag">NA</span>
@@ -47,56 +43,17 @@
     </section>
 
     <section class="ref-section">
-      <h4>Četnosti písmen v češtině</h4>
-      <div class="freq-table-wrapper">
-        <table class="freq-table font-mono">
-          <thead>
-            <tr>
-              <th>Znak</th>
-              <th>Četnost</th>
-              <th>Znak</th>
-              <th>Četnost</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>E</td><td>10.5 %</td>
-              <td>I</td><td>7.3 %</td>
-            </tr>
-            <tr>
-              <td>A</td><td>8.4 %</td>
-              <td>N</td><td>6.5 %</td>
-            </tr>
-            <tr>
-              <td>O</td><td>8.1 %</td>
-              <td>T</td><td>5.7 %</td>
-            </tr>
-            <tr>
-              <td>R</td><td>4.8 %</td>
-              <td>S</td><td>4.5 %</td>
-            </tr>
-            <tr>
-              <td>U</td><td>3.9 %</td>
-              <td>L</td><td>3.8 %</td>
-            </tr>
-            <tr>
-              <td>K</td><td>3.7 %</td>
-              <td>D</td><td>3.6 %</td>
-            </tr>
-            <tr>
-              <td>M</td><td>3.2 %</td>
-              <td>P</td><td>3.1 %</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <h4>Četnost písmen – čeština</h4>
+      <LetterFrequencyTable frequencies={CZECH_27_UNACCENTED_FREQUENCIES} />
     </section>
 
     <section class="ref-section">
-      <h4>Zdvojená písmena v češtině</h4>
-      <p>
-        Dvě stejná písmena za sebou (např. <code>XX</code>) bývají nejčastěji:
-      </p>
+      <h4>Četnost písmen – angličtina</h4>
+      <LetterFrequencyTable frequencies={ENGLISH_26_FREQUENCIES} />
+    </section>
+
+    <section class="ref-section">
+      <h4>Častá zdvojená písmena</h4>
       <div class="letters-pill-list font-mono">
         <span class="pill">NN</span>
         <span class="pill">DD</span>
@@ -125,12 +82,6 @@
     gap: 16px;
   }
 
-  .ref-section h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    margin: 0 0 6px 0;
-  }
 
   .ref-section h4 {
     font-size: 13px;
@@ -139,12 +90,6 @@
     margin: 0 0 6px 0;
   }
 
-  .ref-section p {
-    font-size: 13px;
-    line-height: 1.45;
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
 
   .letters-pill-list {
     display: flex;
@@ -179,39 +124,5 @@
     text-align: center;
     color: var(--color-accent-primary);
     border: 1px solid var(--color-border-subtle);
-  }
-
-  .freq-table-wrapper {
-    margin-top: 8px;
-    background-color: var(--color-surface-1);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border-subtle);
-    overflow: hidden;
-  }
-
-  .freq-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-
-  .freq-table th {
-    background-color: var(--color-surface-2);
-    color: var(--color-text-secondary);
-    padding: 4px 8px;
-    text-align: left;
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  .freq-table td {
-    padding: 3px 8px;
-    border-top: 1px solid var(--color-border-subtle);
-    color: var(--color-text-primary);
-  }
-
-  .freq-table td:nth-child(2),
-  .freq-table td:nth-child(4) {
-    color: var(--color-text-secondary);
   }
 </style>

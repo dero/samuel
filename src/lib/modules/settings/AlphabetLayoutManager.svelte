@@ -57,9 +57,7 @@
 
 <section class="card">
   <h2 class="card-title">Správa abeced</h2>
-  <p class="card-desc">
-    Přehled vestavěných abeced a tvorba vlastních sad znaků pro šifrovací nástroje. Volba konkrétní abecedy se provádí přímo v menu jednotlivých nástrojů.
-  </p>
+  <p class="card-desc">Abecedu pro nástroj zvolíte v jeho menu.</p>
 
   <div class="layouts-list">
     {#each alphabet.layouts as layout (layout.id)}
@@ -74,7 +72,7 @@
           }}
         >
           <span class="layout-name">{layout.name}</span>
-          <span class="layout-count">({layout.letters.length} znaků)</span>
+          <span class="layout-count">{layout.letters.length} znaků</span>
           {#if layout.isBuiltin}
             <span class="builtin-badge">Vestavěná</span>
           {:else}
@@ -98,7 +96,7 @@
   <!-- Letters grid for inspected layout -->
   <div class="letters-preview">
     <div class="preview-label">
-      Znaky: <strong>{inspectedLayout.name}</strong> ({inspectedLayout.letters.length}):
+      <strong>{inspectedLayout.name}</strong>
     </div>
     {#if inspectedLayout.description}
       <div class="preview-desc">{inspectedLayout.description}</div>
@@ -117,7 +115,7 @@
     </div>
     {#if inspectedLayout.isBuiltin}
       <div class="preview-hint">
-        Vestavěné abecedy jsou chráněné proti úpravám. Chcete-li znaky měnit, vytvořte si kopii tlačítkem níže.
+        Vestavěnou abecedu nelze upravit, jen zkopírovat.
       </div>
     {/if}
   </div>
@@ -132,7 +130,7 @@
       isCreatingLayout = true;
     }}
   >
-    + Vytvořit vlastní abecedu (kopie: {inspectedLayout.name})
+    + Kopírovat jako vlastní
   </button>
 </section>
 
@@ -140,7 +138,7 @@
   open={isCreatingLayout}
   title="Vytvořit vlastní abecedu"
   value={newLayoutName}
-  placeholder="Název nové abecedy (např. S heslem KOS)..."
+  placeholder="Název, např. S heslem KOS"
   autocapitalize="sentences"
   onSave={handleSaveLayout}
   onClose={() => {

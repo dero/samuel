@@ -53,8 +53,8 @@
             <TextAa size={22} weight="bold" />
           </div>
           <div class="mode-info">
-            <div class="mode-name">Znak / Písmeno</div>
-            <div class="mode-desc">Aktivní abeceda: {alphabetName}</div>
+            <div class="mode-name">Písmeno</div>
+            <div class="mode-desc">{alphabetName}</div>
           </div>
         </div>
 
@@ -82,8 +82,8 @@
               <span class="font-mono" style="font-weight: 800; font-size: 15px;">Ř</span>
             </div>
             <div class="mode-info">
-              <div class="mode-name">Římská čísla (kanonická)</div>
-              <div class="mode-desc">Striktní pravidla (1–3999), zámek kláves</div>
+              <div class="mode-name">Římská kanonická</div>
+              <div class="mode-desc">1–3999, jen platné tvary</div>
             </div>
           </div>
 
@@ -108,13 +108,13 @@
             </div>
             <div class="mode-info">
               <div class="mode-name">
-                Římská čísla (volná)
+                Římská volná
                 {#if modeType === 'target'}
                   <span class="disabled-tag">Jen vstup</span>
                 {/if}
               </div>
               <div class="mode-desc">
-                {modeType === 'target' ? 'Výstup je vždy kanonický' : 'Povoluje tvary IIII, IC, IL apod.'}
+                {modeType === 'target' ? 'Výstup je vždy kanonický' : 'Přijme i IIII, IC, IL…'}
               </div>
             </div>
           </div>
@@ -130,7 +130,7 @@
 
     <!-- Category 3: Poziční soustavy -->
     <div class="category-section">
-      <div class="category-title">Poziční soustavy (Báze 2–16)</div>
+      <div class="category-title">Poziční soustavy</div>
       <div class="bases-list">
         {#each ALL_BASES as b}
           {@const cfg = BASE_CONFIGS[b]}
@@ -146,7 +146,7 @@
               <div class="mode-info">
                 <div class="mode-name">{cfg.name} ({cfg.shortName})</div>
                 <div class="mode-desc">
-                  Číslice: {cfg.digits[0]}–{cfg.digits[cfg.digits.length - 1]} ({cfg.digits.length})
+                  Číslice {cfg.digits[0]}–{cfg.digits[cfg.digits.length - 1]}
                 </div>
               </div>
             </div>

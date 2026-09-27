@@ -9,10 +9,10 @@
     type BrailleEntry
   } from './brailleData';
   const sections = [
-    { title: 'Základní abeceda (A–Z)', items: BRAILLE_LETTERS },
-    { title: 'Česká diakritika (Á–Ž)', items: BRAILLE_CZECH_DIACRITICS },
-    { title: 'Číslice (1–9, 0)', items: BRAILLE_DIGITS },
-    { title: 'Prefixy a symboly', items: [...BRAILLE_PREFIXES, ...BRAILLE_PUNCTUATION] }
+    { title: 'Abeceda', items: BRAILLE_LETTERS },
+    { title: 'Diakritika', items: BRAILLE_CZECH_DIACRITICS },
+    { title: 'Číslice', items: BRAILLE_DIGITS },
+    { title: 'Prefixy a znaky', items: [...BRAILLE_PREFIXES, ...BRAILLE_PUNCTUATION] }
   ];
 </script>
 

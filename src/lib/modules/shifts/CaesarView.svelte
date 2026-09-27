@@ -39,7 +39,7 @@
 <div class="caesar-container">
   <!-- Contextual tooltip: seated at bottom, dissolves into nothingness on first activity -->
   <EmptyHint
-    text="Všechny posuny abecedy se vyhodnocují živě."
+    text="Vyhodnotí všechny posuny najednou."
     hidden={!!rawText.trim()}
   />
 

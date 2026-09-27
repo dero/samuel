@@ -178,9 +178,9 @@
   async function handleDownloadDatabase() {
     settings.vibrate(20);
     try {
-      toast.show('Stahuji slovníkovou databázi...', { type: 'info' });
+      toast.show('Stahuji slovník…', { type: 'info' });
       await versionService.downloadDb();
-      toast.show('Databáze byla stažena', { type: 'success' });
+      toast.show('Slovník stažen', { type: 'success' });
     } catch (err: any) {
       toast.show(`Chyba stažení: ${err?.message || 'Neznámá chyba'}`, { type: 'danger' });
     }
@@ -202,9 +202,9 @@
           <div class="db-icon-circle">
             <Database size={28} weight="bold" />
           </div>
-          <div class="db-title">Slovníková databáze není stažena</div>
+          <div class="db-title">Slovník není stažen</div>
           <div class="db-desc">
-            Pro offline vyhledávání ve slovníku a přesmyčkách je nutné stáhnout databázi (cca 102 MB).
+            Hledání potřebuje offline slovník (102 MB).
           </div>
           <button
             type="button"
@@ -217,7 +217,7 @@
               <span>Stahuji ({versionService.state.progress}%)...</span>
             {:else}
               <DownloadSimple size={18} weight="bold" />
-              <span>Stáhnout databázi</span>
+              <span>Stáhnout slovník</span>
             {/if}
           </button>
         </div>
@@ -225,8 +225,8 @@
         <!-- Contextual tooltip: seated directly above input zone, dissolves on input -->
         <EmptyHint
           text={activeSubmodule === 'mask'
-            ? 'Tečka nahrazuje písmeno, hvězdička libovolně mnoho znaků.'
-            : 'Zadejte písmena pro vyhledání přesmyček a podslov.'}
+            ? 'Tečka = jedno písmeno, hvězdička = libovolně mnoho.'
+            : 'Zadejte písmena k přesmyčce.'}
           hidden={!!query.trim()}
         />
 
@@ -242,7 +242,7 @@
             {:else if searchError}
               <span class="error-label font-mono">{searchError}</span>
             {:else if results.length === 0}
-              <span class="font-mono">Žádná slova nenalezena</span>
+              <span class="font-mono">Nic nenalezeno</span>
             {:else if hasMore || results.length >= 1000}
               <span class="font-mono">1000+ výsledků</span>
             {:else}
@@ -276,7 +276,7 @@
                   <span class="word-tag font-mono">vlastní</span>
                 {/if}
               </div>
-              <span class="word-len font-mono">({match.len})</span>
+              <span class="word-len font-mono">{match.len}</span>
             </button>
           {/each}
         </div>
@@ -366,10 +366,10 @@
   <!-- Contextual Menu Options -->
   {#snippet menuOptions()}
     <div class="menu-group">
-      <div class="menu-group-title">Slovníkový korpus</div>
+      <div class="menu-group-title">Slovník</div>
       <OptionRow
         label="Pouze podstatná jména"
-        hint="Omezit hledání na česká substantiva (vynechat slovesa, přídavná jména a tvary)"
+        hint="Bez sloves, přídavných jmen a tvarů"
         checked={onlySubstantives}
         onChange={(val) => {
           onlySubstantives = val;
@@ -377,7 +377,7 @@
       />
       <OptionRow
         label="Zahrnout vlastní jména"
-        hint="Povolit jména osob, příjmení a zeměpisná vlastní jména (např. Karel, Praha, Novák)"
+        hint="Karel, Novák, Praha…"
         checked={includeProperNames}
         onChange={(val) => {
           includeProperNames = val;
@@ -385,7 +385,7 @@
       />
       <OptionRow
         label="Zahrnout místopis"
-        hint="Prohledávat také názvy českých obcí, částí obcí a ulic z RÚIAN"
+        hint="Obce, části obcí a ulice z RÚIAN"
         checked={includeRuian}
         onChange={(val) => {
           includeRuian = val;
@@ -394,18 +394,18 @@
     </div>
 
     <div class="menu-group">
-      <div class="menu-group-title">Nastavení vyhledávání</div>
+      <div class="menu-group-title">Hledání</div>
       <OptionRow
         label="Ignorovat diakritiku"
-        hint="Hledat bez ohledu na háčky a čárky (např. 'kocka' najde i 'kočka')"
+        hint="kocka najde i kočka"
         checked={ignoreDiacritics}
         onChange={(val) => {
           ignoreDiacritics = val;
         }}
       />
       <OptionRow
-        label="Používat regex syntaxi"
-        hint="Povolit plné regulární výrazy JavaScriptu (např. ^[k-m].*a$)"
+        label="Regulární výrazy"
+        hint="Syntaxe JavaScriptu, např. ^[k-m].*a$"
         checked={useRegex}
         onChange={(val) => {
           useRegex = val;

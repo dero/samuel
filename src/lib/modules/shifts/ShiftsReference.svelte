@@ -32,7 +32,7 @@
         activeTab = 'vigenere';
       }}
     >
-      Vigenère & Tabula
+      Vigenère
     </button>
     <button
       type="button"
@@ -50,10 +50,8 @@
   <div class="ref-content" data-allow-copy>
     {#if activeTab === 'caesar'}
       <section class="ref-section">
-        <h3>Caesarova šifra (Posun o konstantu)</h3>
-        <p>
-          Každé písmeno zprávy je posunuto o fixní počet pozic $k$ v abecedě o délce $N$.
-        </p>
+        <h3>Caesarova šifra</h3>
+        <p>Každé písmeno posunuto o stejné <code>k</code> v abecedě délky <code>N</code>.</p>
 
         <div class="formula-box font-mono">
           <div>Šifrování: C = (P + k) mod N</div>
@@ -61,68 +59,22 @@
         </div>
 
         <h4>ROT13</h4>
-        <p>
-          Posun o 13 pozic ve standardní 26místné abecedě ($N = 26$). Je sám sobě inverzí (šifrování i dešifrování je stejná operace: $13 + 13 = 26 \equiv 0$).
-        </p>
-
-        <h4>Typická četnost písmen v češtině (ČNK)</h4>
-        <div class="freq-table-wrapper">
-          <table class="freq-table font-mono">
-            <thead>
-              <tr>
-                <th>Písmeno</th>
-                <th>E</th>
-                <th>A</th>
-                <th>O</th>
-                <th>T</th>
-                <th>N</th>
-                <th>I</th>
-                <th>S</th>
-                <th>R</th>
-                <th>V</th>
-                <th>L</th>
-                <th>D</th>
-                <th>K</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Podíl</td>
-                <td>10.7%</td>
-                <td>8.6%</td>
-                <td>8.3%</td>
-                <td>5.8%</td>
-                <td>5.7%</td>
-                <td>5.6%</td>
-                <td>5.3%</td>
-                <td>4.9%</td>
-                <td>4.6%</td>
-                <td>3.8%</td>
-                <td>3.6%</td>
-                <td>3.4%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p>Posun o 13 v 26 písmenech. Šifrování i dešifrování je totéž.</p>
       </section>
     {:else if activeTab === 'vigenere'}
       <section class="ref-section">
-        <h3>Vigenèrova šifra (Polyalfabetická substituce)</h3>
-        <p>
-          Posun se v každém kroku mění podle písmene z opakujícího se klíče (hesla).
-        </p>
+        <h3>Vigenèrova šifra</h3>
+        <p>Posun se mění podle písmen opakujícího se hesla.</p>
 
         <div class="formula-box font-mono">
           <div>Šifrování: C_i = (P_i + K_i) mod N</div>
           <div>Dešifrování: P_i = (C_i - K_i) mod N</div>
         </div>
 
-        <h4>Gronsfeldova šifra</h4>
-        <p>
-          Varianta Vigenèra, kde klíčem není slovo, ale sekvence číslic (např. <code>3 1 4 1 5 9</code>). Každé písmeno se posune o dané číslo. V Samuelovi stačí číslo zadat přímo do pole klíče.
-        </p>
+        <h4>Gronsfeld</h4>
+        <p>Klíčem jsou číslice, např. <code>314159</code>. Zadávají se přímo do pole klíče.</p>
 
-        <h4>Tabula Recta (Šifrovací čtverec)</h4>
+        <h4>Tabula recta</h4>
         <div class="table-scroll">
           <table class="tabula-recta font-mono">
             <thead>
@@ -149,25 +101,18 @@
       </section>
     {:else if activeTab === 'autokey'}
       <section class="ref-section">
-        <h3>Autokey šifra (Samoposuv)</h3>
-        <p>
-          Vynalezena Blaise de Vigenèrem v roce 1586. Řeší slabinu klasického Vigenèra (periodicitu hesla).
-        </p>
+        <h3>Autokey</h3>
+        <p>Heslo se neopakuje – po úvodním klíči (primeru) pokračuje textem zprávy.</p>
 
-        <h4>1. Otevřený text jako klíč (Plaintext Autokey)</h4>
-        <p>
-          Klíč začíná krátkým slovem (tzv. <em>primer</em>). Jakmile primer dojde, jako další klíč slouží samotný <strong>otevřený text zprávy</strong>:
-        </p>
+        <h4>Otevřený text jako klíč</h4>
         <div class="formula-box font-mono">
           <div>Zpráva:  J D E T E N A R O Z C E S T I</div>
           <div>Primer:  K O D</div>
           <div>Klíč:    K O D J D E T E N A R O Z C E</div>
         </div>
 
-        <h4>2. Šifrový text jako klíč (Ciphertext Autokey)</h4>
-        <p>
-          Po vyčerpání primeru se jako klíč použije proud <strong>již zašifrovaných znaků</strong>. Tato varianta je odolnější proti luštění frekvenční analýzou, protože proud klíče neobsahuje českou syntaxi.
-        </p>
+        <h4>Šifrový text jako klíč</h4>
+        <p>Po primeru pokračuje klíč už zašifrovanými znaky.</p>
       </section>
     {/if}
   </div>
@@ -245,30 +190,9 @@
     margin: var(--space-xs) 0 var(--space-sm) 0;
   }
 
-  .freq-table-wrapper {
-    overflow-x: auto;
-    margin-top: var(--space-xs);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-  }
-
-  .freq-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11px;
-    text-align: center;
-    background-color: var(--color-surface-2);
-  }
-
-  .freq-table th,
-  .freq-table td {
-    padding: 6px 4px;
-    border: 1px solid var(--color-border-subtle);
-  }
-
-  .freq-table th {
-    background-color: var(--color-surface-3);
-    color: var(--color-text-primary);
+  .ref-section p code {
+    font-family: var(--font-mono);
+    color: var(--color-accent-primary);
   }
 
   .table-scroll {

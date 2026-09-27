@@ -29,7 +29,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'A',
     name: 'Alfa',
     colors: ["white", "blue"],
-    meaning: 'Mám potápěče pod vodou; držte se v bezpečné vzdálenosti a plujte pomalu.',
+    meaning: 'Potápěč pod vodou, držte se dál a plujte pomalu.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<path d="M 18,18 H 162 L 126,90 L 162,162 H 18 z" fill="#000094"/>
 	<rect x="18" y="18" width="72" height="144" fill="#fff"/>
@@ -40,7 +40,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'B',
     name: 'Bravo',
     colors: ["red"],
-    meaning: 'Nakládám, vykládám nebo přepravuji nebezpečný náklad.',
+    meaning: 'Manipuluji s nebezpečným nákladem.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<path d="M 18,18 H 162 L 126,90 L 162,162 H 18 z" fill="#f00" stroke="#000" stroke-width="3.75" stroke-linejoin="round"/>
 </svg>`
@@ -49,7 +49,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'C',
     name: 'Charlie',
     colors: ["blue", "white", "red"],
-    meaning: 'Ano (kladná odpověď / potvrzení).',
+    meaning: 'Ano.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#000094"/>
 	<rect x="18" y="46.8" width="144" height="86.4" fill="#fff"/>
@@ -61,7 +61,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'D',
     name: 'Delta',
     colors: ["yellow", "blue"],
-    meaning: 'Držte se dál ode mne; manévruji s obtížemi.',
+    meaning: 'Držte se dál, manévruji s obtížemi.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#fc0"/>
 	<rect x="18" y="54" width="144" height="72" fill="#000094"/>
@@ -72,7 +72,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'E',
     name: 'Echo',
     colors: ["blue", "red"],
-    meaning: 'Měním svůj kurz vpravo.',
+    meaning: 'Měním kurz vpravo.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#000094"/>
 	<rect x="18" y="90" width="144" height="72" fill="#f00"/>
@@ -83,7 +83,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'F',
     name: 'Foxtrot',
     colors: ["white", "red"],
-    meaning: 'Jsem neschopen manévrovat; navažte se mnou spojení.',
+    meaning: 'Nemohu manévrovat, navažte spojení.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#fff"/>
 	<path d="M 90,18 l 72,72 l -72,72 l -72,-72 z" fill="#f00"/>
@@ -94,7 +94,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'G',
     name: 'Golf',
     colors: ["yellow", "blue"],
-    meaning: 'Požaduji lodivoda (pro rybářská plavidla: táhnu sítě).',
+    meaning: 'Požaduji lodivoda. Rybáři: vytahuji sítě.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 <path fill="#000094" d="m18,18h144v144H18"/>
 <path stroke="#FC0" stroke-width="24" d="m30,18v144m48,0V18m48,0v144"/>
@@ -116,7 +116,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'I',
     name: 'India',
     colors: ["yellow", "black"],
-    meaning: 'Měním svůj kurz vlevo.',
+    meaning: 'Měním kurz vlevo.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#fc0"/>
 	<circle cx="90" cy="90" r="36" fill="#000"/>
@@ -127,7 +127,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'J',
     name: 'Juliett',
     colors: ["blue", "white"],
-    meaning: 'Mám požár na palubě a vezu nebezpečný náklad; držte se dál.',
+    meaning: 'Požár a nebezpečný náklad, držte se dál.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#000094"/>
 	<rect x="18" y="66" width="144" height="48" fill="#fff"/>
@@ -149,7 +149,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'L',
     name: 'Lima',
     colors: ["yellow", "black"],
-    meaning: 'Okamžitě zastavte své plavidlo.',
+    meaning: 'Okamžitě zastavte.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 <rect x="16" y="16" width="148" height="148" rx="2"/>
 <path fill="#FC0" d="m20,20h70v140h70V90H20"/>
@@ -159,7 +159,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'M',
     name: 'Mike',
     colors: ["blue", "white"],
-    meaning: 'Moje plavidlo stojí a nevplouvá do plavební dráhy.',
+    meaning: 'Stojím, nemám rychlost.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<clipPath id="c">
 		<path d="M 18,18 H 162 V 162 H 18 z"/>
@@ -173,7 +173,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'N',
     name: 'November',
     colors: ["blue", "white"],
-    meaning: 'Ne (záporná odpověď).',
+    meaning: 'Ne.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#fff"/>
 	<path d="M 18,18 H 54 V 162 H 90 V 18 H 126 V 162 H 162 V 126 H 18 V 90 H 162 V 54 H 18 z" fill="#000094"/>
@@ -195,7 +195,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'P',
     name: 'Papa',
     colors: ["blue", "white"],
-    meaning: 'V přístavu: všichni na palubu, loď vyplouvá. Na moři: sítě jsou zachyceny.',
+    meaning: 'V přístavu: všichni na palubu, vyplouváme. Na moři: sítě zachyceny.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#000094"/>
 	<rect x="54" y="54" width="72" height="72" fill="#fff"/>
@@ -206,7 +206,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'Q',
     name: 'Quebec',
     colors: ["yellow"],
-    meaning: 'Moje loď je zdravá, žádám volný styk s pobřežím.',
+    meaning: 'Loď je zdravá, žádám volný styk s pobřežím.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#fc0"/>
 	<path d="M 18,18 H 162 V 162 H 18 z" fill="none" stroke="#000" stroke-width="3.75" stroke-linejoin="round"/>
@@ -216,7 +216,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'R',
     name: 'Romeo',
     colors: ["red", "yellow"],
-    meaning: 'Přijal jsem vaši poslední zprávu.',
+    meaning: 'Přijal jsem vaši zprávu.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#f00"/>
 	<path d="M 90,18 V 162 M 18,90 H 162" stroke="#fc0" stroke-width="36"/>
@@ -227,7 +227,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'S',
     name: 'Sierra',
     colors: ["white", "blue"],
-    meaning: 'Můj stroj pracuje na zpětný chod.',
+    meaning: 'Stroj jede zpět.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#fff"/>
 	<rect x="54" y="54" width="72" height="72" fill="#000094"/>
@@ -238,7 +238,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'T',
     name: 'Tango',
     colors: ["red", "white", "blue"],
-    meaning: 'Držte se dál ode mne; vleču sítě v páru.',
+    meaning: 'Držte se dál, vlečeme sítě v páru.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#000094"/>
 	<rect x="18" y="18" width="96" height="144" fill="#fff"/>
@@ -287,7 +287,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'X',
     name: 'X-ray',
     colors: ["white", "blue"],
-    meaning: 'Přerušte provádění svého manévru a sledujte mé signály.',
+    meaning: 'Přerušte manévr a sledujte mé signály.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 	<rect x="18" y="18" width="144" height="144" fill="#fff"/>
 	<path d="M 90,18 V 162 M 18,90 H 162" stroke="#000094" stroke-width="36"/>
@@ -298,7 +298,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'Y',
     name: 'Yankee',
     colors: ["yellow", "red"],
-    meaning: 'Vleču svou kotvu.',
+    meaning: 'Vleču kotvu.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 <clipPath id="c"><path d="m18,18h144v144H18"/></clipPath>
 <path fill="#FC0" d="m18,18h144v144H18"/>
@@ -310,7 +310,7 @@ export const LETTER_FLAGS: FlagItem[] = [
     code: 'Z',
     name: 'Zulu',
     colors: ["black", "red", "yellow", "blue"],
-    meaning: 'Požaduji remorkér (pro rybáře: vrhám sítě).',
+    meaning: 'Požaduji remorkér. Rybáři: vrhám sítě.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
 <rect x="18" y="18" width="144" height="144" fill="#fc0"/>
 <path d="M 18,18 H 162 L 90,90 z" fill="#000"/>

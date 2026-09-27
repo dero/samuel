@@ -186,15 +186,15 @@
 
   {#snippet menuOptions()}
     <OptionRow
-      label="Zobrazovat lodičku"
-      hint="Dekorativní námořní motiv v levém horním rohu mřížky vlajek"
+      label="Lodička"
+      hint="Dekorace v rohu mřížky"
       type="switch"
       checked={showSailboat}
       onChange={(val) => (showSailboat = val)}
     />
     <OptionRow
-      label="Resetovat filtr po zadání"
-      hint="Po klepnutí na vlajku automaticky zrušit zvolený filtr barev"
+      label="Rušit filtr po zadání"
+      hint="Po klepnutí na vlajku zruší filtr barev"
       type="switch"
       checked={autoResetFilter}
       onChange={(val) => (autoResetFilter = val)}

@@ -59,7 +59,7 @@
     class="result-card"
     class:is-clickable={hasContent}
     onclick={handleCopy}
-    title={hasContent ? 'Klepnutím zkopírujete do schránky' : undefined}
+    title={hasContent ? 'Kopírovat' : undefined}
   >
     <!-- Translation text in normal flow -->
     <div

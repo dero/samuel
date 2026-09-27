@@ -1,35 +1,30 @@
 <div class="reference-content">
-  <!-- Section 1: Princip Cardanovy / Fleissnerovy mřížky -->
   <section class="ref-section">
-    <h3 class="ref-heading">1. Princip rotační mřížky</h3>
+    <h3 class="ref-heading">Otočná mřížka</h3>
     <p class="ref-text">
-      Rotační (Fleissnerova nebo Cardanova) mřížka je transpoziční šifra. Základem je čtvercová tabulka o rozměru <code>N × N</code> a krycí maska s vyříznutými otvory.
-    </p>
-    <p class="ref-text">
-      Postupným otáčením masky o 90° (obvykle 4 kroky po směru hodinových ručiček: 0°, 90°, 180°, 270°) se v otvorech postupně odkrývají písmena tajenky.
+      Fleissnerova mřížka, transpozice. Maska s otvory nad tabulkou <code>N × N</code> se otáčí po 90° (4 polohy) a v otvorech se postupně odkrývá text.
     </p>
   </section>
 
-  <!-- Section 2: Matematický princip orbit -->
   <section class="ref-section">
-    <h3 class="ref-heading">2. Matematické orbity a počet otvorů</h3>
+    <h3 class="ref-heading">Počet otvorů</h3>
     <p class="ref-text">
-      Každé pole mřížky patří do právě jedné 4členné skupiny pozic (orbity), které se při otočení o 90° cyklicky překrývají:
+      Pole tvoří čtveřice, které se otáčením kryjí:
     </p>
     <div class="code-box">
       <code>(r, c) → (c, N-1-r) → (N-1-r, N-1-c) → (N-1-c, r)</code>
     </div>
     <p class="ref-text">
-      Aby byla mřížka platná a žádné pole se neodkrylo dvakrát, smí z každé 4členné orbity patřit do masky právě <strong>1 otvor</strong>. V aplikaci se při zvolení otvoru zbývající 3 pozice automaticky uzamknou.
+      Z každé čtveřice smí být otvorem právě <strong>jedno</strong> pole. Aplikace zbylá tři po klepnutí zamkne.
     </p>
     <div class="table-wrapper">
       <table class="ref-table">
         <thead>
           <tr>
             <th>Rozměr</th>
-            <th>Celkem polí</th>
-            <th>Počet otvorů</th>
-            <th>Poznámka</th>
+            <th>Polí</th>
+            <th>Otvorů</th>
+            <th>Pozn.</th>
           </tr>
         </thead>
         <tbody>
@@ -37,59 +32,57 @@
             <td><strong>4 × 4</strong></td>
             <td>16</td>
             <td><strong>4</strong></td>
-            <td>Rychlé menší šifry</td>
+            <td></td>
           </tr>
           <tr>
             <td><strong>5 × 5</strong></td>
             <td>25</td>
             <td><strong>6</strong></td>
-            <td>1 pevný střed (nelze vyříznout)</td>
+            <td>střed nelze vyříznout</td>
           </tr>
           <tr>
             <td><strong>6 × 6</strong></td>
             <td>36</td>
             <td><strong>9</strong></td>
-            <td>Nejčastější formát na šifrovačkách</td>
+            <td>nejčastější</td>
           </tr>
           <tr>
             <td><strong>8 × 8</strong></td>
             <td>64</td>
             <td><strong>16</strong></td>
-            <td>Delší tajenky</td>
+            <td></td>
           </tr>
           <tr>
             <td><strong>10 × 10</strong></td>
             <td>100</td>
             <td><strong>25</strong></td>
-            <td>Velké mřížky</td>
+            <td></td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- Section 3: Formát vstupu a čárky -->
   <section class="ref-section">
-    <h3 class="ref-heading">3. Formát vstupních dat</h3>
+    <h3 class="ref-heading">Vstup</h3>
     <div class="notation-box">
       <div class="notation-item">
-        <strong>Bez čárek:</strong> Každý neprázdný znak tvoří 1 buňku (např. <code>POKLADNASVERU</code>). Velikost mřížky se automaticky přizpůsobí nejmenšímu čtverci.
+        <strong>Bez čárek:</strong> znak = buňka, např. <code>POKLADNASVERU</code>. Mřížka se zvolí nejmenší možná.
       </div>
       <div class="notation-item">
-        <strong>S čárkami:</strong> Čárka odděluje jednotlivé tokeny do buněk (např. <code>JDE, TEN, ARO, ZCE, STI</code> nebo čísla <code>12, 5, 28, 4</code>).
+        <strong>S čárkami:</strong> čárka odděluje buňky, např. <code>JDE, TEN, ARO</code> nebo <code>12, 5, 28</code>.
       </div>
     </div>
   </section>
 
-  <!-- Section 4: Časté terénní chytáky -->
   <section class="ref-section">
-    <h3 class="ref-heading">4. Časté terénní záludnosti</h3>
+    <h3 class="ref-heading">Záludnosti</h3>
     <div class="notation-box">
       <div class="notation-item">
-        <strong>Směr otáčení (CW vs. CCW):</strong> Většina šifer se otáčí po směru hodinových ručiček (CW). Pro opačný směr zapněte v Menu <em>Otáčení proti směru</em>.
+        <strong>Směr otáčení:</strong> obvykle po směru hodinových ručiček. Opačný směr lze zapnout v menu.
       </div>
       <div class="notation-item">
-        <strong>Pořadí čtení:</strong> Standardně se v každé rotaci čtou otvory po řádcích (shora dolů, zleva doprava). Pokud zadání šifry vyžaduje číst v pořadí klepání, aktivujte <em>Pořadí klepání = pořadí čtení</em>.
+        <strong>Pořadí čtení:</strong> obvykle po řádcích. Číst v pořadí klepání lze zapnout v menu.
       </div>
     </div>
   </section>

@@ -7,26 +7,26 @@
 
 <div class="help-scroll">
   <div class="help-container">
-    <h1 class="page-title">Nápověda k aplikaci</h1>
-    <p class="subtitle">{APP_NAME} – Nástroj pro terénní šifrovačky</p>
+    <h1 class="page-title">Nápověda</h1>
+    <p class="subtitle">{APP_NAME} – pomůcky na šifrovačky</p>
 
     <section class="card">
-      <h2 class="card-title">Základní ovládání & Ergonomie</h2>
+      <h2 class="card-title">Ovládání</h2>
       <ul class="help-list">
         <li>
-          <strong>Rychlá navigace:</strong> Klepnutím na ikonu nebo název pomůcky v záhlaví otevřete rychlý výběr pro okamžitý skok do libovolného nástroje na 1 kliknutí.
+          <strong>Přepnutí pomůcky:</strong> klepněte na ikonu nebo název v záhlaví.
         </li>
         <li>
-          <strong>Tlačítko Zpět:</strong> Systémové tlačítko Zpět v telefonu vás vždy spolehlivě vrátí z menu, reference či výběru pomůcek zpět do rozluštěného modulu.
+          <strong>Zpět:</strong> systémové tlačítko zavře menu, referenci i výběr pomůcek.
         </li>
         <li>
-          <strong>Kopírování jedním klepnutím (One-tap Copy):</strong> Klepnutím na jakýkoliv dekódovaný text nebo výsledkový řádek se obsah automaticky zkopíruje do schránky.
+          <strong>Kopírování:</strong> klepnutím na výsledek.
         </li>
         <li>
-          <strong>Nastavení modulu:</strong> Tlačítko se symbolem <span class="inline-icon"><List size={14} weight="bold" /></span> v záhlaví obsahuje rychlé volby specifické pro daný nástroj, výběr abecedy a bezpečné tlačítko pro vyčištění modulu.
+          <strong>Menu</strong> <span class="inline-icon"><List size={14} weight="bold" /></span> volby nástroje, abeceda a vyčištění modulu.
         </li>
         <li>
-          <strong>Reference a taháky:</strong> Tlačítko <span class="inline-icon"><BookOpen size={14} weight="duotone" /></span> v záhlaví okamžitě otevře tahák a tabulky daného modulu.
+          <strong>Reference</strong> <span class="inline-icon"><BookOpen size={14} weight="duotone" /></span> tahák a tabulky.
         </li>
       </ul>
     </section>
@@ -43,9 +43,6 @@
           </div>
         {/each}
       </div>
-      <p class="note">
-        Podrobný popis každého modulu a jeho pokročilých funkcí bude zkompletován během finální fáze implementace.
-      </p>
     </section>
   </div>
 </div>
@@ -140,10 +137,4 @@
     color: var(--color-accent-primary);
   }
 
-  .note {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    font-style: italic;
-    margin: 0;
-  }
 </style>

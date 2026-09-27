@@ -5,8 +5,8 @@
   let activeTab = $state<"list" | "tree">("list");
 
   const tabs: SegmentOption<"list" | "tree">[] = [
-    { id: "list", label: `Přehled znaků (${CZECH_MNEMONICS.length})` },
-    { id: "tree", label: "Morseův strom" }
+    { id: "list", label: "Znaky", badge: CZECH_MNEMONICS.length },
+    { id: "tree", label: "Strom" }
   ];
 
   // Binary tree levels for visualization

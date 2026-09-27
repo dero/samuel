@@ -36,28 +36,28 @@ export const BUILTIN_LAYOUTS: AlphabetLayout[] = [
     name: 'Anglická (26)',
     letters: DEFAULT_ENGLISH_26,
     isBuiltin: true,
-    description: 'Písmena A–Z, bez CH'
+    description: 'A–Z bez CH'
   },
   {
     id: 'english-ch-27',
     name: 'Anglická + CH (27)',
     letters: DEFAULT_ENGLISH_CH_27,
     isBuiltin: true,
-    description: 'Písmena A–Z, přidáno CH'
+    description: 'A–Z a CH'
   },
   {
     id: 'alphanumeric-36',
     name: 'Alfanumerická (36)',
     letters: DEFAULT_ALPHANUMERIC_36,
     isBuiltin: true,
-    description: 'Písmena A–Z a číslice 0–9'
+    description: 'A–Z a 0–9'
   },
   {
     id: 'czech-42',
     name: 'Česká (42)',
     letters: DEFAULT_CZECH_42,
     isBuiltin: true,
-    description: 'Česká abeceda s diakritikou'
+    description: 'S diakritikou a CH'
   }
 ];
 

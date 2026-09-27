@@ -139,7 +139,7 @@
       holes = holes.filter((k) => k !== key);
     } else {
       if (holes.length >= requiredHoles) {
-        toast.show(`Dosažen max. počet (${requiredHoles}) otvorů`, { type: 'warning' });
+        toast.show(`Maximum je ${requiredHoles} otvorů`, { type: 'warning' });
         return;
       }
       holes = [...holes, key];
@@ -187,27 +187,27 @@
     />
 
     <div class="menu-group">
-      <div class="menu-group-title">Konfigurace šifry</div>
+      <div class="menu-group-title">Šifra</div>
 
       <OptionRow
-        label="Pořadí klepání = pořadí čtení"
-        hint="Čte díry v pořadí klepnutí místo standardního zleva doprava a shora dolů."
+        label="Číst v pořadí klepnutí"
+        hint="Místo po řádcích"
         checked={tapOrderReading}
         isNonStandard={tapOrderReading}
         onChange={(v) => (tapOrderReading = v)}
       />
 
       <OptionRow
-        label="Otáčení proti směru (CCW ↺)"
-        hint="Otáčí masku o 90° proti směru hodinových ručiček."
+        label="Otáčet proti směru ↺"
+        hint="Proti směru hodinových ručiček"
         checked={rotationCCW}
         isNonStandard={rotationCCW}
         onChange={(v) => (rotationCCW = v)}
       />
 
       <OptionRow
-        label="Režim zápisu (kódování)"
-        hint="Inverzní operace: text se zapisuje přes okénka a výsledkem je podkladová tabulka."
+        label="Šifrovat"
+        hint="Text se vepíše do otvorů, výsledkem je tabulka"
         checked={writeMode}
         isNonStandard={writeMode}
         onChange={(v) => (writeMode = v)}
@@ -224,8 +224,8 @@
       <TranslationCard
         text={fullText}
         emptyHint={writeMode
-          ? 'Zadejte otevřený text a označte otvory v masce pro rozdistribuování do tabulky.'
-          : 'Vložte podkladová data a označte otvory v masce.'}
+          ? 'Zadejte text a označte otvory.'
+          : 'Vložte tabulku a označte otvory.'}
       >
         {#snippet children()}
           {#if fullText}
@@ -279,7 +279,7 @@
             <span class="trigger-text">{rawInput}</span>
           {:else}
             <span class="trigger-placeholder">
-              {writeMode ? 'Klepnutím zadat text k zašifrování...' : 'Klepnutím vložit podkladová data...'}
+              {writeMode ? 'Text k zašifrování…' : 'Obsah tabulky…'}
             </span>
           {/if}
         </button>
@@ -329,11 +329,11 @@
 <!-- Text Entry Sheet -->
 <TextEntrySheet
   open={showTextSheet}
-  title={writeMode ? 'Text k zašifrování' : 'Podkladová data mřížky'}
+  title={writeMode ? 'Text k zašifrování' : 'Obsah tabulky'}
   value={rawInput}
   placeholder={writeMode
-    ? 'Vložte otevřený text k zašifrování, který se vepíše přes otvory mřížky...'
-    : 'Vložte písmena podkladu bez mezer (např. ABCDEF...) nebo oddělená čárkami (např. AB, CD, EF...).'}
+    ? 'Text k zašifrování…'
+    : 'Např. ABCDEF… nebo AB, CD, EF…'}
   onSave={(val) => {
     rawInput = val;
   }}

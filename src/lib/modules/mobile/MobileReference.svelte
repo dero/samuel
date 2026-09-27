@@ -1,9 +1,6 @@
 <div class="reference-content">
   <section class="ref-section">
-    <h3 class="ref-heading">Mobilní telefon (T9 / SMS multi-tap)</h3>
-    <p class="ref-text">
-      Klasická tlačítková klávesnice telefonu (standard ITU E.161). Znak se kóduje jako posloupnost stisků nebo dvojice (klávesa, pořadí).
-    </p>
+    <h3 class="ref-heading">Klávesnice telefonu</h3>
 
     <div class="phone-grid-preview">
       <div class="phone-key-card"><span class="key-num">1</span><span class="key-chars">. , ? !</span></div>
@@ -21,9 +18,9 @@
     </div>
 
     <div class="notation-box">
-      <div class="notation-item"><strong>Zápis počtem stisků:</strong> <code>22</code> = <code>B</code>, <code>7777</code> = <code>S</code>, <code>0</code> = <code>␣</code>, <code>**</code> = <code>+</code></div>
-      <div class="notation-item"><strong>Zápis souřadnicemi:</strong> <code>(Klávesa, Stisk)</code> např. <code>(7, 4)</code> = <code>S</code></div>
-      <div class="notation-item"><strong>Režim T9:</strong> Každá klávesa se stiskne pouze jednou za písmeno. Slovník automaticky navrhuje celá slova. Hvězdičkou <code>*</code> lze cyklovat alternativní kandidáty.</div>
+      <div class="notation-item"><strong>Počet stisků:</strong> <code>22</code> = <code>B</code>, <code>7777</code> = <code>S</code>, <code>0</code> = <code>␣</code>, <code>**</code> = <code>+</code></div>
+      <div class="notation-item"><strong>Klávesa a pořadí:</strong> <code>(7, 4)</code> = <code>S</code></div>
+      <div class="notation-item"><strong>T9:</strong> jeden stisk na písmeno, slovo dohledá slovník. <code>*</code> přepíná kandidáty.</div>
     </div>
   </section>
 </div>
@@ -50,12 +47,6 @@
     margin: 0;
   }
 
-  .ref-text {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: 1.5;
-    margin: 0;
-  }
 
   .phone-grid-preview {
     display: grid;

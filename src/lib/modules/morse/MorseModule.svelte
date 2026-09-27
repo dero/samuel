@@ -192,7 +192,7 @@
     totalFoundCandidates = 0;
     isBruteforceOpen = false;
     isPermutationsOpen = false;
-    toast.show('Morseovka byla vyčištěna', 'info');
+    toast.show('Vyčištěno', 'info');
   }
 
   function handlePaste(text: string) {
@@ -235,7 +235,7 @@
           class:active={isBruteforceOpen}
           onclick={runBruteforce}
           disabled={!modState.input || !isEligibleForBruteforce}
-          title="Rozluštit morseovku bez mezer pomocí slovníku a jazykového modelu"
+          title="Rozluštit kód bez mezer"
         >
           <span class="floating-icon"><Lightning size={14} weight="duotone" /></span>
           <span>Vyřešit bez mezer</span>
@@ -290,24 +290,24 @@
 
   {#snippet menuOptions()}
     <OptionRow
-      label="Zobrazovat telegrafní vedení"
-      hint="Animované sloupy s drátem a světelnými impulsy pod tlačítky"
+      label="Telegrafní vedení"
+      hint="Animace pod tlačítky"
       type="switch"
       checked={modState.show_wire}
       onChange={(v) => (modState.show_wire = v)}
     />
     <OptionRow
-      label="Rozpoznávat písmeno CH (----)"
+      label="Rozpoznávat CH"
       checked={modState.parse_ch}
       onChange={(v) => (modState.parse_ch = v)}
     />
     <OptionRow
-      label="Rozpoznávat číslice (0–9)"
+      label="Rozpoznávat číslice"
       checked={modState.parse_digits}
       onChange={(v) => (modState.parse_digits = v)}
     />
     <OptionRow
-      label="Rozpoznávat ostatní znaky (.,?!...)"
+      label="Rozpoznávat interpunkci"
       checked={modState.parse_other}
       onChange={(v) => (modState.parse_other = v)}
     />
@@ -327,7 +327,7 @@
   onClose={() => (isPermutationsOpen = false)}
 >
   {#if permutations.length === 0}
-    <div class="empty-state">Zadejte morseův kód pro zobrazení permutací.</div>
+    <div class="empty-state">Nejdřív zadejte kód.</div>
   {:else}
     <div class="perms-list">
       {#each permutations as perm}
@@ -337,7 +337,7 @@
               <span class="perm-name">{perm.name}</span>
               <span class="perm-mapping">{perm.mapping}</span>
             </div>
-            <span class="perm-decoded">{perm.decodedText || '(prázdné)'}</span>
+            <span class="perm-decoded">{perm.decodedText || '—'}</span>
           </div>
           <button type="button" class="perm-apply-btn" onclick={() => applyPermutation(perm)}>
             Použít
@@ -359,7 +359,7 @@
   {#if !versionService.state.isDbInstalled}
     <div class="empty-state" style="padding: 24px 16px; text-align: center;">
       <p style="color: var(--color-text-secondary); margin-bottom: 16px;">
-        Pro automatické řešení morseovky bez mezer je vyžadován offline slovník (~102 MB).
+        Vyžaduje offline slovník (102 MB).
       </p>
       <button
         type="button"
@@ -370,16 +370,16 @@
           navigation.openModule('settings');
         }}
       >
-        Přejít do Nastavení ke stažení
+        Stáhnout v Nastavení
       </button>
     </div>
   {:else if isSolving}
     <div class="loading-state">
       <div class="loading-spinner"></div>
-      <span>Prohledávám strom možností a slovník...</span>
+      <span>Hledám…</span>
     </div>
   {:else if bruteforceResults.length === 0}
-    <div class="empty-state">Nenalezeny žádné smysluplné kombinace slov.</div>
+    <div class="empty-state">Žádné smysluplné řešení.</div>
   {:else}
     <div class="candidates-list">
       {#each bruteforceResults as cand, idx}
@@ -401,7 +401,7 @@
 
       {#if totalFoundCandidates > bruteforceResults.length}
         <div class="more-info-banner">
-          Zobrazeno top {bruteforceResults.length} z celkem {totalFoundCandidates} nalezených variant. Dalších {totalFoundCandidates - bruteforceResults.length} možností s nižším skóre se nezobrazuje.
+          Zobrazeno {bruteforceResults.length} nejlepších z {totalFoundCandidates}.
         </div>
       {/if}
     </div>

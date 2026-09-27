@@ -191,19 +191,19 @@ export function getPermutations(
     },
     {
       id: 'invert',
-      name: 'Inverze (tečky ⇄ čárky)',
+      name: 'Inverze',
       mapping: '. ➔ - , - ➔ .',
       fn: (c: string) => (c === '.' ? '-' : c === '-' ? '.' : c)
     },
     {
       id: 'dot-sep',
-      name: 'Prohození tečky a oddělovače',
+      name: 'Tečka ⇄ oddělovač',
       mapping: '. ➔ / , / ➔ .',
       fn: (c: string) => (c === '.' ? '/' : c === '/' ? '.' : c)
     },
     {
       id: 'dash-sep',
-      name: 'Prohození čárky a oddělovače',
+      name: 'Čárka ⇄ oddělovač',
       mapping: '- ➔ / , / ➔ -',
       fn: (c: string) => (c === '-' ? '/' : c === '/' ? '-' : c)
     },
@@ -256,8 +256,8 @@ export function getPermutations(
 
   results.push({
     id: 'reverse',
-    name: 'Čtení pozpátku (Reverz)',
-    mapping: 'Obrácený směr čtení',
+    name: 'Pozpátku',
+    mapping: 'čtení odzadu',
     transformedMorse: reversedMorse,
     decodedText: reversedDecoded,
     score: 0,

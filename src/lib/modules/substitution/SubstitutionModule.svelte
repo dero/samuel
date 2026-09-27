@@ -130,7 +130,7 @@
     <div class="substitution-output-wrapper">
       <TranslationCard
         text={result.plainText}
-        emptyHint="Zadejte nebo vložte šifrový text pro zahájení substituce."
+        emptyHint="Zadejte nebo vložte šifrový text."
       >
         {#snippet children()}
           {#each result.tokens as token}
@@ -203,7 +203,7 @@
       <div class="menu-group-title">Abeceda modulu</div>
       <NonStandardAlphabetBanner
         isWarning={isNonStandardAlphabet}
-        description="Pro Substituci je nastavena {currentLayout.name}. Běžně se používá Anglická (26) nebo Anglická + CH (27)."
+        description="Obvykle anglická (26) nebo s CH (27)."
       />
       <AlphabetSelect
         value={alphabetId}
@@ -214,18 +214,18 @@
     </div>
 
     <div class="menu-group">
-      <div class="menu-group-title">Nastavení šifry</div>
+      <div class="menu-group-title">Šifra</div>
       <OptionRow
         label="Povolit nepoužitá písmena"
-        hint="Umožní přiřazovat i znaky, které se nevyskytují v šifrovém textu"
+        hint="Přiřazovat i znaky, které v šifře nejsou"
         checked={allowUnusedLetters}
         onChange={(val) => {
           allowUnusedLetters = val;
         }}
       />
       <OptionRow
-        label="Povolit homofony 1:N"
-        hint="Umožní přiřadit stejné otevřené písmeno více šifrovým znakům"
+        label="Povolit homofony"
+        hint="Jedno písmeno pro více šifrových znaků"
         checked={allowHomophones}
         onChange={(val) => {
           allowHomophones = val;
@@ -253,7 +253,7 @@
         onclick={handlePasteFromClipboard}
       >
         <ClipboardText size={18} weight="bold" />
-        <span>Vložit nový text ze schránky</span>
+        <span>Vložit ze schránky</span>
       </button>
     </div>
   {/snippet}

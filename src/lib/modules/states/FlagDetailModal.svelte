@@ -64,7 +64,7 @@
           <span class="info-value">{continentName}</span>
         </div>
         <div class="info-card">
-          <span class="info-label">ISO Kódy</span>
+          <span class="info-label">ISO kódy</span>
           <span class="info-value font-mono">
             {flag.code.toUpperCase()} / {flag.code3.toUpperCase()}
           </span>
@@ -96,7 +96,7 @@
       <!-- Features / Design Elements -->
       {#if flag.features && flag.features.length > 0}
         <div class="flag-section">
-          <div class="section-title">Vexilologické prvky & design</div>
+          <div class="section-title">Prvky vlajky</div>
           <div class="chips-row">
             {#each flag.features as featId}
               {@const featDef = getFeatureDef(featId)}

@@ -1,41 +1,32 @@
 <div class="reference-content">
-  <!-- Section 1: Velký polský kříž -->
   <section class="ref-section">
-    <h3 class="ref-heading">1. Velký polský kříž (3×3×3)</h3>
+    <h3 class="ref-heading">Velký polský kříž (3×3×3)</h3>
     <p class="ref-text">
-      Jedna mřížka 3×3 obsahuje v každém chlívku až 3 znaky. Tvar znaku odpovídá ohraničení daného chlívku a počet teček určuje pozici písmene v chlívku:
+      Tvar = ohraničení chlívku, počet teček (1–3) = pozice písmene v chlívku. Např. <code>•</code> A, <code>••</code> B, <code>•••</code> C.
     </p>
-    <div class="notation-box">
-      <div class="notation-item"><strong>1. pozice:</strong> 1 tečka <code>•</code> (např. <code>A</code>, <code>D</code>, <code>G</code>)</div>
-      <div class="notation-item"><strong>2. pozice:</strong> 2 tečky <code>••</code> (např. <code>B</code>, <code>E</code>, <code>H</code>)</div>
-      <div class="notation-item"><strong>3. pozice:</strong> 3 tečky <code>•••</code> (např. <code>C</code>, <code>F</code>, <code>CH/I</code>)</div>
-      <div class="notation-item note-item"><strong>U 26 znaků (bez CH):</strong> 27. pozice (chlívek 3,3 •••) slouží jako Mezera (<code>␣</code>).</div>
-    </div>
     <div class="shape-preview-grid">
-      <div class="shape-item"><span class="shape-icon">┘</span> <span>Pole (1,1)</span></div>
-      <div class="shape-item"><span class="shape-icon">┴</span> <span>Pole (1,2)</span></div>
-      <div class="shape-item"><span class="shape-icon">└</span> <span>Pole (1,3)</span></div>
-      <div class="shape-item"><span class="shape-icon">┤</span> <span>Pole (2,1)</span></div>
-      <div class="shape-item"><span class="shape-icon">┼</span> <span>Střed (2,2)</span></div>
-      <div class="shape-item"><span class="shape-icon">├</span> <span>Pole (2,3)</span></div>
-      <div class="shape-item"><span class="shape-icon">┐</span> <span>Pole (3,1)</span></div>
-      <div class="shape-item"><span class="shape-icon">┬</span> <span>Pole (3,2)</span></div>
-      <div class="shape-item"><span class="shape-icon">┌</span> <span>Pole (3,3)</span></div>
+      <div class="shape-item"><span class="shape-icon">┘</span> <span>1,1</span></div>
+      <div class="shape-item"><span class="shape-icon">┴</span> <span>1,2</span></div>
+      <div class="shape-item"><span class="shape-icon">└</span> <span>1,3</span></div>
+      <div class="shape-item"><span class="shape-icon">┤</span> <span>2,1</span></div>
+      <div class="shape-item"><span class="shape-icon">┼</span> <span>2,2</span></div>
+      <div class="shape-item"><span class="shape-icon">├</span> <span>2,3</span></div>
+      <div class="shape-item"><span class="shape-icon">┐</span> <span>3,1</span></div>
+      <div class="shape-item"><span class="shape-icon">┬</span> <span>3,2</span></div>
+      <div class="shape-item"><span class="shape-icon">┌</span> <span>3,3</span></div>
+    </div>
+    <div class="notation-box">
+      <div class="notation-item note-item">Abeceda bez CH: poslední pozice (3,3 •••) je mezera <code>␣</code>.</div>
     </div>
   </section>
 
-  <!-- Section 2: Pigpen (aka Malý polský kříž) -->
   <section class="ref-section">
-    <h3 class="ref-heading">2. Pigpen (aka Malý polský kříž)</h3>
-    <p class="ref-text">
-      Kombinace čtvercových mřížek 3×3 a šikmých křížů 2×2 (X). Každý tvar se vyskytuje ve variantě bez tečky a s tečkou (celkem 26 znaků A–Z):
-    </p>
+    <h3 class="ref-heading">Pigpen (malý polský kříž)</h3>
     <div class="notation-box">
-      <div class="notation-item"><strong>1. Mřížka 3×3 bez tečky:</strong> Znaky <code>A–I</code> (chlívek ohraničený linkami mřížky)</div>
-      <div class="notation-item"><strong>2. Mřížka 3×3 s tečkou (•):</strong> Znaky <code>J–R</code> (stejný chlívek s tečkou uvnitř)</div>
-      <div class="notation-item"><strong>3. Šikmý kříž X bez tečky:</strong> Znaky <code>S–V</code> (nahoře <code>S</code>, vlevo <code>T</code>, vpravo <code>U</code>, dole <code>V</code>)</div>
-      <div class="notation-item"><strong>4. Šikmý kříž X s tečkou (•):</strong> Znaky <code>W–Z</code> (nahoře <code>W</code>, vlevo <code>X</code>, vpravo <code>Y</code>, dole <code>Z</code>)</div>
-      <div class="notation-item note-item"><strong>Poznámka k CH:</strong> Šifra má přesně 26 pozic pro písmena A–Z. Spřežka <code>CH</code> se zapisuje jako <code>C</code> + <code>H</code>.</div>
+      <div class="notation-item"><strong>Mřížka 3×3:</strong> <code>A–I</code>, s tečkou <code>J–R</code></div>
+      <div class="notation-item"><strong>Kříž X:</strong> <code>S</code> nahoře, <code>T</code> vlevo, <code>U</code> vpravo, <code>V</code> dole</div>
+      <div class="notation-item"><strong>Kříž X s tečkou:</strong> <code>W</code> nahoře, <code>X</code> vlevo, <code>Y</code> vpravo, <code>Z</code> dole</div>
+      <div class="notation-item note-item">Jen 26 znaků – CH se píše jako C + H.</div>
     </div>
   </section>
 </div>
@@ -80,6 +71,7 @@
     font-size: var(--text-xs);
   }
 
+  .ref-text code,
   .notation-item code {
     background-color: var(--color-surface-2);
     padding: 1px 4px;

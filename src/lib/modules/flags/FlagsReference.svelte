@@ -11,8 +11,8 @@
   let activeTab = $state<'letters' | 'numbers'>('letters');
 
   const tabs: SegmentOption<'letters' | 'numbers'>[] = [
-    { id: 'letters', label: 'Písmena (A–Z)', badge: LETTER_FLAGS.length },
-    { id: 'numbers', label: 'Číslice (0–9)', badge: NUMBER_FLAGS.length }
+    { id: 'letters', label: 'Písmena', badge: LETTER_FLAGS.length },
+    { id: 'numbers', label: 'Číslice', badge: NUMBER_FLAGS.length }
   ];
 
   function getColorHex(colorId: string): string {
@@ -79,10 +79,6 @@
                 <div class="flag-title-row">
                   <span class="flag-code">{flag.code}</span>
                   <span class="flag-nato">{flag.name}</span>
-                </div>
-
-                <div class="flag-meaning">
-                  Číslicový praporek {flag.code}
                 </div>
 
                 <div class="flag-colors-row">

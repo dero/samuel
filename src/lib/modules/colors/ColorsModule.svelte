@@ -240,8 +240,7 @@
             <ImageIcon size={18} weight="bold" />
             <span>Vyfotit nebo vybrat šifru</span>
           </button>
-          <span class="upload-hint">Vyberte fotografii z galerie nebo vyfoťte šifru fotoaparátem</span>
-        </div>
+                  </div>
       {:else}
         <!-- Canvas Stage with CSS Transform -->
         <div
@@ -513,13 +512,6 @@
 
   .upload-trigger-btn:active {
     background-color: var(--color-surface-active);
-  }
-
-  .upload-hint {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    max-width: 260px;
-    line-height: 1.4;
   }
 
   .hidden-file-input {

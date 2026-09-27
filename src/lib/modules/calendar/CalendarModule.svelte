@@ -58,13 +58,13 @@
         {#if !calendarState.searchQuery}
           <div class="search-empty-container">
             <EmptyHint
-              text="Zadejte datum (např. 133 = 13. 3.), začátek jména nebo den v roce (1–366)"
+              text="Datum (133 = 13. 3.), jméno nebo pořadí dne v roce"
             />
           </div>
         {:else if calendarState.searchMatches.length === 0}
           <div class="no-matches-box">
             <span class="no-matches-query">„{calendarState.searchQuery}“</span>
-            <span class="no-matches-msg">Nenalezen žádný svátek ani den</span>
+            <span class="no-matches-msg">Nic nenalezeno</span>
           </div>
         {:else}
           <!-- Simplified search results list with toggleable accordion day card -->

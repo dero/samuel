@@ -135,10 +135,10 @@ export function getFlowModeLabel(mode: FlowMode): string {
     return 'Znak';
   }
   if (mode === 'roman') {
-    return 'Římská čísla (kanonická)';
+    return 'Římská kanonická';
   }
   if (mode === 'roman_loose') {
-    return 'Římská čísla (volná)';
+    return 'Římská volná';
   }
   const cfg = BASE_CONFIGS[mode];
   return cfg ? `${cfg.shortName} (${mode})` : `Báze ${mode}`;

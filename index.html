@@ -305,40 +305,40 @@
 
         <div id="shell-checking" class="shell-checking">
           <div class="shell-spinner"></div>
-          <div class="shell-checking-text">Kontrola offline mezipaměti…</div>
+          <div class="shell-checking-text">Kontroluji offline data…</div>
         </div>
 
         <div id="shell-first-run" class="shell-first-run" style="display: none;">
           <h1 class="shell-title">První spuštění</h1>
           <p class="shell-desc">
-            Aplikace funguje 100% offline v terénu bez signálu. Zvolte balíčky k uložení do paměti telefonu:
+            Vše funguje offline. Co stáhnout do telefonu?
           </p>
 
           <div class="shell-packages">
             <label class="shell-pkg-item">
               <input type="checkbox" id="pkg-app" checked disabled />
               <div class="shell-pkg-info">
-                <span class="shell-pkg-name">Aplikace a šifrovací nástroje</span>
-                <span class="shell-pkg-size">~1,5 MB • Vyžadováno</span>
+                <span class="shell-pkg-name">Aplikace</span>
+                <span class="shell-pkg-size">1,5 MB • povinné</span>
               </div>
             </label>
 
             <label class="shell-pkg-item" for="pkg-db">
               <input type="checkbox" id="pkg-db" />
               <div class="shell-pkg-info">
-                <span class="shell-pkg-name">Slovníková databáze</span>
-                <span class="shell-pkg-size">~102 MB • Volitelné</span>
+                <span class="shell-pkg-name">Slovník</span>
+                <span class="shell-pkg-size">102 MB • volitelné</span>
               </div>
             </label>
           </div>
 
           <button id="shell-download-btn" class="shell-btn" type="button">
-            Stáhnout vybrané a spustit
+            Stáhnout a spustit
           </button>
 
           <div id="shell-progress-box" class="shell-progress-box" style="display: none;">
             <div id="shell-progress-fill" class="shell-progress-fill"></div>
-            <div id="shell-progress-text" class="shell-progress-text">Připravuji stahování…</div>
+            <div id="shell-progress-text" class="shell-progress-text">Připravuji…</div>
           </div>
         </div>
       </div>
@@ -388,8 +388,8 @@
           overlay.innerHTML =
             '<div style="font-size:16px;font-weight:700;">Aplikaci se nepodařilo spustit</div>' +
             '<div style="font-size:13px;line-height:1.5;color:#b3b3b3;max-width:320px;">' +
-            'Offline mezipaměť je pravděpodobně neúplná po přerušené aktualizaci. ' +
-            'Obnova ji smaže a stáhne aplikaci znovu &ndash; je nutné aktivní připojení k internetu.' +
+            'Offline data jsou nejspíš neúplná po přerušené aktualizaci. ' +
+            'Obnova je smaže a stáhne znovu &ndash; vyžaduje připojení.' +
             '</div>' +
             '<button id="recovery-btn" type="button" style="min-height:52px;padding:0 24px;' +
             'background-color:#00d2ff;color:#000000;font-size:15px;font-weight:700;border:none;' +

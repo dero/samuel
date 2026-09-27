@@ -13,7 +13,7 @@
       type="button"
       class="launcher-btn"
       aria-label="Výběr pomůcky"
-      title="Kliknutím otevřete výběr pomůcek"
+      title="Výběr pomůcky"
       onclick={() => {
         settings.vibrate(20);
         navigation.toggleLauncher();
@@ -37,8 +37,8 @@
         <button
           type="button"
           class="header-btn"
-          aria-label="Reference a tahák"
-          title="Reference a tahák"
+          aria-label="Reference"
+          title="Reference"
           onclick={() => {
             settings.vibrate(20);
             navigation.toggleRef();

@@ -1,14 +1,13 @@
 <div class="reference-content">
   <section class="ref-section">
-    <h3 class="ref-heading">Polybiův čtverec (souřadnicová matice)</h3>
+    <h3 class="ref-heading">Polybiův čtverec</h3>
     <p class="ref-text">
-      Znak je kódován dvojicí čísel či písmen odpovídající souřadnicím <strong>(Řádek, Sloupec)</strong> v matici.
+      Znak = souřadnice <strong>řádek, sloupec</strong>. Např. <code>12</code> = B, u písmenných os <code>CE</code> = řádek C, sloupec E.
     </p>
 
     <div class="notation-box">
-      <div class="notation-item"><strong>Varianta 5×5 (25 polí):</strong> Běžně pro anglickou abecedu (26 znaků). Jedno písmeno bývá vynecháno nebo sloučeno (obvykle <code>Q</code>, případně <code>I/J</code>).</div>
-      <div class="notation-item"><strong>Varianta 6×6 (36 polí):</strong> Obsahuje kompletní abecedu A–Z plus číslice 0–9.</div>
-      <div class="notation-item"><strong>Příklad zápisu:</strong> <code>12</code> = Řádek 1, Sloupec 2 (<code>B</code>); <code>CE</code> = Řádek C, Sloupec E.</div>
+      <div class="notation-item"><strong>5×5:</strong> 25 polí, jedno písmeno chybí (obvykle <code>Q</code>) nebo se slučuje <code>I/J</code>.</div>
+      <div class="notation-item"><strong>6×6:</strong> A–Z a číslice 0–9.</div>
     </div>
   </section>
 </div>
@@ -53,6 +52,7 @@
     font-size: var(--text-xs);
   }
 
+  .ref-text code,
   .notation-item code {
     background-color: var(--color-surface-2);
     padding: 1px 4px;

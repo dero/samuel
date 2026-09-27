@@ -375,18 +375,18 @@ export function getMovableHoliday(year: number, month: number, day: number): str
   // Velký pátek = Easter - 2 days
   const goodFriday = new Date(easterDate.getTime() - 2 * 86400000);
   if (goodFriday.getUTCMonth() + 1 === month && goodFriday.getUTCDate() === day) {
-    return 'Velký pátek (státní svátek)';
+    return 'Velký pátek';
   }
 
   // Velikonoční neděle
   if (easter.month === month && easter.day === day) {
-    return 'Velikonoční neděle (Boží hod velikonoční)';
+    return 'Boží hod velikonoční';
   }
 
   // Velikonoční pondělí = Easter + 1 day
   const easterMonday = new Date(easterDate.getTime() + 1 * 86400000);
   if (easterMonday.getUTCMonth() + 1 === month && easterMonday.getUTCDate() === day) {
-    return 'Velikonoční pondělí (státní svátek)';
+    return 'Velikonoční pondělí';
   }
 
   return undefined;

@@ -130,12 +130,12 @@ async function initBootstrap(): Promise<void> {
     const wantDb = Boolean(dbCheck?.checked);
 
     try {
-      if (progressText) progressText.textContent = 'Načítám informace…';
+      if (progressText) progressText.textContent = 'Načítám…';
       if (progressFill) progressFill.style.width = '5%';
 
       const remoteVersion = await fetchRemoteVersion();
       if (!remoteVersion) {
-        throw new Error('Nepodařilo se načíst informace o verzi. Zkontrolujte připojení k internetu.');
+        throw new Error('Nelze načíst verzi. Zkontrolujte připojení.');
       }
 
       // Download Application assets atomically (fresh versioned cache, verified, then switched)
@@ -167,7 +167,7 @@ async function initBootstrap(): Promise<void> {
       }
 
       if (progressFill) progressFill.style.width = '100%';
-      if (progressText) progressText.textContent = 'Hotovo! Spouštím…';
+      if (progressText) progressText.textContent = 'Spouštím…';
 
       // Best-effort, inside the user gesture flow of this click handler.
       await maybeRequestPersistentStorage();
@@ -191,7 +191,7 @@ async function initBootstrap(): Promise<void> {
       }
       if (progressText) {
         progressText.style.color = '#ef4444';
-        progressText.textContent = 'Chyba při stahování (klepnutím zkusit znovu)';
+        progressText.textContent = 'Stahování selhalo. Klepněte pro opakování.';
       }
       // Tap on error box to restore the download button and retry
       progressBox.style.cursor = 'pointer';
@@ -207,7 +207,7 @@ async function initBootstrap(): Promise<void> {
         }
         if (progressText) {
           progressText.style.color = '';
-          progressText.textContent = 'Připravuji stahování…';
+          progressText.textContent = 'Připravuji…';
         }
         downloadBtn.style.display = 'flex';
         if (dbCheck) dbCheck.disabled = false;

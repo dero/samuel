@@ -23,7 +23,7 @@
   });
 
   const phoneModeOptions: SegmentOption<'multitap' | 't9'>[] = [
-    { id: 'multitap', label: 'Klasik (SMS)' },
+    { id: 'multitap', label: 'SMS' },
     { id: 't9', label: 'T9 Predikce' }
   ];
 
@@ -225,7 +225,7 @@
     }
     modState.phoneMode = newMode;
     if (newMode === 't9' && !versionService.state.isDbInstalled) {
-      toast.show('Stáhněte slovník v Nastavení pro T9', 'warning');
+      toast.show('T9 vyžaduje slovník – stáhněte ho v Nastavení', 'warning');
     }
   }
 
@@ -314,7 +314,7 @@
           <div class="banner-text">
             <span class="banner-title">Slovník pro T9 není stažen</span>
             <p class="banner-desc">
-              Pro prediktivní psaní T9 je potřeba stáhnout slovníkovou databázi v Nastavení aplikace (~102 MB).
+              Stáhněte ho v Nastavení (102 MB).
             </p>
           </div>
         </div>
@@ -342,8 +342,8 @@
       text={modState.text}
       pendingText={pendingDisplay}
       emptyHint={modState.phoneMode === 't9'
-        ? 'Každou klávesu stiskněte jen jednou, slova doplňuje slovník.'
-        : 'Vícečetným stiskem číslic volíte písmena abecedy.'}
+        ? 'Jeden stisk na písmeno, slovo doplní slovník.'
+        : 'Písmeno = počet stisků klávesy.'}
     />
   {/snippet}
 

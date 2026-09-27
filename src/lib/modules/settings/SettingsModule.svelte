@@ -68,7 +68,7 @@
       if (!updateAvailable) {
         toast.show('Máte nejnovější verzi', { type: 'success', duration: 2500 });
       } else {
-        toast.show('Dostupná nová verze!', { type: 'warning', duration: 3000 });
+        toast.show('Je dostupná nová verze', { type: 'warning', duration: 3000 });
       }
     } catch {
       toast.show('Chyba kontroly', { type: 'danger' });
@@ -79,7 +79,7 @@
     try {
       settings.vibrate(30);
       if (versionService.state.dbUpdateAvailable) {
-        toast.show('Stahuji slovník...', { type: 'info' });
+        toast.show('Stahuji slovník…', { type: 'info' });
         await versionService.downloadDb();
         toast.show('Slovník aktualizován', { type: 'success' });
       } else if (versionService.state.appUpdateAvailable) {
@@ -95,9 +95,9 @@
   async function handleDownloadDbManual() {
     try {
       settings.vibrate(20);
-      toast.show('Zahajuji stahování slovníku...', { type: 'info' });
+      toast.show('Stahuji slovník…', { type: 'info' });
       await versionService.downloadDb();
-      toast.show('Slovník byl úspěšně stažen', { type: 'success' });
+      toast.show('Slovník stažen', { type: 'success' });
     } catch (err: any) {
       toast.show(`Chyba: ${err?.message || 'Nepodařilo se stáhnout'}`, { type: 'danger' });
     }
@@ -106,7 +106,7 @@
   async function handleDeleteDbManual() {
     try {
       await versionService.deleteDb();
-      toast.show('Slovník byl smazán z paměti', { type: 'info' });
+      toast.show('Slovník smazán', { type: 'info' });
     } catch {
       toast.show('Chyba při mazání slovníku', { type: 'danger' });
     }
@@ -173,9 +173,7 @@
       <div class="card-header-row">
         <div>
           <h2 class="card-title">Aktualizace</h2>
-          <p class="card-desc">
-            Aplikace i data fungují offline. Aktualizace probíhají jednoduše jedním klepnutím.
-          </p>
+          <p class="card-desc">Aplikace i data fungují offline.</p>
         </div>
         {#if !versionService.state.updateAvailable && versionService.state.status === 'idle'}
           <span class="badge-status online">
@@ -191,15 +189,15 @@
           <div class="update-banner-info">
             <div class="update-title">
               <RocketLaunch size={18} weight="duotone" />
-              <span>K dispozici je novější verze</span>
+              <span>Nová verze</span>
             </div>
             <div class="update-subtitle">
               {#if versionService.state.dbUpdateAvailable && versionService.state.remoteVersion}
-                Nová verze slovníku ({formatTimestamp(versionService.state.remoteVersion.dbUpdated || versionService.state.remoteVersion.dbVersion)}).
+                Slovník z {formatTimestamp(versionService.state.remoteVersion.dbUpdated || versionService.state.remoteVersion.dbVersion)}
               {:else if versionService.state.appUpdateAvailable && versionService.state.remoteVersion}
-                Nové vydání aplikace ({formatTimestamp(versionService.state.remoteVersion.buildTime)}).
+                Aplikace z {formatTimestamp(versionService.state.remoteVersion.buildTime)}
               {:else}
-                Na serveru je k dispozici novější verze.
+                Novější verze na serveru
               {/if}
             </div>
           </div>
@@ -213,7 +211,7 @@
               <span>Stahuji ({versionService.state.progress} %)...</span>
             {:else}
               <RocketLaunch size={16} weight="bold" />
-              <span>Aktualizovat nyní</span>
+              <span>Aktualizovat</span>
             {/if}
           </button>
         </div>
@@ -226,7 +224,7 @@
           <span class="version-badge">{formattedAppVersion}</span>
         </div>
         <div class="sys-row">
-          <span>Slovníková data</span>
+          <span>Slovník</span>
           <span class="version-badge">{formattedDbVersion}</span>
         </div>
       </div>
@@ -280,11 +278,11 @@
 
     <!-- 3. Předvolby aplikace -->
     <section class="card">
-      <h2 class="card-title">Předvolby aplikace</h2>
+      <h2 class="card-title">Předvolby</h2>
 
       <OptionRow
         label="Haptická odezva"
-        hint="Vibrace při stisku kláves a potvrzeních v terénu"
+        hint="Vibrace při stisku kláves"
         type="switch"
         checked={settings.hapticsEnabled}
         onChange={(val) => {
@@ -293,8 +291,7 @@
       />
 
       <OptionRow
-        label="Zabránit zhasnutí obrazovky (Wake Lock)"
-        hint="Udržuje displej rozsvícený během luštění šifry"
+        label="Nezhasínat obrazovku"
         type="switch"
         checked={settings.wakeLockEnabled}
         onChange={(val) => {
@@ -308,9 +305,7 @@
       <div class="card-header-row">
         <div>
           <h2 class="card-title">Trvalé úložiště</h2>
-          <p class="card-desc">
-            Ochrana offline dat proti automatickému smazání prohlížečem při nedostatku místa nebo delší neaktivitě.
-          </p>
+          <p class="card-desc">Chrání offline data před smazáním prohlížečem.</p>
         </div>
         {#if storagePersisted}
           <span class="badge-status online">
@@ -341,7 +336,7 @@
         >
           {#if isRequestingPersistence}
             <SpinnerGap size={16} class="spin" />
-            <span>Žádám o trvalé úložiště...</span>
+            <span>Žádám…</span>
           {:else}
             <ShieldWarning size={16} weight="bold" />
             <span>Povolit trvalé úložiště</span>
@@ -349,8 +344,7 @@
         </button>
         {#if iosDevice}
           <p class="card-desc">
-            Na iPhonu/iPadu prohlížeč trvalé úložiště téměř nikdy nepovolí sám. Přidejte si Samuela na plochu
-            (Sdílet → Přidat na plochu) – jako nainstalovaná aplikace jsou data mnohem lépe chráněna proti smazání.
+            Na iPhonu a iPadu přidejte Samuela na plochu (Sdílet → Přidat na plochu), jinak může Safari data smazat.
           </p>
         {/if}
       {/if}
@@ -359,16 +353,14 @@
     <!-- 5. Reset a správa úložiště -->
     <section class="card">
       <h2 class="card-title">Reset dat</h2>
-      <p class="card-desc">
-        Odstraní všechna data aplikace i slovníku z offline mezipaměti a vrátí aplikaci do výchozího stavu prvního spuštění.
-      </p>
+      <p class="card-desc">Smaže všechna offline data včetně slovníku.</p>
 
       <SlideToAction
         onAction={handleResetAllData}
         disabled={isResetting}
         showLabel={true}
-        label={isResetting ? "Resetuji mezipaměť..." : "Reset všech dat"}
-        confirmedLabel="Resetuji mezipaměť..."
+        label={isResetting ? "Resetuji…" : "Reset všech dat"}
+        confirmedLabel="Resetuji…"
         ariaLabel="Podržte pro reset všech dat"
         holdDuration={800}
         variant="outline"

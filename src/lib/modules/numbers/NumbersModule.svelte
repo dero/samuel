@@ -445,7 +445,7 @@
 
   {#snippet menuOptions()}
     <div class="menu-group">
-      <div class="menu-group-title">Aktivní abeceda</div>
+      <div class="menu-group-title">Abeceda</div>
       <AlphabetSelect
         value={alphabetId}
         defaultId="english-26"
@@ -455,10 +455,10 @@
     </div>
 
     <div class="menu-group">
-      <div class="menu-group-title">Indexování a kódování</div>
+      <div class="menu-group-title">Kódování</div>
       <OptionRow
-        label="Indexování od nuly (0-based)"
-        hint="Standardně 1-based (A=1, B=2). Při zapnutí A=0, B=1."
+        label="Indexovat od nuly"
+        hint="A=0, B=1 místo A=1, B=2."
         type="switch"
         checked={zeroBased}
         disabled={asciiMode}
@@ -466,7 +466,7 @@
       />
       <OptionRow
         label="Režim ASCII"
-        hint="Převádí přímo dle standardní ASCII tabulky (DEC 65 = A, HEX 41 = A)."
+        hint="Kódy podle ASCII, 65 = A."
         type="switch"
         checked={asciiMode}
         onChange={(v) => (asciiMode = v)}
@@ -474,10 +474,10 @@
     </div>
 
     <div class="menu-group">
-      <div class="menu-group-title">Automatické vkládání (Auto-Enter)</div>
+      <div class="menu-group-title">Automatické vkládání</div>
       <OptionRow
-        label="Automatické vkládání pro Číslo ➔ Znak"
-        hint="Při převodu čísel na znaky automaticky potvrdí písmeno po dosažení plné délky bloku (např. 5 bitů u binárky)."
+        label="Číslo ➔ znak"
+        hint="Znak se vloží po zadání celého bloku, např. 5 bitů."
         type="switch"
         checked={autoEnter}
         onChange={(v) => (autoEnter = v)}
@@ -485,10 +485,10 @@
     </div>
 
     <div class="menu-group">
-      <div class="menu-group-title">Vzhled a chování</div>
+      <div class="menu-group-title">Vzhled</div>
       <OptionRow
-        label="Zobrazovat římskou dekoraci"
-        hint="Zobrazí v prázdném rohu římské klávesnice symbol SPQR."
+        label="Římská dekorace"
+        hint="SPQR v rohu římské klávesnice."
         type="switch"
         checked={showRomanEasterEgg}
         onChange={(v) => (showRomanEasterEgg = v)}
@@ -504,7 +504,7 @@
 <FlowModeModal
   open={activeModalType !== null}
   modeType={activeModalType ?? 'source'}
-  title={activeModalType === 'source' ? 'Zvolte vstupní režim (Z)' : 'Zvolte výstupní režim (DO)'}
+  title={activeModalType === 'source' ? 'Vstup' : 'Výstup'}
   activeMode={activeModalType === 'source' ? sourceMode : targetMode}
   alphabetName={currentLayout.name}
   onSelect={(mode) => {

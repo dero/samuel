@@ -48,7 +48,7 @@
   // ASCII table printable chars (32 to 126) - Znak, DEC, HEX
   const asciiRows = Array.from({ length: 95 }, (_, i) => {
     const code = 32 + i;
-    const char = code === 32 ? '␣ (mezera)' : String.fromCharCode(code);
+    const char = code === 32 ? '␣' : String.fromCharCode(code);
     return {
       code,
       char,
@@ -75,7 +75,7 @@
             <tr>
               <th class="col-num">#</th>
               <th class="col-char">Znak</th>
-              <th class="col-bin">BIN (5b)</th>
+              <th class="col-bin">BIN</th>
               <th class="col-oct">OCT</th>
               <th class="col-hex">HEX</th>
             </tr>
@@ -136,7 +136,7 @@
 
         <!-- 2. Odčítací kombinace (Subtrakce) - 3x2 mřížka -->
         <div class="power-card">
-          <div class="power-title">Odčítací kombinace (Subtrakce)</div>
+          <div class="power-title">Odčítání</div>
           <div class="subtraction-grid">
             <div class="subtraction-tile">
               <span class="sub-sym">IV</span>
@@ -167,11 +167,8 @@
 
         <!-- 3. Jak se skládají čísla (Pravidla a víceřádkový rozklad) -->
         <div class="power-card">
-          <div class="power-title">Tvorba čísel a rozklad řádů</div>
+          <div class="power-title">Rozklad po řádech</div>
           <div class="roman-explanation-card">
-            <p class="roman-p">
-              Kanonické číslo se tvoří <strong>samostatným rozkladem každého řádu</strong> (tisíce, stovky, desítky, jednotky) zleva doprava:
-            </p>
             <div class="roman-examples-list">
               <div class="example-card">
                 <div class="example-header">
@@ -225,7 +222,7 @@
                   <span class="ex-num font-mono">49</span>
                   <span class="ex-arrow">➔</span>
                   <span class="ex-result font-mono text-accent">XLIX</span>
-                  <span class="ex-note text-muted">(nikoli IL)</span>
+                  <span class="ex-note text-muted">ne IL</span>
                 </div>
                 <div class="example-breakdown font-mono">
                   <span class="breakdown-part"><span class="bp-val">40</span> <span class="bp-rom">XL</span></span>
@@ -239,7 +236,7 @@
                   <span class="ex-num font-mono">99</span>
                   <span class="ex-arrow">➔</span>
                   <span class="ex-result font-mono text-accent">XCIX</span>
-                  <span class="ex-note text-muted">(nikoli IC)</span>
+                  <span class="ex-note text-muted">ne IC</span>
                 </div>
                 <div class="example-breakdown font-mono">
                   <span class="breakdown-part"><span class="bp-val">90</span> <span class="bp-rom">XC</span></span>
@@ -258,23 +255,16 @@
             <div class="rule-item">
               <span class="rule-badge is-canonical">Kanonická</span>
               <ul class="rule-bullets">
-                <li><strong>Max. 3 opakování:</strong> Symboly <code>I</code>, <code>X</code>, <code>C</code>, <code>M</code> se smí opakovat nejvýše 3× za sebou (<code>III</code>, <code>XXX</code>, <code>CCC</code>, <code>MMM</code>).</li>
-                <li><strong>Neopakující se symboly:</strong> Symboly <code>V</code>, <code>L</code>, <code>D</code> se nikdy neopakují (např. 10 je <code>X</code>, nikoli <code>VV</code>).</li>
-                <li><strong>Pravidla odčítání:</strong> Odčítá se vždy jen 1 menší symbol před 2 nejbližšími vyššími:
-                  <ul class="sub-bullets">
-                    <li><code>I</code> pouze před <code>V</code> (4) a <code>X</code> (9)</li>
-                    <li><code>X</code> pouze před <code>L</code> (40) a <code>C</code> (90)</li>
-                    <li><code>C</code> pouze před <code>D</code> (400) a <code>M</code> (900)</li>
-                  </ul>
-                </li>
-                <li><strong>Skládání po řádech:</strong> Postupuje se striktně od tisíců přes stovky a desítky k jednotkám.</li>
+                <li><code>I</code> <code>X</code> <code>C</code> <code>M</code> nejvýše 3× za sebou.</li>
+                <li><code>V</code> <code>L</code> <code>D</code> se neopakují.</li>
+                <li>Odčítá se jen jeden symbol: <code>I</code> před <code>V X</code>, <code>X</code> před <code>L C</code>, <code>C</code> před <code>D M</code>.</li>
               </ul>
             </div>
             <div class="rule-item">
               <span class="rule-badge is-loose">Volná</span>
               <ul class="rule-bullets">
-                <li><strong>Aditivní / Hodinářský zápis:</strong> <code>IIII</code> = 4, <code>VIIII</code> = 9, <code>XXXX</code> = 40.</li>
-                <li><strong>Subtraktivní zkratky:</strong> <code>IC</code> = 99, <code>IL</code> = 49, <code>XM</code> = 990.</li>
+                <li><strong>Aditivní:</strong> <code>IIII</code> = 4, <code>VIIII</code> = 9, <code>XXXX</code> = 40.</li>
+                <li><strong>Zkratky:</strong> <code>IC</code> = 99, <code>IL</code> = 49, <code>XM</code> = 990.</li>
                 <li><strong>Vícenásobné odčítání:</strong> <code>IIV</code> = 3, <code>IIX</code> = 8.</li>
               </ul>
             </div>
@@ -504,12 +494,6 @@
     gap: var(--space-xs);
   }
 
-  .roman-p {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    line-height: 1.4;
-    margin: 0;
-  }
 
   .roman-examples-list {
     display: flex;
@@ -612,13 +596,6 @@
     gap: 3px;
   }
 
-  .sub-bullets {
-    margin: 2px 0 0 0;
-    padding-left: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
 
   .rule-badge {
     display: inline-flex;

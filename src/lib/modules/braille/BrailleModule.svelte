@@ -205,7 +205,7 @@
     }
   }
 
-  const brailleEmptyHint = 'Body lze zadávat klepnutím i plynulým tahem.';
+  const brailleEmptyHint = 'Body zadávejte klepnutím nebo tahem.';
 
   onDestroy(() => {
     clearFadeTimer();
@@ -296,18 +296,20 @@
 
   {#snippet menuOptions()}
     <OptionRow
-      label="Okamžité zadávání (bez potvrzování)"
-      hint="Znak se automaticky vloží ihned po dokončení tahu (tahem i klepnutím)."
+      label="Okamžité vkládání"
+      hint="Znak se vloží hned po dokončení tahu, bez potvrzení."
       checked={modState.auto_insert}
       onChange={(v) => (modState.auto_insert = v)}
     />
     <OptionRow
-      label="Česká diakritika (body 2,4,5,6 = Ř, W = 1,2,3,5,6)"
+      label="Česká diakritika"
+      hint="Body 2456 = Ř, W = 12356."
       checked={modState.czech}
       onChange={(v) => (modState.czech = v)}
     />
     <OptionRow
-      label="Přímý režim čísel (A–J jako 1–0 bez prefixu)"
+      label="Čísla bez prefixu"
+      hint="A–J čte jako 1–0."
       checked={modState.direct_nums}
       onChange={(v) => (modState.direct_nums = v)}
     />

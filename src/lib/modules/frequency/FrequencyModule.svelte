@@ -136,7 +136,7 @@
     <div class="freq-output-stage">
       <!-- Contextual tooltip: seated directly above input zone, dissolves on input -->
       <EmptyHint
-        text="Vložte šifrový text pro zobrazení četnosti znaků."
+        text="Vložte šifrový text."
         hidden={!!rawText.trim()}
       />
 
@@ -184,7 +184,7 @@
         <div class="histogram-wrapper">
           {#if analysis.monograms.length === 0}
             <div class="empty-histogram-msg">
-              Text neobsahuje žádné znaky odpovídající nastavení (např. pouze písmena).
+              Žádné znaky k analýze.
             </div>
           {:else}
             <MonogramsView
@@ -222,10 +222,10 @@
   <!-- Contextual Menu Options -->
   {#snippet menuOptions()}
     <div class="menu-group">
-      <div class="menu-group-title">Nastavení analýzy</div>
+      <div class="menu-group-title">Analýza</div>
       <OptionRow
-        label="Ignoruj diakritiku"
-        hint="Převést znaky s háčky a čárkami na základní latinku (A–Z)"
+        label="Ignorovat diakritiku"
+        hint="Č → C, Á → A…"
         checked={removeDiacritics}
         onChange={(val) => {
           removeDiacritics = val;
@@ -233,8 +233,8 @@
       />
 
       <OptionRow
-        label="Ignoruj interpunkci"
-        hint="Analyzovat pouze písmena, ignorovat interpunkci, čísla a mezery"
+        label="Ignorovat interpunkci"
+        hint="Jen písmena, bez číslic a mezer"
         checked={removeSymbols}
         onChange={(val) => {
           removeSymbols = val;
@@ -243,7 +243,7 @@
     </div>
 
     <div class="menu-group">
-      <div class="menu-group-title">Akce se šifrou</div>
+      <div class="menu-group-title">Akce</div>
       <button
         type="button"
         class="menu-btn"
@@ -260,7 +260,7 @@
         disabled={!rawText.trim()}
       >
         <ArrowRight size={18} weight="bold" />
-        <span>Přenést text do Substituce</span>
+        <span>Přenést do Substituce</span>
       </button>
 
       <button
@@ -270,7 +270,7 @@
         disabled={!rawText.trim()}
       >
         <ArrowsClockwise size={18} weight="bold" />
-        <span>Přenést text do Posunů</span>
+        <span>Přenést do Posunů</span>
       </button>
 
       <button
@@ -295,7 +295,7 @@
   open={showTextSheet}
   title="Šifrový text"
   value={rawText}
-  placeholder="Vložte nebo napište šifrový text k frekvenční analýze..."
+  placeholder="Vložte nebo napište šifrový text…"
   onSave={(val) => {
     rawText = val;
   }}

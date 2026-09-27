@@ -1,54 +1,55 @@
 <script lang="ts">
+  import LetterFrequencyTable from './LetterFrequencyTable.svelte';
+  import {
+    CZECH_27_UNACCENTED_FREQUENCIES,
+    ENGLISH_26_FREQUENCIES,
+    IOC_EXPECTED
+  } from './frequencyData';
+
+  const VOWELS = ['E', 'A', 'O', 'I', 'U', 'Y'];
+  const vowels = VOWELS.map((v) => [v, CZECH_27_UNACCENTED_FREQUENCIES[v]] as const).sort(
+    (a, b) => b[1] - a[1]
+  );
+  const vowelShare = Math.round(vowels.reduce((sum, [, pct]) => sum + pct, 0));
 </script>
 
 <div class="ref-wrapper">
   <div class="ref-content" data-allow-copy>
     <section class="ref-section">
-      <h3>Frekvenční analýza</h3>
-      <p>
-        Základní metoda pro odhalení povahy šifry z rozložení četností znaků
-        a statistických vlastností přirozeného jazyka.
-      </p>
-    </section>
-
-    <section class="ref-section">
       <h4>Index koincidence (IoC)</h4>
-      <p>
-        Pravděpodobnost, že dva náhodně vybrané znaky v textu jsou shodné.
-        Rychlé vodítko pro určení typu šifrovacího systému:
-      </p>
+      <p>Pravděpodobnost, že dva náhodné znaky textu jsou shodné. Prozradí typ šifry.</p>
       <div class="ioc-table-wrapper">
         <table class="ioc-table font-mono">
           <thead>
             <tr>
-              <th>Typ textu / Jazyk</th>
-              <th>Typický IoC</th>
+              <th>Text</th>
+              <th>IoC</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>Čeština bez diakritiky</td>
-              <td class="highlight-mono">~ 0.058 – 0.062 (≈ 0.060)</td>
+              <td class="highlight-mono">{IOC_EXPECTED.csUnaccented.toFixed(3)}</td>
             </tr>
             <tr>
-              <td>Čeština s diakritikou (42 znaků)</td>
-              <td class="highlight-mono">~ 0.046 – 0.050 (≈ 0.048)</td>
+              <td>Čeština s diakritikou</td>
+              <td class="highlight-mono">{IOC_EXPECTED.csDiacritics42.toFixed(3)}</td>
             </tr>
             <tr>
-              <td>Monoalfabetická substituce</td>
-              <td class="highlight-mono">Shodný s jazykem (~0.060 / ~0.048)</td>
+              <td>Angličtina</td>
+              <td class="highlight-mono">{IOC_EXPECTED.en.toFixed(3)}</td>
             </tr>
             <tr>
-              <td>Transpozice (přesmyčka, mřížka)</td>
-              <td class="highlight-mono">Shodný s jazykem (~0.060 / ~0.048)</td>
+              <td>Substituce, transpozice</td>
+              <td class="highlight-mono">jako jazyk</td>
             </tr>
             <tr>
-              <td>Polyalfabetická (Vigenère, delší heslo)</td>
-              <td class="highlight-poly">~ 0.038 – 0.045</td>
+              <td>Polyalfabetická (Vigenère)</td>
+              <td class="highlight-poly">0.038–0.045</td>
             </tr>
             <tr>
-              <td>Uniformní náhodný šum (26 znaků)</td>
-              <td class="highlight-poly">1 / 26 ≈ 0.0385</td>
+              <td>Náhodný text (26 znaků)</td>
+              <td class="highlight-poly">{IOC_EXPECTED.uniform26}</td>
             </tr>
           </tbody>
         </table>
@@ -56,53 +57,28 @@
     </section>
 
     <section class="ref-section">
-      <h4>Samohlásky vs. Souhlásky</h4>
-      <p>
-        V běžném českém textu tvoří samohlásky přibližně <strong>42 %</strong> a souhlásky <strong>58 %</strong>.
-        Téměř v každém slově se střídají samohlásky se souhláskami.
-      </p>
+      <h4>Samohlásky</h4>
+      <p>Tvoří cca <strong>{vowelShare} %</strong> textu a střídají se se souhláskami.</p>
       <div class="vowels-box font-mono">
-        <span class="vowel-pill">E (9.5 %)</span>
-        <span class="vowel-pill">A (9.3 %)</span>
-        <span class="vowel-pill">O (8.9 %)</span>
-        <span class="vowel-pill">I (7.9 %)</span>
-        <span class="vowel-pill">U (4.1 %)</span>
-        <span class="vowel-pill">Y (2.6 %)</span>
+        {#each vowels as [v, pct] (v)}
+          <span class="vowel-pill">{v} {pct.toFixed(1)} %</span>
+        {/each}
       </div>
     </section>
 
     <section class="ref-section">
-      <h4>Četnost písmen v češtině (ČNK)</h4>
-      <div class="freq-table-wrapper">
-        <table class="freq-table font-mono">
-          <thead>
-            <tr>
-              <th>Znak</th><th>Četnost</th><th>Znak</th><th>Četnost</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>E</td><td>9.5 %</td><td>P</td><td>2.8 %</td></tr>
-            <tr><td>A</td><td>9.3 %</td><td>C</td><td>2.7 %</td></tr>
-            <tr><td>O</td><td>8.9 %</td><td>D</td><td>2.7 %</td></tr>
-            <tr><td>I</td><td>7.9 %</td><td>Y</td><td>2.6 %</td></tr>
-            <tr><td>N</td><td>6.9 %</td><td>Z</td><td>2.1 %</td></tr>
-            <tr><td>R</td><td>5.8 %</td><td>H</td><td>1.6 %</td></tr>
-            <tr><td>T</td><td>5.0 %</td><td>B</td><td>1.6 %</td></tr>
-            <tr><td>S</td><td>5.0 %</td><td>J</td><td>1.3 %</td></tr>
-            <tr><td>L</td><td>4.7 %</td><td>CH</td><td>1.2 %</td></tr>
-            <tr><td>V</td><td>4.5 %</td><td>G</td><td>1.0 %</td></tr>
-            <tr><td>U</td><td>4.1 %</td><td>F</td><td>0.7 %</td></tr>
-            <tr><td>K</td><td>3.9 %</td><td>W</td><td>0.3 %</td></tr>
-            <tr><td>M</td><td>3.8 %</td><td>X, Q</td><td>0.2 %</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <h4>Četnost písmen – čeština</h4>
+      <LetterFrequencyTable frequencies={CZECH_27_UNACCENTED_FREQUENCIES} />
     </section>
 
     <section class="ref-section">
-      <h4>Jednopísmenná slova v češtině</h4>
-      <p>Pokud jsou v textu zachovány mezery, samostatně stojící písmena jsou téměř vždy:</p>
-      <div class="pill-list font-mono">
+      <h4>Četnost písmen – angličtina</h4>
+      <LetterFrequencyTable frequencies={ENGLISH_26_FREQUENCIES} />
+    </section>
+
+    <section class="ref-section">
+      <h4>Jednopísmenná slova</h4>
+            <div class="pill-list font-mono">
         <span class="pill">A</span>
         <span class="pill">I</span>
         <span class="pill">O</span>
@@ -115,7 +91,7 @@
     </section>
 
     <section class="ref-section">
-      <h4>Nejčastější dvoupísmenná slova</h4>
+      <h4>Častá dvoupísmenná slova</h4>
       <div class="words-grid font-mono">
         <span class="word-tag">DO</span>
         <span class="word-tag">NA</span>
@@ -151,12 +127,6 @@
     gap: 16px;
   }
 
-  .ref-section h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    margin: 0 0 6px 0;
-  }
 
   .ref-section h4 {
     font-size: 13px;
@@ -172,24 +142,21 @@
     margin: 0 0 8px 0;
   }
 
-  .ioc-table-wrapper,
-  .freq-table-wrapper {
+  .ioc-table-wrapper {
     overflow-x: auto;
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-subtle);
     background-color: var(--color-surface-1);
   }
 
-  .ioc-table,
-  .freq-table {
+  .ioc-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 11px;
     text-align: left;
   }
 
-  .ioc-table th,
-  .freq-table th {
+  .ioc-table th {
     background-color: var(--color-surface-2);
     color: var(--color-text-secondary);
     padding: 5px 8px;
@@ -197,8 +164,7 @@
     font-weight: 600;
   }
 
-  .ioc-table td,
-  .freq-table td {
+  .ioc-table td {
     padding: 4px 8px;
     border-top: 1px solid var(--color-border-subtle);
   }

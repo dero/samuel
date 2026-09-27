@@ -31,7 +31,7 @@
 
   const crossSubmoduleOptions: SegmentOption<CrossType>[] = [
     { id: 'large-polish', label: 'Velký' },
-    { id: 'small-polish', label: 'Malý (Pigpen)' }
+    { id: 'small-polish', label: 'Pigpen' }
   ];
 
   // Per-tool alphabet configuration
@@ -154,11 +154,11 @@
   const emptyHint = $derived.by(() => {
     switch (crossTypeId) {
       case 'large-polish':
-        return 'Klepněte přímo do pole kříže nebo zvolte souřadnice.';
+        return 'Klepněte do kříže nebo zvolte souřadnice.';
       case 'small-polish':
-        return 'Klepněte do pole kříže se zvolenou tečkou.';
+        return 'Klepněte do kříže, tečku zvolte dole.';
       default:
-        return 'Klepnutím vyberte požadovaný znak.';
+        return 'Klepněte na znak.';
     }
   });
 </script>
@@ -171,13 +171,13 @@
   {#snippet menuOptions()}
     {#if activeConfig.hasAlphabet}
       <div class="menu-group">
-        <div class="menu-group-title">Abeceda nástroje</div>
+        <div class="menu-group-title">Abeceda</div>
 
         <NonStandardAlphabetBanner
           isWarning={isNonStandardAlphabet}
-          description="Pro tento kříž je obvyklá {activeConfig.defaultAlphabetId === 'english-ch-27'
-            ? 'Anglická s CH (27 znaků)'
-            : 'Anglická (26 znaků)'}."
+          description="Obvykle {activeConfig.defaultAlphabetId === 'english-ch-27'
+            ? 'anglická s CH (27)'
+            : 'anglická (26)'}."
         />
 
         <AlphabetSelect

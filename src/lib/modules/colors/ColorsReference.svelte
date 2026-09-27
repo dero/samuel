@@ -1,140 +1,118 @@
 <div class="reference-content">
-  <!-- Section 1: Aditivní model (RGB) -->
   <section class="ref-section">
-    <h3 class="ref-heading">1. Aditivní míchání světel (Model RGB)</h3>
-    <p class="ref-text">
-      Princip sčítání vyzařovaných vlnových délek světla (monitory, displeje mobilů, projektory, optika). Bez světla je tma (černá), sečtením všech barev vzniká bílé světlo.
-    </p>
-
+    <h3 class="ref-heading">RGB – světlo</h3>
+    <p class="ref-text">Aditivní: displeje, projektory. Všechny složky dají bílou.</p>
     <div class="table-wrapper">
       <table class="ref-table">
         <thead>
           <tr>
             <th class="col-name">Složky</th>
-            <th class="col-val">Výsledná barva</th>
-            <th class="col-val">Typ</th>
+            <th class="col-val">Výsledek</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#ef4444;"></span>Červená + <span class="color-dot" style="background:#22c55e;"></span>Zelená</td>
-            <td class="col-val"><span class="color-dot" style="background:#eab308;"></span><strong>Žlutá</strong> (Yellow)</td>
-            <td class="col-val">Sekundární</td>
+            <td class="col-val"><span class="color-dot" style="background:#eab308;"></span><strong>Žlutá</strong></td>
           </tr>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#ef4444;"></span>Červená + <span class="color-dot" style="background:#3b82f6;"></span>Modrá</td>
-            <td class="col-val"><span class="color-dot" style="background:#d946ef;"></span><strong>Purpurová</strong> (Magenta)</td>
-            <td class="col-val">Sekundární</td>
+            <td class="col-val"><span class="color-dot" style="background:#d946ef;"></span><strong>Purpurová</strong></td>
           </tr>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#22c55e;"></span>Zelená + <span class="color-dot" style="background:#3b82f6;"></span>Modrá</td>
-            <td class="col-val"><span class="color-dot" style="background:#06b6d4;"></span><strong>Azurová</strong> (Cyan)</td>
-            <td class="col-val">Sekundární</td>
+            <td class="col-val"><span class="color-dot" style="background:#06b6d4;"></span><strong>Azurová</strong></td>
           </tr>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#ef4444;"></span>Červená + <span class="color-dot" style="background:#22c55e;"></span>Zelená + <span class="color-dot" style="background:#3b82f6;"></span>Modrá</td>
             <td class="col-val"><span class="color-dot" style="background:#ffffff; border-color:#999;"></span><strong>Bílá</strong></td>
-            <td class="col-val">Plné spektrum</td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- Section 2: Subtraktivní model (CMY / CMYK) -->
   <section class="ref-section">
-    <h3 class="ref-heading">2. Subtraktivní míchání pigmentů (Model CMY / CMYK)</h3>
-    <p class="ref-text">
-      Princip pohlcování (absorpce) světla dopadajícího na papír (tiskárny, polygrafie, tisková rastrová síť). Podkladový bílý papír odráží vše, nanesením inkoustů se vlnové délky ubírají. Složka <strong>K</strong> (blacK) se přidává kvůli sytosti a úspoře barev.
-    </p>
-
+    <h3 class="ref-heading">CMYK – tisk</h3>
+    <p class="ref-text">Subtraktivní: inkoust pohlcuje světlo. K = černá.</p>
     <div class="table-wrapper">
       <table class="ref-table">
         <thead>
           <tr>
-            <th class="col-name">Tiskové složky</th>
-            <th class="col-val">Výsledná barva</th>
-            <th class="col-val">Pohlcená složka</th>
+            <th class="col-name">Inkousty</th>
+            <th class="col-val">Výsledek</th>
+            <th class="col-val">Pohlcuje</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#06b6d4;"></span>Azurová + <span class="color-dot" style="background:#d946ef;"></span>Purpurová</td>
             <td class="col-val"><span class="color-dot" style="background:#3b82f6;"></span><strong>Modrá</strong></td>
-            <td class="col-val">Pohlcuje R a G</td>
+            <td class="col-val">R, G</td>
           </tr>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#06b6d4;"></span>Azurová + <span class="color-dot" style="background:#eab308;"></span>Žlutá</td>
             <td class="col-val"><span class="color-dot" style="background:#22c55e;"></span><strong>Zelená</strong></td>
-            <td class="col-val">Pohlcuje R a B</td>
+            <td class="col-val">R, B</td>
           </tr>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#d946ef;"></span>Purpurová + <span class="color-dot" style="background:#eab308;"></span>Žlutá</td>
             <td class="col-val"><span class="color-dot" style="background:#ef4444;"></span><strong>Červená</strong></td>
-            <td class="col-val">Pohlcuje G a B</td>
+            <td class="col-val">G, B</td>
           </tr>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#06b6d4;"></span>Azurová + <span class="color-dot" style="background:#d946ef;"></span>Purpurová + <span class="color-dot" style="background:#eab308;"></span>Žlutá</td>
-            <td class="col-val"><span class="color-dot" style="background:#111111; border-color:#555;"></span><strong>Černá</strong> (teoretická)</td>
-            <td class="col-val">Pohlcuje vše</td>
+            <td class="col-val"><span class="color-dot" style="background:#111111; border-color:#555;"></span><strong>Černá</strong></td>
+            <td class="col-val">vše</td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- Section 3: Malířský model (RYB) -->
   <section class="ref-section">
-    <h3 class="ref-heading">3. Tradiční malířské míchání (Model RYB)</h3>
-    <p class="ref-text">
-      Historický systém používaný v malířství a ve školních/dětských šifrách (tempery, vodovky). Základní barvy jsou Červená (Red), Žlutá (Yellow) a Modrá (Blue).
-    </p>
-
+    <h3 class="ref-heading">RYB – malířské</h3>
+    <p class="ref-text">Vodovky, tempery, dětské šifry.</p>
     <div class="table-wrapper">
       <table class="ref-table">
         <thead>
           <tr>
-            <th class="col-name">Pigmenty</th>
+            <th class="col-name">Barvy</th>
             <th class="col-val">Výsledek</th>
-            <th class="col-val">Poznámka</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#ef4444;"></span>Červená + <span class="color-dot" style="background:#eab308;"></span>Žlutá</td>
             <td class="col-val"><span class="color-dot" style="background:#f97316;"></span><strong>Oranžová</strong></td>
-            <td class="col-val">Sekundární barva</td>
           </tr>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#eab308;"></span>Žlutá + <span class="color-dot" style="background:#3b82f6;"></span>Modrá</td>
             <td class="col-val"><span class="color-dot" style="background:#22c55e;"></span><strong>Zelená</strong></td>
-            <td class="col-val">Sekundární barva</td>
           </tr>
           <tr>
             <td class="col-name"><span class="color-dot" style="background:#ef4444;"></span>Červená + <span class="color-dot" style="background:#3b82f6;"></span>Modrá</td>
             <td class="col-val"><span class="color-dot" style="background:#a855f7;"></span><strong>Fialová</strong></td>
-            <td class="col-val">Sekundární barva</td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- Section 4: Fyzické barevné filtry -->
   <section class="ref-section">
-    <h3 class="ref-heading">4. Chování fyzických optických filtrů (v šifrovacích hrách)</h3>
+    <h3 class="ref-heading">Barevné filtry</h3>
     <div class="notation-box">
       <div class="notation-item">
-        <strong>Základní pravidlo:</strong> Barevný filtr propouští výhradně paprsky své vlastní barvy a pohlcuje barvy doplňkové (komplementární).
+        Filtr propustí svou barvu – ta splyne s bílým papírem. Doplňkové barvy zčernají.
       </div>
       <div class="notation-item">
-        <strong>Červený filtr:</strong> Bílé pozadí papíru se jeví červené. Červený text odráží červenou stejně jako pozadí $\to$ <strong>červený text zmizí (splyne s papírem)</strong>. Modrý a azurový inkoust červenou pohlcuje $\to$ <strong>modrý text zčerná a vystoupí do popředí</strong>.
+        <strong>Červený:</strong> červená zmizí, modrá a azurová zčernají.
       </div>
       <div class="notation-item">
-        <strong>Zelený filtr:</strong> Zelené a žluté prvky splynou s pozadím. Červené a purpurové prvky ztmavnou / zčernají.
+        <strong>Zelený:</strong> zelená a žlutá zmizí, červená a purpurová zčernají.
       </div>
       <div class="notation-item">
-        <strong>Modrý filtr:</strong> Modré a azurové prvky splynou s pozadím. Žluté a červené prvky ztmavnou / zčernají.
+        <strong>Modrý:</strong> modrá a azurová zmizí, žlutá a červená zčernají.
       </div>
     </div>
   </section>
