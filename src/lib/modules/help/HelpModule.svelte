@@ -1,49 +1,37 @@
 <script lang="ts">
-  import { MODULES } from '../../types';
   import { APP_NAME } from '../../constants';
-  import ModuleIcon from '../../components/ui/ModuleIcon.svelte';
-  import { List, BookOpen } from 'phosphor-svelte';
+  import { ArrowUp, List, BookOpen } from 'phosphor-svelte';
 </script>
 
 <div class="help-scroll">
   <div class="help-container">
-    <h1 class="page-title">Nápověda</h1>
-    <p class="subtitle">{APP_NAME} – pomůcky na šifrovačky</p>
+    <section class="start-card">
+      <span class="start-arrow"><ArrowUp size={22} weight="bold" /></span>
+      <div>
+        <h1 class="start-title">Začněte klepnutím na ikonu nebo název nahoře</h1>
+        <p class="start-desc">Otevře se výběr pomůcek. Tudy pak přepínáte kdykoli.</p>
+      </div>
+    </section>
 
     <section class="card">
       <h2 class="card-title">Ovládání</h2>
       <ul class="help-list">
         <li>
-          <strong>Přepnutí pomůcky:</strong> klepněte na ikonu nebo název v záhlaví.
+          <strong>Menu</strong> <span class="inline-icon"><List size={14} weight="bold" /></span> volby pomůcky, abeceda a vyčištění.
         </li>
         <li>
-          <strong>Zpět:</strong> systémové tlačítko zavře menu, referenci i výběr pomůcek.
+          <strong>Reference</strong> <span class="inline-icon"><BookOpen size={14} weight="duotone" /></span> tahák a tabulky.
         </li>
         <li>
           <strong>Kopírování:</strong> klepnutím na výsledek.
         </li>
         <li>
-          <strong>Menu</strong> <span class="inline-icon"><List size={14} weight="bold" /></span> volby nástroje, abeceda a vyčištění modulu.
-        </li>
-        <li>
-          <strong>Reference</strong> <span class="inline-icon"><BookOpen size={14} weight="duotone" /></span> tahák a tabulky.
+          <strong>Zpět:</strong> systémové tlačítko zavře menu, referenci i výběr pomůcek.
         </li>
       </ul>
     </section>
 
-    <section class="card">
-      <h2 class="card-title">Přehled nástrojů</h2>
-      <div class="tools-overview">
-        {#each MODULES as mod}
-          <div class="tool-item">
-            <span class="tool-icon">
-              <ModuleIcon id={mod.id} weight="duotone" />
-            </span>
-            <span class="tool-name">{mod.name}</span>
-          </div>
-        {/each}
-      </div>
-    </section>
+    <p class="subtitle">{APP_NAME} – pomůcky na šifrovačky. Vše funguje offline.</p>
   </div>
 </div>
 
@@ -65,16 +53,42 @@
     gap: var(--space-lg);
   }
 
-  .page-title {
-    font-size: var(--text-2xl);
-    font-weight: 700;
-    margin: 0 0 2px 0;
-  }
 
   .subtitle {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    margin: 0;
+    text-align: center;
+  }
+
+  .start-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    background-color: var(--color-accent-primary-subtle);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-md);
+  }
+
+  .start-arrow {
+    display: flex;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--color-accent-primary);
+  }
+
+  .start-title {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 4px 0;
+  }
+
+  .start-desc {
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
-    margin: 0 0 4px 0;
+    margin: 0;
   }
 
   .card {
@@ -104,30 +118,8 @@
     line-height: 1.5;
   }
 
-  .tools-overview {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: var(--space-sm);
-  }
 
-  .tool-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: 8px 10px;
-    background-color: var(--color-surface-2);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    font-weight: 600;
-  }
 
-  .tool-icon {
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-accent-primary);
-  }
 
   .inline-icon {
     display: inline-flex;
