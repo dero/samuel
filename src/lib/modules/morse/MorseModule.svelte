@@ -366,6 +366,7 @@
     <TranslationCard
       text={plainTextOutput}
       pendingText={pendingInterlinearToken?.primary ?? ''}
+      hasContent={!!modState.input}
       emptyHint="Lomítko dělí písmena, dvě slova, tři STOP. Text bez mezer řeší tlačítko dole."
     >
       {#snippet children()}

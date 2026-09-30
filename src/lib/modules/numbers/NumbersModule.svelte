@@ -108,13 +108,6 @@
     calculateRequiredLength(sourceBase, currentLetters.length, zeroBased, asciiMode)
   );
 
-  // Buffer capping when auto-enter is active
-  $effect(() => {
-    if (isSourceNumber && isTargetChar && autoEnter && buffer.length > requiredLength) {
-      buffer = buffer.slice(0, requiredLength);
-    }
-  });
-
   // Source input validation status (e.g. invalid Roman or invalid base digit)
   const isSourceInputError = $derived.by(() => {
     if (!buffer) return false;
@@ -162,10 +155,6 @@
     if (isSourceRoman) return convertRomanToRoman(buffer, isSourceRomanCanonical);
     return { val: null, result: null };
   });
-
-  const currentChar = $derived<string | null>(
-    decodeCharResult.status === 'valid' ? decodeCharResult.character : null
-  );
 
   function decodeOneToken(
     tok: string,
@@ -429,47 +418,14 @@
     };
   });
 
-  // Enter button is enabled whenever there is something valid in the buffer to commit
-  const isEnterButtonEnabled = $derived.by(() => {
-    if (isSourceChar) return false; // instant letter commit
-    if (!buffer) return false;
-    if (isTargetChar) {
-      return !!currentChar;
-    }
-    if (isTargetNumber) {
-      return !!decodeNumResult.result;
-    }
-    if (isTargetRoman) {
-      return !!decodeRomanResult.result;
-    }
-    return false;
-  });
+  // Enter button is enabled whenever there is a valid non-error pending token to commit
+  const isEnterButtonEnabled = $derived(
+    !isSourceChar && !!pendingInterlinearToken && !pendingInterlinearToken.isError
+  );
 
-  const enterButtonSymbol = $derived.by(() => {
-    if (isTargetChar) {
-      return currentChar || '↵';
-    }
-    if (isTargetNumber) {
-      return decodeNumResult.result || '↵';
-    }
-    if (isTargetRoman) {
-      return decodeRomanResult.result || '↵';
-    }
-    return '↵';
-  });
-
-  const enterButtonName = $derived.by(() => {
-    if (isTargetChar) {
-      return currentChar ? `Vložit „${currentChar}“` : 'Vložit';
-    }
-    if (isTargetNumber) {
-      return decodeNumResult.result ? `Vložit ${decodeNumResult.result}` : 'Vložit';
-    }
-    if (isTargetRoman) {
-      return decodeRomanResult.result ? `Vložit ${decodeRomanResult.result}` : 'Vložit';
-    }
-    return 'Vložit';
-  });
+  const enterButtonSymbol = $derived(
+    isEnterButtonEnabled ? pendingInterlinearToken!.primary : '↵'
+  );
 
   // Actions
   function handleSwapFlow() {
@@ -505,25 +461,30 @@
   }
 
   function handleDigit(digit: string) {
+    const nextBuffer = buffer + digit;
+
     // If auto-enter is active for Number -> Char, cap at requiredLength
-    if (isSourceNumber && isTargetChar && autoEnter && buffer.length >= requiredLength) {
+    if (isSourceNumber && isTargetChar && autoEnter && nextBuffer.length > requiredLength) {
       settings.vibrate(40);
       return;
     }
 
-    buffer += digit;
-
-    // Check auto-enter condition for Number -> Char
-    if (isSourceNumber && isTargetChar && autoEnter && buffer.length >= requiredLength) {
-      if (currentChar) {
+    if (isSourceNumber && isTargetChar && autoEnter && nextBuffer.length >= requiredLength) {
+      const decoded = decodeOneToken(nextBuffer, sourceMode, targetMode, false);
+      if (!decoded.isError) {
         settings.vibrate(30);
-        rawTokens = [...rawTokens, buffer];
+        rawTokens = [...rawTokens, nextBuffer];
         buffer = '';
-      } else if (decodeCharResult.status === 'out_of_range') {
+        return;
+      } else {
+        buffer = nextBuffer;
         settings.vibrate(50);
-        toast.show(decodeCharResult.errorText || 'Číslo je mimo rozsah abecedy', 'warning');
+        toast.show(decoded.errorText || 'Číslo je mimo rozsah abecedy', 'warning');
+        return;
       }
     }
+
+    buffer = nextBuffer;
   }
 
   function handleLetter(char: string) {
@@ -543,11 +504,7 @@
 
   function handleSpace() {
     settings.vibrate(20);
-
-    if (buffer.length > 0) {
-      rawTokens = [...rawTokens, buffer, ' '];
-      buffer = '';
-    } else if (rawTokens.length > 0 && rawTokens.at(-1) !== ' ') {
+    if (rawTokens.length > 0 && rawTokens.at(-1) !== ' ') {
       rawTokens = [...rawTokens, ' '];
     }
   }
@@ -557,7 +514,23 @@
     if (buffer.length > 0) {
       buffer = buffer.slice(0, -1);
     } else if (rawTokens.length > 0) {
+      const lastToken = rawTokens[rawTokens.length - 1];
       rawTokens = rawTokens.slice(0, -1);
+      if (lastToken === ' ') {
+        return;
+      }
+      if (isSourceNumber || isSourceRoman) {
+        buffer = lastToken.slice(0, -1);
+      } else if (isSourceChar) {
+        const prevChar = rawTokens.filter((t) => t !== ' ').at(-1) || '';
+        lastCharInput = prevChar;
+        if (prevChar) {
+          const decoded = decodeOneToken(prevChar, 'char', targetMode, false);
+          lastCharOutputStr = decoded.primary;
+        } else {
+          lastCharOutputStr = '';
+        }
+      }
     }
   }
 
@@ -606,12 +579,15 @@
   {#snippet output()}
     <TranslationCard
       text={plainTextOutput}
+      pendingText={pendingInterlinearToken?.primary ?? ''}
+      hasContent={rawTokens.length > 0 || !!buffer}
       emptyHint="Soustavy a režimy volí lišta níže."
     >
       {#snippet children()}
         <InterlinearText
           tokens={interlinearTokens}
           pendingToken={pendingInterlinearToken}
+          scalePrimaryBy="primary"
         />
       {/snippet}
     </TranslationCard>

@@ -34,7 +34,7 @@
     tokens = [],
     pendingToken = null,
     size = 'md',
-    scalePrimaryBy = 'both',
+    scalePrimaryBy = 'primary',
     class: customClass = ''
   }: Props = $props();
 </script>
@@ -47,14 +47,14 @@
       </span>
     {:else}
       {@const hasSecondary = Boolean(token.secondary || token.secondarySub != null)}
-      {@const primSubStr = token.primarySub != null ? String(token.primarySub) : ''}
       {@const secSubStr = token.secondarySub != null ? String(token.secondarySub) : ''}
-      {@const primLen = token.primary.length + Math.ceil(primSubStr.length * 0.7)}
+      {@const primLen = token.primary.length}
       {@const secLen = (token.secondary ? token.secondary.length : 0) + Math.ceil(secSubStr.length * 0.7)}
-      {@const maxLen = scalePrimaryBy === 'primary' ? primLen : Math.max(primLen, secLen)}
-      {@const tier = maxLen <= 3 ? 'short' : maxLen <= 7 ? 'medium' : maxLen <= 12 ? 'dense' : maxLen <= 18 ? 'long' : 'xlong'}
+      {@const effPrimLen = scalePrimaryBy === 'both' ? Math.max(primLen, secLen) : primLen}
+      {@const primTier = effPrimLen <= 3 ? 'short' : effPrimLen <= 6 ? 'medium' : effPrimLen <= 11 ? 'dense' : effPrimLen <= 18 ? 'long' : 'xlong'}
+      {@const secTier = secLen <= 6 ? 'short' : secLen <= 12 ? 'dense' : 'long'}
       <span
-        class="interlinear-cell tier-{tier} {token.className || ''}"
+        class="interlinear-cell tier-{primTier} sec-tier-{secTier} {token.className || ''}"
         class:is-pending={token.isPending}
         class:is-error={token.isError}
         class:has-secondary={hasSecondary}
@@ -81,14 +81,14 @@
       </span>
     {:else}
       {@const hasSecondary = Boolean(pendingToken.secondary || pendingToken.secondarySub != null)}
-      {@const primSubStr = pendingToken.primarySub != null ? String(pendingToken.primarySub) : ''}
       {@const secSubStr = pendingToken.secondarySub != null ? String(pendingToken.secondarySub) : ''}
-      {@const primLen = pendingToken.primary.length + Math.ceil(primSubStr.length * 0.7)}
+      {@const primLen = pendingToken.primary.length}
       {@const secLen = (pendingToken.secondary ? pendingToken.secondary.length : 0) + Math.ceil(secSubStr.length * 0.7)}
-      {@const maxLen = scalePrimaryBy === 'primary' ? primLen : Math.max(primLen, secLen)}
-      {@const tier = maxLen <= 3 ? 'short' : maxLen <= 7 ? 'medium' : maxLen <= 12 ? 'dense' : maxLen <= 18 ? 'long' : 'xlong'}
+      {@const effPrimLen = scalePrimaryBy === 'both' ? Math.max(primLen, secLen) : primLen}
+      {@const primTier = effPrimLen <= 3 ? 'short' : effPrimLen <= 6 ? 'medium' : effPrimLen <= 11 ? 'dense' : effPrimLen <= 18 ? 'long' : 'xlong'}
+      {@const secTier = secLen <= 6 ? 'short' : secLen <= 12 ? 'dense' : 'long'}
       <span
-        class="interlinear-cell is-pending tier-{tier} {pendingToken.className || ''}"
+        class="interlinear-cell is-pending tier-{primTier} sec-tier-{secTier} {pendingToken.className || ''}"
         class:is-error={pendingToken.isError}
         class:has-secondary={hasSecondary}
         style="--prim-len: {primLen}; --sec-len: {secLen};"
@@ -276,12 +276,11 @@
     font-weight: 800;
   }
 
-  /* Adaptive length tiers for cell-secondary */
-  .tier-dense .cell-secondary {
+  /* Adaptive length tiers for cell-secondary (governed strictly by secondary length) */
+  .sec-tier-dense .cell-secondary {
     font-size: 8.5px;
   }
-  .tier-long .cell-secondary,
-  .tier-xlong .cell-secondary {
+  .sec-tier-long .cell-secondary {
     font-size: 7.5px;
     letter-spacing: -0.3px;
   }

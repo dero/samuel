@@ -7,6 +7,7 @@
   interface Props {
     text: string;
     pendingText?: string;
+    hasContent?: boolean;
     placeholder?: string;
     emptyHint?: string;
     emptyTitle?: string;
@@ -17,6 +18,7 @@
   let {
     text = '',
     pendingText = '',
+    hasContent: explicitHasContent,
     placeholder = '',
     emptyHint = '',
     emptyTitle = '',
@@ -26,7 +28,11 @@
 
   let textEl = $state<HTMLDivElement | null>(null);
 
-  const hasContent = $derived(!!(text.trim() || pendingText.trim()));
+  const hasContent = $derived(
+    explicitHasContent !== undefined
+      ? explicitHasContent
+      : !!(text.trim() || pendingText.trim())
+  );
   const displayHint = $derived(emptyHint || emptyTitle || '');
 
   $effect(() => {
