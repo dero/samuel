@@ -7,6 +7,7 @@
   import NonStandardSettingsBanner from '../../components/ui/NonStandardSettingsBanner.svelte';
   import TurtleCanvas from './TurtleCanvas.svelte';
   import TurtleReference from './TurtleReference.svelte';
+  import TurtleEasterEgg from './TurtleEasterEgg.svelte';
   import {
     ArrowUp,
     ArrowDown,
@@ -59,6 +60,9 @@
   let showGrid = $state<boolean>(
     modSettings.getBoolean('show_grid', true)
   );
+  let showTurtle = $state<boolean>(
+    modSettings.getBoolean('show_turtle', true)
+  );
 
   // Persistence effect
   $effect(() => {
@@ -67,7 +71,8 @@
       granularity,
       initial_heading_east: initialHeadingEast,
       show_dashes: showDashes,
-      show_grid: showGrid
+      show_grid: showGrid,
+      show_turtle: showTurtle
     });
   });
 
@@ -80,13 +85,15 @@
   const nonStandardCount = $derived(
     (initialHeadingEast ? 1 : 0) +
     (!showDashes ? 1 : 0) +
-    (!showGrid ? 1 : 0)
+    (!showGrid ? 1 : 0) +
+    (!showTurtle ? 1 : 0)
   );
 
   function resetToDefaults() {
     initialHeadingEast = false;
     showDashes = true;
     showGrid = true;
+    showTurtle = true;
     toast.show('Výchozí nastavení obnoveno', { type: 'success' });
   }
 
@@ -195,6 +202,14 @@
         isNonStandard={!showGrid}
         onChange={(v) => (showGrid = v)}
       />
+
+      <OptionRow
+        label="Zobrazit dekorativní želvičku"
+        hint="Oživí prázdné místo v klávesnici"
+        checked={showTurtle}
+        isNonStandard={!showTurtle}
+        onChange={(v) => (showTurtle = v)}
+      />
     </div>
   {/snippet}
 
@@ -296,7 +311,11 @@
               <span class="key-label">Vzad</span>
             </button>
 
-            <div class="grid-filler" aria-hidden="true"></div>
+            {#if showTurtle}
+              <TurtleEasterEgg />
+            {:else}
+              <div class="grid-filler" aria-hidden="true"></div>
+            {/if}
           </div>
 
           <!-- Row 3: Granularity preset bar (1, 5, 15, 45, 90°) -->
