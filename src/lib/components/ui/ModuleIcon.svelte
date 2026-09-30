@@ -19,7 +19,8 @@
     Gear,
     DeviceMobile,
     SquaresFour,
-    GlobeSimple
+    GlobeSimple,
+    Path
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
 
@@ -57,6 +58,7 @@
     freq: ChartBar,
     'freq-ocr': ChartBar,
     grille: SquaresFour,
+    turtle: Path,
     words: BookOpen,
     calendar: CalendarBlank,
     facts: Lightbulb,
@@ -78,6 +80,7 @@
     chartbar: ChartBar,
     gridfour: GridFour,
     squaresfour: SquaresFour,
+    path: Path,
     devicemobile: DeviceMobile,
     bookopen: BookOpen,
     calendarblank: CalendarBlank,

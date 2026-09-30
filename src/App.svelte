@@ -19,6 +19,7 @@
   import FrequencyModule from './lib/modules/frequency/FrequencyModule.svelte';
   import WordsModule from './lib/modules/words/WordsModule.svelte';
   import GrilleModule from './lib/modules/grille/GrilleModule.svelte';
+  import TurtleModule from './lib/modules/turtle/TurtleModule.svelte';
   import CalendarModule from './lib/modules/calendar/CalendarModule.svelte';
   import FactsModule from './lib/modules/facts/FactsModule.svelte';
   import ColorsModule from './lib/modules/colors/ColorsModule.svelte';
@@ -107,6 +108,8 @@
     <WordsModule />
   {:else if navigation.activeModuleId === 'grille'}
     <GrilleModule />
+  {:else if navigation.activeModuleId === 'turtle'}
+    <TurtleModule />
   {:else if navigation.activeModuleId === 'calendar'}
     <CalendarModule />
   {:else if navigation.activeModuleId === 'facts'}
