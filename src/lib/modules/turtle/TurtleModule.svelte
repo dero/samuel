@@ -85,8 +85,7 @@
   const nonStandardCount = $derived(
     (initialHeadingEast ? 1 : 0) +
     (!showDashes ? 1 : 0) +
-    (!showGrid ? 1 : 0) +
-    (!showTurtle ? 1 : 0)
+    (!showGrid ? 1 : 0)
   );
 
   function resetToDefaults() {
@@ -207,7 +206,6 @@
         label="Zobrazit dekorativní želvičku"
         hint="Oživí prázdné místo v klávesnici"
         checked={showTurtle}
-        isNonStandard={!showTurtle}
         onChange={(v) => (showTurtle = v)}
       />
     </div>
