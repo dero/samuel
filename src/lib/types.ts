@@ -33,7 +33,7 @@ export interface ModuleMeta {
 }
 
 export const MODULES: ModuleMeta[] = [
-  { id: 'morse', name: 'Morseovka', icon: 'Broadcast' },
+  { id: 'morse', name: 'Morse', icon: 'Broadcast' },
   { id: 'braille', name: 'Braille', icon: 'DotsSixVertical' },
   { id: 'semaphore', name: 'Semafor', icon: 'FlagBanner' },
   { id: 'flags', name: 'Vlajky', icon: 'FlagCheckered' },

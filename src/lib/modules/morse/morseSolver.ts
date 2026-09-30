@@ -61,15 +61,53 @@ export function normalizeMorse(raw: string): string {
 }
 
 /**
- * Decodes normalized Morse code to readable uppercase text.
+ * Decodes a single Morse code token to an uppercase letter, digit, or punctuation mark.
  */
-export function decodeMorse(
-  morse: string,
+export function decodeMorseLetter(
+  code: string,
   optionsOrParseCH: boolean | DecodeMorseOptions = true,
   parseDigits = true,
   parseOther = true
 ): string {
-  if (!morse.trim()) return '';
+  let parseCH = true;
+  let digits = true;
+  let other = true;
+
+  if (typeof optionsOrParseCH === 'object' && optionsOrParseCH !== null) {
+    parseCH = optionsOrParseCH.parseCH ?? true;
+    digits = optionsOrParseCH.parseDigits ?? true;
+    other = optionsOrParseCH.parseOther ?? true;
+  } else {
+    parseCH = optionsOrParseCH ?? true;
+    digits = parseDigits;
+    other = parseOther;
+  }
+
+  if (code === '----') {
+    return parseCH ? 'CH' : '?';
+  }
+  if (code in REVERSE_MORSE_LETTERS) {
+    return REVERSE_MORSE_LETTERS[code];
+  }
+  if (code in REVERSE_MORSE_DIGITS) {
+    return digits ? REVERSE_MORSE_DIGITS[code] : '?';
+  }
+  if (code in REVERSE_MORSE_OTHER) {
+    return other ? REVERSE_MORSE_OTHER[code] : '?';
+  }
+  return '?';
+}
+
+/**
+ * Checks whether a given string of dots and dashes is a prefix of any recognized Morse code.
+ */
+export function isMorsePrefix(
+  code: string,
+  optionsOrParseCH: boolean | DecodeMorseOptions = true,
+  parseDigits = true,
+  parseOther = true
+): boolean {
+  if (!code) return false;
 
   let parseCH = true;
   let digits = true;
@@ -85,6 +123,34 @@ export function decodeMorse(
     other = parseOther;
   }
 
+  for (const m in REVERSE_MORSE_LETTERS) {
+    if (!parseCH && m === '----') continue;
+    if (m.startsWith(code)) return true;
+  }
+  if (digits) {
+    for (const m in REVERSE_MORSE_DIGITS) {
+      if (m.startsWith(code)) return true;
+    }
+  }
+  if (other) {
+    for (const m in REVERSE_MORSE_OTHER) {
+      if (m.startsWith(code)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Decodes normalized Morse code to readable uppercase text.
+ */
+export function decodeMorse(
+  morse: string,
+  optionsOrParseCH: boolean | DecodeMorseOptions = true,
+  parseDigits = true,
+  parseOther = true
+): string {
+  if (!morse.trim()) return '';
+
   // Words are separated by '//' or double spaces
   const words = morse.split(/\s*\/\/\s*|\s{2,}/);
 
@@ -92,21 +158,7 @@ export function decodeMorse(
     // Letters are separated by single '/' or single space
     const letters = word.split(/[\/\s]+/).filter(Boolean);
     return letters
-      .map((code) => {
-        if (code === '----') {
-          return parseCH ? 'CH' : '?';
-        }
-        if (code in REVERSE_MORSE_LETTERS) {
-          return REVERSE_MORSE_LETTERS[code];
-        }
-        if (code in REVERSE_MORSE_DIGITS) {
-          return digits ? REVERSE_MORSE_DIGITS[code] : '?';
-        }
-        if (code in REVERSE_MORSE_OTHER) {
-          return other ? REVERSE_MORSE_OTHER[code] : '?';
-        }
-        return '?';
-      })
+      .map((code) => decodeMorseLetter(code, optionsOrParseCH, parseDigits, parseOther))
       .join('');
   });
 

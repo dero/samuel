@@ -10,6 +10,10 @@
     modeType?: 'source' | 'target';
     activeMode: FlowMode;
     alphabetName: string;
+    minSourceBase?: number;
+    maxDigitChar?: string;
+    hasTokens?: boolean;
+    sourceTokenType?: 'number' | 'roman' | 'char' | 'none';
     onSelect: (mode: FlowMode) => void;
     onClose: () => void;
   }
@@ -20,6 +24,10 @@
     modeType = 'source',
     activeMode,
     alphabetName,
+    minSourceBase = 2,
+    maxDigitChar = '',
+    hasTokens = false,
+    sourceTokenType = 'none',
     onSelect,
     onClose
   }: Props = $props();
@@ -29,6 +37,14 @@
     onSelect(mode);
     onClose();
   }
+
+  const isCharDisabled = $derived(
+    modeType === 'source' && hasTokens && sourceTokenType !== 'char' && sourceTokenType !== 'none'
+  );
+
+  const isRomanDisabled = $derived(
+    modeType === 'source' && hasTokens && sourceTokenType !== 'roman' && sourceTokenType !== 'none'
+  );
 </script>
 
 <BottomSheet
@@ -46,6 +62,7 @@
         type="button"
         class="mode-row"
         class:is-selected={activeMode === 'char'}
+        disabled={isCharDisabled}
         onclick={() => handlePick('char')}
       >
         <div class="mode-left">
@@ -53,8 +70,15 @@
             <TextAa size={22} weight="bold" />
           </div>
           <div class="mode-info">
-            <div class="mode-name">Písmeno</div>
-            <div class="mode-desc">{alphabetName}</div>
+            <div class="mode-name">
+              Písmeno
+              {#if isCharDisabled}
+                <span class="disabled-icon" aria-hidden="true">❌</span>
+              {/if}
+            </div>
+            <div class="mode-desc" class:is-warning={isCharDisabled}>
+              {isCharDisabled ? 'Nutno smazat vstup' : alphabetName}
+            </div>
           </div>
         </div>
 
@@ -75,6 +99,7 @@
           type="button"
           class="mode-row"
           class:is-selected={activeMode === 'roman'}
+          disabled={isRomanDisabled}
           onclick={() => handlePick('roman')}
         >
           <div class="mode-left">
@@ -82,8 +107,15 @@
               <span class="font-mono" style="font-weight: 800; font-size: 15px;">Ř</span>
             </div>
             <div class="mode-info">
-              <div class="mode-name">Římská kanonická</div>
-              <div class="mode-desc">1–3999, jen platné tvary</div>
+              <div class="mode-name">
+                Římská kanonická
+                {#if isRomanDisabled}
+                  <span class="disabled-icon" aria-hidden="true">❌</span>
+                {/if}
+              </div>
+              <div class="mode-desc" class:is-warning={isRomanDisabled}>
+                {isRomanDisabled ? 'Nutno smazat vstup' : '1–3999, jen platné tvary'}
+              </div>
             </div>
           </div>
 
@@ -99,7 +131,7 @@
           type="button"
           class="mode-row"
           class:is-selected={activeMode === 'roman_loose'}
-          disabled={modeType === 'target'}
+          disabled={modeType === 'target' || isRomanDisabled}
           onclick={() => handlePick('roman_loose')}
         >
           <div class="mode-left">
@@ -111,10 +143,16 @@
                 Římská volná
                 {#if modeType === 'target'}
                   <span class="disabled-tag">Jen vstup</span>
+                {:else if isRomanDisabled}
+                  <span class="disabled-icon" aria-hidden="true">❌</span>
                 {/if}
               </div>
-              <div class="mode-desc">
-                {modeType === 'target' ? 'Výstup je vždy kanonický' : 'Přijme i IIII, IC, IL…'}
+              <div class="mode-desc" class:is-warning={modeType === 'source' && isRomanDisabled}>
+                {modeType === 'target'
+                  ? 'Výstup je vždy kanonický'
+                  : isRomanDisabled
+                    ? 'Nutno smazat vstup'
+                    : 'Přijme i IIII, IC, IL…'}
               </div>
             </div>
           </div>
@@ -135,18 +173,29 @@
         {#each ALL_BASES as b}
           {@const cfg = BASE_CONFIGS[b]}
           {@const isSelected = activeMode === b}
+          {@const isDiffType = modeType === 'source' && hasTokens && sourceTokenType !== 'number' && sourceTokenType !== 'none'}
+          {@const isBaseTooSmall = modeType === 'source' && hasTokens && sourceTokenType === 'number' && b < minSourceBase}
+          {@const isBaseDisabled = isDiffType || isBaseTooSmall}
           <button
             type="button"
             class="mode-row"
             class:is-selected={isSelected}
+            disabled={isBaseDisabled}
             onclick={() => handlePick(b)}
           >
             <div class="mode-left">
               <span class="base-badge">{b}</span>
               <div class="mode-info">
-                <div class="mode-name">{cfg.name} ({cfg.shortName})</div>
-                <div class="mode-desc">
-                  Číslice {cfg.digits[0]}–{cfg.digits[cfg.digits.length - 1]}
+                <div class="mode-name">
+                  {cfg.name} ({cfg.shortName})
+                  {#if isBaseDisabled}
+                    <span class="disabled-icon" aria-hidden="true">❌</span>
+                  {/if}
+                </div>
+                <div class="mode-desc" class:is-warning={isBaseDisabled}>
+                  {isBaseDisabled
+                    ? 'Nutno smazat vstup'
+                    : `Číslice ${cfg.digits[0]}–${cfg.digits[cfg.digits.length - 1]}`}
                 </div>
               </div>
             </div>
@@ -262,14 +311,27 @@
     color: var(--color-text-secondary);
   }
 
+  .mode-desc.is-warning {
+    color: var(--color-accent-warning, #f59e0b);
+    font-weight: 500;
+  }
+
   .check-icon {
     color: var(--color-accent-primary);
     display: flex;
     align-items: center;
   }
 
+  .disabled-icon {
+    display: inline-block;
+    font-size: 11px;
+    margin-left: var(--space-2xs);
+    vertical-align: middle;
+    line-height: 1;
+  }
+
   .mode-row:disabled {
-    opacity: 0.35;
+    opacity: 0.55;
     cursor: not-allowed;
     background-color: var(--color-surface-1);
     border-color: var(--color-border-subtle);
