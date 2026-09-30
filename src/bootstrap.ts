@@ -1,7 +1,7 @@
 /**
  * Samuel - Bootstrap Entry Script
  * Minimal, lightweight entry point that handles offline cache verification,
- * first-run package downloading (App ~1.5MB, DB ~102MB), and service worker registration.
+ * first-run package downloading (App ~1.5MB, DB ~97MB), and service worker registration.
  * Dynamically imports ./main once offline cache is ready.
  */
 
@@ -115,9 +115,20 @@ async function initBootstrap(): Promise<void> {
   const progressFill = document.getElementById('shell-progress-fill');
   const progressText = document.getElementById('shell-progress-text');
   const dbCheck = document.getElementById('pkg-db') as HTMLInputElement | null;
+  const dbSizeEl = document.getElementById('shell-pkg-db-size');
 
   if (checkingEl) checkingEl.style.display = 'none';
   if (firstRunEl) firstRunEl.style.display = 'flex';
+
+  // Silently query remote version to display the true dictionary size if available
+  void fetchRemoteVersion()
+    .then((ver) => {
+      if (ver?.dbSizeBytes && dbSizeEl) {
+        const mb = Math.round(ver.dbSizeBytes / (1024 * 1024));
+        dbSizeEl.textContent = `${mb} MB • volitelné`;
+      }
+    })
+    .catch(() => {});
 
   // This screen legitimately owns error handling from here on (it has its
   // own inline retry UI below) - disarm the generic timeout/script-error

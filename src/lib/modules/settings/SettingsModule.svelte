@@ -241,7 +241,7 @@
             <span>Stahuji slovník ({versionService.state.progress} %)...</span>
           {:else}
             <DownloadSimple size={16} weight="bold" />
-            <span>Stáhnout slovník (102 MB)</span>
+            <span>Stáhnout slovník ({versionService.formattedDbSize})</span>
           {/if}
         </button>
       {:else}
@@ -249,7 +249,7 @@
           onAction={handleDeleteDbManual}
           disabled={versionService.state.status !== 'idle'}
           showLabel={true}
-          label="Smazat slovník (102 MB)"
+          label="Smazat slovník ({versionService.formattedDbSize})"
           confirmedLabel="Slovník smazán"
           ariaLabel="Podržte pro smazání slovníku"
           holdDuration={600}

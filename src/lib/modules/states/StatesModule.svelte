@@ -136,7 +136,7 @@
         {#if !versionService.state.isDbInstalled}
           <div class="empty-state">
             <span class="empty-title">Slovník není stažen</span>
-            <span class="empty-hint text-muted">Státy jsou součástí offline slovníku (102 MB).</span>
+            <span class="empty-hint text-muted">Státy jsou součástí offline slovníku ({versionService.formattedDbSize}).</span>
             <button type="button" class="empty-reset-btn" onclick={() => navigation.openModule('settings')}>
               Stáhnout v Nastavení
             </button>

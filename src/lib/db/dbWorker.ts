@@ -604,13 +604,13 @@ function executeMaskSearch(
   limit: number
 ): { results: WordMatch[]; hasMore: boolean } {
   const db2 = requireDb();
-  const col = ignoreDiacritics ? 'word_nodiac' : 'word';
   const substPart = onlySubstantives ? 'is_subst = 1' : '1=1';
   const namePart = includeProperNames ? '1=1' : 'is_name = 0';
   const filterCond = `${substPart} AND ${namePart}`;
 
   let sql = '';
   let params: Record<string, any> = {};
+  const fetchLimit = Math.max(limit * 3, 3000);
 
   if (useRegex) {
     try {
@@ -619,39 +619,74 @@ function executeMaskSearch(
       throw new Error('Neplatný regulární výraz');
     }
 
+    const col = ignoreDiacritics ? 'word_nodiac' : 'word';
     // Cheap column filters first: SQLite evaluates these terms in order, so the
     // JS REGEXP callback only runs on rows that pass them (~3x fewer calls).
     sql = `
       SELECT word, freq, len, is_name FROM words
       WHERE ${filterCond} AND ${col} REGEXP $pattern
-      ${includeRuian ? `UNION ALL SELECT word, 150 as freq, len, 1 as is_name FROM ruian WHERE ${col} REGEXP $pattern` : ''}
+      ${includeRuian ? `UNION ALL SELECT word, 20 as freq, len, 1 as is_name FROM ruian WHERE ${col} REGEXP $pattern` : ''}
       ORDER BY freq DESC
       LIMIT $fetchLimit
     `;
-    params = { $pattern: query, $fetchLimit: limit * 2 };
+    params = { $pattern: query, $fetchLimit: fetchLimit };
   } else {
-    const cleanQ = ignoreDiacritics ? removeDiacritics(query).toLowerCase() : query.toLowerCase();
-    const hasWildcard = cleanQ.includes('*');
-    const globPattern = cleanQ.replace(/\./g, '?');
+    const cleanNodiac = removeDiacritics(query).toLowerCase();
+    const globNodiac = cleanNodiac.replace(/\./g, '?');
+    const hasWildcard = cleanNodiac.includes('*');
 
-    if (!hasWildcard) {
-      sql = `
-        SELECT word, freq, len, is_name FROM words
-        WHERE len = $len AND ${col} GLOB $glob AND ${filterCond}
-        ${includeRuian ? `UNION ALL SELECT word, 150 as freq, len, 1 as is_name FROM ruian WHERE len = $len AND ${col} GLOB $glob` : ''}
-        ORDER BY freq DESC
-        LIMIT $fetchLimit
-      `;
-      params = { $len: cleanQ.length, $glob: globPattern, $fetchLimit: limit * 2 };
+    if (ignoreDiacritics) {
+      if (!hasWildcard) {
+        sql = `
+          SELECT word, freq, len, is_name FROM words
+          WHERE len = $len AND word_nodiac GLOB $glob AND ${filterCond}
+          ${includeRuian ? `UNION ALL SELECT word, 20 as freq, len, 1 as is_name FROM ruian WHERE len = $len AND word_nodiac GLOB $glob` : ''}
+          ORDER BY freq DESC
+          LIMIT $fetchLimit
+        `;
+        params = { $len: cleanNodiac.length, $glob: globNodiac, $fetchLimit: fetchLimit };
+      } else {
+        sql = `
+          SELECT word, freq, len, is_name FROM words
+          WHERE word_nodiac GLOB $glob AND ${filterCond}
+          ${includeRuian ? `UNION ALL SELECT word, 20 as freq, len, 1 as is_name FROM ruian WHERE word_nodiac GLOB $glob` : ''}
+          ORDER BY freq DESC
+          LIMIT $fetchLimit
+        `;
+        params = { $glob: globNodiac, $fetchLimit: fetchLimit };
+      }
     } else {
-      sql = `
-        SELECT word, freq, len, is_name FROM words
-        WHERE ${col} GLOB $glob AND ${filterCond}
-        ${includeRuian ? `UNION ALL SELECT word, 150 as freq, len, 1 as is_name FROM ruian WHERE ${col} GLOB $glob` : ''}
-        ORDER BY freq DESC
-        LIMIT $fetchLimit
-      `;
-      params = { $glob: globPattern, $fetchLimit: limit * 2 };
+      const cleanDiac = query.toLowerCase();
+      const globDiac = cleanDiac.replace(/\./g, '?');
+
+      if (!hasWildcard) {
+        sql = `
+          SELECT word, freq, len, is_name FROM words
+          WHERE len = $len AND word_nodiac GLOB $globNodiac AND word GLOB $globDiac AND ${filterCond}
+          ${includeRuian ? `UNION ALL SELECT word, 20 as freq, len, 1 as is_name FROM ruian WHERE len = $len AND word_nodiac GLOB $globNodiac AND lower(word) GLOB $globDiac` : ''}
+          ORDER BY freq DESC
+          LIMIT $fetchLimit
+        `;
+        params = {
+          $len: cleanNodiac.length,
+          $globNodiac: globNodiac,
+          $globDiac: globDiac,
+          $fetchLimit: fetchLimit
+        };
+      } else {
+        sql = `
+          SELECT word, freq, len, is_name FROM words
+          WHERE word_nodiac GLOB $globNodiac AND word GLOB $globDiac AND ${filterCond}
+          ${includeRuian ? `UNION ALL SELECT word, 20 as freq, len, 1 as is_name FROM ruian WHERE word_nodiac GLOB $globNodiac AND lower(word) GLOB $globDiac` : ''}
+          ORDER BY freq DESC
+          LIMIT $fetchLimit
+        `;
+        params = {
+          $globNodiac: globNodiac,
+          $globDiac: globDiac,
+          $fetchLimit: fetchLimit
+        };
+      }
     }
   }
 
@@ -717,7 +752,7 @@ function executeAnagramSearch(
   const stmtExact = db2.prepare(`
     SELECT word, word_nodiac, freq, len, is_name FROM words
     WHERE len = $len AND mask_nodiac = $mask AND ${filterCond}
-    ${includeRuian ? `UNION ALL SELECT word, word_nodiac, 150 as freq, len, 1 as is_name FROM ruian WHERE len = $len AND mask_nodiac = $mask` : ''}
+    ${includeRuian ? `UNION ALL SELECT word, word_nodiac, 20 as freq, len, 1 as is_name FROM ruian WHERE len = $len AND mask_nodiac = $mask` : ''}
     ORDER BY freq DESC
     LIMIT 1500
   `);
@@ -752,7 +787,7 @@ function executeAnagramSearch(
     const stmtSub = db2.prepare(`
       SELECT word, word_nodiac, freq, len, is_name FROM words
       WHERE len < $maxLen AND len >= 3 AND (mask_nodiac & ~$mask) = 0 AND ${filterCond} ${onlySubstantives ? '' : 'AND freq >= 5'}
-      ${includeRuian ? `UNION ALL SELECT word, word_nodiac, 150 as freq, len, 1 as is_name FROM ruian WHERE len < $maxLen AND len >= 3 AND (mask_nodiac & ~$mask) = 0` : ''}
+      ${includeRuian ? `UNION ALL SELECT word, word_nodiac, 20 as freq, len, 1 as is_name FROM ruian WHERE len < $maxLen AND len >= 3 AND (mask_nodiac & ~$mask) = 0` : ''}
       ORDER BY len DESC, freq DESC
       LIMIT 5000
     `);

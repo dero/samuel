@@ -525,7 +525,7 @@
   {#if !versionService.state.isDbInstalled}
     <div class="empty-state" style="padding: 24px 16px; text-align: center;">
       <p style="color: var(--color-text-secondary); margin-bottom: 16px;">
-        Vyžaduje offline slovník (102 MB).
+        Vyžaduje offline slovník ({versionService.formattedDbSize}).
       </p>
       <button
         type="button"

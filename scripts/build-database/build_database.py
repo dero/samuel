@@ -214,7 +214,6 @@ def main():
     cur.execute('CREATE INDEX idx_words_nodiac_glob ON words(word_nodiac)')
     cur.execute('CREATE INDEX idx_words_len_freq ON words(len, freq DESC)')
     cur.execute('CREATE INDEX idx_words_len_mask ON words(len, mask_nodiac, freq DESC)')
-    cur.execute('CREATE INDEX idx_words_len_nodiac ON words(len, word_nodiac)')
 
     # =========================================================================
     # 4. TABLE: ruian (from data/RUIAN/*.csv)
@@ -280,7 +279,6 @@ def main():
     # See comment above idx_words_nodiac_glob: BINARY collation is required for GLOB
     # prefix-search to use the index (COLLATE NOCASE indexes are ignored by GLOB).
     cur.execute('CREATE INDEX idx_ruian_word_nodiac_glob ON ruian(word_nodiac)')
-    cur.execute('CREATE INDEX idx_ruian_type ON ruian(type)')
     cur.execute('CREATE INDEX idx_ruian_type_nodiac ON ruian(type, word_nodiac COLLATE NOCASE)')
     cur.execute('CREATE INDEX idx_ruian_len_mask ON ruian(len, mask_nodiac)')
 

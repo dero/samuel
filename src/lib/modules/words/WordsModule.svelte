@@ -204,7 +204,7 @@
           </div>
           <div class="db-title">Slovník není stažen</div>
           <div class="db-desc">
-            Hledání potřebuje offline slovník (102 MB).
+            Hledání potřebuje offline slovník ({versionService.formattedDbSize}).
           </div>
           <button
             type="button"

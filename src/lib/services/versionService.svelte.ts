@@ -195,7 +195,7 @@ class VersionService {
   }
 
   /**
-   * Deletes SQLite dictionary database from cache to reclaim ~102MB.
+   * Deletes SQLite dictionary database from cache to reclaim storage space.
    */
   async deleteDb(): Promise<void> {
     try {
@@ -208,6 +208,22 @@ class VersionService {
       this.state.error = err?.message || 'Chyba při mazání slovníku';
       throw err;
     }
+  }
+
+  /**
+   * Database size in bytes from local installed metadata or remote version info,
+   * with fallback to a sensible default.
+   */
+  get dbSizeBytes(): number {
+    return this.state.dbMeta?.dbSizeBytes || this.state.remoteVersion?.dbSizeBytes || 101728256;
+  }
+
+  /**
+   * Human-readable formatted database size (e.g. "97 MB").
+   */
+  get formattedDbSize(): string {
+    const bytes = this.dbSizeBytes;
+    return `${Math.round(bytes / (1024 * 1024))} MB`;
   }
 
   /**

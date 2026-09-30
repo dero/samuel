@@ -314,7 +314,7 @@
           <div class="banner-text">
             <span class="banner-title">Slovník pro T9 není stažen</span>
             <p class="banner-desc">
-              Stáhněte ho v Nastavení (102 MB).
+              Stáhněte ho v Nastavení ({versionService.formattedDbSize}).
             </p>
           </div>
         </div>
