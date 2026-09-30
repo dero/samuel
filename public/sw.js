@@ -302,9 +302,8 @@ self.addEventListener('fetch', (event) => {
   // Only intercept same-origin requests
   if (url.origin !== self.location.origin) return;
 
-  // 1. Explicit network bypass requested by client (e.g. manual updates)
+  // 1. Explicit network bypass requested by client (e.g. manual updates, downloading words.db)
   if (url.searchParams.get('sw-strategy') === 'network') {
-    event.respondWith(fetch(event.request));
     return;
   }
 

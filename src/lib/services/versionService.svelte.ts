@@ -22,6 +22,7 @@ import {
 } from './offlineCacheService';
 import { APP_BUILD_TIME, APP_VERSION } from '../constants';
 import { resetDatabase } from '../db/database.svelte';
+import { dbClient } from '../db/dbClient';
 
 export type VersionStatus =
   | 'idle'
@@ -171,11 +172,37 @@ class VersionService {
   }
 
   /**
+   * Returns true when an asynchronous network operation is actively in flight.
+   */
+  get isBusy(): boolean {
+    return (
+      this.state.status === 'checking' ||
+      this.state.status === 'downloading_app' ||
+      this.state.status === 'downloading_db'
+    );
+  }
+
+  /**
+   * Cancels any active database download and returns to idle.
+   */
+  async cancelDownload(): Promise<void> {
+    try {
+      await dbClient.cancelDownload();
+    } catch {
+      // ignore
+    }
+    this.state.status = 'idle';
+    this.state.progress = 0;
+    this.state.error = null;
+  }
+
+  /**
    * Downloads or updates SQLite dictionary database (words.db).
    */
   async downloadDb(onProgress?: (percent: number) => void): Promise<void> {
     this.state.status = 'downloading_db';
     this.state.progress = 0;
+    this.state.error = null;
 
     try {
       await downloadDbCore(this.state.remoteVersion, (percent) => {
@@ -229,9 +256,14 @@ class VersionService {
   /**
    * Resets all offline caches, registrations, and metadata,
    * then reloads to root which triggers the first-run splash screen.
+   * Guaranteed to navigate away even if any step fails or times out.
    */
   async resetAllData(): Promise<void> {
-    await resetAllOfflineData();
+    try {
+      await resetAllOfflineData();
+    } catch (e) {
+      console.warn('resetAllOfflineData encountered an error, redirecting anyway:', e);
+    }
     window.location.href = '/?sw-strategy=network';
   }
 }

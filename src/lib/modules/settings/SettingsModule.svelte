@@ -78,7 +78,12 @@
   async function handleApplyUpdate() {
     try {
       settings.vibrate(30);
-      if (versionService.state.dbUpdateAvailable) {
+      if (versionService.state.appUpdateAvailable && versionService.state.dbUpdateAvailable) {
+        toast.show('Stahuji slovník…', { type: 'info' });
+        await versionService.downloadDb();
+        toast.show('Stahuji novou verzi aplikace…', { type: 'info' });
+        await versionService.updateApp();
+      } else if (versionService.state.dbUpdateAvailable) {
         toast.show('Stahuji slovník…', { type: 'info' });
         await versionService.downloadDb();
         toast.show('Slovník aktualizován', { type: 'success' });
@@ -87,8 +92,8 @@
         await versionService.updateApp();
         toast.show('Aplikace aktualizována', { type: 'success' });
       }
-    } catch {
-      toast.show('Chyba aktualizace', { type: 'danger' });
+    } catch (err: any) {
+      toast.show(`Chyba aktualizace: ${err?.message || 'Neznámá chyba'}`, { type: 'danger' });
     }
   }
 
@@ -201,19 +206,36 @@
               {/if}
             </div>
           </div>
-          <button
-            class="update-action-btn"
-            disabled={versionService.state.status !== 'idle'}
-            onclick={handleApplyUpdate}
-          >
-            {#if versionService.state.status === 'downloading_app' || versionService.state.status === 'downloading_db'}
-              <SpinnerGap size={15} class="spin" />
-              <span>Stahuji ({versionService.state.progress} %)...</span>
-            {:else}
-              <RocketLaunch size={16} weight="bold" />
-              <span>Aktualizovat</span>
+          <div class="update-actions-cluster">
+            <button
+              class="update-action-btn"
+              disabled={versionService.isBusy}
+              onclick={handleApplyUpdate}
+            >
+              {#if versionService.isBusy}
+                <SpinnerGap size={15} class="spin" />
+                <span>Stahuji ({versionService.state.progress} %)...</span>
+              {:else}
+                <RocketLaunch size={16} weight="bold" />
+                <span>Aktualizovat</span>
+              {/if}
+            </button>
+            {#if versionService.state.status === 'downloading_db'}
+              <button
+                type="button"
+                class="cancel-inline-btn"
+                onclick={() => versionService.cancelDownload()}
+              >
+                Zrušit
+              </button>
             {/if}
-          </button>
+          </div>
+        </div>
+      {/if}
+
+      {#if versionService.state.error}
+        <div class="update-error-banner">
+          <span>{versionService.state.error}</span>
         </div>
       {/if}
 
@@ -231,23 +253,34 @@
 
       <!-- Tlačítko pro stažení / smazání slovníku -->
       {#if !versionService.state.isDbInstalled}
-        <button
-          class="secondary-btn"
-          disabled={versionService.state.status !== 'idle'}
-          onclick={handleDownloadDbManual}
-        >
+        <div class="db-actions-row">
+          <button
+            class="secondary-btn flex-1"
+            disabled={versionService.isBusy}
+            onclick={handleDownloadDbManual}
+          >
+            {#if versionService.state.status === 'downloading_db'}
+              <SpinnerGap size={16} class="spin" />
+              <span>Stahuji slovník ({versionService.state.progress} %)...</span>
+            {:else}
+              <DownloadSimple size={16} weight="bold" />
+              <span>{versionService.state.error ? 'Zkusit znovu' : `Stáhnout slovník (${versionService.formattedDbSize})`}</span>
+            {/if}
+          </button>
           {#if versionService.state.status === 'downloading_db'}
-            <SpinnerGap size={16} class="spin" />
-            <span>Stahuji slovník ({versionService.state.progress} %)...</span>
-          {:else}
-            <DownloadSimple size={16} weight="bold" />
-            <span>Stáhnout slovník ({versionService.formattedDbSize})</span>
+            <button
+              type="button"
+              class="cancel-inline-btn"
+              onclick={() => versionService.cancelDownload()}
+            >
+              Zrušit
+            </button>
           {/if}
-        </button>
+        </div>
       {:else}
         <SlideToAction
           onAction={handleDeleteDbManual}
-          disabled={versionService.state.status !== 'idle'}
+          disabled={versionService.isBusy}
           showLabel={true}
           label="Smazat slovník ({versionService.formattedDbSize})"
           confirmedLabel="Slovník smazán"
@@ -260,7 +293,7 @@
       <!-- Tlačítko kontroly aktualizací -->
       <button
         class="secondary-btn"
-        disabled={versionService.state.status !== 'idle'}
+        disabled={versionService.isBusy}
         onclick={handleCheckUpdates}
       >
         {#if versionService.state.status === 'checking'}
@@ -542,6 +575,44 @@
     align-items: center;
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
+  }
+
+  .update-actions-cluster,
+  .db-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .flex-1 {
+    flex: 1;
+  }
+
+  .cancel-inline-btn {
+    padding: 10px 14px;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-danger, #ef4444);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .cancel-inline-btn:active {
+    background-color: var(--color-surface-active);
+  }
+
+  .update-error-banner {
+    padding: 8px 12px;
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-danger, #ef4444);
+    font-size: var(--text-xs);
+    line-height: 1.4;
   }
 
   :global(.spin) {

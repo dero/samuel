@@ -7,7 +7,7 @@
  */
 
 import type { AppVersionInfo } from './appCacheService';
-import { dbClient } from '../db/dbClient';
+import { dbClient, terminateWorker } from '../db/dbClient';
 
 /** @deprecated Legacy CacheStorage name, kept only for reference/migration in dbWorker.ts. */
 export const DB_CACHE_NAME = 'samuel-db';
@@ -91,14 +91,56 @@ export async function downloadDatabase(
 }
 
 /**
+ * Directly removes all OPFS files and directories from the main thread,
+ * ensuring no leftover database or lock handles persist.
+ */
+export async function forceWipeOpfs(): Promise<void> {
+  if (typeof navigator === 'undefined' || !navigator.storage?.getDirectory) return;
+  try {
+    const root = await navigator.storage.getDirectory();
+    try {
+      await root.removeEntry('samuel-db-active.txt');
+    } catch {
+      // ignore
+    }
+
+    if ((root as any).values) {
+      for await (const entry of (root as any).values()) {
+        try {
+          await root.removeEntry(entry.name, { recursive: true });
+        } catch (e) {
+          console.warn('[forceWipeOpfs] Could not remove entry:', entry.name, e);
+        }
+      }
+    } else if ((root as any).keys) {
+      const it = (root as any).keys();
+      let res = await it.next();
+      while (!res.done) {
+        try {
+          await root.removeEntry(res.value, { recursive: true });
+        } catch (e) {
+          console.warn('[forceWipeOpfs] Could not remove entry:', res.value, e);
+        }
+        res = await it.next();
+      }
+    }
+  } catch (e) {
+    console.warn('[forceWipeOpfs] OPFS wipe failed:', e);
+  }
+}
+
+/**
  * Removes the dictionary database (OPFS and/or legacy CacheStorage) and its
- * local metadata.
+ * local metadata. Fail-safe: if the DB worker is stuck or busy, terminates it
+ * and wipes OPFS directly from the main thread.
  */
 export async function clearDatabaseCache(): Promise<void> {
   try {
     await dbClient.deleteDb();
   } catch (e) {
-    console.warn('Failed to clear database cache:', e);
+    console.warn('Failed to clear database cache gracefully, forcing termination:', e);
+    terminateWorker();
+    await forceWipeOpfs();
   }
   try {
     localStorage.removeItem(DB_META_KEY);

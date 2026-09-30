@@ -83,6 +83,25 @@ interface PendingEntry {
 
 const pending = new Map<number, PendingEntry>();
 
+export function terminateWorker(): void {
+  if (worker) {
+    try {
+      worker.terminate();
+    } catch (e) {
+      console.warn('[dbClient] Error terminating worker:', e);
+    }
+    worker = null;
+  }
+  for (const [, entry] of pending.entries()) {
+    try {
+      entry.reject(new Error('DB worker terminated'));
+    } catch {
+      // ignore
+    }
+  }
+  pending.clear();
+}
+
 function getWorker(): Worker {
   if (worker) return worker;
 
@@ -105,7 +124,8 @@ function getWorker(): Worker {
   };
 
   worker.onerror = (err) => {
-    console.error('[dbClient] DB worker crashed:', err);
+    console.error('[dbClient] DB worker crashed or failed:', err);
+    terminateWorker();
   };
 
   return worker;
@@ -306,9 +326,25 @@ class DbClient {
     return result;
   }
 
+  async cancelDownload(): Promise<void> {
+    try {
+      await callWorker<void>('cancelDownload');
+    } catch {
+      terminateWorker();
+    }
+  }
+
   async deleteDb(): Promise<void> {
-    await callWorker<void>('deleteDb');
-    this.resetCaches();
+    try {
+      await Promise.race([
+        callWorker<void>('deleteDb'),
+        new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout při mazání databáze v DB workeru')), 3000)
+        )
+      ]);
+    } finally {
+      this.resetCaches();
+    }
   }
 
   /** Clears client-side caches (world flags) after a DB swap/delete. */

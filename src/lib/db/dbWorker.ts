@@ -203,6 +203,9 @@ async function handleOp(op: string, payload: any, id: number): Promise<unknown> 
       // tripping the in-memory fallback instead of using OPFS.
       await ensureInit();
       return opDownloadDb(payload, id);
+    case 'cancelDownload':
+      opCancelDownload();
+      return true;
     case 'deleteDb':
       return opDeleteDb();
     default:
@@ -970,20 +973,51 @@ interface DownloadPayload {
   expectedHash?: string;
 }
 
+let downloadAbortController: AbortController | null = null;
+
+function opCancelDownload(): void {
+  if (downloadAbortController) {
+    try {
+      downloadAbortController.abort();
+    } catch {
+      // ignore
+    }
+    downloadAbortController = null;
+  }
+}
+
 async function opDownloadDb(payload: DownloadPayload, id: number): Promise<{ sizeBytes: number; hash: string }> {
+  opCancelDownload();
+
   if (!poolUtil) {
     // No OPFS available - fall back to fetching into memory (in-memory mode).
     return downloadIntoMemory(payload, id);
   }
 
   const { url, expectedSizeBytes, expectedHash } = payload;
-  const response = await fetch(url);
+  const abortController = new AbortController();
+  downloadAbortController = abortController;
+  const signal = abortController.signal;
+
+  let response: Response;
+  try {
+    response = await fetch(url, { signal });
+  } catch (err: any) {
+    if (signal.aborted) {
+      throw new Error('Stahování slovníku bylo zrušeno.');
+    }
+    throw new Error(`Chyba při stahování slovníku: ${err?.message || String(err)}`);
+  }
+
   if (!response.ok) {
     throw new Error(`Chyba při stahování slovníku: ${response.status} ${response.statusText}`);
   }
 
   const contentLength = response.headers.get('content-length');
   const totalBytes = contentLength ? parseInt(contentLength, 10) : expectedSizeBytes || 0;
+
+  // Immediate progress so UI shifts from 0% right away
+  postProgress(id, { percent: 1, loadedBytes: 0, totalBytes: totalBytes || 101728256 });
 
   // Stream into a brand-new pool file; the currently active DB stays open and
   // fully usable until the new one is verified and the pointer flipped.
@@ -999,26 +1033,68 @@ async function opDownloadDb(payload: DownloadPayload, id: number): Promise<{ siz
   try {
     if (!response.body) {
       const buf = new Uint8Array(await response.arrayBuffer());
+      if (signal.aborted) throw new Error('Stahování slovníku bylo zrušeno.');
       hasher.update(buf);
       received = buf.byteLength;
       await importBufferChunked(target, buf);
     } else {
       const reader = response.body.getReader();
-      await poolUtil.importDb(target, async () => {
-        const { done, value } = await reader.read();
-        if (done) return undefined;
-        hasher.update(value);
-        received += value.length;
-        if (totalBytes > 0) {
-          const percent = Math.min(99, Math.round((received / totalBytes) * 100));
-          postProgress(id, { percent, loadedBytes: received, totalBytes });
-        }
-        return value;
-      });
+      let lastProgressTime = 0;
+      let lastPercent = 1;
+
+      try {
+        await poolUtil.importDb(target, async () => {
+          if (signal.aborted) {
+            try { await reader.cancel(); } catch {}
+            throw new Error('Stahování slovníku bylo zrušeno.');
+          }
+
+          let chunkTimeout: ReturnType<typeof setTimeout> | null = null;
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            chunkTimeout = setTimeout(() => {
+              reject(new Error('Stahování slovníku se zastavilo (síťové spojení neodpovídá).'));
+            }, 25000);
+          });
+
+          let readResult: ReadableStreamReadResult<Uint8Array>;
+          try {
+            readResult = await Promise.race([reader.read(), timeoutPromise]);
+          } finally {
+            if (chunkTimeout) clearTimeout(chunkTimeout);
+          }
+
+          const { done, value } = readResult;
+          if (done) return undefined;
+          if (signal.aborted) {
+            try { await reader.cancel(); } catch {}
+            throw new Error('Stahování slovníku bylo zrušeno.');
+          }
+
+          hasher.update(value);
+          received += value.length;
+          if (totalBytes > 0) {
+            const percent = Math.min(99, Math.max(1, Math.round((received / totalBytes) * 100)));
+            const now = Date.now();
+            if (percent !== lastPercent && (percent > lastPercent || now - lastProgressTime > 150)) {
+              lastPercent = percent;
+              lastProgressTime = now;
+              postProgress(id, { percent, loadedBytes: received, totalBytes });
+            }
+          }
+          return value;
+        });
+      } catch (err) {
+        try { await reader.cancel(); } catch {}
+        throw err;
+      }
     }
   } catch (err) {
     unlinkQuietly(target);
     throw err;
+  } finally {
+    if (downloadAbortController === abortController) {
+      downloadAbortController = null;
+    }
   }
 
   const computedHash = hasher.hexDigest().slice(0, 16);
@@ -1073,37 +1149,85 @@ function unlinkQuietly(name: string): void {
 async function downloadIntoMemory(payload: DownloadPayload, id: number): Promise<{ sizeBytes: number; hash: string }> {
   if (!sqlite3) throw new Error('sqlite3 not initialized');
   const { url, expectedSizeBytes, expectedHash } = payload;
-  const response = await fetch(url);
+  const abortController = new AbortController();
+  downloadAbortController = abortController;
+  const signal = abortController.signal;
+
+  let response: Response;
+  try {
+    response = await fetch(url, { signal });
+  } catch (err: any) {
+    if (signal.aborted) {
+      throw new Error('Stahování slovníku bylo zrušeno.');
+    }
+    throw new Error(`Chyba při stahování slovníku: ${err?.message || String(err)}`);
+  }
+
   if (!response.ok) {
     throw new Error(`Chyba při stahování slovníku: ${response.status} ${response.statusText}`);
   }
 
   const contentLength = response.headers.get('content-length');
   const totalBytes = contentLength ? parseInt(contentLength, 10) : expectedSizeBytes || 0;
+  postProgress(id, { percent: 1, loadedBytes: 0, totalBytes: totalBytes || 101728256 });
+
   const hasher = new Sha256Incremental();
   const chunks: Uint8Array[] = [];
   let received = 0;
 
-  if (response.body) {
-    const reader = response.body.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) {
-        chunks.push(value);
-        hasher.update(value);
-        received += value.length;
-        if (totalBytes > 0) {
-          const percent = Math.min(99, Math.round((received / totalBytes) * 100));
-          postProgress(id, { percent, loadedBytes: received, totalBytes });
+  try {
+    if (response.body) {
+      const reader = response.body.getReader();
+      let lastProgressTime = 0;
+      let lastPercent = 1;
+      while (true) {
+        if (signal.aborted) {
+          try { await reader.cancel(); } catch {}
+          throw new Error('Stahování slovníku bylo zrušeno.');
+        }
+
+        let chunkTimeout: ReturnType<typeof setTimeout> | null = null;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          chunkTimeout = setTimeout(() => {
+            reject(new Error('Stahování slovníku se zastavilo (síťové spojení neodpovídá).'));
+          }, 25000);
+        });
+
+        let readResult: ReadableStreamReadResult<Uint8Array>;
+        try {
+          readResult = await Promise.race([reader.read(), timeoutPromise]);
+        } finally {
+          if (chunkTimeout) clearTimeout(chunkTimeout);
+        }
+
+        const { done, value } = readResult;
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+          hasher.update(value);
+          received += value.length;
+          if (totalBytes > 0) {
+            const percent = Math.min(99, Math.max(1, Math.round((received / totalBytes) * 100)));
+            const now = Date.now();
+            if (percent !== lastPercent && (percent > lastPercent || now - lastProgressTime > 150)) {
+              lastPercent = percent;
+              lastProgressTime = now;
+              postProgress(id, { percent, loadedBytes: received, totalBytes });
+            }
+          }
         }
       }
+    } else {
+      const buf = new Uint8Array(await response.arrayBuffer());
+      if (signal.aborted) throw new Error('Stahování slovníku bylo zrušeno.');
+      chunks.push(buf);
+      hasher.update(buf);
+      received = buf.length;
     }
-  } else {
-    const buf = new Uint8Array(await response.arrayBuffer());
-    chunks.push(buf);
-    hasher.update(buf);
-    received = buf.length;
+  } finally {
+    if (downloadAbortController === abortController) {
+      downloadAbortController = null;
+    }
   }
 
   const computedHash = hasher.hexDigest().slice(0, 16);
@@ -1150,6 +1274,7 @@ async function downloadIntoMemory(payload: DownloadPayload, id: number): Promise
 // ---------------------------------------------------------------------------
 
 async function opDeleteDb(): Promise<void> {
+  opCancelDownload();
   invalidateLexicon();
   if (db) {
     try {

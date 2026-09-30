@@ -206,20 +206,36 @@
           <div class="db-desc">
             Hledání potřebuje offline slovník ({versionService.formattedDbSize}).
           </div>
-          <button
-            type="button"
-            class="download-db-btn"
-            onclick={handleDownloadDatabase}
-            disabled={versionService.state.status === 'downloading_db'}
-          >
+          {#if versionService.state.error}
+            <div class="db-error-banner">
+              <span>{versionService.state.error}</span>
+            </div>
+          {/if}
+          <div class="db-btn-cluster">
+            <button
+              type="button"
+              class="download-db-btn"
+              onclick={handleDownloadDatabase}
+              disabled={versionService.state.status === 'downloading_db'}
+            >
+              {#if versionService.state.status === 'downloading_db'}
+                <SpinnerGap size={18} weight="bold" class="spin-icon" />
+                <span>Stahuji ({versionService.state.progress}%)...</span>
+              {:else}
+                <DownloadSimple size={18} weight="bold" />
+                <span>{versionService.state.error ? 'Zkusit znovu' : 'Stáhnout slovník'}</span>
+              {/if}
+            </button>
             {#if versionService.state.status === 'downloading_db'}
-              <SpinnerGap size={18} weight="bold" class="spin-icon" />
-              <span>Stahuji ({versionService.state.progress}%)...</span>
-            {:else}
-              <DownloadSimple size={18} weight="bold" />
-              <span>Stáhnout slovník</span>
+              <button
+                type="button"
+                class="cancel-db-btn"
+                onclick={() => versionService.cancelDownload()}
+              >
+                Zrušit
+              </button>
             {/if}
-          </button>
+          </div>
         </div>
       {:else}
         <!-- Contextual tooltip: seated directly above input zone, dissolves on input -->
@@ -489,6 +505,25 @@
     line-height: 1.4;
   }
 
+  .db-error-banner {
+    padding: 8px 12px;
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-danger, #ef4444);
+    font-size: var(--text-xs);
+    max-width: 320px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .db-btn-cluster {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: var(--space-xs);
+  }
+
   .download-db-btn {
     display: flex;
     align-items: center;
@@ -503,7 +538,6 @@
     font-weight: 700;
     cursor: pointer;
     box-shadow: 0 2px 10px rgba(0, 210, 255, 0.3);
-    margin-top: var(--space-xs);
     transition: opacity 0.12s ease, transform 0.08s ease;
   }
 
@@ -514,6 +548,26 @@
   .download-db-btn:disabled {
     opacity: 0.7;
     cursor: wait;
+  }
+
+  .cancel-db-btn {
+    padding: 0 14px;
+    height: 40px;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-danger, #ef4444);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.12s ease;
+  }
+
+  .cancel-db-btn:active {
+    background-color: var(--color-surface-active);
   }
 
   /* Results Header & Status Bar Details */
