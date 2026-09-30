@@ -13,19 +13,12 @@
  * - The Service Worker (public/sw.js) reads the same pointer to decide which
  *   cache to serve app requests from; it must be told to re-read it (see
  *   `notifyServiceWorkerOfUpdate`) or it re-reads it lazily when unset.
- * - Legacy installs (pre-this-mechanism) have only the plain `samuel-app`
- *   cache and no pointer. That cache is treated as active until the first
- *   successful update migrates away from it, at which point it is deleted.
+ * - No valid pointer means the app is not installed.
  */
 
 export const APP_CACHE_PREFIX = 'samuel-app-';
-export const LEGACY_APP_CACHE_NAME = 'samuel-app';
 export const META_CACHE_NAME = 'samuel-meta';
 export const ACTIVE_APP_CACHE_KEY = '/__meta/active-app-cache';
-
-// Kept for backwards compatibility with any external references.
-export const APP_CACHE_NAME = LEGACY_APP_CACHE_NAME;
-export const APP_META_KEY = 'samuel_app_meta';
 
 export interface AppVersionInfo {
   appVersion: string;
@@ -40,11 +33,9 @@ export interface AppVersionInfo {
 }
 
 /**
- * Resolves the name of the currently ACTIVE app cache:
- * 1. Reads the pointer from `samuel-meta` (if present and the cache it names
- *    still actually exists).
- * 2. Falls back to the legacy `samuel-app` cache for pre-pointer installs.
- * 3. Returns null if nothing usable is installed.
+ * Resolves the name of the currently ACTIVE app cache from the `samuel-meta`
+ * pointer (only if the cache it names still exists), or null if nothing
+ * usable is installed.
  */
 export async function getActiveAppCacheName(): Promise<string | null> {
   if (!('caches' in window)) return null;
@@ -59,15 +50,7 @@ export async function getActiveAppCacheName(): Promise<string | null> {
       }
     }
   } catch {
-    // Fall through to legacy check
-  }
-
-  try {
-    if (await caches.has(LEGACY_APP_CACHE_NAME)) {
-      return LEGACY_APP_CACHE_NAME;
-    }
-  } catch {
-    // ignore
+    // treat as not installed
   }
 
   return null;
@@ -99,17 +82,14 @@ function notifyServiceWorkerOfUpdate(): void {
 }
 
 /**
- * Deletes every app-related cache except the one currently active
- * (stale versioned caches + the legacy cache once migrated away from).
+ * Deletes every versioned app cache except the one currently active.
  */
 async function deleteStaleAppCaches(keepName: string): Promise<void> {
   try {
     const names = await caches.keys();
     await Promise.all(
       names
-        .filter(
-          (n) => n !== keepName && (n === LEGACY_APP_CACHE_NAME || n.startsWith(APP_CACHE_PREFIX))
-        )
+        .filter((n) => n !== keepName && n.startsWith(APP_CACHE_PREFIX))
         .map((n) => caches.delete(n))
     );
   } catch (e) {
@@ -181,7 +161,7 @@ export async function fetchRemoteVersion(): Promise<AppVersionInfo | null> {
  * 2. Verifies index.html and the entry JS are present in the new cache.
  * 3. Only then flips the `samuel-meta` pointer to the new cache and notifies
  *    the Service Worker.
- * 4. Deletes old/stale app caches (including the legacy one, if any).
+ * 4. Deletes old/stale app caches.
  *
  * On ANY failure, the partially-downloaded cache is deleted and the
  * previously active cache/pointer is left completely untouched, so the app

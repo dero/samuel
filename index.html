@@ -427,60 +427,103 @@
               btn.textContent = 'Mažu…';
               btn.style.opacity = '0.6';
             }
-            wipeAllAndRestart();
+            wipeAllAndRestart(false);
           });
         }
 
-        // Wipes ALL offline data (app caches, dictionary DB, SW registration)
-        // and restarts onboarding from the network. User settings in
-        // localStorage are kept. Must stay in sync with wipeAll() embedded in
-        // public/sw.js - neither place can share code, as both run when the
-        // app itself can no longer load.
-        function wipeAllAndRestart() {
-          var tasks = [];
-          if ('caches' in window) {
-            tasks.push(caches.keys().then(function (names) {
-              return Promise.all(names.map(function (n) { return caches.delete(n); }));
-            }));
+        // Must stay identical to wipeAllAndRestart() in public/sw.js - neither
+        // place can share code, as both run when the app itself may not load.
+        // The running app reuses it via window.__samuelWipeAll ("Reset všech
+        // dat"), so the app has exactly one wipe routine.
+        //
+        // Wipes ALL offline data (app caches, dictionary DB, SW registration) and
+        // restarts onboarding from the network. "full" also clears localStorage and
+        // sessionStorage (user settings); otherwise only the dictionary metadata.
+        // Can never hang: it navigates once every step settles or after a hard
+        // deadline, whichever comes first. Any DB worker must already be dead
+        // (terminated, or gone with the previous page); files it held stay locked
+        // for a moment, so OPFS removal is retried, and whatever still survives is
+        // orphaned by the missing pointer and unlinked by the next DB worker.
+        function wipeAllAndRestart(full) {
+          var navigated = false;
+          function restart() {
+            if (navigated) return;
+            navigated = true;
+            location.href = '/?sw-strategy=network';
           }
-          if (navigator.storage && navigator.storage.getDirectory) {
-            tasks.push(navigator.storage.getDirectory().then(function (root) {
-              // Pointer first: a plain file that is never locked, and without
-              // it the dictionary counts as not installed even if a DB worker
-              // still holds the pool files.
+          setTimeout(restart, 4000);
+
+          try {
+            if (full) {
+              localStorage.clear();
+              sessionStorage.clear();
+            } else {
+              localStorage.removeItem('samuel_words_db_meta');
+            }
+          } catch (e) {}
+          try { indexedDB.deleteDatabase('samuel_offline_storage'); } catch (e) {}
+
+          function settle(run) {
+            try {
+              return Promise.resolve(run()).catch(function (e) { console.warn('Wipe step failed', e); });
+            } catch (e) {
+              console.warn('Wipe step failed', e);
+              return Promise.resolve();
+            }
+          }
+          function wipeOpfs(attemptsLeft) {
+            return navigator.storage.getDirectory().then(function (root) {
+              // Pointer first: without it no dictionary counts as installed.
               return root.removeEntry('samuel-db-active.txt').catch(function () {}).then(function () {
-                if (!root.keys) return;
                 var names = [];
+                if (!root.keys) return names;
                 var it = root.keys();
                 function step() {
                   return it.next().then(function (r) {
-                    if (r.done) return;
+                    if (r.done) return names;
                     names.push(r.value);
                     return step();
                   });
                 }
-                return step().then(function () {
-                  return Promise.all(names.map(function (n) {
-                    return root.removeEntry(n, { recursive: true }).catch(function () {});
-                  }));
+                return step();
+              }).then(function (names) {
+                return Promise.all(names.map(function (n) {
+                  return root.removeEntry(n, { recursive: true }).then(
+                    function () { return true; },
+                    function () { return false; }
+                  );
+                }));
+              }).then(function (removed) {
+                if (removed.indexOf(false) === -1 || attemptsLeft <= 1) return;
+                return new Promise(function (r) { setTimeout(r, 400); }).then(function () {
+                  return wipeOpfs(attemptsLeft - 1);
                 });
               });
-            }));
+            });
           }
-          try { localStorage.removeItem('samuel_words_db_meta'); } catch (e) {}
-          try { indexedDB.deleteDatabase('samuel_offline_storage'); } catch (e) {}
-          if ('serviceWorker' in navigator) {
-            // Unregister so the next load is uncontrolled like a brand new
-            // visitor; otherwise the cache-only worker would 504 its scripts.
-            tasks.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
-              return Promise.all(regs.map(function (r) { return r.unregister(); }));
-            }));
-          }
-          var restart = function () { location.href = '/?sw-strategy=network'; };
-          Promise.all(tasks.map(function (t) {
-            return t.catch(function (e) { console.warn('Wipe step failed', e); });
-          })).then(restart, restart);
+
+          Promise.all([
+            settle(function () {
+              if (!('caches' in window)) return;
+              return caches.keys().then(function (names) {
+                return Promise.all(names.map(function (n) { return caches.delete(n); }));
+              });
+            }),
+            settle(function () {
+              if (!navigator.storage || !navigator.storage.getDirectory) return;
+              return wipeOpfs(5);
+            }),
+            settle(function () {
+              // Unregister so the next load is uncontrolled like a brand new
+              // visitor; otherwise the cache-only worker would 504 its scripts.
+              if (!('serviceWorker' in navigator)) return;
+              return navigator.serviceWorker.getRegistrations().then(function (regs) {
+                return Promise.all(regs.map(function (r) { return r.unregister(); }));
+              });
+            })
+          ]).then(restart, restart);
         }
+        window.__samuelWipeAll = wipeAllAndRestart;
 
         // Catch the bootstrap module script (or any script) failing to load -
         // this fires even if bootstrap.ts itself never got to execute a single

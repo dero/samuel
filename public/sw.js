@@ -12,13 +12,9 @@
 // each new app version into its own cache `samuel-app-<buildTime>` and, only once every
 // asset has been verified, writes a pointer into the `samuel-meta` cache naming the
 // ACTIVE app cache. This worker reads that pointer to decide which cache serves app
-// requests, so a stale/partial version cache is never served. Legacy installs (from
-// before this mechanism existed) have only the plain `samuel-app` cache and no pointer;
-// that cache is treated as active until the client's first successful update migrates
-// away from it.
+// requests, so a stale/partial version cache is never served. No valid pointer means
+// the app is not installed.
 
-const APP_CACHE_PREFIX = 'samuel-app-';
-const LEGACY_APP_CACHE_NAME = 'samuel-app';
 const META_CACHE_NAME = 'samuel-meta';
 const ACTIVE_APP_CACHE_KEY = '/__meta/active-app-cache';
 
@@ -37,15 +33,7 @@ async function resolveActiveAppCacheName() {
       }
     }
   } catch {
-    // fall through to legacy check
-  }
-
-  try {
-    if (await caches.has(LEGACY_APP_CACHE_NAME)) {
-      return LEGACY_APP_CACHE_NAME;
-    }
-  } catch {
-    // ignore
+    // treat as not installed
   }
 
   return null;
@@ -116,30 +104,14 @@ async function handleFetch(request) {
     }
   }
 
-  // 2. Fall back to any other non-stale-app cache (e.g. legacy `samuel-db`),
-  // explicitly skipping stale/other versioned app caches and the meta cache.
-  try {
-    const names = await caches.keys();
-    for (const name of names) {
-      if (name === activeName) continue; // already checked above
-      if (name.startsWith(APP_CACHE_PREFIX)) continue; // stale version cache
-      if (name === META_CACHE_NAME) continue; // internal pointer storage, never a real asset
-      const cache = await caches.open(name);
-      const match = await cache.match(request, MATCH_OPTIONS);
-      if (match) return match;
-    }
-  } catch {
-    // fall through to 504 below
-  }
-
-  // 3. Installed, but the page itself is missing: the cache is corrupt. Don't
+  // 2. Installed, but the page itself is missing: the cache is corrupt. Don't
   // mix in a (possibly newer) index.html from the network against older
   // cached scripts - offer a full wipe and a clean onboarding instead.
   if (activeName && request.mode === 'navigate') {
     return brokenCachePage();
   }
 
-  // 4. Not installed at all (first run never finished, the app was closed
+  // 3. Not installed at all (first run never finished, the app was closed
   // before downloading, or iOS evicted CacheStorage while keeping this
   // registration). There is nothing to serve cache-only - a 504 here would
   // brick the app, as index.html with its first-run screen could never load
@@ -224,61 +196,101 @@ function offlinePage() {
   );
 }
 
-// Must stay in sync with wipeAllAndRestart() in index.html - neither place
+// Must stay identical to wipeAllAndRestart() in index.html - neither place
 // can share code, as both run when the app itself can no longer load.
-// Wipes ALL offline data (app caches, dictionary DB, SW registration) and
-// restarts onboarding from the network. User settings in localStorage stay.
 const WIPE_ALL_SCRIPT = `
-function wipeAllAndRestart() {
-  var tasks = [];
-  if ('caches' in window) {
-    tasks.push(caches.keys().then(function (names) {
-      return Promise.all(names.map(function (n) { return caches.delete(n); }));
-    }));
+// Wipes ALL offline data (app caches, dictionary DB, SW registration) and
+// restarts onboarding from the network. "full" also clears localStorage and
+// sessionStorage (user settings); otherwise only the dictionary metadata.
+// Can never hang: it navigates once every step settles or after a hard
+// deadline, whichever comes first. Any DB worker must already be dead
+// (terminated, or gone with the previous page); files it held stay locked
+// for a moment, so OPFS removal is retried, and whatever still survives is
+// orphaned by the missing pointer and unlinked by the next DB worker.
+function wipeAllAndRestart(full) {
+  var navigated = false;
+  function restart() {
+    if (navigated) return;
+    navigated = true;
+    location.href = '/?sw-strategy=network';
   }
-  if (navigator.storage && navigator.storage.getDirectory) {
-    tasks.push(navigator.storage.getDirectory().then(function (root) {
-      // Pointer first: a plain file that is never locked, and without
-      // it the dictionary counts as not installed even if a DB worker
-      // still holds the pool files.
+  setTimeout(restart, 4000);
+
+  try {
+    if (full) {
+      localStorage.clear();
+      sessionStorage.clear();
+    } else {
+      localStorage.removeItem('samuel_words_db_meta');
+    }
+  } catch (e) {}
+  try { indexedDB.deleteDatabase('samuel_offline_storage'); } catch (e) {}
+
+  function settle(run) {
+    try {
+      return Promise.resolve(run()).catch(function (e) { console.warn('Wipe step failed', e); });
+    } catch (e) {
+      console.warn('Wipe step failed', e);
+      return Promise.resolve();
+    }
+  }
+  function wipeOpfs(attemptsLeft) {
+    return navigator.storage.getDirectory().then(function (root) {
+      // Pointer first: without it no dictionary counts as installed.
       return root.removeEntry('samuel-db-active.txt').catch(function () {}).then(function () {
-        if (!root.keys) return;
         var names = [];
+        if (!root.keys) return names;
         var it = root.keys();
-function step() {
+        function step() {
           return it.next().then(function (r) {
-            if (r.done) return;
+            if (r.done) return names;
             names.push(r.value);
             return step();
           });
         }
-        return step().then(function () {
-          return Promise.all(names.map(function (n) {
-            return root.removeEntry(n, { recursive: true }).catch(function () {});
-          }));
+        return step();
+      }).then(function (names) {
+        return Promise.all(names.map(function (n) {
+          return root.removeEntry(n, { recursive: true }).then(
+            function () { return true; },
+            function () { return false; }
+          );
+        }));
+      }).then(function (removed) {
+        if (removed.indexOf(false) === -1 || attemptsLeft <= 1) return;
+        return new Promise(function (r) { setTimeout(r, 400); }).then(function () {
+          return wipeOpfs(attemptsLeft - 1);
         });
       });
-    }));
+    });
   }
-  try { localStorage.removeItem('samuel_words_db_meta'); } catch (e) {}
-  try { indexedDB.deleteDatabase('samuel_offline_storage'); } catch (e) {}
-  if ('serviceWorker' in navigator) {
-    // Unregister so the next load is uncontrolled like a brand new
-    // visitor; otherwise the cache-only worker would 504 its scripts.
-    tasks.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
-      return Promise.all(regs.map(function (r) { return r.unregister(); }));
-    }));
-  }
-  var restart = function () { location.href = '/?sw-strategy=network'; };
-  Promise.all(tasks.map(function (t) {
-    return t.catch(function (e) { console.warn('Wipe step failed', e); });
-  })).then(restart, restart);
+
+  Promise.all([
+    settle(function () {
+      if (!('caches' in window)) return;
+      return caches.keys().then(function (names) {
+        return Promise.all(names.map(function (n) { return caches.delete(n); }));
+      });
+    }),
+    settle(function () {
+      if (!navigator.storage || !navigator.storage.getDirectory) return;
+      return wipeOpfs(5);
+    }),
+    settle(function () {
+      // Unregister so the next load is uncontrolled like a brand new
+      // visitor; otherwise the cache-only worker would 504 its scripts.
+      if (!('serviceWorker' in navigator)) return;
+      return navigator.serviceWorker.getRegistrations().then(function (regs) {
+        return Promise.all(regs.map(function (r) { return r.unregister(); }));
+      });
+    })
+  ]).then(restart, restart);
 }
 if (!navigator.onLine) document.getElementById('offline-warn').hidden = false;
 document.getElementById('action').onclick = function () {
   this.disabled = true;
   this.textContent = 'Mažu…';
-  wipeAllAndRestart();
+  wipeAllAndRestart(false);
 };
 `;
 

@@ -7,9 +7,12 @@
  * fully copied into the WASM heap: SQLite reads pages on demand straight from
  * OPFS, so opening/using the DB costs a few KB of memory instead of ~100+ MB.
  *
- * This worker is started lazily on first need and is NEVER terminated for the
- * lifetime of the app session (module workers used to be spun up/torn down on
- * every module enter/exit, forcing a full re-read of the DB each time).
+ * This worker is started lazily on first need and normally lives for the whole
+ * app session. It is also DISPOSABLE: every destructive operation (cancelling
+ * a download, deleting the DB, full reset) is done by the main thread
+ * terminating it outright rather than asking it to cooperate - a busy or stuck
+ * worker can therefore never block them. All its state is rebuilt from OPFS by
+ * the next instance, whose init discards anything left half-written.
  *
  * RPC protocol: every request `{ id, op, ...payload }` posted to this worker
  * gets exactly one `{ id, ok: true, result }` or `{ id, ok: false, error }`
@@ -41,6 +44,7 @@ import { removeDiacritics } from '../utils/text';
 import { computeMaskNodiac, isExactAnagram, isSubAnagram, type WordMatch } from '../modules/words/wordsData';
 import { T9_PUNCTUATION, DIGIT_TO_GLOB, getFallbackT9Word } from '../modules/mobile/t9Data';
 import { Sha256Incremental } from './sha256';
+import { ACTIVE_POINTER_FILENAME } from './opfsLayout';
 import { LEXICON_SQL_QUERY, RUIAN_MULTIWORD_SQL_QUERY, parseLexiconRows } from './lexiconDb';
 import {
   buildLexiconItems,
@@ -67,9 +71,6 @@ const SAHPOOL_VFS_NAME = 'samuel-opfs-sahpool';
 // payload is never copied or read back into memory.
 const DB_FILE_PREFIX = '/words-';
 const DB_FILE_SUFFIX = '.db';
-const ACTIVE_POINTER_FILENAME = 'samuel-db-active.txt';
-const LEGACY_CACHE_NAME = 'samuel-db';
-const LEGACY_CACHE_URL = '/words.db';
 
 function newDbFilename(tag?: string): string {
   const safeTag = (tag || Date.now().toString(36)).replace(/[^a-z0-9]/gi, '');
@@ -100,15 +101,6 @@ async function writeActivePointer(filename: string): Promise<void> {
     access.flush();
   } finally {
     access.close();
-  }
-}
-
-async function deleteActivePointer(): Promise<void> {
-  try {
-    const root = await navigator.storage.getDirectory();
-    await root.removeEntry(ACTIVE_POINTER_FILENAME);
-  } catch {
-    // ignore - may not exist
   }
 }
 
@@ -203,11 +195,6 @@ async function handleOp(op: string, payload: any, id: number): Promise<unknown> 
       // tripping the in-memory fallback instead of using OPFS.
       await ensureInit();
       return opDownloadDb(payload, id);
-    case 'cancelDownload':
-      opCancelDownload();
-      return true;
-    case 'deleteDb':
-      return opDeleteDb();
     default:
       throw new Error(`Unknown DB worker op: ${op}`);
   }
@@ -303,15 +290,9 @@ async function openOrBootstrapOpfsDb(): Promise<void> {
     return;
   }
 
-  // No valid active DB: anything in the pool is an unverified leftover.
+  // No valid active DB: anything in the pool is an unverified leftover (an
+  // interrupted download, or files a deleted/reset DB's worker still held).
   unlinkPoolFilesExcept(null);
-
-  // Migration path: pre-existing sql.js users have the DB in CacheStorage.
-  const migrated = await migrateFromCacheStorage();
-  if (migrated) {
-    db = new poolUtil.OpfsSAHPoolDb(migrated);
-    return;
-  }
 
   // Dev mode: DB is served statically by Vite at /words.db - auto-import on
   // first use so `yarn dev` works without a manual download step.
@@ -329,8 +310,8 @@ async function openOrBootstrapOpfsDb(): Promise<void> {
 async function openInMemoryDb(): Promise<void> {
   if (!sqlite3) throw new Error('sqlite3 not initialized');
 
-  let buffer: Uint8Array | null = await readLegacyCacheBuffer();
-  if (!buffer && import.meta.env.DEV) {
+  let buffer: Uint8Array | null = null;
+  if (import.meta.env.DEV) {
     try {
       const resp = await fetch('/words.db');
       if (resp.ok) buffer = new Uint8Array(await resp.arrayBuffer());
@@ -355,10 +336,6 @@ async function openInMemoryDb(): Promise<void> {
     sqlite3.capi.SQLITE_DESERIALIZE_FREEONCLOSE | sqlite3.capi.SQLITE_DESERIALIZE_RESIZEABLE
   );
   storageMode = 'memory';
-
-  if (await cacheStorageHasDb()) {
-    await deleteLegacyCache();
-  }
 }
 
 function registerRegexFunction(target: Database): void {
@@ -383,135 +360,24 @@ function registerRegexFunction(target: Database): void {
 }
 
 // ---------------------------------------------------------------------------
-// Migration: CacheStorage 'samuel-db' -> OPFS (streamed, no full buffer)
+// Dev-mode import (streamed via the chunked `importDb(name, asyncCallback)`
+// API, never buffering the whole file)
 // ---------------------------------------------------------------------------
-
-async function cacheStorageHasDb(): Promise<boolean> {
-  try {
-    if (typeof self === 'undefined' || !('caches' in self)) return false;
-    const cache = await self.caches.open(LEGACY_CACHE_NAME);
-    const match = await cache.match(LEGACY_CACHE_URL);
-    return Boolean(match);
-  } catch {
-    return false;
-  }
-}
-
-async function readLegacyCacheBuffer(): Promise<Uint8Array | null> {
-  try {
-    if (typeof self === 'undefined' || !('caches' in self)) return null;
-    const cache = await self.caches.open(LEGACY_CACHE_NAME);
-    const match = await cache.match(LEGACY_CACHE_URL);
-    if (!match) return null;
-    return new Uint8Array(await match.arrayBuffer());
-  } catch {
-    return null;
-  }
-}
-
-async function deleteLegacyCache(): Promise<void> {
-  try {
-    if (typeof self === 'undefined' || !('caches' in self)) return;
-    await self.caches.delete(LEGACY_CACHE_NAME);
-  } catch {
-    // ignore
-  }
-}
-
-// Max bytes handed to a single sahpool `sah.write()` call. Single writes in
-// the ~100 MB range were observed to fail or silently truncate, so in-memory
-// buffers (only the rare no-`response.body` path) are imported in slices.
-// Streamed network/CacheStorage bodies are naturally chunked and unaffected.
-const MAX_SAH_WRITE_CHUNK = 4 * 1024 * 1024;
-
-/**
- * Imports an in-memory buffer via the sahpool's *chunked* `importDb(name, fn)`
- * overload, feeding it in bounded-size slices (see MAX_SAH_WRITE_CHUNK) rather
- * than the plain `importDb(name, Uint8Array)` overload or a single giant
- * chunked call - both were found to corrupt/misreport on buffers this large.
- */
-function importBufferChunked(name: string, buffer: Uint8Array): Promise<number> {
-  if (!poolUtil) throw new Error('OPFS pool not installed');
-  let offset = 0;
-  return poolUtil.importDb(name, () => {
-    if (offset >= buffer.byteLength) return undefined;
-    const end = Math.min(offset + MAX_SAH_WRITE_CHUNK, buffer.byteLength);
-    const slice = buffer.subarray(offset, end);
-    offset = end;
-    return slice;
-  });
-}
-
-/**
- * Streams a Response body into an OPFS sahpool-managed file via the chunked
- * `importDb(name, asyncCallback)` API, never buffering the whole file.
- */
-async function importResponseStreamed(response: Response, targetName: string): Promise<number> {
-  if (!poolUtil) throw new Error('OPFS pool not installed');
-  if (!response.body) {
-    const buf = new Uint8Array(await response.arrayBuffer());
-    return importBufferChunked(targetName, buf);
-  }
-  const reader = response.body.getReader();
-  const size = await poolUtil.importDb(targetName, async () => {
-    const { done, value } = await reader.read();
-    if (done) return undefined;
-    return value;
-  });
-  return size;
-}
-
-async function migrateFromCacheStorage(): Promise<string | null> {
-  if (!poolUtil) return null;
-  const target = newDbFilename('migrated');
-
-  try {
-    const cache = await self.caches.open(LEGACY_CACHE_NAME);
-    const match = await cache.match(LEGACY_CACHE_URL);
-    if (!match) return null;
-
-    console.log('[dbWorker] Migrating legacy CacheStorage words.db into OPFS...');
-    await importResponseStreamed(match, target);
-
-    // No expected hash is available here, so verify the page structure instead.
-    if (!verifyOpfsDb(target)) {
-      console.warn('[dbWorker] Migrated DB failed integrity check, discarding.');
-      poolUtil.unlink(target);
-      return null;
-    }
-
-    await writeActivePointer(target);
-    await deleteLegacyCache();
-    console.log('[dbWorker] Migration complete, legacy CacheStorage entry removed.');
-    return target;
-  } catch (err) {
-    console.warn('[dbWorker] Migration from CacheStorage failed:', err);
-    try {
-      poolUtil.unlink(target);
-    } catch {
-      // ignore
-    }
-    return null;
-  }
-}
 
 async function importFromNetwork(url: string): Promise<string | null> {
   if (!poolUtil) return null;
   const target = newDbFilename();
   try {
     const resp = await fetch(url);
-    if (!resp.ok) return null;
-    await importResponseStreamed(resp, target);
+    if (!resp.ok || !resp.body) return null;
+    const reader = resp.body.getReader();
+    await poolUtil.importDb(target, async () => (await reader.read()).value);
     if (!verifyOpfsDb(target)) throw new Error('integrity check failed');
     await writeActivePointer(target);
     return target;
   } catch (err) {
     console.warn('[dbWorker] importFromNetwork failed:', err);
-    try {
-      poolUtil.unlink(target);
-    } catch {
-      // ignore
-    }
+    unlinkQuietly(target);
     return null;
   }
 }
@@ -964,8 +830,13 @@ function opGetWorldFlags(): unknown[] {
 }
 
 // ---------------------------------------------------------------------------
-// Op: streaming, verified download (Task 5)
+// Op: streaming, verified download
 // ---------------------------------------------------------------------------
+//
+// There is deliberately no cancel/delete op: the main thread cancels a
+// download (or deletes/resets the DB) by terminating this whole worker. Any
+// half-written pool file is never pointed to, so the next worker's init
+// unlinks it (see openOrBootstrapOpfsDb).
 
 interface DownloadPayload {
   url: string;
@@ -973,169 +844,112 @@ interface DownloadPayload {
   expectedHash?: string;
 }
 
-let downloadAbortController: AbortController | null = null;
+const PROGRESS_HEARTBEAT_MS = 2000;
 
-function opCancelDownload(): void {
-  if (downloadAbortController) {
-    try {
-      downloadAbortController.abort();
-    } catch {
-      // ignore
+/**
+ * Wraps a response body in a pull function that hashes every chunk and posts
+ * progress (on each whole percent, and at least every PROGRESS_HEARTBEAT_MS so
+ * the main thread's stall watchdog can tell a slow download from a dead one).
+ */
+function createBodyReader(response: Response, id: number, totalBytes: number) {
+  if (!response.body) throw new Error('Chyba při stahování slovníku: prázdná odpověď.');
+  const reader = response.body.getReader();
+  const hasher = new Sha256Incremental();
+  let received = 0;
+  let lastPercent = 0;
+  let lastPostAt = 0;
+
+  postProgress(id, { percent: 1, loadedBytes: 0, totalBytes });
+
+  return {
+    get received() {
+      return received;
+    },
+    hash: () => hasher.hexDigest().slice(0, 16),
+    async next(): Promise<Uint8Array | undefined> {
+      const { done, value } = await reader.read();
+      if (done) return undefined;
+      hasher.update(value);
+      received += value.length;
+      const percent = totalBytes > 0 ? Math.min(99, Math.max(1, Math.round((received / totalBytes) * 100))) : 1;
+      const now = Date.now();
+      if (percent > lastPercent || now - lastPostAt > PROGRESS_HEARTBEAT_MS) {
+        lastPercent = percent;
+        lastPostAt = now;
+        postProgress(id, { percent, loadedBytes: received, totalBytes });
+      }
+      return value;
     }
-    downloadAbortController = null;
+  };
+}
+
+async function fetchDb(url: string): Promise<Response> {
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (err: any) {
+    throw new Error(`Chyba při stahování slovníku: ${err?.message || String(err)}`);
+  }
+  if (!response.ok) {
+    throw new Error(`Chyba při stahování slovníku: ${response.status} ${response.statusText}`);
+  }
+  return response;
+}
+
+function verifyDownload(received: number, computedHash: string, payload: DownloadPayload): void {
+  const { expectedSizeBytes, expectedHash } = payload;
+  if (expectedSizeBytes && received !== expectedSizeBytes) {
+    throw new Error(
+      `Stažený soubor má neočekávanou velikost (${received} B, očekáváno ${expectedSizeBytes} B). Databáze nebyla aktualizována.`
+    );
+  }
+  if (expectedHash && computedHash !== expectedHash) {
+    throw new Error('Kontrolní součet stažené databáze nesouhlasí. Databáze nebyla aktualizována.');
   }
 }
 
 async function opDownloadDb(payload: DownloadPayload, id: number): Promise<{ sizeBytes: number; hash: string }> {
-  opCancelDownload();
-
   if (!poolUtil) {
     // No OPFS available - fall back to fetching into memory (in-memory mode).
     return downloadIntoMemory(payload, id);
   }
 
-  const { url, expectedSizeBytes, expectedHash } = payload;
-  const abortController = new AbortController();
-  downloadAbortController = abortController;
-  const signal = abortController.signal;
-
-  let response: Response;
-  try {
-    response = await fetch(url, { signal });
-  } catch (err: any) {
-    if (signal.aborted) {
-      throw new Error('Stahování slovníku bylo zrušeno.');
-    }
-    throw new Error(`Chyba při stahování slovníku: ${err?.message || String(err)}`);
-  }
-
-  if (!response.ok) {
-    throw new Error(`Chyba při stahování slovníku: ${response.status} ${response.statusText}`);
-  }
-
-  const contentLength = response.headers.get('content-length');
-  const totalBytes = contentLength ? parseInt(contentLength, 10) : expectedSizeBytes || 0;
-
-  // Immediate progress so UI shifts from 0% right away
-  postProgress(id, { percent: 1, loadedBytes: 0, totalBytes: totalBytes || 101728256 });
-
   // Stream into a brand-new pool file; the currently active DB stays open and
   // fully usable until the new one is verified and the pointer flipped.
   const previous = await readActivePointer();
-  const target = newDbFilename(expectedHash);
+  const target = newDbFilename(payload.expectedHash);
   if (target === previous) {
     throw new Error('Tato verze databáze je již nainstalována.');
   }
 
-  const hasher = new Sha256Incremental();
-  let received = 0;
+  const response = await fetchDb(payload.url);
+  const totalBytes = Number(response.headers.get('content-length')) || payload.expectedSizeBytes || 0;
+  const body = createBodyReader(response, id, totalBytes);
 
   try {
-    if (!response.body) {
-      const buf = new Uint8Array(await response.arrayBuffer());
-      if (signal.aborted) throw new Error('Stahování slovníku bylo zrušeno.');
-      hasher.update(buf);
-      received = buf.byteLength;
-      await importBufferChunked(target, buf);
-    } else {
-      const reader = response.body.getReader();
-      let lastProgressTime = 0;
-      let lastPercent = 1;
-
-      try {
-        await poolUtil.importDb(target, async () => {
-          if (signal.aborted) {
-            try { await reader.cancel(); } catch {}
-            throw new Error('Stahování slovníku bylo zrušeno.');
-          }
-
-          let chunkTimeout: ReturnType<typeof setTimeout> | null = null;
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            chunkTimeout = setTimeout(() => {
-              reject(new Error('Stahování slovníku se zastavilo (síťové spojení neodpovídá).'));
-            }, 25000);
-          });
-
-          let readResult: ReadableStreamReadResult<Uint8Array>;
-          try {
-            readResult = await Promise.race([reader.read(), timeoutPromise]);
-          } finally {
-            if (chunkTimeout) clearTimeout(chunkTimeout);
-          }
-
-          const { done, value } = readResult;
-          if (done) return undefined;
-          if (signal.aborted) {
-            try { await reader.cancel(); } catch {}
-            throw new Error('Stahování slovníku bylo zrušeno.');
-          }
-
-          hasher.update(value);
-          received += value.length;
-          if (totalBytes > 0) {
-            const percent = Math.min(99, Math.max(1, Math.round((received / totalBytes) * 100)));
-            const now = Date.now();
-            if (percent !== lastPercent && (percent > lastPercent || now - lastProgressTime > 150)) {
-              lastPercent = percent;
-              lastProgressTime = now;
-              postProgress(id, { percent, loadedBytes: received, totalBytes });
-            }
-          }
-          return value;
-        });
-      } catch (err) {
-        try { await reader.cancel(); } catch {}
-        throw err;
-      }
+    await poolUtil.importDb(target, body.next);
+    verifyDownload(body.received, body.hash(), payload);
+    // A matching SHA-256 already proves the bytes are exactly what was built;
+    // only fall back to a structural check when there was no hash to compare.
+    if (!payload.expectedHash && !verifyOpfsDb(target)) {
+      throw new Error('Stažená databáze je poškozená (selhala kontrola integrity). Databáze nebyla aktualizována.');
     }
   } catch (err) {
     unlinkQuietly(target);
     throw err;
-  } finally {
-    if (downloadAbortController === abortController) {
-      downloadAbortController = null;
-    }
-  }
-
-  const computedHash = hasher.hexDigest().slice(0, 16);
-
-  if (expectedSizeBytes && received !== expectedSizeBytes) {
-    unlinkQuietly(target);
-    throw new Error(
-      `Stažený soubor má neočekávanou velikost (${received} B, očekáváno ${expectedSizeBytes} B). Databáze nebyla aktualizována.`
-    );
-  }
-
-  if (expectedHash && computedHash !== expectedHash) {
-    unlinkQuietly(target);
-    throw new Error('Kontrolní součet stažené databáze nesouhlasí. Databáze nebyla aktualizována.');
-  }
-
-  // A matching SHA-256 already proves the bytes are exactly what was built;
-  // only fall back to a structural check when there was no hash to compare.
-  if (!expectedHash && !verifyOpfsDb(target)) {
-    unlinkQuietly(target);
-    throw new Error('Stažená databáze je poškozená (selhala kontrola integrity). Databáze nebyla aktualizována.');
   }
 
   // Activate: flip the pointer first (the commit point), then swap handles.
   await writeActivePointer(target);
-  if (db) {
-    try {
-      db.close();
-    } catch {
-      // ignore
-    }
-  }
+  closeDb();
   db = new poolUtil.OpfsSAHPoolDb(target);
   registerRegexFunction(db);
   invalidateLexicon();
   storageMode = 'opfs';
   unlinkPoolFilesExcept(target);
 
-  postProgress(id, { percent: 100, loadedBytes: received, totalBytes: totalBytes || received });
-
-  return { sizeBytes: received, hash: computedHash };
+  postProgress(id, { percent: 100, loadedBytes: body.received, totalBytes: totalBytes || body.received });
+  return { sizeBytes: body.received, hash: body.hash() };
 }
 
 function unlinkQuietly(name: string): void {
@@ -1146,112 +960,37 @@ function unlinkQuietly(name: string): void {
   }
 }
 
+function closeDb(): void {
+  if (!db) return;
+  try {
+    db.close();
+  } catch {
+    // ignore
+  }
+  db = null;
+}
+
 async function downloadIntoMemory(payload: DownloadPayload, id: number): Promise<{ sizeBytes: number; hash: string }> {
   if (!sqlite3) throw new Error('sqlite3 not initialized');
-  const { url, expectedSizeBytes, expectedHash } = payload;
-  const abortController = new AbortController();
-  downloadAbortController = abortController;
-  const signal = abortController.signal;
 
-  let response: Response;
-  try {
-    response = await fetch(url, { signal });
-  } catch (err: any) {
-    if (signal.aborted) {
-      throw new Error('Stahování slovníku bylo zrušeno.');
-    }
-    throw new Error(`Chyba při stahování slovníku: ${err?.message || String(err)}`);
-  }
+  const response = await fetchDb(payload.url);
+  const totalBytes = Number(response.headers.get('content-length')) || payload.expectedSizeBytes || 0;
+  const body = createBodyReader(response, id, totalBytes);
 
-  if (!response.ok) {
-    throw new Error(`Chyba při stahování slovníku: ${response.status} ${response.statusText}`);
-  }
-
-  const contentLength = response.headers.get('content-length');
-  const totalBytes = contentLength ? parseInt(contentLength, 10) : expectedSizeBytes || 0;
-  postProgress(id, { percent: 1, loadedBytes: 0, totalBytes: totalBytes || 101728256 });
-
-  const hasher = new Sha256Incremental();
   const chunks: Uint8Array[] = [];
-  let received = 0;
-
-  try {
-    if (response.body) {
-      const reader = response.body.getReader();
-      let lastProgressTime = 0;
-      let lastPercent = 1;
-      while (true) {
-        if (signal.aborted) {
-          try { await reader.cancel(); } catch {}
-          throw new Error('Stahování slovníku bylo zrušeno.');
-        }
-
-        let chunkTimeout: ReturnType<typeof setTimeout> | null = null;
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          chunkTimeout = setTimeout(() => {
-            reject(new Error('Stahování slovníku se zastavilo (síťové spojení neodpovídá).'));
-          }, 25000);
-        });
-
-        let readResult: ReadableStreamReadResult<Uint8Array>;
-        try {
-          readResult = await Promise.race([reader.read(), timeoutPromise]);
-        } finally {
-          if (chunkTimeout) clearTimeout(chunkTimeout);
-        }
-
-        const { done, value } = readResult;
-        if (done) break;
-        if (value) {
-          chunks.push(value);
-          hasher.update(value);
-          received += value.length;
-          if (totalBytes > 0) {
-            const percent = Math.min(99, Math.max(1, Math.round((received / totalBytes) * 100)));
-            const now = Date.now();
-            if (percent !== lastPercent && (percent > lastPercent || now - lastProgressTime > 150)) {
-              lastPercent = percent;
-              lastProgressTime = now;
-              postProgress(id, { percent, loadedBytes: received, totalBytes });
-            }
-          }
-        }
-      }
-    } else {
-      const buf = new Uint8Array(await response.arrayBuffer());
-      if (signal.aborted) throw new Error('Stahování slovníku bylo zrušeno.');
-      chunks.push(buf);
-      hasher.update(buf);
-      received = buf.length;
-    }
-  } finally {
-    if (downloadAbortController === abortController) {
-      downloadAbortController = null;
-    }
+  for (let chunk = await body.next(); chunk; chunk = await body.next()) {
+    chunks.push(chunk);
   }
+  verifyDownload(body.received, body.hash(), payload);
 
-  const computedHash = hasher.hexDigest().slice(0, 16);
-  if (expectedSizeBytes && received !== expectedSizeBytes) {
-    throw new Error('Stažený soubor má neočekávanou velikost. Databáze nebyla aktualizována.');
-  }
-  if (expectedHash && computedHash !== expectedHash) {
-    throw new Error('Kontrolní součet stažené databáze nesouhlasí. Databáze nebyla aktualizována.');
-  }
-
-  const merged = new Uint8Array(received);
+  const merged = new Uint8Array(body.received);
   let offset = 0;
   for (const c of chunks) {
     merged.set(c, offset);
     offset += c.length;
   }
 
-  if (db) {
-    try {
-      db.close();
-    } catch {
-      // ignore
-    }
-  }
+  closeDb();
   db = new sqlite3.oo1.DB(':memory:', 'c');
   sqlite3.capi.sqlite3_deserialize(
     db.pointer!,
@@ -1265,26 +1004,6 @@ async function downloadIntoMemory(payload: DownloadPayload, id: number): Promise
   invalidateLexicon();
   storageMode = 'memory';
 
-  postProgress(id, { percent: 100, loadedBytes: received, totalBytes: totalBytes || received });
-  return { sizeBytes: received, hash: computedHash };
-}
-
-// ---------------------------------------------------------------------------
-// Op: delete DB
-// ---------------------------------------------------------------------------
-
-async function opDeleteDb(): Promise<void> {
-  opCancelDownload();
-  invalidateLexicon();
-  if (db) {
-    try {
-      db.close();
-    } catch {
-      // ignore
-    }
-    db = null;
-  }
-  await deleteActivePointer();
-  unlinkPoolFilesExcept(null);
-  await deleteLegacyCache();
+  postProgress(id, { percent: 100, loadedBytes: body.received, totalBytes: totalBytes || body.received });
+  return { sizeBytes: body.received, hash: body.hash() };
 }

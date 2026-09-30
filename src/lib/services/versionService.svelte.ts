@@ -21,8 +21,7 @@ import {
   type LocalDbMeta
 } from './offlineCacheService';
 import { APP_BUILD_TIME, APP_VERSION } from '../constants';
-import { resetDatabase } from '../db/database.svelte';
-import { dbClient } from '../db/dbClient';
+import { dbClient, DownloadCancelledError } from '../db/dbClient';
 
 export type VersionStatus =
   | 'idle'
@@ -183,23 +182,18 @@ class VersionService {
   }
 
   /**
-   * Cancels any active database download and returns to idle.
+   * Cancels an active database download; the pending `downloadDb()` resolves
+   * `false` and the state returns to idle.
    */
-  async cancelDownload(): Promise<void> {
-    try {
-      await dbClient.cancelDownload();
-    } catch {
-      // ignore
-    }
-    this.state.status = 'idle';
-    this.state.progress = 0;
-    this.state.error = null;
+  cancelDownload(): void {
+    dbClient.cancelDownload();
   }
 
   /**
    * Downloads or updates SQLite dictionary database (words.db).
+   * Resolves `true` once installed, `false` if cancelled via `cancelDownload()`.
    */
-  async downloadDb(onProgress?: (percent: number) => void): Promise<void> {
+  async downloadDb(onProgress?: (percent: number) => void): Promise<boolean> {
     this.state.status = 'downloading_db';
     this.state.progress = 0;
     this.state.error = null;
@@ -214,7 +208,13 @@ class VersionService {
       this.state.dbUpdateAvailable = false;
       this.state.updateAvailable = this.state.appUpdateAvailable;
       this.state.status = 'idle';
+      return true;
     } catch (err: any) {
+      if (err instanceof DownloadCancelledError) {
+        this.state.status = 'idle';
+        this.state.progress = 0;
+        return false;
+      }
       this.state.status = 'error';
       this.state.error = err?.message || 'Chyba při stahování slovníku';
       throw err;
@@ -227,7 +227,6 @@ class VersionService {
   async deleteDb(): Promise<void> {
     try {
       await clearDatabaseCache();
-      resetDatabase();
       await this.refreshLocalStatus();
       this.state.dbUpdateAvailable = false;
       this.state.updateAvailable = this.state.appUpdateAvailable;
@@ -256,15 +255,10 @@ class VersionService {
   /**
    * Resets all offline caches, registrations, and metadata,
    * then reloads to root which triggers the first-run splash screen.
-   * Guaranteed to navigate away even if any step fails or times out.
+   * Always navigates away, even if individual wipe steps fail or stall.
    */
-  async resetAllData(): Promise<void> {
-    try {
-      await resetAllOfflineData();
-    } catch (e) {
-      console.warn('resetAllOfflineData encountered an error, redirecting anyway:', e);
-    }
-    window.location.href = '/?sw-strategy=network';
+  resetAllData(): void {
+    resetAllOfflineData();
   }
 }
 

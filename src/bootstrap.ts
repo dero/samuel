@@ -21,6 +21,8 @@ declare global {
     __samuelBootFirstRun?: () => void;
     /** Called by bootstrap to force-show the recovery overlay immediately on a caught boot error. */
     __samuelShowRecovery?: (reason?: string) => void;
+    /** Defined by index.html: wipes all offline data (`full` also clears localStorage/sessionStorage), then navigates to onboarding. Never fails. */
+    __samuelWipeAll?: (full?: boolean) => void;
   }
 }
 

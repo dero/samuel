@@ -1,9 +1,12 @@
 /**
  * Typed promise-based RPC client for Samuel's single shared DB worker
- * (`dbWorker.ts`). Exactly one worker instance is created per app session,
- * lazily on first use, and it is never terminated - see dbWorker.ts for the
- * full architecture rationale and instructions on adding new DB-backed ops.
+ * (`dbWorker.ts`). One worker instance is created lazily on first use and
+ * kept for the session. It is disposable: cancelling a download and deleting
+ * the DB terminate it (pending calls reject) and the next call spawns a fresh
+ * one - see dbWorker.ts for the rationale and how to add new DB-backed ops.
  */
+
+import { ACTIVE_POINTER_FILENAME } from './opfsLayout';
 
 import type { WordMatch } from '../modules/words/wordsData';
 import type { BruteforceResult, MorseSolverWeights } from '../modules/morse/morseSolver';
@@ -60,6 +63,17 @@ export interface DbDownloadResult {
   hash: string;
 }
 
+/** Rejection of a `downloadDatabase()` call cancelled via `cancelDownload()`. */
+export class DownloadCancelledError extends Error {
+  constructor() {
+    super('Stahování slovníku bylo zrušeno.');
+    this.name = 'DownloadCancelledError';
+  }
+}
+
+/** A download reporting no progress for this long is treated as dead. */
+const DOWNLOAD_STALL_TIMEOUT_MS = 30000;
+
 /** Thrown when a queued `searchWords()` call is superseded by a newer one. */
 export class SupersededError extends Error {
   constructor() {
@@ -83,23 +97,25 @@ interface PendingEntry {
 
 const pending = new Map<number, PendingEntry>();
 
-export function terminateWorker(): void {
-  if (worker) {
-    try {
-      worker.terminate();
-    } catch (e) {
-      console.warn('[dbClient] Error terminating worker:', e);
-    }
-    worker = null;
+let cachedWorldFlags: WorldFlagRecord[] | null = null;
+
+/**
+ * Synchronously kills the DB worker - aborting any in-flight download and
+ * releasing its OPFS handles - and rejects every pending call with `reason`.
+ * Never throws; the next call spawns a fresh worker.
+ */
+export function terminateWorker(reason: Error = new Error('DB worker terminated')): void {
+  const w = worker;
+  worker = null;
+  cachedWorldFlags = null;
+  try {
+    w?.terminate();
+  } catch (e) {
+    console.warn('[dbClient] Error terminating worker:', e);
   }
-  for (const [, entry] of pending.entries()) {
-    try {
-      entry.reject(new Error('DB worker terminated'));
-    } catch {
-      // ignore
-    }
-  }
+  const entries = [...pending.values()];
   pending.clear();
+  for (const entry of entries) entry.reject(reason);
 }
 
 function getWorker(): Worker {
@@ -124,8 +140,8 @@ function getWorker(): Worker {
   };
 
   worker.onerror = (err) => {
-    console.error('[dbClient] DB worker crashed or failed:', err);
-    terminateWorker();
+    console.error('[dbClient] DB worker crashed:', err);
+    terminateWorker(new Error('DB worker crashed'));
   };
 
   return worker;
@@ -204,8 +220,6 @@ const caesarScoreGate = new SingleFlightGate<string[], CaesarScoredCandidate[]>(
 // ---------------------------------------------------------------------------
 // Public client API
 // ---------------------------------------------------------------------------
-
-let cachedWorldFlags: WorldFlagRecord[] | null = null;
 
 class DbClient {
   /**
@@ -311,40 +325,58 @@ class DbClient {
    * in-memory buffer if OPFS is unavailable), verifying size + SHA-256 + a
    * `PRAGMA quick_check` before activating it. The previous DB (if any) stays
    * fully usable until the new one is verified.
+   *
+   * Rejects with DownloadCancelledError after `cancelDownload()`. A download
+   * that stops reporting progress kills the worker and rejects, so it can
+   * never hang.
    */
   async downloadDatabase(
     url: string,
     expected: { sizeBytes?: number; hash?: string },
     onProgress?: (progress: DbDownloadProgress) => void
   ): Promise<DbDownloadResult> {
-    const result = await callWorker<DbDownloadResult>(
-      'downloadDb',
-      { url, expectedSizeBytes: expected.sizeBytes, expectedHash: expected.hash },
-      onProgress
-    );
-    this.resetCaches();
-    return result;
-  }
+    let stallTimer: ReturnType<typeof setTimeout> | undefined;
+    const armStallTimer = () => {
+      clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        terminateWorker(new Error('Stahování slovníku se zastavilo (síťové spojení neodpovídá).'));
+      }, DOWNLOAD_STALL_TIMEOUT_MS);
+    };
 
-  async cancelDownload(): Promise<void> {
+    armStallTimer();
     try {
-      await callWorker<void>('cancelDownload');
-    } catch {
-      terminateWorker();
-    }
-  }
-
-  async deleteDb(): Promise<void> {
-    try {
-      await Promise.race([
-        callWorker<void>('deleteDb'),
-        new Promise<void>((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout při mazání databáze v DB workeru')), 3000)
-        )
-      ]);
-    } finally {
+      const result = await callWorker<DbDownloadResult>(
+        'downloadDb',
+        { url, expectedSizeBytes: expected.sizeBytes, expectedHash: expected.hash },
+        (progress) => {
+          armStallTimer();
+          onProgress?.(progress);
+        }
+      );
       this.resetCaches();
+      return result;
+    } finally {
+      clearTimeout(stallTimer);
     }
+  }
+
+  /** Aborts an in-flight download by killing the worker. The active DB is untouched. */
+  cancelDownload(): void {
+    terminateWorker(new DownloadCancelledError());
+  }
+
+  /**
+   * Deletes the dictionary without the worker's cooperation: kills it, then
+   * removes the active pointer so no DB counts as installed. The next worker
+   * unlinks the orphaned pool files during its init.
+   */
+  async deleteDb(): Promise<void> {
+    terminateWorker();
+    if (!navigator.storage?.getDirectory) return; // in-memory mode: nothing persisted
+    const root = await navigator.storage.getDirectory();
+    await root.removeEntry(ACTIVE_POINTER_FILENAME).catch((err: unknown) => {
+      if ((err as DOMException)?.name !== 'NotFoundError') throw err;
+    });
   }
 
   /** Clears client-side caches (world flags) after a DB swap/delete. */

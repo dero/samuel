@@ -179,8 +179,7 @@
     settings.vibrate(20);
     try {
       toast.show('Stahuji slovník…', { type: 'info' });
-      await versionService.downloadDb();
-      toast.show('Slovník stažen', { type: 'success' });
+      if (await versionService.downloadDb()) toast.show('Slovník stažen', { type: 'success' });
     } catch (err: any) {
       toast.show(`Chyba stažení: ${err?.message || 'Neznámá chyba'}`, { type: 'danger' });
     }

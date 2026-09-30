@@ -80,13 +80,12 @@
       settings.vibrate(30);
       if (versionService.state.appUpdateAvailable && versionService.state.dbUpdateAvailable) {
         toast.show('Stahuji slovník…', { type: 'info' });
-        await versionService.downloadDb();
+        if (!(await versionService.downloadDb())) return;
         toast.show('Stahuji novou verzi aplikace…', { type: 'info' });
         await versionService.updateApp();
       } else if (versionService.state.dbUpdateAvailable) {
         toast.show('Stahuji slovník…', { type: 'info' });
-        await versionService.downloadDb();
-        toast.show('Slovník aktualizován', { type: 'success' });
+        if (await versionService.downloadDb()) toast.show('Slovník aktualizován', { type: 'success' });
       } else if (versionService.state.appUpdateAvailable) {
         toast.show('Stahuji novou verzi...', { type: 'info' });
         await versionService.updateApp();
@@ -101,8 +100,7 @@
     try {
       settings.vibrate(20);
       toast.show('Stahuji slovník…', { type: 'info' });
-      await versionService.downloadDb();
-      toast.show('Slovník stažen', { type: 'success' });
+      if (await versionService.downloadDb()) toast.show('Slovník stažen', { type: 'success' });
     } catch (err: any) {
       toast.show(`Chyba: ${err?.message || 'Nepodařilo se stáhnout'}`, { type: 'danger' });
     }
@@ -159,15 +157,10 @@
 
   let isResetting = $state(false);
 
-  async function handleResetAllData() {
+  function handleResetAllData() {
+    // Navigates away on its own and never fails, so the button stays locked.
     isResetting = true;
-    try {
-      await versionService.resetAllData();
-    } catch (err) {
-      console.error('Failed to reset all data:', err);
-      isResetting = false;
-      toast.show('Chyba při resetu dat', { type: 'danger' });
-    }
+    versionService.resetAllData();
   }
 </script>
 
