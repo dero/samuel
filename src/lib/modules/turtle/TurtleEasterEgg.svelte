@@ -108,7 +108,7 @@
   aria-label="Dekorativní želvička"
   title="Dekorativní želvička"
 >
-  <svg class="turtle-svg" viewBox="-5.0 12.0 110.0 72.0" preserveAspectRatio="xMidYMid meet">
+  <svg class="turtle-svg" viewBox="-35.0 -7.0 170.0 112.0" preserveAspectRatio="xMidYMid meet">
     <g class="turtle-body">
       <!-- Main turtle silhouette with shell scute & head cutouts -->
       <path
@@ -121,14 +121,6 @@
         d="m18.125 35c0 2.5-3.75 2.5-3.75 0s3.75-2.5 3.75 0z"
       />
     </g>
-
-    <!-- Sweat droplets for flipping/upside-down struggle -->
-    {#if turtleAnimState === 'flipping' || turtleAnimState === 'upside_down'}
-      <g class="sweat-group">
-        <path d="M 6,24 C 4,22 4,19.5 6,17.5 C 8,19.5 8,22 6,24 Z" class="sweat s1" />
-        <path d="M 88,24 C 86,22 86,19.5 88,17.5 C 90,19.5 90,22 88,24 Z" class="sweat s2" />
-      </g>
-    {/if}
   </svg>
 </button>
 
@@ -173,13 +165,14 @@
     height: 100%;
     max-height: 100%;
     display: block;
-    opacity: 0.85;
+    opacity: 0.72;
+    transition: opacity 0.15s ease;
   }
 
   /* SVG Elements Styling */
   .turtle-main-path {
     fill: currentColor;
-    opacity: 0.80;
+    opacity: 0.85;
     transition: opacity 0.15s;
   }
 
@@ -188,8 +181,8 @@
     opacity: 0.95;
   }
 
-  .turtle-card:hover .turtle-main-path {
-    opacity: 1;
+  .turtle-card:hover .turtle-svg {
+    opacity: 0.95;
   }
 
   /* Ambient Idle Bobbing */
@@ -304,33 +297,6 @@
     }
     100% {
       transform: rotate(360deg) scale(1);
-    }
-  }
-
-  /* Sweat droplets */
-  .sweat {
-    fill: var(--color-accent-primary);
-    opacity: 0.7;
-    animation: sweatBounce 0.8s ease-in-out infinite alternate;
-  }
-
-  .s1 {
-    transform-origin: 6px 20px;
-  }
-
-  .s2 {
-    transform-origin: 88px 20px;
-    animation-delay: 0.3s;
-  }
-
-  @keyframes sweatBounce {
-    0% {
-      transform: translateY(0) scale(0.8);
-      opacity: 0.4;
-    }
-    100% {
-      transform: translateY(-2px) scale(1.1);
-      opacity: 0.8;
     }
   }
 </style>
