@@ -9,22 +9,25 @@
     showGrid?: boolean;
   }
 
-  let { state, showDashes = true, showGrid = true }: Props = $props();
+  let { state: turtleState, showDashes = true, showGrid = true }: Props = $props();
+
+  let containerWidth = $state(0);
+  let containerHeight = $state(0);
 
   const bounds = $derived.by(() => {
-    let minX = Math.min(0, state.position.x);
-    let maxX = Math.max(0, state.position.x);
-    let minY = Math.min(0, state.position.y);
-    let maxY = Math.max(0, state.position.y);
+    let minX = Math.min(0, turtleState.position.x);
+    let maxX = Math.max(0, turtleState.position.x);
+    let minY = Math.min(0, turtleState.position.y);
+    let maxY = Math.max(0, turtleState.position.y);
 
-    for (const seg of state.segments) {
+    for (const seg of turtleState.segments) {
       minX = Math.min(minX, seg.from.x, seg.to.x);
       maxX = Math.max(maxX, seg.from.x, seg.to.x);
       minY = Math.min(minY, seg.from.y, seg.to.y);
       maxY = Math.max(maxY, seg.from.y, seg.to.y);
     }
 
-    for (const m of state.markers) {
+    for (const m of turtleState.markers) {
       minX = Math.min(minX, m.position.x);
       maxX = Math.max(maxX, m.position.x);
       minY = Math.min(minY, m.position.y);
@@ -39,41 +42,78 @@
     const topClearance = Math.max(1.6, effectiveSpan * 0.30);
 
     const cx = (minX + maxX) / 2;
-    const halfWidth = Math.max(spanX / 2 + sidePadding, 2);
 
     const cartMinY = minY - sidePadding;
     const cartMaxY = maxY + sidePadding + topClearance;
-    const totalHeight = Math.max(cartMaxY - cartMinY, 4);
+    const contentHeight = Math.max(cartMaxY - cartMinY, 4);
+    const contentWidth = Math.max(spanX + sidePadding * 2, 4);
 
-    const viewBoxX = cx - halfWidth;
-    const viewBoxY = -cartMaxY;
-    const viewBoxWidth = halfWidth * 2;
-    const viewBoxHeight = totalHeight;
+    const aspect =
+      containerWidth > 0 && containerHeight > 0
+        ? containerWidth / containerHeight
+        : 1.5;
 
-    const gMinX = Math.floor(cx - halfWidth);
-    const gMaxX = Math.ceil(cx + halfWidth);
-    const gMinY = Math.floor(cartMinY);
-    const gMaxY = Math.ceil(cartMaxY);
-    const dotCount = (gMaxX - gMinX + 1) * (gMaxY - gMinY + 1);
+    let viewBoxWidth = contentWidth;
+    let viewBoxHeight = contentHeight;
 
-    const markerRadius = Math.max(0.38, Math.min(halfWidth, totalHeight / 2) * 0.08);
+    if (viewBoxWidth / viewBoxHeight < aspect) {
+      // Container is wider than content: expand width so canvas fills full width without pillarboxing
+      viewBoxWidth = viewBoxHeight * aspect;
+    } else {
+      // Container is taller than content: expand height
+      viewBoxHeight = viewBoxWidth / aspect;
+    }
+
+    const viewBoxX = cx - viewBoxWidth / 2;
+    const extraHeight = viewBoxHeight - contentHeight;
+    const viewBoxY = -(cartMaxY + extraHeight * 0.3);
+
+    const markerRadius = Math.max(0.38, effectiveSpan * 0.04);
+
+    // Visible integer grid bounds covering the full viewport
+    const gMinX = Math.floor(viewBoxX);
+    const gMaxX = Math.ceil(viewBoxX + viewBoxWidth);
+    const gMinY = Math.floor(-(viewBoxY + viewBoxHeight));
+    const gMaxY = Math.ceil(-viewBoxY);
+
+    const rawCols = gMaxX - gMinX + 1;
+    const rawRows = gMaxY - gMinY + 1;
+    const rawCount = rawCols * rawRows;
+
+    let gridStep = 1;
+    if (rawCount > 900) {
+      gridStep = 2;
+    }
+    if (rawCount > 3600) {
+      gridStep = 5;
+    }
+    if (rawCount > 15000) {
+      gridStep = 10;
+    }
+
+    const dotRadius =
+      Math.max(0.048, Math.min(0.065, markerRadius * 0.15)) * Math.sqrt(gridStep);
 
     return {
       viewBox: `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`,
       markerRadius,
+      dotRadius,
+      gridStep,
       gMinX,
       gMaxX,
       gMinY,
-      gMaxY,
-      canRenderGrid: dotCount <= 900
+      gMaxY
     };
   });
 
   const gridDots = $derived.by(() => {
-    if (!showGrid || !bounds.canRenderGrid) return [];
+    if (!showGrid) return [];
+    const step = bounds.gridStep;
     const dots: { x: number; y: number }[] = [];
-    for (let x = bounds.gMinX; x <= bounds.gMaxX; x++) {
-      for (let y = bounds.gMinY; y <= bounds.gMaxY; y++) {
+    const startX = Math.ceil(bounds.gMinX / step) * step;
+    const startY = Math.ceil(bounds.gMinY / step) * step;
+    for (let x = startX; x <= bounds.gMaxX; x += step) {
+      for (let y = startY; y <= bounds.gMaxY; y += step) {
         dots.push({ x, y: -y });
       }
     }
@@ -81,33 +121,37 @@
   });
 
   const hasContent = $derived(
-    state.segments.length > 0 || state.markers.length > 0
+    turtleState.segments.length > 0 || turtleState.markers.length > 0
   );
 </script>
 
-<div class="turtle-canvas-wrapper">
+<div
+  class="turtle-canvas-wrapper"
+  bind:clientWidth={containerWidth}
+  bind:clientHeight={containerHeight}
+>
   <!-- HUD Badge -->
   <div class="canvas-hud">
     <div class="hud-pill">
       <span class="hud-item heading-indicator">
-        <span class="heading-deg">{state.heading}°</span>
+        <span class="heading-deg">{turtleState.heading}°</span>
       </span>
       <span class="hud-sep">•</span>
       <span class="hud-item steps-indicator">
-        {state.segments.length} {state.segments.length === 1 ? 'krok' : state.segments.length >= 2 && state.segments.length <= 4 ? 'kroky' : 'kroků'}
+        {turtleState.segments.length} {turtleState.segments.length === 1 ? 'krok' : turtleState.segments.length >= 2 && turtleState.segments.length <= 4 ? 'kroky' : 'kroků'}
       </span>
-      {#if state.markers.length > 0}
+      {#if turtleState.markers.length > 0}
         <span class="hud-sep">•</span>
         <span class="hud-item marker-indicator">
-          📍 {state.markers.length}
+          📍 {turtleState.markers.length}
         </span>
       {/if}
       <span class="hud-sep">•</span>
-      <span class="hud-item pen-indicator" class:is-pen-up={!state.penDown}>
+      <span class="hud-item pen-indicator" class:is-pen-up={!turtleState.penDown}>
         <span class="hud-pen-icon">
           <PencilSimple size={12} weight="bold" />
         </span>
-        {state.penDown ? 'Kreslí' : 'Zvednuto'}
+        {turtleState.penDown ? 'Kreslí' : 'Zvednuto'}
       </span>
     </div>
   </div>
@@ -124,13 +168,13 @@
     aria-label="Plátno želví grafiky"
   >
     <!-- Background Grid Dots -->
-    {#if showGrid && bounds.canRenderGrid}
+    {#if showGrid}
       <g class="grid-layer">
         {#each gridDots as dot}
           <circle
             cx={dot.x}
             cy={dot.y}
-            r={bounds.markerRadius * 0.16}
+            r={bounds.dotRadius}
             fill="rgba(255, 255, 255, 0.28)"
           />
         {/each}
@@ -139,7 +183,7 @@
 
     <!-- Segments Layer -->
     <g class="segments-layer">
-      {#each state.segments as seg (seg.id)}
+      {#each turtleState.segments as seg (seg.id)}
         {#if seg.penDown}
           <line
             x1={seg.from.x}
@@ -184,7 +228,7 @@
 
     <!-- Numbered Markers Layer -->
     <g class="markers-layer">
-      {#each state.markers as m (m.id)}
+      {#each turtleState.markers as m (m.id)}
         <g class="marker-node" transform="translate({m.position.x}, {-m.position.y})">
           <circle
             cx="0"
@@ -213,7 +257,7 @@
     <!-- Turtle / Heading Arrow -->
     <g
       class="turtle-cursor"
-      transform="translate({state.position.x}, {-state.position.y}) rotate({state.heading})"
+      transform="translate({turtleState.position.x}, {-turtleState.position.y}) rotate({turtleState.heading})"
     >
       <!-- Halo glow circle -->
       <circle
