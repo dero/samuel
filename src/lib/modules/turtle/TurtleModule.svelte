@@ -236,7 +236,44 @@
       <!-- 2. Keypad Stage -->
       {#if flavour === 'angles'}
         <div class="turtle-chassis angles-stage">
-          <!-- Row 1: Left / Forward / Right -->
+          <!-- Row 1: Easter egg / Forward / Marker -->
+          <div class="keypad-row-3col movement-row">
+            {#if showTurtle}
+              <TurtleEasterEgg />
+            {:else}
+              <div class="grid-filler" aria-hidden="true"></div>
+            {/if}
+
+            <button
+              type="button"
+              class="keycap"
+              onpointerdown={(e) => {
+                e.preventDefault();
+                handleStepForward();
+              }}
+              title="Krok vpřed"
+              aria-label="Krok vpřed"
+            >
+              <ArrowUp size={18} weight="bold" />
+              <span class="key-label">Vpřed</span>
+            </button>
+
+            <button
+              type="button"
+              class="keycap marker-keycap"
+              onpointerdown={(e) => {
+                e.preventDefault();
+                handleAddMarker();
+              }}
+              title="Položit značku {turtleState.nextMarkerId}"
+              aria-label="Položit značku {turtleState.nextMarkerId}"
+            >
+              <MapPin size={18} weight="fill" class="marker-pin-icon" />
+              <span class="key-label">Značka {turtleState.nextMarkerId}</span>
+            </button>
+          </div>
+
+          <!-- Row 2: Turn Left / Backward / Turn Right -->
           <div class="keypad-row-3col movement-row">
             <button
               type="button"
@@ -257,13 +294,13 @@
               class="keycap"
               onpointerdown={(e) => {
                 e.preventDefault();
-                handleStepForward();
+                handleStepBackward();
               }}
-              title="Krok vpřed"
-              aria-label="Krok vpřed"
+              title="Krok vzad"
+              aria-label="Krok vzad"
             >
-              <ArrowUp size={18} weight="bold" />
-              <span class="key-label">Vpřed</span>
+              <ArrowDown size={18} weight="bold" />
+              <span class="key-label">Vzad</span>
             </button>
 
             <button
@@ -279,43 +316,6 @@
               <ArrowClockwise size={18} weight="bold" />
               <span class="key-label">Vpravo {granularity}°</span>
             </button>
-          </div>
-
-          <!-- Row 2: Marker / Backward / Grid-filler -->
-          <div class="keypad-row-3col movement-row">
-            <button
-              type="button"
-              class="keycap marker-keycap"
-              onpointerdown={(e) => {
-                e.preventDefault();
-                handleAddMarker();
-              }}
-              title="Položit značku {turtleState.nextMarkerId}"
-              aria-label="Položit značku {turtleState.nextMarkerId}"
-            >
-              <MapPin size={18} weight="fill" class="marker-pin-icon" />
-              <span class="key-label">Značka {turtleState.nextMarkerId}</span>
-            </button>
-
-            <button
-              type="button"
-              class="keycap"
-              onpointerdown={(e) => {
-                e.preventDefault();
-                handleStepBackward();
-              }}
-              title="Krok vzad"
-              aria-label="Krok vzad"
-            >
-              <ArrowDown size={18} weight="bold" />
-              <span class="key-label">Vzad</span>
-            </button>
-
-            {#if showTurtle}
-              <TurtleEasterEgg />
-            {:else}
-              <div class="grid-filler" aria-hidden="true"></div>
-            {/if}
           </div>
 
           <!-- Row 3: Granularity preset bar (1, 5, 15, 45, 90°) -->
