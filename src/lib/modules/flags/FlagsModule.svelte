@@ -1,7 +1,7 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
-  import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import SpaceButton from '../../components/ui/SpaceButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
@@ -134,13 +134,13 @@
         {/if}
       </div>
 
-      <!-- Utility Row: SlideToAction (Vymazat) + Mezera + Backspace (1.2fr 1fr 1fr) -->
+      <!-- Utility Row: HoldToAction (Vymazat) + Mezera + Backspace (1.2fr 1fr 1fr) -->
       <div class="keypad-utility-row-3col">
-        <SlideToAction
+        <HoldToAction
           disabled={!inputLetters && selectedColors.length === 0}
           onAction={handleClearAll}
           label="Vymazat"
-          ariaLabel="Vymazat text tažením"
+          ariaLabel="Vymazat text podržením"
         />
 
         <SpaceButton

@@ -60,7 +60,7 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 │ 2. Zadávací matice / Keypad Stage (clampovaná výška)   │
 │    ↕ 8px mezera (--zone-input-gap)                     │
 │ 3. .keypad-utility-row-3col (42 px fixně)              │
-│    [ <SlideToAction> | <SpaceCommitButton> | <Backspace> ]
+│    [ <HoldToAction> | <SpaceCommitButton> | <Backspace> ]
 ├────────────────────────────────────────────────────────┤
 │ KONTEXTOVÁ ROZHRANÍ (Mimo hlavní plochu)               │
 │ - {#snippet menuOptions()}: Položky pro ModuleMenu     │
@@ -103,11 +103,11 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 
 ### Utilitní trojblok & Akce
 - **POKUD** skládáš utilitní řádek pod klávesnicí, **POTOM** použij `.keypad-utility-row-3col` (výška 42 px, poměr `1fr : 1.3fr : 1fr`):  
-  `[ <SlideToAction> | <SpaceCommitButton> | <BackspaceButton> ]`
+  `[ <HoldToAction> | <SpaceCommitButton> | <BackspaceButton> ]`
 - **POKUD** modul vyžaduje potvrzení rozepsaného znaku (Enter / Commit), **POTOM** použij středové `<SpaceCommitButton>`, které se při rozepsaném znaku přepne z mezery na Enter/Vložit. Při přímém vkládání zůstává trvale mezerou.
 - **POKUD** renderuješ mezerník v `<SpaceCommitButton>`, **POTOM** použij SVG ikonu otevřené klávesy `|_|` (tloušťka 2.2 px). Textový znak `␣` nepoužívej.
 - **POKUD** `<SpaceCommitButton>` zobrazuje potvrzovaný text, **POTOM** musí mít `max-width: 100%`, `text-overflow: ellipsis`, `overflow: hidden`, `white-space: nowrap` a font clampován, aby nepřeteklo.
-- **POKUD** mažeš celý text, **POTOM** VŽDY použij `<SlideToAction>` (bezpečné podržení s červeným podbarvením zleva doprava). NIKDY nemaž pouhým klikem.
+- **POKUD** mažeš celý text, **POTOM** VŽDY použij `<HoldToAction>` (bezpečné podržení s horní zářící linkou a varovným toastem při letmém tapnutí). NIKDY nemaž pouhým klikem.
 
 ### Microcopy
 - **POKUD** píšeš nápovědu prázdného stavu (`emptyHint`), **POTOM** formuluj 1 údernou větu bez vatových úvodů („Zde se zobrazuje...“). Při psaní se plynule rozostří (0.7s blur), při vymazání znovu zaostří.
@@ -154,7 +154,7 @@ $$540\text{ px} - [52\text{ (Header)} + 84\text{ (Output min)} + 42\text{ (Utili
 | :--- | :--- | :--- |
 | `<ModuleShell>` | `layout/ModuleShell.svelte` | Základní kostra: snippets `#output`, `#input`, `#menuOptions`, `#reference`; props `title`, `hasAlphabet`, `onReset`, `onPaste` |
 | `<TranslationCard>` | `ui/TranslationCard.svelte` | OLED výstup s auto-scrollem a 1-tap copy: props `text`, `pendingText`, `emptyHint` |
-| `<SlideToAction>` | `ui/SlideToAction.svelte` | Bezpečné smazání podržením: props `onAction`, `disabled`, `holdDuration=450` |
+| `<HoldToAction>` | `ui/HoldToAction.svelte` | Bezpečné smazání podržením: props `onAction`, `disabled`, `holdDuration=380` |
 | `<SpaceCommitButton>` | `ui/SpaceCommitButton.svelte` | Kontextová mezera / Enter: props `pendingChar`, `onSpace`, `onCommit`, `commitSymbol` |
 | `<BackspaceButton>` | `ui/BackspaceButton.svelte` | Mazání / rušení rozepsaného znaku (✕ vs ⌫): props `onAction`, `hasActiveSelection`, `disabled` |
 | `<SegmentedControl>` | `ui/SegmentedControl.svelte` | Přepínač flavours v sub-toolbaru: props `options`, `value`, `onChange` |

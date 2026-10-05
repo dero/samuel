@@ -3,7 +3,7 @@
   import { settings } from '../../state/settings.svelte';
   import { pasteFromClipboard } from '../../utils/clipboard';
   import BottomSheet from '../ui/BottomSheet.svelte';
-  import SlideToAction from '../ui/SlideToAction.svelte';
+  import HoldToAction from '../ui/HoldToAction.svelte';
   import { ClipboardText, List } from 'phosphor-svelte';
 
   interface Props {
@@ -58,7 +58,7 @@
       <span>Vložit ze schránky</span>
     </button>
 
-    <SlideToAction
+    <HoldToAction
       onAction={handleResetAction}
       showLabel={true}
       label="Vyčistit modul"

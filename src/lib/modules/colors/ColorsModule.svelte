@@ -3,7 +3,7 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import ColorsReference from './ColorsReference.svelte';
   import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
-  import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import { settings } from '../../state/settings.svelte';
   import { Camera, Image as ImageIcon, ArrowClockwise } from 'phosphor-svelte';
   import { applyRgbFilter, applyCmyFilter, getScaledDimensions } from './colorsFilter';
@@ -297,11 +297,11 @@
         />
       </div>
 
-      <!-- 2. Controls Row: SlideToAction (left) + Channel Filters (right) -->
+      <!-- 2. Controls Row: HoldToAction (left) + Channel Filters (right) -->
       <div class="colors-control-row">
         <!-- Clear Photo Button (Hold to action) -->
         <div class="clear-btn-wrap">
-          <SlideToAction
+          <HoldToAction
             variant="icon-only"
             disabled={!imageLoaded}
             onAction={handleReset}

@@ -10,7 +10,7 @@
     getStorageEstimate,
     isLikelyIos
   } from '../../services/storageService';
-  import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import {
     ArrowsClockwise,
     RocketLaunch,
@@ -271,7 +271,7 @@
           {/if}
         </div>
       {:else}
-        <SlideToAction
+        <HoldToAction
           onAction={handleDeleteDbManual}
           disabled={versionService.isBusy}
           showLabel={true}
@@ -381,7 +381,7 @@
       <h2 class="card-title">Reset dat</h2>
       <p class="card-desc">Smaže všechna offline data včetně slovníku.</p>
 
-      <SlideToAction
+      <HoldToAction
         onAction={handleResetAllData}
         disabled={isResetting}
         showLabel={true}

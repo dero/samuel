@@ -1,7 +1,7 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
-  import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import NonStandardSettingsBanner from '../../components/ui/NonStandardSettingsBanner.svelte';
@@ -474,7 +474,7 @@
 
       <!-- 3. Bottom Utility Row (42px fixed, 3 columns) -->
       <div class="keypad-utility-row-3col">
-        <SlideToAction
+        <HoldToAction
           label="Smazat"
           disabled={turtleState.segments.length === 0 && turtleState.markers.length === 0}
           onAction={handleClearAll}

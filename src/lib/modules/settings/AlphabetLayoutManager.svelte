@@ -2,7 +2,7 @@
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
-  import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
 
   let newLayoutName = $state('');
@@ -81,7 +81,7 @@
         </button>
 
         {#if !layout.isBuiltin}
-          <SlideToAction
+          <HoldToAction
             onAction={() => handleDeleteCustomLayout(layout.id)}
             showLabel={false}
             ariaLabel="Podržte pro smazání vlastní abecedy"

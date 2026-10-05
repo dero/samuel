@@ -3,7 +3,7 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import MorseReference from './MorseReference.svelte';
   import TelegraphWire, { type PulseEvent } from './TelegraphWire.svelte';
-  import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import DominantButton from '../../components/ui/DominantButton.svelte';
@@ -434,10 +434,10 @@
 
       <!-- Utility Row: Slide to Clear and Backspace -->
       <div class="keypad-utility-row">
-        <SlideToAction
+        <HoldToAction
           disabled={!modState.input}
           onAction={handleClear}
-          ariaLabel="Vymazat celý kód tažením"
+          ariaLabel="Vymazat celý kód podržením"
         />
 
         <BackspaceButton

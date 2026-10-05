@@ -2,7 +2,7 @@
   import { onDestroy } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
-  import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
   import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
@@ -412,7 +412,7 @@
 
       <!-- 3. Utilitní trojblok: Clear | Space/Commit | Backspace -->
       <div class="keypad-utility-row-3col">
-        <SlideToAction
+        <HoldToAction
           disabled={!modState.text && !pendingDisplay}
           onAction={handleClearAll}
           ariaLabel="Vymazat text podržením"

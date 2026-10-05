@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SlideToAction from '../../components/ui/SlideToAction.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import { settings } from '../../state/settings.svelte';
 
   interface Props {
@@ -49,7 +49,7 @@
 <div class="filmstrip-container">
   <!-- Pinned Reset Button at the start (outside scroll area) -->
   <div class="filmstrip-reset-slot">
-    <SlideToAction
+    <HoldToAction
       onAction={onResetAll}
       disabled={!hasAnyMapping}
       variant="icon-only"
