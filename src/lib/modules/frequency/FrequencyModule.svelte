@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
@@ -11,15 +10,8 @@
   import { analyzeFrequency, type FrequencyOptions } from './frequencySolver';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { navigation } from '../../state/navigation.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
-  import {
-    ClipboardText,
-    ArrowRight,
-    ArrowsClockwise,
-    Trash,
-    Info
-  } from 'phosphor-svelte';
+  import { Info } from 'phosphor-svelte';
   import EmptyHint from '../../components/ui/EmptyHint.svelte';
 
   const modSettings = localSettingsService.forModule('freq');
@@ -34,19 +26,6 @@
 
   let showTextSheet = $state<boolean>(false);
   let showIocModal = $state<boolean>(false);
-  let isResetConfirming = $state<boolean>(false);
-  let resetConfirmTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function clearResetConfirmTimer() {
-    if (resetConfirmTimer) {
-      clearTimeout(resetConfirmTimer);
-      resetConfirmTimer = null;
-    }
-  }
-
-  onDestroy(() => {
-    clearResetConfirmTimer();
-  });
 
   // Persistence
   $effect(() => {
@@ -70,58 +49,10 @@
   function handleReset() {
     settings.vibrate(35);
     rawText = '';
-  }
-
-  async function handlePasteText() {
-    settings.vibrate(20);
-    try {
-      const clip = await navigator.clipboard.readText();
-      if (clip) {
-        rawText = clip;
-        toast.show('✓ Text vložen ze schránky', { type: 'success' });
-      }
-    } catch {
-      toast.show('Nelze číst schránku', { type: 'danger' });
-    }
-  }
-
-  function transferToSubstitution() {
-    if (!rawText.trim()) {
-      toast.show('Nejprve zadejte text', { type: 'danger' });
-      return;
-    }
-    settings.vibrate(35);
-    localSettingsService.forModule('substitution').setString('ciphertext', rawText);
-    navigation.openModule('substitution');
-    toast.show('✓ Text přenesen do Substituce', { type: 'success' });
-  }
-
-  function transferToShifts() {
-    if (!rawText.trim()) {
-      toast.show('Nejprve zadejte text', { type: 'danger' });
-      return;
-    }
-    settings.vibrate(35);
-    localSettingsService.forModule('shifts').setString('text', rawText);
-    navigation.openModule('shifts');
-    toast.show('✓ Text přenesen do Posunů', { type: 'success' });
-  }
-
-  function triggerResetConfirmation() {
-    if (isResetConfirming) {
-      clearResetConfirmTimer();
-      handleReset();
-      isResetConfirming = false;
-      toast.show('Frekvence vyčištěna', { type: 'success' });
-    } else {
-      settings.vibrate(30);
-      isResetConfirming = true;
-      clearResetConfirmTimer();
-      resetConfirmTimer = setTimeout(() => {
-        isResetConfirming = false;
-        resetConfirmTimer = null;
-      }, 3000);
-    }
+    removeDiacritics = false;
+    removeSymbols = true;
+    sortBy = 'freq';
+    toast.show('Modul frekvence resetován', { type: 'success' });
   }
 </script>
 
@@ -129,7 +60,6 @@
   title="Frekvence"
   hasAlphabet={false}
   onReset={handleReset}
-  onPaste={handlePasteText}
 >
   <!-- TOP ZONE: Output (Letter frequency histogram and status bar) -->
   {#snippet output()}
@@ -214,8 +144,6 @@
         settings.vibrate(15);
         rawText = '';
       }}
-      onPasteText={handlePasteText}
-      onTransferToSubstitution={transferToSubstitution}
     />
   {/snippet}
 
@@ -240,47 +168,6 @@
           removeSymbols = val;
         }}
       />
-    </div>
-
-    <div class="menu-group">
-      <div class="menu-group-title">Akce</div>
-      <button
-        type="button"
-        class="menu-btn"
-        onclick={handlePasteText}
-      >
-        <ClipboardText size={18} weight="bold" />
-        <span>Vložit ze schránky</span>
-      </button>
-
-      <button
-        type="button"
-        class="menu-btn"
-        onclick={transferToSubstitution}
-        disabled={!rawText.trim()}
-      >
-        <ArrowRight size={18} weight="bold" />
-        <span>Přenést do Substituce</span>
-      </button>
-
-      <button
-        type="button"
-        class="menu-btn"
-        onclick={transferToShifts}
-        disabled={!rawText.trim()}
-      >
-        <ArrowsClockwise size={18} weight="bold" />
-        <span>Přenést do Posunů</span>
-      </button>
-
-      <button
-        type="button"
-        class="menu-btn danger"
-        onclick={triggerResetConfirmation}
-      >
-        <Trash size={18} weight="bold" />
-        <span>{isResetConfirming ? 'Opravdu vymazat text?' : 'Vyčistit modul'}</span>
-      </button>
     </div>
   {/snippet}
 
@@ -468,32 +355,4 @@
     color: var(--color-text-muted);
     margin-bottom: 2px;
   }
-
-  .menu-btn {
-    appearance: none;
-    border: 1px solid var(--color-border-subtle);
-    background-color: var(--color-surface-2);
-    color: var(--color-text-primary);
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    text-align: left;
-    transition: background 0.15s, color 0.15s;
-  }
-
-  .menu-btn:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
-
-  .menu-btn.danger {
-    color: var(--color-accent-danger, #ef4444);
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-
 </style>

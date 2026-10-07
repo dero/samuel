@@ -222,15 +222,6 @@
     handleClearAll();
   }
 
-  function handlePaste(text: string) {
-    clearFadeTimer();
-    const normalized = normalizeSemaphoreInput(text, decodeOptions);
-    if (normalized) {
-      modState.input += (modState.input.length > 0 ? ' ' : '') + normalized;
-      toast.show('Text vložen ze schránky', 'success');
-    }
-  }
-
   onDestroy(() => {
     clearFadeTimer();
   });
@@ -257,7 +248,6 @@
 <ModuleShell
   hasWarning={nonStandardCount > 0}
   onReset={handleReset}
-  onPaste={handlePaste}
 >
   {#snippet output()}
     <TranslationCard

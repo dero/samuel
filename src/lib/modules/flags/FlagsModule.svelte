@@ -79,20 +79,10 @@
   function handleSpace() {
     inputLetters += ' ';
   }
-
-  function handlePaste(text: string) {
-    if (!text) return;
-    const sanitized = text
-      .toUpperCase()
-      .replace(/[^A-Z\s]/g, '')
-      .replace(/\s+/g, ' ');
-    inputLetters += sanitized;
-  }
 </script>
 
 <ModuleShell
   onReset={handleClearAll}
-  onPaste={handlePaste}
 >
   {#snippet output()}
     <div class="flags-output-container">

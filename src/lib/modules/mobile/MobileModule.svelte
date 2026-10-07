@@ -294,7 +294,6 @@
     handleClearAll();
     resetModState();
   }}
-  onPaste={(pasted) => (modState.text += pasted.toUpperCase())}
 >
   {#snippet menuOptions()}
     <div class="menu-group">

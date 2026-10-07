@@ -9,7 +9,6 @@
     alphabetHint?: string;
     hasWarning?: boolean;
     onReset?: () => void;
-    onPaste?: (text: string) => void;
     layoutMode?: 'default' | 'compact-output' | 'fullscreen-input';
     output?: import('svelte').Snippet;
     input?: import('svelte').Snippet;
@@ -23,7 +22,6 @@
     alphabetHint,
     hasWarning = false,
     onReset,
-    onPaste,
     layoutMode = 'default',
     output,
     input,
@@ -62,7 +60,7 @@
 
   <!-- Contextual Menu -->
   {#if navigation.activeModule?.hasMenu !== false}
-    <ModuleMenu {title} {hasAlphabet} {alphabetHint} {onReset} {onPaste}>
+    <ModuleMenu {title} {hasAlphabet} {alphabetHint} {onReset}>
       {#if menuOptions}
         {@render menuOptions()}
       {/if}

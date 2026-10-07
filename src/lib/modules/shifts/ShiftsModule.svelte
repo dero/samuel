@@ -26,7 +26,7 @@
   import { versionService } from '../../services/versionService.svelte';
   import { navigation } from '../../state/navigation.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { X, ClipboardText, PencilSimple } from 'phosphor-svelte';
+  import { X, PencilSimple } from 'phosphor-svelte';
   import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
   import NonStandardAlphabetBanner from '../../components/ui/NonStandardAlphabetBanner.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
@@ -142,49 +142,6 @@
     autokeyPrimer = '';
   }
 
-  function handlePaste(pasted: string) {
-    text = pasted;
-  }
-
-  async function handlePasteText() {
-    settings.vibrate(20);
-    try {
-      const clip = await navigator.clipboard.readText();
-      if (clip) {
-        text = clip;
-        toast.show('✓ Text vložen', { type: 'success' });
-      }
-    } catch {
-      toast.show('Nelze číst schránku', { type: 'danger' });
-    }
-  }
-
-  async function handlePasteKey() {
-    settings.vibrate(20);
-    try {
-      const clip = await navigator.clipboard.readText();
-      if (clip) {
-        keyText = clip;
-        toast.show('✓ Klíč vložen', { type: 'success' });
-      }
-    } catch {
-      toast.show('Nelze číst schránku', { type: 'danger' });
-    }
-  }
-
-  async function handlePastePrimer() {
-    settings.vibrate(20);
-    try {
-      const clip = await navigator.clipboard.readText();
-      if (clip) {
-        autokeyPrimer = clip;
-        toast.show('✓ Heslo vloženo', { type: 'success' });
-      }
-    } catch {
-      toast.show('Nelze číst schránku', { type: 'danger' });
-    }
-  }
-
   // Easter egg: Caesar's 23 daggers
   let daggerCount = $state<number>(0);
   let isDaggersShaking = $state<boolean>(false);
@@ -219,7 +176,6 @@
   title={activeSubmodule === 'caesar' ? 'Cézar' : activeSubmodule === 'vigenere' ? 'Vigenère' : 'Autokey'}
   hasAlphabet={true}
   onReset={handleReset}
-  onPaste={handlePaste}
 >
   <!-- TOP ZONE: Output (Translation area only) -->
   {#snippet output()}
@@ -310,15 +266,6 @@
             >
               <PencilSimple size={16} weight="bold" />
             </button>
-            <button
-              type="button"
-              class="input-paste-btn"
-              onclick={handlePasteText}
-              title="Vložit ze schránky"
-              aria-label="Vložit ze schránky"
-            >
-              <ClipboardText size={17} weight="bold" />
-            </button>
           </div>
 
           <!-- Easter egg: Caesar's 23 daggers in the reserved spacer slot -->
@@ -398,15 +345,6 @@
             >
               <PencilSimple size={16} weight="bold" />
             </button>
-            <button
-              type="button"
-              class="input-paste-btn"
-              onclick={handlePasteText}
-              title="Vložit text ze schránky"
-              aria-label="Vložit text ze schránky"
-            >
-              <ClipboardText size={17} weight="bold" />
-            </button>
           </div>
 
           <div class="input-row">
@@ -451,15 +389,6 @@
               aria-label="Otevřít editor klíče"
             >
               <PencilSimple size={16} weight="bold" />
-            </button>
-            <button
-              type="button"
-              class="input-paste-btn"
-              onclick={handlePasteKey}
-              title="Vložit klíč ze schránky"
-              aria-label="Vložit klíč ze schránky"
-            >
-              <ClipboardText size={17} weight="bold" />
             </button>
           </div>
         </div>
@@ -510,15 +439,6 @@
             >
               <PencilSimple size={16} weight="bold" />
             </button>
-            <button
-              type="button"
-              class="input-paste-btn"
-              onclick={handlePasteText}
-              title="Vložit text ze schránky"
-              aria-label="Vložit text ze schránky"
-            >
-              <ClipboardText size={17} weight="bold" />
-            </button>
           </div>
 
           <div class="input-row">
@@ -563,15 +483,6 @@
               aria-label="Otevřít editor hesla"
             >
               <PencilSimple size={16} weight="bold" />
-            </button>
-            <button
-              type="button"
-              class="input-paste-btn"
-              onclick={handlePastePrimer}
-              title="Vložit heslo ze schránky"
-              aria-label="Vložit heslo ze schránky"
-            >
-              <ClipboardText size={17} weight="bold" />
             </button>
           </div>
         </div>
@@ -846,26 +757,6 @@
   }
 
   .input-sheet-btn:active {
-    transform: scale(0.96);
-  }
-
-  .input-paste-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    background-color: var(--color-surface-3);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-xs);
-    color: var(--color-accent-primary);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background-color 0.1s ease, transform 0.08s ease;
-  }
-
-  .input-paste-btn:active {
-    background-color: var(--color-surface-active);
     transform: scale(0.96);
   }
 

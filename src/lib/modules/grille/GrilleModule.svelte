@@ -21,7 +21,6 @@
   import { localSettingsService } from '../../services/localSettingsService';
   import {
     PencilSimple,
-    ClipboardText,
     X
   } from 'phosphor-svelte';
 
@@ -156,19 +155,6 @@
     rawInput = '';
     holes = [];
   }
-
-  async function handlePaste() {
-    settings.vibrate(20);
-    try {
-      const clip = await navigator.clipboard.readText();
-      if (clip) {
-        rawInput = clip.trim();
-        toast.show('✓ Data vložena ze schránky', { type: 'success' });
-      }
-    } catch {
-      toast.show('Nelze číst schránku', { type: 'danger' });
-    }
-  }
 </script>
 
 <ModuleShell
@@ -176,9 +162,6 @@
   hasAlphabet={false}
   hasWarning={nonStandardCount > 0}
   onReset={handleClearAll}
-  onPaste={(pasted) => {
-    rawInput = pasted.trim();
-  }}
 >
   {#snippet menuOptions()}
     <NonStandardSettingsBanner
@@ -310,16 +293,6 @@
           aria-label="Otevřít textový editor"
         >
           <PencilSimple size={16} weight="bold" />
-        </button>
-
-        <button
-          type="button"
-          class="input-paste-btn"
-          onclick={handlePaste}
-          title="Vložit text ze schránky"
-          aria-label="Vložit text ze schránky"
-        >
-          <ClipboardText size={17} weight="bold" />
         </button>
       </div>
     </div>
@@ -458,8 +431,7 @@
     background-color: var(--color-surface-3);
   }
 
-  .input-sheet-btn,
-  .input-paste-btn {
+  .input-sheet-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -474,14 +446,12 @@
     transition: background-color 0.1s ease, color 0.1s ease, transform 0.08s ease;
   }
 
-  .input-sheet-btn:hover,
-  .input-paste-btn:hover {
+  .input-sheet-btn:hover {
     color: var(--color-accent-primary);
     background-color: var(--color-surface-active);
   }
 
-  .input-sheet-btn:active,
-  .input-paste-btn:active {
+  .input-sheet-btn:active {
     transform: scale(0.96);
   }
 

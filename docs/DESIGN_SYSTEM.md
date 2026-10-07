@@ -152,7 +152,7 @@ $$540\text{ px} - [52\text{ (Header)} + 84\text{ (Output min)} + 42\text{ (Utili
 
 | Komponenta | Cesta | Účel & Klíčové props |
 | :--- | :--- | :--- |
-| `<ModuleShell>` | `layout/ModuleShell.svelte` | Základní kostra: snippets `#output`, `#input`, `#menuOptions`, `#reference`; props `title`, `hasAlphabet`, `onReset`, `onPaste` |
+| `<ModuleShell>` | `layout/ModuleShell.svelte` | Základní kostra: snippets `#output`, `#input`, `#menuOptions`, `#reference`; props `title`, `hasAlphabet`, `onReset` |
 | `<TranslationCard>` | `ui/TranslationCard.svelte` | OLED výstup s auto-scrollem a 1-tap copy: props `text`, `pendingText`, `emptyHint` |
 | `<HoldToAction>` | `ui/HoldToAction.svelte` | Bezpečné smazání podržením: props `onAction`, `disabled`, `holdDuration=380` |
 | `<SpaceCommitButton>` | `ui/SpaceCommitButton.svelte` | Kontextová mezera / Enter: props `pendingChar`, `onSpace`, `onCommit`, `commitSymbol` |

@@ -196,15 +196,6 @@
     handleClearAll();
   }
 
-  function handlePaste(text: string) {
-    clearFadeTimer();
-    const normalized = normalizeBrailleInput(text, { czechDiacritics: modState.czech, directNumbers: modState.direct_nums });
-    if (normalized) {
-      modState.text += (modState.text.length > 0 ? ' ' : '') + normalized;
-      toast.show('Text vložen ze schránky', 'success');
-    }
-  }
-
   const brailleEmptyHint = 'Body zadávejte klepnutím nebo tahem.';
 
   onDestroy(() => {
@@ -212,7 +203,7 @@
   });
 </script>
 
-<ModuleShell onReset={handleReset} onPaste={handlePaste}>
+<ModuleShell onReset={handleReset}>
   {#snippet output()}
     <TranslationCard
       text={modState.text}

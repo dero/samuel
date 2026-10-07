@@ -10,6 +10,7 @@
     showLabel?: boolean;
     confirmedLabel?: string;
     ariaLabel?: string;
+    tapWarning?: string;
     holdDuration?: number;
     variant?: "utility" | "outline" | "menu" | "icon-only";
     iconSize?: number;
@@ -23,6 +24,7 @@
     showLabel,
     confirmedLabel = "Smazáno",
     ariaLabel,
+    tapWarning,
     holdDuration = 380,
     variant = "utility",
     iconSize,
@@ -35,6 +37,10 @@
 
   let effectiveIconSize = $derived(
     iconSize ?? (variant === "menu" ? 20 : variant === "outline" ? 16 : variant === "icon-only" ? 15 : 20)
+  );
+
+  let effectiveTapWarning = $derived(
+    tapWarning ?? (label.toLowerCase() === "vymazat" ? "Podržte pro smazání" : `Podržte pro ${label.toLowerCase()}`)
   );
 
   let isHolding = $state(false);
@@ -81,7 +87,7 @@
     }, 320);
 
     settings.vibrate(15);
-    toast.show("Podržte pro smazání", { type: "warning", duration: 1800 });
+    toast.show(effectiveTapWarning, { type: "warning", duration: 1800 });
   }
 
   function startHold() {

@@ -137,13 +137,6 @@
     handleClearAll();
   }
 
-  function handlePaste(text: string) {
-    if (text) {
-      inputLetters += (inputLetters.length > 0 ? ' ' : '') + text.toUpperCase();
-      toast.show('Text vložen ze schránky', 'success');
-    }
-  }
-
   function handleTypeChange(newType: CrossType) {
     crossTypeId = newType;
     selectedAxis1 = null;
@@ -166,7 +159,6 @@
 <ModuleShell
   title={activeConfig.name}
   onReset={handleReset}
-  onPaste={handlePaste}
 >
   {#snippet menuOptions()}
     {#if activeConfig.hasAlphabet}

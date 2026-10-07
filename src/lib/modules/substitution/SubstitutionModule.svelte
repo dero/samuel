@@ -13,7 +13,7 @@
   import { toast } from '../../state/toast.svelte';
   import { navigation } from '../../state/navigation.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
-  import { PencilSimple, ClipboardText } from 'phosphor-svelte';
+  import { PencilSimple } from 'phosphor-svelte';
   import NonStandardAlphabetBanner from '../../components/ui/NonStandardAlphabetBanner.svelte';
 
   const modSettings = localSettingsService.forModule('substitution');
@@ -100,30 +100,12 @@
     toast.show('✓ Modul vyčištěn', { type: 'success' });
   }
 
-  function handlePasteText(pasted: string) {
-    ciphertext = pasted;
-    toast.show('✓ Text vložen', { type: 'success' });
-  }
-
-  async function handlePasteFromClipboard() {
-    settings.vibrate(20);
-    try {
-      const clip = await navigator.clipboard.readText();
-      if (clip) {
-        ciphertext = clip;
-        toast.show('✓ Text vložen', { type: 'success' });
-      }
-    } catch {
-      toast.show('Nelze číst schránku', { type: 'danger' });
-    }
-  }
 </script>
 
 <ModuleShell
   title="Substituce"
   hasAlphabet={true}
   onReset={handleResetAll}
-  onPaste={handlePasteText}
 >
   <!-- TOP ZONE: Output (TranslationCard) -->
   {#snippet output()}
@@ -160,16 +142,6 @@
         >
           <PencilSimple size={20} weight="bold" />
           <span>Zadat šifrový text</span>
-        </button>
-
-        <button
-          type="button"
-          class="paste-shortcut-btn"
-          onclick={handlePasteFromClipboard}
-          title="Vložit text ze schránky"
-        >
-          <ClipboardText size={18} weight="bold" />
-          <span>Vložit ze schránky</span>
         </button>
       </div>
     {:else}
@@ -246,15 +218,6 @@
         <PencilSimple size={18} weight="bold" />
         <span>Upravit šifrový text</span>
       </button>
-
-      <button
-        type="button"
-        class="menu-action-row"
-        onclick={handlePasteFromClipboard}
-      >
-        <ClipboardText size={18} weight="bold" />
-        <span>Vložit ze schránky</span>
-      </button>
     </div>
   {/snippet}
 
@@ -324,30 +287,6 @@
   .enter-text-cta-btn:active {
     background-color: var(--color-surface-active);
     border-color: var(--color-accent-primary);
-  }
-
-  .paste-shortcut-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    width: 100%;
-    height: 40px;
-    background-color: transparent;
-    border: 1px dashed var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-secondary);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: color 0.12s ease, border-color 0.12s ease;
-  }
-
-  .paste-shortcut-btn:active {
-    color: var(--color-text-primary);
-    border-color: var(--color-border-active);
-    background-color: var(--color-surface-1);
   }
 
   /* Menu styles */

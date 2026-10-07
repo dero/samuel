@@ -193,7 +193,6 @@
 <ModuleShell
   title="Polybius"
   onReset={handleClearAll}
-  onPaste={(pasted) => (text += pasted.toUpperCase())}
 >
   {#snippet menuOptions()}
     <div class="menu-group">

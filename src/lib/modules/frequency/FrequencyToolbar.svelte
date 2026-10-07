@@ -1,6 +1,6 @@
 <script lang="ts">
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
-  import { PencilSimple, ClipboardText, ArrowRight, X } from 'phosphor-svelte';
+  import { PencilSimple, X } from 'phosphor-svelte';
 
   interface Props {
     sortBy: 'freq' | 'alpha';
@@ -8,8 +8,6 @@
     onSortChange: (sort: 'freq' | 'alpha') => void;
     onOpenEditor: () => void;
     onClearText: () => void;
-    onPasteText: () => void;
-    onTransferToSubstitution: () => void;
   }
 
   let {
@@ -17,9 +15,7 @@
     rawText,
     onSortChange,
     onOpenEditor,
-    onClearText,
-    onPasteText,
-    onTransferToSubstitution
+    onClearText
   }: Props = $props();
 
   const SORT_SEGMENT_OPTIONS: SegmentOption<'freq' | 'alpha'>[] = [
@@ -74,29 +70,6 @@
       aria-label="Otevřít textový editor"
     >
       <PencilSimple size={16} weight="bold" />
-    </button>
-    <button
-      type="button"
-      class="input-paste-btn"
-      onclick={onPasteText}
-      title="Vložit text ze schránky"
-      aria-label="Vložit text ze schránky"
-    >
-      <ClipboardText size={17} weight="bold" />
-    </button>
-  </div>
-
-  <!-- 3. Bottom Action Row: Transfer text to Substitution -->
-  <div class="bottom-actions-row">
-    <button
-      type="button"
-      class="action-transfer-btn primary"
-      onclick={onTransferToSubstitution}
-      disabled={!rawText.trim()}
-      title="Přenést text přímo do modulu Substituce"
-    >
-      <span>Přenést do Substituce</span>
-      <ArrowRight size={15} weight="bold" />
     </button>
   </div>
 </div>
@@ -195,8 +168,7 @@
     background-color: var(--color-surface-3);
   }
 
-  .input-sheet-btn,
-  .input-paste-btn {
+  .input-sheet-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -211,48 +183,12 @@
     transition: background-color 0.1s ease, color 0.1s ease, transform 0.08s ease;
   }
 
-  .input-sheet-btn:hover,
-  .input-paste-btn:hover {
+  .input-sheet-btn:hover {
     color: var(--color-accent-primary);
     background-color: var(--color-surface-active);
   }
 
-  .input-sheet-btn:active,
-  .input-paste-btn:active {
+  .input-sheet-btn:active {
     transform: scale(0.96);
-  }
-
-  .bottom-actions-row {
-    display: flex;
-    gap: 8px;
-    height: 38px;
-    flex-shrink: 0;
-  }
-
-  .action-transfer-btn {
-    flex: 1;
-    appearance: none;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background-color: var(--color-surface-3);
-    color: var(--color-accent-primary);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transition: background-color 0.1s ease, transform 0.08s ease;
-  }
-
-  .action-transfer-btn:active:not(:disabled) {
-    transform: scale(0.98);
-  }
-
-  .action-transfer-btn:disabled {
-    opacity: 0.48;
-    cursor: not-allowed;
   }
 </style>

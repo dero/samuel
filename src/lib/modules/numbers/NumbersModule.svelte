@@ -541,40 +541,11 @@
     lastCharInput = '';
     lastCharOutputStr = '';
   }
-
-  function handlePaste(pasted: string) {
-    const trimmed = pasted.trim();
-    if (!trimmed) return;
-
-    if (isSourceNumber || isSourceRoman) {
-      const parts = trimmed.split(/[\s,;]+/);
-      const newTokens: string[] = [];
-      for (const p of parts) {
-        if (p) newTokens.push(p);
-      }
-      if (newTokens.length > 0) {
-        settings.vibrate(25);
-        rawTokens = [...rawTokens, ...newTokens];
-        toast.show(`Vloženo ${newTokens.length} hodnot`, 'success');
-      }
-    } else {
-      const newTokens: string[] = [];
-      for (const ch of trimmed) {
-        newTokens.push(ch);
-      }
-      if (newTokens.length > 0) {
-        settings.vibrate(25);
-        rawTokens = [...rawTokens, ...newTokens];
-        toast.show(`Vloženo ${newTokens.length} znaků`, 'success');
-      }
-    }
-  }
 </script>
 
 <ModuleShell
   hasAlphabet={true}
   onReset={handleClearAll}
-  onPaste={handlePaste}
 >
   {#snippet output()}
     <TranslationCard

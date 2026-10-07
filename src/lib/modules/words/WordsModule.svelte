@@ -18,7 +18,6 @@
   import { onDestroy } from 'svelte';
   import {
     PencilSimple,
-    ClipboardText,
     X,
     Database,
     DownloadSimple,
@@ -78,19 +77,6 @@
     toast.show('Slovník vyčištěn', { type: 'success' });
   }
 
-
-  async function handlePaste() {
-    settings.vibrate(20);
-    try {
-      const clip = await navigator.clipboard.readText();
-      if (clip) {
-        query = activeSubmodule === 'mask' ? clip.trim().replace(/\s+/g, '') : clip.trim();
-        toast.show('✓ Vloženo ze schránky', { type: 'success' });
-      }
-    } catch {
-      toast.show('Nelze číst schránku', { type: 'danger' });
-    }
-  }
 
   // DB worker search (shared, single-flight gated in dbClient)
   let results = $state<WordMatch[]>([]);
@@ -190,7 +176,6 @@
   title="Slovník"
   hasAlphabet={false}
   onReset={handleReset}
-  onPaste={handlePaste}
 >
   <!-- TOP ZONE: Output (Word results list or Empty State) -->
   {#snippet output()}
@@ -363,16 +348,6 @@
           aria-label="Otevřít textový editor"
         >
           <PencilSimple size={16} weight="bold" />
-        </button>
-
-        <button
-          type="button"
-          class="input-paste-btn"
-          onclick={handlePaste}
-          title="Vložit text ze schránky"
-          aria-label="Vložit text ze schránky"
-        >
-          <ClipboardText size={17} weight="bold" />
         </button>
       </div>
     </div>
@@ -784,8 +759,7 @@
     background-color: var(--color-surface-3);
   }
 
-  .input-sheet-btn,
-  .input-paste-btn {
+  .input-sheet-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -800,14 +774,12 @@
     transition: background-color 0.1s ease, color 0.1s ease, transform 0.08s ease;
   }
 
-  .input-sheet-btn:hover,
-  .input-paste-btn:hover {
+  .input-sheet-btn:hover {
     color: var(--color-accent-primary);
     background-color: var(--color-surface-active);
   }
 
-  .input-sheet-btn:active,
-  .input-paste-btn:active {
+  .input-sheet-btn:active {
     transform: scale(0.96);
   }
 

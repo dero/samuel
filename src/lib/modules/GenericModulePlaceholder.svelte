@@ -15,16 +15,11 @@
   function handleReset() {
     dummyText = '';
   }
-
-  function handlePaste(pasted: string) {
-    dummyText += pasted;
-  }
 </script>
 
 <ModuleShell
   hasAlphabet={module.hasAlphabet}
   onReset={handleReset}
-  onPaste={handlePaste}
 >
   {#snippet output()}
     <TranslationCard

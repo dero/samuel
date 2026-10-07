@@ -351,17 +351,9 @@
     isPermutationsOpen = false;
     toast.show('Vyčištěno', 'info');
   }
-
-  function handlePaste(text: string) {
-    const formatted = formatMorseToCanonical(text);
-    if (formatted) {
-      modState.input = formatted;
-      toast.show('Kód vložen ze schránky', 'success');
-    }
-  }
 </script>
 
-<ModuleShell onReset={handleReset} onPaste={handlePaste}>
+<ModuleShell onReset={handleReset}>
   {#snippet output()}
     <TranslationCard
       text={plainTextOutput}
