@@ -2,31 +2,29 @@
  * World Flags Data Models & Taxonomy Definitions
  */
 
-export type WorldContinent = 'all' | 'europe' | 'asia' | 'africa' | 'americas' | 'oceania';
+export type WorldContinent = 'europe' | 'asia' | 'africa' | 'oceania' | 'americas' | 'all';
 
 export type WorldFlagColorId =
-  | 'red'
   | 'blue'
-  | 'white'
-  | 'green'
   | 'yellow'
   | 'black'
-  | 'orange'
-  | 'cyan'
-  | 'brown'
-  | 'purple';
+  | 'green'
+  | 'red'
+  | 'white';
 
 export type WorldFlagFeatureId =
   | 'horizontal_stripes'
   | 'vertical_stripes'
-  | 'stars'
+  | 'diagonal_stripes'
   | 'cross'
   | 'triangle'
-  | 'diagonal_stripes'
-  | 'emblem'
-  | 'crescent'
+  | 'canton'
+  | 'stars'
   | 'sun_circle'
-  | 'canton';
+  | 'crescent'
+  | 'emblem'
+  | 'text'
+  | 'animal';
 
 export interface WorldColorDef {
   id: WorldFlagColorId;
@@ -45,37 +43,40 @@ export interface ContinentDef {
   name: string;
 }
 
+// 6 continents in Olympic ring order + All
 export const WORLD_CONTINENTS: ContinentDef[] = [
-  { id: 'all', name: 'Vše' },
   { id: 'europe', name: 'Evropa' },
   { id: 'asia', name: 'Asie' },
   { id: 'africa', name: 'Afrika' },
+  { id: 'oceania', name: 'Oceánie' },
   { id: 'americas', name: 'Amerika' },
-  { id: 'oceania', name: 'Oceánie' }
+  { id: 'all', name: 'Vše' }
 ];
 
+// 6 colors directly corresponding to Olympic ring order above + White flag canvas
 export const WORLD_FLAG_COLORS: WorldColorDef[] = [
-  { id: 'red', name: 'Červená', hex: '#dc2626', borderHex: '#b91c1c' },
-  { id: 'blue', name: 'Modrá', hex: '#1d4ed8', borderHex: '#1e40af' },
-  { id: 'white', name: 'Bílá', hex: '#f8fafc', borderHex: '#94a3b8' },
-  { id: 'green', name: 'Zelená', hex: '#15803d', borderHex: '#166534' },
-  { id: 'yellow', name: 'Žlutá', hex: '#facc15', borderHex: '#eab308' },
+  { id: 'blue', name: 'Modrá', hex: '#2563eb', borderHex: '#1d4ed8' },
+  { id: 'yellow', name: 'Žlutá', hex: '#eab308', borderHex: '#ca8a04' },
   { id: 'black', name: 'Černá', hex: '#18181b', borderHex: '#3f3f46' },
-  { id: 'orange', name: 'Oranžová', hex: '#ea580c', borderHex: '#c2410c' },
-  { id: 'cyan', name: 'Sv. modrá', hex: '#38bdf8', borderHex: '#0ea5e9' },
-  { id: 'brown', name: 'Hnědá', hex: '#78350f', borderHex: '#92400e' },
-  { id: 'purple', name: 'Fialová', hex: '#7e22ce', borderHex: '#6b21a8' }
+  { id: 'green', name: 'Zelená', hex: '#16a34a', borderHex: '#15803d' },
+  { id: 'red', name: 'Červená', hex: '#dc2626', borderHex: '#b91c1c' },
+  { id: 'white', name: 'Bílá', hex: '#f8fafc', borderHex: '#94a3b8' }
 ];
 
+// 12 features (2 rows x 6 items)
 export const WORLD_FLAG_FEATURES: WorldFeatureDef[] = [
+  // Row 1: Geometry & Layout
   { id: 'horizontal_stripes', name: 'Horiz. pruhy' },
   { id: 'vertical_stripes', name: 'Vertik. pruhy' },
-  { id: 'stars', name: 'Hvězdy' },
+  { id: 'diagonal_stripes', name: 'Diagonála' },
   { id: 'cross', name: 'Kříž' },
   { id: 'triangle', name: 'Klín' },
-  { id: 'diagonal_stripes', name: 'Diagonála' },
-  { id: 'emblem', name: 'Emblém' },
-  { id: 'crescent', name: 'Půlměsíc' },
+  { id: 'canton', name: 'Kanton' },
+  // Row 2: Symbols & Figures
+  { id: 'stars', name: 'Hvězdy' },
   { id: 'sun_circle', name: 'Slunce / Kruh' },
-  { id: 'canton', name: 'Kanton' }
+  { id: 'crescent', name: 'Půlměsíc' },
+  { id: 'emblem', name: 'Znak / Emblém' },
+  { id: 'text', name: 'Nápis / Text' },
+  { id: 'animal', name: 'Zvíře / Fauna' }
 ];

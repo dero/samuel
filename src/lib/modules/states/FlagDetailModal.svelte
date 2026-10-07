@@ -71,6 +71,14 @@
         </div>
       </div>
 
+      <!-- Description -->
+      {#if flag.description_cs}
+        <div class="flag-section">
+          <div class="section-title">Popis vlajky</div>
+          <p class="flag-description-text">{flag.description_cs}</p>
+        </div>
+      {/if}
+
       <!-- Colors -->
       {#if flag.colors && flag.colors.length > 0}
         <div class="flag-section">
@@ -210,6 +218,17 @@
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.3px;
+  }
+
+  .flag-description-text {
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+    margin: 0;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm);
   }
 
   .chips-row {

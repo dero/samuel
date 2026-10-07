@@ -25,6 +25,8 @@ export interface WorldFlagRecord {
   continent: string;
   colors: string[];
   features: string[];
+  description_cs?: string;
+  description_en?: string;
   svg_4x3: string;
   svg_1x1: string;
 }
@@ -266,6 +268,8 @@ class DbClient {
         continent: String(row.continent),
         colors,
         features,
+        description_cs: row.description_cs ? String(row.description_cs) : undefined,
+        description_en: row.description_en ? String(row.description_en) : undefined,
         svg_4x3: String(row.svg_4x3 || ''),
         svg_1x1: String(row.svg_1x1 || '')
       };

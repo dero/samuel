@@ -823,7 +823,7 @@ async function opMorseSolve(payload: {
 function opGetWorldFlags(): unknown[] {
   const db2 = requireDb();
   return db2.selectObjects(`
-    SELECT id, code, code3, name_cs, name_cs_nodiac, name_en, capital_cs, capital_cs_nodiac, capital_en, continent, colors, features, svg_4x3, svg_1x1
+    SELECT id, code, code3, name_cs, name_cs_nodiac, name_en, capital_cs, capital_cs_nodiac, capital_en, continent, colors, features, description_cs, description_en, svg_4x3, svg_1x1
     FROM world_flags
     ORDER BY name_cs_nodiac ASC
   `);

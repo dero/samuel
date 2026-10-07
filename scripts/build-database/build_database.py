@@ -301,6 +301,8 @@ def main():
             continent TEXT NOT NULL,
             colors TEXT NOT NULL,
             features TEXT NOT NULL,
+            description_cs TEXT NOT NULL DEFAULT '',
+            description_en TEXT NOT NULL DEFAULT '',
             svg_4x3 TEXT NOT NULL,
             svg_1x1 TEXT NOT NULL
         )
@@ -323,21 +325,23 @@ def main():
             continent = fl.get('continent', 'europe')
             colors_json = json.dumps(fl.get('colors', []), ensure_ascii=False)
             features_json = json.dumps(fl.get('features', []), ensure_ascii=False)
+            desc_cs = fl.get('description_cs', '')
+            desc_en = fl.get('description_en', '')
             svg_4x3 = fl.get('svg_4x3', '')
             svg_1x1 = fl.get('svg_1x1', '')
 
             flag_entries.append((
                 code, code3, name_cs, name_cs_nodiac, name_en,
                 capital_cs, capital_cs_nodiac, capital_en, continent,
-                colors_json, features_json, svg_4x3, svg_1x1
+                colors_json, features_json, desc_cs, desc_en, svg_4x3, svg_1x1
             ))
 
         cur.executemany('''
             INSERT INTO world_flags (
                 code, code3, name_cs, name_cs_nodiac, name_en,
                 capital_cs, capital_cs_nodiac, capital_en, continent,
-                colors, features, svg_4x3, svg_1x1
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                colors, features, description_cs, description_en, svg_4x3, svg_1x1
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', flag_entries)
         print(f"Inserted {len(flag_entries)} rows into world_flags")
     else:
