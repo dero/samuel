@@ -22,6 +22,7 @@ import {
 } from './offlineCacheService';
 import { APP_BUILD_TIME, APP_VERSION } from '../constants';
 import { dbClient, DownloadCancelledError } from '../db/dbClient';
+import { navigation } from '../state/navigation.svelte';
 
 export type VersionStatus =
   | 'idle'
@@ -45,13 +46,15 @@ export interface VersionState {
   error: string | null;
 }
 
+const initialDbMeta = typeof window !== 'undefined' ? getLocalDbMeta() : null;
+
 class VersionService {
   state: VersionState = $state({
     appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : APP_VERSION,
     buildTime: typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : APP_BUILD_TIME,
     isAppInstalled: true,
-    isDbInstalled: false,
-    dbMeta: null,
+    isDbInstalled: Boolean(initialDbMeta),
+    dbMeta: initialDbMeta,
     remoteVersion: null,
     appUpdateAvailable: false,
     dbUpdateAvailable: false,
@@ -67,8 +70,10 @@ class VersionService {
 
   /**
    * Refreshes local installation state from CacheStorage and localStorage.
+   * Returns whether database status transitioned from uninstalled to installed.
    */
-  async refreshLocalStatus(): Promise<void> {
+  async refreshLocalStatus(): Promise<{ dbJustInstalled: boolean }> {
+    const wasInstalled = this.state.isDbInstalled;
     try {
       this.state.isAppInstalled = await isAppInstalled();
       this.state.isDbInstalled = await isDbInstalled();
@@ -76,6 +81,13 @@ class VersionService {
     } catch {
       // Offline fallback
     }
+
+    const dbJustInstalled = !wasInstalled && this.state.isDbInstalled;
+    if (dbJustInstalled && navigation.activeModuleId !== 'settings') {
+      navigation.reloadActiveModule();
+    }
+
+    return { dbJustInstalled };
   }
 
   /**

@@ -146,13 +146,20 @@
             <Globe size={32} class="spin-icon text-muted" />
             <span class="text-muted">Načítám…</span>
           </div>
+        {:else if allFlags.length === 0}
+          <div class="empty-state">
+            <span class="empty-title">Žádná data</span>
+            <span class="empty-hint text-muted">V databázi se nenachází žádné státy.</span>
+          </div>
         {:else if filteredFlags.length === 0}
           <div class="empty-state">
             <span class="empty-title">Žádný stát neodpovídá filtrům</span>
             <span class="empty-hint text-muted">Uberte některý filtr</span>
-            <button type="button" class="empty-reset-btn" onclick={resetAllFilters}>
-              Zrušit filtry
-            </button>
+            {#if hasActiveFilters}
+              <button type="button" class="empty-reset-btn" onclick={resetAllFilters}>
+                Zrušit filtry
+              </button>
+            {/if}
           </div>
         {:else}
           <div class="flags-result-grid">

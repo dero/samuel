@@ -80,49 +80,51 @@
 <Header />
 
 <main class="main-content">
-  {#if navigation.activeModuleId === 'morse'}
-    <MorseModule />
-  {:else if navigation.activeModuleId === 'braille'}
-    <BrailleModule />
-  {:else if navigation.activeModuleId === 'semaphore'}
-    <SemaphoreModule />
-  {:else if navigation.activeModuleId === 'flags'}
-    <FlagsModule />
-  {:else if navigation.activeModuleId === 'states'}
-    <StatesModule />
-  {:else if navigation.activeModuleId === 'cross'}
-    <CrossModule />
-  {:else if navigation.activeModuleId === 'polybius'}
-    <PolybiusModule />
-  {:else if navigation.activeModuleId === 'mobile'}
-    <MobileModule />
-  {:else if navigation.activeModuleId === 'numbers'}
-    <NumbersModule />
-  {:else if navigation.activeModuleId === 'shifts'}
-    <ShiftsModule />
-  {:else if navigation.activeModuleId === 'substitution'}
-    <SubstitutionModule />
-  {:else if navigation.activeModuleId === 'freq'}
-    <FrequencyModule />
-  {:else if navigation.activeModuleId === 'words'}
-    <WordsModule />
-  {:else if navigation.activeModuleId === 'grille'}
-    <GrilleModule />
-  {:else if navigation.activeModuleId === 'turtle'}
-    <TurtleModule />
-  {:else if navigation.activeModuleId === 'calendar'}
-    <CalendarModule />
-  {:else if navigation.activeModuleId === 'facts'}
-    <FactsModule />
-  {:else if navigation.activeModuleId === 'colors'}
-    <ColorsModule />
-  {:else if navigation.activeModuleId === 'settings'}
-    <SettingsModule />
-  {:else if navigation.activeModuleId === 'help'}
-    <HelpModule />
-  {:else if navigation.activeModule}
-    <GenericModulePlaceholder module={navigation.activeModule} />
-  {/if}
+  {#key navigation.activeModuleKey}
+    {#if navigation.activeModuleId === 'morse'}
+      <MorseModule />
+    {:else if navigation.activeModuleId === 'braille'}
+      <BrailleModule />
+    {:else if navigation.activeModuleId === 'semaphore'}
+      <SemaphoreModule />
+    {:else if navigation.activeModuleId === 'flags'}
+      <FlagsModule />
+    {:else if navigation.activeModuleId === 'states'}
+      <StatesModule />
+    {:else if navigation.activeModuleId === 'cross'}
+      <CrossModule />
+    {:else if navigation.activeModuleId === 'polybius'}
+      <PolybiusModule />
+    {:else if navigation.activeModuleId === 'mobile'}
+      <MobileModule />
+    {:else if navigation.activeModuleId === 'numbers'}
+      <NumbersModule />
+    {:else if navigation.activeModuleId === 'shifts'}
+      <ShiftsModule />
+    {:else if navigation.activeModuleId === 'substitution'}
+      <SubstitutionModule />
+    {:else if navigation.activeModuleId === 'freq'}
+      <FrequencyModule />
+    {:else if navigation.activeModuleId === 'words'}
+      <WordsModule />
+    {:else if navigation.activeModuleId === 'grille'}
+      <GrilleModule />
+    {:else if navigation.activeModuleId === 'turtle'}
+      <TurtleModule />
+    {:else if navigation.activeModuleId === 'calendar'}
+      <CalendarModule />
+    {:else if navigation.activeModuleId === 'facts'}
+      <FactsModule />
+    {:else if navigation.activeModuleId === 'colors'}
+      <ColorsModule />
+    {:else if navigation.activeModuleId === 'settings'}
+      <SettingsModule />
+    {:else if navigation.activeModuleId === 'help'}
+      <HelpModule />
+    {:else if navigation.activeModule}
+      <GenericModulePlaceholder module={navigation.activeModule} />
+    {/if}
+  {/key}
 </main>
 
 <LauncherOverlay />

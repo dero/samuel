@@ -161,11 +161,11 @@ export const LETTER_FLAGS: FlagItem[] = [
     colors: ["blue", "white"],
     meaning: 'Stojím, nemám rychlost.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
-	<clipPath id="c">
+	<clipPath id="c-m">
 		<path d="M 18,18 H 162 V 162 H 18 z"/>
 	</clipPath>
 	<rect x="18" y="18" width="144" height="144" fill="#000094"/>
-	<path d="M 18,18 L 162,162 M 162,18 L 18,162" clip-path="url(#c)" stroke="#fff" stroke-width="28.8"/>
+	<path d="M 18,18 L 162,162 M 162,18 L 18,162" clip-path="url(#c-m)" stroke="#fff" stroke-width="28.8"/>
 	<path d="M 18,18 H 162 V 162 H 18 z" fill="none" stroke="#000" stroke-width="3.75" stroke-linejoin="round"/>
 </svg>`
   },
@@ -263,11 +263,11 @@ export const LETTER_FLAGS: FlagItem[] = [
     colors: ["white", "red"],
     meaning: 'Žádám o pomoc.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
-	<clipPath id="c">
+	<clipPath id="c-v">
 		<path d="M 18,18 H 162 V 162 H 18 z"/>
 	</clipPath>
 	<rect x="18" y="18" width="144" height="144" fill="#fff"/>
-	<path d="M 18,18 L 162,162 M 162,18 L 18,162" clip-path="url(#c)" stroke="#f00" stroke-width="28.8"/>
+	<path d="M 18,18 L 162,162 M 162,18 L 18,162" clip-path="url(#c-v)" stroke="#f00" stroke-width="28.8"/>
 	<path d="M 18,18 H 162 V 162 H 18 z" fill="none" stroke="#000" stroke-width="3.75" stroke-linejoin="round"/>
 </svg>`
   },
@@ -300,9 +300,9 @@ export const LETTER_FLAGS: FlagItem[] = [
     colors: ["yellow", "red"],
     meaning: 'Vleču kotvu.',
     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 180 180">
-<clipPath id="c"><path d="m18,18h144v144H18"/></clipPath>
+<clipPath id="c-y"><path d="m18,18h144v144H18"/></clipPath>
 <path fill="#FC0" d="m18,18h144v144H18"/>
-<path stroke="#F00" stroke-dasharray="18.8" stroke-width="250" clip-path="url(#c)" d="M -18,198 L 198,-18"/>
+<path stroke="#F00" stroke-dasharray="18.8" stroke-width="250" clip-path="url(#c-y)" d="M -18,198 L 198,-18"/>
 <path d="m18,18h144v144H18z" fill="none" stroke="#000" stroke-width="3.75" stroke-linejoin="round"/>
 </svg>`
   },

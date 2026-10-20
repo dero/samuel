@@ -31,6 +31,51 @@
   function getFeatureDef(featId: string) {
     return WORLD_FLAG_FEATURES.find((f) => f.id === featId);
   }
+
+  function escapeRegex(s: string): string {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function sanitizeModalSvg(svg: string): string {
+    if (!svg) return '';
+    // If already namespaced with -4x3- or -modal-, no need to re-namespace
+    if (svg.includes('-4x3-') || svg.includes('-modal-')) return svg;
+
+    const idRegex = /\bid=(['"])([^'"]+)\1/g;
+    const ids: string[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = idRegex.exec(svg)) !== null) {
+      if (!ids.includes(m[2])) ids.push(m[2]);
+    }
+    if (ids.length === 0) return svg;
+    ids.sort((a, b) => b.length - a.length);
+
+    let result = svg;
+    for (const oldId of ids) {
+      let newId: string;
+      if (oldId.startsWith('flag-icons-')) {
+        newId = `${oldId}-modal`;
+      } else {
+        const parts = oldId.split('-');
+        if (parts.length >= 2) {
+          newId = `${parts[0]}-modal-${parts.slice(1).join('-')}`;
+        } else {
+          newId = `${oldId}-modal`;
+        }
+      }
+      const defRegex = new RegExp(`\\bid=(['"])${escapeRegex(oldId)}\\1`, 'g');
+      result = result.replace(defRegex, `id=$1${newId}$1`);
+
+      const urlRegex = new RegExp(`url\\((['"]?)#${escapeRegex(oldId)}(['"]?\\))`, 'g');
+      result = result.replace(urlRegex, `url($1#${newId}$2`);
+
+      const hrefRegex = new RegExp(`((?:xlink:)?href=(['"])#)${escapeRegex(oldId)}\\2`, 'g');
+      result = result.replace(hrefRegex, `$1${newId}$2`);
+    }
+    return result;
+  }
+
+  const detailSvg = $derived(flag ? sanitizeModalSvg(flag.svg_4x3) : '');
 </script>
 
 <BottomSheet
@@ -44,7 +89,7 @@
     <div class="flag-detail-container" data-allow-copy>
       <!-- Large Flag SVG Preview -->
       <div class="flag-large-preview">
-        {@html flag.svg_4x3}
+        {@html detailSvg}
       </div>
 
       <!-- Country Title & Names -->

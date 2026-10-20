@@ -505,8 +505,28 @@ def fetch_data():
             s = re.sub(r'>\s+<', '><', s)
             return s.strip()
 
-        svg_4x3_clean = clean_svg(svg_4x3_map.get(code, ''))
-        svg_1x1_clean = clean_svg(svg_1x1_map.get(code, ''))
+        # Namespace IDs to prevent DOM-wide collisions when multiple SVGs are in the document
+        def namespace_svg(svg: str, tag: str) -> str:
+            if not svg:
+                return ''
+            defined_ids = sorted(list(set(re.findall(r'\bid=[\'"]([^\'"]+)[\'"]', svg))), key=len, reverse=True)
+            for old_id in defined_ids:
+                if old_id.startswith('flag-icons-'):
+                    new_id = f"{old_id}-{tag}"
+                else:
+                    parts = old_id.split('-', 1)
+                    if len(parts) == 2:
+                        new_id = f"{parts[0]}-{tag}-{parts[1]}"
+                    else:
+                        new_id = f"{old_id}-{tag}"
+
+                svg = re.sub(r'\bid=([\'"])' + re.escape(old_id) + r'\1', r'id=\1' + new_id + r'\1', svg)
+                svg = re.sub(r'url\(([\'"]?)#' + re.escape(old_id) + r'([\'"]?)\)', r'url(\1#' + new_id + r'\2)', svg)
+                svg = re.sub(r'((?:xlink:)?href=([\'"])#)' + re.escape(old_id) + r'\2', r'\1' + new_id + r'\2', svg)
+            return svg
+
+        svg_4x3_clean = namespace_svg(clean_svg(svg_4x3_map.get(code, '')), '4x3')
+        svg_1x1_clean = namespace_svg(clean_svg(svg_1x1_map.get(code, '')), '1x1')
 
         flag_entry = {
             'code': code,

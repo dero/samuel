@@ -9,6 +9,7 @@ class NavigationState {
   subView = $state<SubView>('none');
   isLauncherOpen = $state<boolean>(false);
   hasMenuWarning = $state<boolean>(false);
+  activeModuleKey = $state<number>(0);
 
   activeModule = $derived(
     MODULES.find((m) => m.id === this.activeModuleId) ?? MODULES.find((m) => m.id === DEFAULT_FIRST_MODULE)!
@@ -179,6 +180,13 @@ class NavigationState {
 
   setMenuWarning(hasWarning: boolean) {
     this.hasMenuWarning = hasWarning;
+  }
+
+  /**
+   * Forces a remount of the currently active module (e.g. after dictionary DB is installed).
+   */
+  reloadActiveModule() {
+    this.activeModuleKey++;
   }
 }
 
