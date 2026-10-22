@@ -20,7 +20,8 @@
     DeviceMobile,
     SquaresFour,
     GlobeSimple,
-    Path
+    Path,
+    GridNine
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
 
@@ -57,6 +58,7 @@
     substitution: TextAa,
     freq: ChartBar,
     'freq-ocr': ChartBar,
+    sudoku: GridNine,
     grille: SquaresFour,
     turtle: Path,
     words: BookOpen,
@@ -78,6 +80,7 @@
     arrowsclockwise: ArrowsClockwise,
     textaa: TextAa,
     chartbar: ChartBar,
+    gridnine: GridNine,
     gridfour: GridFour,
     squaresfour: SquaresFour,
     path: Path,

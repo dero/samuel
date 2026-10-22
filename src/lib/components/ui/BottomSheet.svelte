@@ -259,12 +259,14 @@
     box-shadow: var(--shadow-sheet);
     overscroll-behavior: contain;
     touch-action: auto;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   @media (min-width: 600px) {
     .sheet-panel {
       border-radius: var(--radius-lg);
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85);
+      padding-bottom: 0;
     }
   }
 

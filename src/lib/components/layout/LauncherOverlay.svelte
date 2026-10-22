@@ -56,7 +56,7 @@
     background-color: var(--color-border-subtle);
     width: 100%;
     margin: 0;
-    padding: 0;
+    padding: 0 0 max(var(--space-md), env(safe-area-inset-bottom, 0px)) 0;
   }
 
   .module-btn,

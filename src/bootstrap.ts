@@ -73,6 +73,16 @@ async function initBootstrap(): Promise<void> {
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   window.scrollTo(0, 0);
 
+  // Guarantee scroll is reset when restoring tab from background or page cache in mobile browsers (Brave/Chrome/Safari)
+  window.addEventListener('pageshow', () => {
+    window.scrollTo(0, 0);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      window.scrollTo(0, 0);
+    }
+  });
+
   // Clean up ?sw-strategy query parameter from address bar if present
   if (typeof window !== 'undefined' && window.location.search.includes('sw-strategy')) {
     window.history.replaceState(null, '', window.location.pathname);
