@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { alphabet } from '../../state/alphabet.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
 
   interface Props {
-    letters?: string[];
+    letters: string[];
   }
 
-  let { letters }: Props = $props();
+  let { letters: currentLetters }: Props = $props();
 
   type TabType = 'alphabet' | 'roman' | 'ascii';
 
@@ -25,8 +24,6 @@
     oct: string;
     hex: string;
   }
-
-  const currentLetters = $derived(letters ?? alphabet.currentLetters);
 
   const letterRows = $derived.by<LetterRow[]>(() => {
     return currentLetters.map((char, index) => {

@@ -62,41 +62,28 @@ export const BUILTIN_LAYOUTS: AlphabetLayout[] = [
 ];
 
 class AlphabetState {
-  activeId = $state<string>('english-ch-27');
   layouts = $state<AlphabetLayout[]>([...BUILTIN_LAYOUTS]);
-
-  currentLayout = $derived(
-    this.layouts.find((l) => l.id === this.activeId) ?? this.layouts[0]
-  );
-
-  currentLetters = $derived(this.currentLayout.letters);
-  length = $derived(this.currentLetters.length);
 
   constructor() {
     if (typeof window !== 'undefined') {
       const alphaScope = localSettingsService.forSection('alphabet');
-      let storedActive = alphaScope.getString('activeId');
       const storedLayouts = alphaScope.getJSON<AlphabetLayout[] | null>('layouts', null);
 
-      if (storedActive === 'czech-27') {
-        storedActive = 'english-ch-27';
-      }
+      // Built-ins always come from code; only custom layouts are persisted.
+      const customLayouts = Array.isArray(storedLayouts)
+        ? storedLayouts.filter((l) => !l.isBuiltin)
+        : [];
+      this.layouts = [...BUILTIN_LAYOUTS, ...customLayouts];
 
-      if (Array.isArray(storedLayouts) && storedLayouts.length > 0) {
-        const customLayouts = storedLayouts.filter((l) => !l.isBuiltin);
-        this.layouts = [...BUILTIN_LAYOUTS, ...customLayouts];
-      } else {
-        this.layouts = [...BUILTIN_LAYOUTS];
-      }
-
-      if (storedActive && this.layouts.some((l) => l.id === storedActive)) {
-        this.activeId = storedActive;
-      }
+      // Tools pick their own alphabet; the former global "active" id is obsolete.
+      alphaScope.removeItem('activeId');
 
       $effect.root(() => {
         $effect(() => {
-          alphaScope.setString('activeId', this.activeId);
-          alphaScope.setJSON('layouts', this.layouts);
+          alphaScope.setJSON(
+            'layouts',
+            this.layouts.filter((l) => !l.isBuiltin)
+          );
         });
       });
     }
@@ -104,12 +91,6 @@ class AlphabetState {
 
   getLayout(id: string): AlphabetLayout | undefined {
     return this.layouts.find((l) => l.id === id);
-  }
-
-  setActiveLayout(id: string) {
-    if (this.layouts.some((l) => l.id === id)) {
-      this.activeId = id;
-    }
   }
 
   addCustomLayout(name: string, letters: string[], description?: string): string {
@@ -124,7 +105,6 @@ class AlphabetState {
         description: description || 'Uživatelská abeceda'
       }
     ];
-    this.activeId = id;
     return id;
   }
 
@@ -149,9 +129,6 @@ class AlphabetState {
     if (!target || target.isBuiltin) return [];
 
     this.layouts = this.layouts.filter((l) => l.id !== id);
-    if (this.activeId === id) {
-      this.activeId = 'english-ch-27';
-    }
     return this.dropLayoutReferences(id);
   }
 
@@ -176,16 +153,6 @@ class AlphabetState {
       if (touched) affected.push(moduleId);
     }
     return affected;
-  }
-
-  letterToIndex(char: string): number {
-    return this.currentLetters.indexOf(char.toUpperCase());
-  }
-
-  indexToLetter(idx: number): string {
-    if (this.length === 0) return '';
-    const norm = ((idx % this.length) + this.length) % this.length;
-    return this.currentLetters[norm] ?? '';
   }
 }
 

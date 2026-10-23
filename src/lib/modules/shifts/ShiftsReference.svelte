@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
 
-  let currentLetters = $derived(alphabet.currentLetters);
-  let activeTab = $state<'caesar' | 'vigenere' | 'autokey'>('caesar');
+  interface Props {
+    letters: string[];
+  }
 
-  // Generate 26x26 Tabula Recta sample for Vigenère
-  const tabulaLetters = $derived(currentLetters.slice(0, 26));
+  let { letters }: Props = $props();
+
+  let activeTab = $state<'caesar' | 'vigenere' | 'autokey'>('caesar');
 </script>
 
 <div class="ref-wrapper">
@@ -80,18 +81,18 @@
             <thead>
               <tr>
                 <th class="corner-th"></th>
-                {#each tabulaLetters as l}
+                {#each letters as l}
                   <th>{l}</th>
                 {/each}
               </tr>
             </thead>
             <tbody>
-              {#each tabulaLetters as rowL, rowIdx}
+              {#each letters as rowL, rowIdx}
                 <tr>
                   <th class="row-th">{rowL}</th>
-                  {#each tabulaLetters as colL, colIdx}
-                    {@const shiftedIdx = (rowIdx + colIdx) % tabulaLetters.length}
-                    <td>{tabulaLetters[shiftedIdx]}</td>
+                  {#each letters as colL, colIdx}
+                    {@const shiftedIdx = (rowIdx + colIdx) % letters.length}
+                    <td>{letters[shiftedIdx]}</td>
                   {/each}
                 </tr>
               {/each}
