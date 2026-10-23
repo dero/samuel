@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { navigation } from '../../state/navigation.svelte';
   import { Warning } from 'phosphor-svelte';
   import type { Snippet } from 'svelte';
 
@@ -16,13 +15,6 @@
     description,
     children
   }: Props = $props();
-
-  $effect(() => {
-    navigation.setMenuWarning(isWarning);
-    return () => {
-      navigation.setMenuWarning(false);
-    };
-  });
 </script>
 
 {#if isWarning}

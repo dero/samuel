@@ -3,13 +3,11 @@
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import { MODULES } from '../../types';
-  import { parseAlphabetInput, formatAlphabetInput } from '../../utils/alphabetInput';
   import HoldToAction from '../../components/ui/HoldToAction.svelte';
-  import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
+  import AlphabetEditSheet from '../../components/ui/AlphabetEditSheet.svelte';
 
-  let newLayoutName = $state('');
-  let isCreatingLayout = $state(false);
-  let isEditingLetters = $state(false);
+  let editorOpen = $state(false);
+  let editorMode = $state<'create' | 'edit'>('create');
 
   let inspectedLayoutId = $state<string>(alphabet.layouts[0]?.id ?? 'english-26');
 
@@ -32,30 +30,14 @@
     }
   }
 
-  // New layout starts as a copy of the inspected one; its letters are edited right after.
-  function handleSaveLayout(name: string) {
-    if (!name.trim()) {
-      toast.show('Zadejte název abecedy', { type: 'danger' });
-      return;
+  function handleSaveLayout(name: string, letters: string[]) {
+    if (editorMode === 'create') {
+      inspectedLayoutId = alphabet.addCustomLayout(name, letters);
+      toast.show('Abeceda vytvořena', { type: 'success' });
+    } else {
+      alphabet.updateCustomLayout(inspectedLayoutId, { name, letters });
+      toast.show('Abeceda uložena', { type: 'success' });
     }
-    const id = alphabet.addCustomLayout(
-      name.trim(),
-      [...inspectedLayout.letters]
-    );
-    inspectedLayoutId = id;
-    newLayoutName = '';
-    isCreatingLayout = false;
-    isEditingLetters = true;
-  }
-
-  function handleSaveLetters(text: string) {
-    const { letters, error } = parseAlphabetInput(text);
-    if (error) {
-      toast.show(error, { type: 'danger' });
-      return;
-    }
-    alphabet.updateCustomLayout(inspectedLayoutId, letters);
-    toast.show(`Abeceda uložena (${letters.length} znaků)`, { type: 'success' });
   }
 </script>
 
@@ -120,10 +102,11 @@
         class="secondary-btn"
         onclick={() => {
           settings.vibrate(25);
-          isEditingLetters = true;
+          editorMode = 'edit';
+          editorOpen = true;
         }}
       >
-        Upravit znaky
+        Upravit
       </button>
     {/if}
   </div>
@@ -134,45 +117,25 @@
     class="secondary-btn"
     onclick={() => {
       settings.vibrate(25);
-      newLayoutName = '';
-      isCreatingLayout = true;
+      editorMode = 'create';
+      editorOpen = true;
     }}
   >
-    + Nová abeceda z vybrané
+    + Nová abeceda
   </button>
 </section>
 
-<TextEntrySheet
-  open={isCreatingLayout}
-  title="Vytvořit vlastní abecedu"
-  value={newLayoutName}
-  placeholder="Název, např. S heslem KOS"
-  autocapitalize="sentences"
+<AlphabetEditSheet
+  open={editorOpen}
+  mode={editorMode}
+  initialName={editorMode === 'edit' ? inspectedLayout.name : ''}
+  initialLetters={inspectedLayout.letters}
+  sourceLabel={inspectedLayout.name}
   onSave={handleSaveLayout}
   onClose={() => {
-    isCreatingLayout = false;
+    editorOpen = false;
   }}
 />
-
-<TextEntrySheet
-  open={isEditingLetters}
-  title="Znaky abecedy"
-  value={formatAlphabetInput(inspectedLayout.letters)}
-  placeholder="A, B, C, CH, D, ..."
-  autocapitalize="characters"
-  validate={(val) => parseAlphabetInput(val).error}
-  onSave={handleSaveLetters}
-  onClose={() => {
-    isEditingLetters = false;
-  }}
->
-  {#snippet options()}
-    <p class="sheet-hint">
-      Znaky oddělte čárkou, pořadí určuje číslování. Dvouznakové položky (např. CH) jsou povolené,
-      duplicity ne.
-    </p>
-  {/snippet}
-</TextEntrySheet>
 
 <style>
   .card {
@@ -292,13 +255,6 @@
     font-style: italic;
     line-height: 1.35;
     margin-top: 4px;
-  }
-
-  .sheet-hint {
-    margin: 0;
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    line-height: 1.4;
   }
 
   .letters-chips {

@@ -192,6 +192,7 @@
 
 <ModuleShell
   title="Polybius"
+  hasWarning={isNonStandardAlphabet}
   onReset={handleClearAll}
 >
   {#snippet menuOptions()}

@@ -158,6 +158,7 @@
 
 <ModuleShell
   title={activeConfig.name}
+  hasWarning={isNonStandardAlphabet}
   onReset={handleReset}
 >
   {#snippet menuOptions()}

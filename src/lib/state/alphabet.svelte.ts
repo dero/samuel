@@ -108,13 +108,14 @@ class AlphabetState {
     return id;
   }
 
-  updateCustomLayout(id: string, letters: string[]) {
+  updateCustomLayout(id: string, patch: { name?: string; letters?: string[] }) {
     const idx = this.layouts.findIndex((l) => l.id === id && !l.isBuiltin);
     if (idx !== -1) {
       const updated = [...this.layouts];
       updated[idx] = {
         ...updated[idx],
-        letters: [...letters]
+        ...(patch.name !== undefined && { name: patch.name }),
+        ...(patch.letters !== undefined && { letters: [...patch.letters] })
       };
       this.layouts = updated;
     }

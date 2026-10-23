@@ -105,6 +105,7 @@
 <ModuleShell
   title="Substituce"
   hasAlphabet={true}
+  hasWarning={isNonStandardAlphabet}
   onReset={handleResetAll}
 >
   <!-- TOP ZONE: Output (TranslationCard) -->

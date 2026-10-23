@@ -175,6 +175,7 @@
 <ModuleShell
   title={activeSubmodule === 'caesar' ? 'Cézar' : activeSubmodule === 'vigenere' ? 'Vigenère' : 'Autokey'}
   hasAlphabet={true}
+  hasWarning={isNonStandardAlphabet}
   onReset={handleReset}
 >
   <!-- TOP ZONE: Output (Translation area only) -->

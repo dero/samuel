@@ -35,7 +35,6 @@
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { navigation } from '../../state/navigation.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
 
   const modSettings = localSettingsService.forModule('numbers');
@@ -411,12 +410,6 @@
 
   const isNonStandardAlphabet = $derived(!['english-26', 'english-ch-27'].includes(alphabetId));
 
-  $effect(() => {
-    navigation.setMenuWarning(isNonStandardAlphabet);
-    return () => {
-      navigation.setMenuWarning(false);
-    };
-  });
 
   // Enter button is enabled whenever there is a valid non-error pending token to commit
   const isEnterButtonEnabled = $derived(
@@ -545,6 +538,7 @@
 
 <ModuleShell
   hasAlphabet={true}
+  hasWarning={isNonStandardAlphabet}
   onReset={handleClearAll}
 >
   {#snippet output()}
