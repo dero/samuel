@@ -55,8 +55,21 @@
     return () => clearTimeout(timer);
   });
 
+  // Zoom level used when focusing a single element (search -> table, tap on unselected tile)
+  const FOCUS_SCALE = 0.85;
+
+  let wrapperRef: HTMLDivElement | null = $state(null);
+
+  function findTile(z: number): HTMLElement | null {
+    return wrapperRef?.querySelector<HTMLElement>(`[data-element-z="${z}"]`) ?? null;
+  }
+
   function handleSelectElement(el: ChemicalElement) {
+    // ElementCard already vibrates on tap -> no extra haptics here
+    if (elementsState.selectedElementZ === el.z) return;
     elementsState.selectElement(el.z);
+    const tile = findTile(el.z);
+    if (tile) panZoomRef?.focusElement(tile, FOCUS_SCALE, false);
   }
 
   export function resetView() {
@@ -68,9 +81,10 @@
     if (elementsState.targetFocusZ && panZoomRef) {
       const zToFocus = elementsState.targetFocusZ;
       const timer = setTimeout(() => {
-        const el = document.querySelector(`[data-element-z="${zToFocus}"]`) as HTMLElement | null;
+        const el = findTile(zToFocus);
+        // No vibration here: we're inside a timer, and the "show in table" tap already vibrated
         if (el) {
-          panZoomRef?.focusElement(el, 0.85, true);
+          panZoomRef?.focusElement(el, FOCUS_SCALE, false);
         }
         elementsState.targetFocusZ = null;
       }, 70);
@@ -79,7 +93,7 @@
   });
 </script>
 
-<div class="elements-table-wrapper">
+<div class="elements-table-wrapper" bind:this={wrapperRef}>
   <!-- PanZoom Viewport with Semantic LOD Table -->
   <PanZoomViewport
     bind:this={panZoomRef}
