@@ -29,14 +29,15 @@
     </div>
   {:else if elementsState.searchMatches.length === 0}
     <div class="no-matches-box">
-      <span class="no-matches-query">„{elementsState.searchQuery}“</span>
+      <span class="no-matches-query">'{elementsState.searchQuery}'</span>
       <span class="no-matches-msg">Žádný prvek nenalezen</span>
     </div>
   {:else}
     <!-- Results Header -->
     <div class="results-header">
-      <span class="results-count">
-        Nalezeno <strong class="text-accent">{elementsState.searchMatches.length}</strong> {elementsState.searchMatches.length === 1 ? 'prvek' : elementsState.searchMatches.length < 5 ? 'prvky' : 'prvků'}
+      <span class="results-query">
+        Hledám <strong class="text-accent font-mono">'{elementsState.searchQuery}'</strong>
+        <span class="results-count-sub text-muted font-mono">({elementsState.searchMatches.length})</span>
       </span>
       <span class="results-hint text-muted">Klepnutím zobrazit v tabulce</span>
     </div>
@@ -105,22 +106,40 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     padding: 4px 6px 8px 6px;
     font-size: 12px;
     border-bottom: 1px solid var(--color-border-subtle);
     margin-bottom: 8px;
   }
 
-  .results-count {
-    color: var(--color-text-primary);
+  .results-query {
+    color: var(--color-text-secondary);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .text-accent {
     color: var(--color-accent-primary, #00d2ff);
   }
 
+  .results-count-sub {
+    font-size: 11px;
+    color: var(--color-text-muted);
+  }
+
   .results-hint {
     font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono, monospace);
   }
 
   /* 2-Column Card Grid */

@@ -4,6 +4,7 @@
   import SimpleKeyboard from '../../components/ui/SimpleKeyboard.svelte';
   import ElementsTable from './ElementsTable.svelte';
   import ElementsSearch from './ElementsSearch.svelte';
+  import ElementsReference from './ElementsReference.svelte';
   import { elementsState, type ElementsFlavour } from './elementsState.svelte';
   import type { TacticalFilter, ChemicalElement } from './elementsData';
   import { settings } from '../../state/settings.svelte';
@@ -107,6 +108,11 @@
         />
       {/if}
     </div>
+  {/snippet}
+
+  <!-- Reference Modal Content -->
+  {#snippet reference()}
+    <ElementsReference />
   {/snippet}
 </ModuleShell>
 
