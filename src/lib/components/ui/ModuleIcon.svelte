@@ -21,7 +21,8 @@
     SquaresFour,
     GlobeSimple,
     Path,
-    GridNine
+    GridNine,
+    Atom
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
 
@@ -65,10 +66,12 @@
     calendar: CalendarBlank,
     facts: Lightbulb,
     colors: Palette,
+    elements: Atom,
     settings: Gear,
     help: Question,
 
     // Phosphor Name aliases
+    atom: Atom,
     broadcast: Broadcast,
     dotssixvertical: DotsSixVertical,
     flagbanner: FlagBanner,

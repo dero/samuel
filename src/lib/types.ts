@@ -19,6 +19,7 @@ export type ModuleId =
   | 'calendar'
   | 'facts'
   | 'colors'
+  | 'elements'
   | 'settings'
   | 'help';
 
@@ -54,6 +55,7 @@ export const MODULES: ModuleMeta[] = [
   { id: 'calendar', name: 'Kalendář', icon: 'CalendarBlank', hasMenu: false },
   { id: 'facts', name: 'Fakta', icon: 'Lightbulb', hasReference: false, hasMenu: false },
   { id: 'colors', name: 'Barvy', icon: 'Palette', hasReference: true, hasMenu: false },
+  { id: 'elements', name: 'PSP', icon: 'Atom', hasReference: false, hasMenu: false },
   { id: 'help', name: 'Nápověda', icon: 'Question', isSystem: true },
   { id: 'settings', name: 'Nastavení', icon: 'Gear', isSystem: true }
 ];

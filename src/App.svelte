@@ -24,6 +24,7 @@
   import CalendarModule from './lib/modules/calendar/CalendarModule.svelte';
   import FactsModule from './lib/modules/facts/FactsModule.svelte';
   import ColorsModule from './lib/modules/colors/ColorsModule.svelte';
+  import ElementsModule from './lib/modules/elements/ElementsModule.svelte';
   import GenericModulePlaceholder from './lib/modules/GenericModulePlaceholder.svelte';
   import { navigation } from './lib/state/navigation.svelte';
   import { onMount } from 'svelte';
@@ -120,6 +121,8 @@
       <FactsModule />
     {:else if navigation.activeModuleId === 'colors'}
       <ColorsModule />
+    {:else if navigation.activeModuleId === 'elements'}
+      <ElementsModule />
     {:else if navigation.activeModuleId === 'settings'}
       <SettingsModule />
     {:else if navigation.activeModuleId === 'help'}

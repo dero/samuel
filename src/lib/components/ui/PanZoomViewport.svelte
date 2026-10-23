@@ -7,6 +7,8 @@
     minScale?: number;
     maxScale?: number;
     initialScale?: number;
+    currentScale?: number;
+    autoFitOnMount?: boolean;
     children?: Snippet;
   }
 
@@ -14,14 +16,49 @@
     minScale = 0.1,
     maxScale = 5.0,
     initialScale = 1.0,
+    currentScale = $bindable(1.0),
+    autoFitOnMount = true,
     children
   }: Props = $props();
 
   let containerRef: HTMLDivElement | null = $state(null);
   let contentRef: HTMLDivElement | null = $state(null);
-  let scale = $state(1.0);
-  let panX = $state(0);
-  let panY = $state(0);
+
+  // View transform is intentionally NOT reactive state.
+  // Pointer/wheel events fire at 60–240 Hz; routing every event through Svelte reactivity
+  // (and the bound `currentScale` into parents) caused a flush per event. Instead we keep the
+  // transform in plain variables and write it to the DOM at most once per animation frame.
+  // svelte-ignore state_referenced_locally
+  let scale = initialScale;
+  let panX = 0;
+  let panY = 0;
+  let rafId = 0;
+
+  // Lower bound may be relaxed by resetView() when the content needs a smaller fit scale.
+  // Kept local so we never write into a (non-bindable) prop.
+  let fitMinScale = Infinity;
+  const effectiveMinScale = () => Math.min(minScale, fitMinScale);
+  const clampScale = (s: number) => Math.min(Math.max(s, effectiveMinScale()), maxScale);
+
+  function renderTransform() {
+    rafId = 0;
+    if (!contentRef) return;
+    contentRef.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${scale})`;
+    // Propagate scale to parent only once per frame (drives LOD in consumers)
+    if (currentScale !== scale) currentScale = scale;
+  }
+
+  function scheduleRender() {
+    if (rafId) return;
+    rafId = requestAnimationFrame(renderTransform);
+  }
+
+  function setView(x: number, y: number, s: number) {
+    panX = x;
+    panY = y;
+    scale = s;
+    scheduleRender();
+  }
 
   // Active pointers map
   const activePointers = new Map<number, { x: number; y: number }>();
@@ -31,12 +68,32 @@
   let initialMidpoint = { x: 0, y: 0 };
   let initialPan = { x: 0, y: 0 };
   let initialGestureScale = 1.0;
+  // Container rect cached for the duration of a gesture (avoids layout reads on every move)
+  let gestureRect: DOMRect | null = null;
 
   // Desktop drag tracking
   let isMousePanning = false;
   let mouseStart = { x: 0, y: 0 };
   let mouseInitialPan = { x: 0, y: 0 };
   let isAutoPanning = $state(false);
+  let autoPanTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function startAutoPan() {
+    isAutoPanning = true;
+    if (autoPanTimer) clearTimeout(autoPanTimer);
+    autoPanTimer = setTimeout(() => {
+      isAutoPanning = false;
+      autoPanTimer = null;
+    }, 220);
+  }
+
+  function stopAutoPan() {
+    if (autoPanTimer) {
+      clearTimeout(autoPanTimer);
+      autoPanTimer = null;
+    }
+    if (isAutoPanning) isAutoPanning = false;
+  }
 
   function getOffsetRelativeTo(element: HTMLElement, ancestor: HTMLElement): { x: number; y: number } {
     let x = 0;
@@ -50,15 +107,39 @@
     return { x, y };
   }
 
+  let cachedElW = 0;
+  let cachedElH = 0;
+
+  function updateContentDimensions() {
+    if (!contentRef) return;
+    const child = (contentRef.firstElementChild as HTMLElement) || contentRef;
+    const w = child.offsetWidth || contentRef.offsetWidth || 0;
+    const h = child.offsetHeight || contentRef.offsetHeight || 0;
+    if (w > 0) cachedElW = w;
+    if (h > 0) cachedElH = h;
+  }
+
+  let containerW = 0;
+  let containerH = 0;
+
+  function readContainerSize() {
+    if (!containerRef) return;
+    containerW = containerRef.clientWidth;
+    containerH = containerRef.clientHeight;
+  }
+
   function getPanBounds(currentScale: number) {
     if (!containerRef || !contentRef) {
       return { minX: -Infinity, maxX: Infinity, minY: -Infinity, maxY: Infinity };
     }
-    const cW = containerRef.clientWidth;
-    const cH = containerRef.clientHeight;
-    const child = (contentRef.firstElementChild as HTMLElement) || contentRef;
-    const elW = child.offsetWidth || contentRef.offsetWidth;
-    const elH = child.offsetHeight || contentRef.offsetHeight;
+    if (containerW <= 0 || containerH <= 0) readContainerSize();
+    const cW = containerW;
+    const cH = containerH;
+    if (cachedElW <= 0 || cachedElH <= 0) {
+      updateContentDimensions();
+    }
+    const elW = cachedElW || 2750;
+    const elH = cachedElH || 1600;
 
     const scaledW = elW * currentScale;
     const scaledH = elH * currentScale;
@@ -84,22 +165,25 @@
     };
   }
 
+  export function getScale(): number {
+    return scale;
+  }
+
   export function resetView(vibrate = true) {
     if (vibrate) settings.vibrate(20);
     if (!containerRef || !contentRef) return;
 
-    const cW = containerRef.clientWidth;
-    const cH = containerRef.clientHeight;
+    readContainerSize();
+    const cW = containerW;
+    const cH = containerH;
     if (cW <= 0 || cH <= 0) return;
 
-    const child = (contentRef.firstElementChild as HTMLElement) || contentRef;
-    const elW = child.offsetWidth || contentRef.offsetWidth;
-    const elH = child.offsetHeight || contentRef.offsetHeight;
+    updateContentDimensions();
+    const elW = cachedElW;
+    const elH = cachedElH;
 
     if (elW <= 0 || elH <= 0) {
-      scale = 1.0;
-      panX = 0;
-      panY = 0;
+      setView(0, 0, 1.0);
       return;
     }
 
@@ -113,35 +197,71 @@
     const targetScale = Math.min(initialScale, rawFitScale);
 
     if (targetScale < minScale) {
-      minScale = Math.max(0.05, targetScale * 0.8);
+      fitMinScale = Math.max(0.05, targetScale * 0.8);
     }
 
-    isAutoPanning = true;
-    scale = targetScale;
-    panX = Math.round((cW - elW * targetScale) / 2);
-    panY = Math.round((cH - elH * targetScale) / 2);
-
-    setTimeout(() => {
-      isAutoPanning = false;
-    }, 220);
+    startAutoPan();
+    setView(
+      Math.round((cW - elW * targetScale) / 2),
+      Math.round((cH - elH * targetScale) / 2),
+      targetScale
+    );
   }
 
+  let isInitialMountDone = false;
+  let lastContainerW = 0;
+  let lastContainerH = 0;
+
   onMount(() => {
+    // Paint initial transform synchronously (no flash of untransformed content)
+    renderTransform();
+
     // Initial fit on mount
-    const timer = setTimeout(() => {
-      resetView(false);
-    }, 50);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (autoFitOnMount) {
+      timer = setTimeout(() => {
+        resetView(false);
+        isInitialMountDone = true;
+      }, 50);
+    } else {
+      isInitialMountDone = true;
+    }
 
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined' && containerRef) {
       ro = new ResizeObserver(() => {
-        resetView(false);
+        if (!containerRef) return;
+        readContainerSize();
+        const cW = containerW;
+        const cH = containerH;
+        if (cW <= 0 || cH <= 0) return;
+
+        // Skip if viewport container dimensions haven't changed after initial mount
+        if (isInitialMountDone && cW === lastContainerW && cH === lastContainerH) {
+          return;
+        }
+        lastContainerW = cW;
+        lastContainerH = cH;
+
+        if (!isInitialMountDone) {
+          if (autoFitOnMount) {
+            resetView(false);
+          }
+          isInitialMountDone = true;
+        } else {
+          // Viewport resized (e.g. orientation change): re-clamp existing view without resetting scale!
+          updateContentDimensions();
+          const clamped = clampPan(panX, panY, scale);
+          setView(clamped.x, clamped.y, scale);
+        }
       });
       ro.observe(containerRef);
     }
 
     return () => {
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
+      if (autoPanTimer) clearTimeout(autoPanTimer);
+      if (rafId) cancelAnimationFrame(rafId);
       ro?.disconnect();
     };
   });
@@ -157,8 +277,9 @@
     const elW = el.offsetWidth;
     const elH = el.offsetHeight;
 
-    const cW = containerRef.clientWidth;
-    const cH = containerRef.clientHeight;
+    readContainerSize();
+    const cW = containerW;
+    const cH = containerH;
     if (cW <= 0 || cH <= 0) return;
 
     // Default safe zones: ~80px in forward direction of scrolling (bottom & right)
@@ -217,16 +338,57 @@
     newPanY = clamped.y;
 
     if (Math.abs(newPanX - panX) > 1 || Math.abs(newPanY - panY) > 1) {
-      isAutoPanning = true;
-      panX = Math.round(newPanX);
-      panY = Math.round(newPanY);
-      setTimeout(() => {
-        isAutoPanning = false;
-      }, 220);
+      startAutoPan();
+      setView(Math.round(newPanX), Math.round(newPanY), scale);
     }
   }
 
+  export function focusElement(
+    el: HTMLElement,
+    targetScale?: number,
+    vibrate = false
+  ) {
+    if (vibrate) settings.vibrate(20);
+    if (!containerRef || !contentRef || !el) return;
+
+    readContainerSize();
+    const cW = containerW;
+    const cH = containerH;
+    if (cW <= 0 || cH <= 0) return;
+
+    const nextScale = targetScale !== undefined ? clampScale(targetScale) : scale;
+
+    const offset = getOffsetRelativeTo(el, contentRef);
+    const elW = el.offsetWidth;
+    const elH = el.offsetHeight;
+
+    const newPanX = (cW - elW * nextScale) / 2 - offset.x * nextScale;
+    const newPanY = (cH - elH * nextScale) / 2 - offset.y * nextScale;
+
+    const clamped = clampPan(newPanX, newPanY, nextScale);
+    startAutoPan();
+    setView(Math.round(clamped.x), Math.round(clamped.y), nextScale);
+  }
+
+  function beginPinch() {
+    if (!containerRef) return;
+    const pts = Array.from(activePointers.values());
+    const p1 = pts[0];
+    const p2 = pts[1];
+    gestureRect = containerRef.getBoundingClientRect();
+    initialDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    initialMidpoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    initialPan = { x: panX, y: panY };
+    initialGestureScale = scale;
+  }
+
   function handlePointerDown(e: PointerEvent) {
+    stopAutoPan();
+
+    // A primary touch pointer means no other touch is active. Any entries left in the map are
+    // stale (their pointerup/cancel never reached us) and would turn the next single-finger
+    // touch into a phantom pinch against a ghost point.
+    if (e.isPrimary) activePointers.clear();
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     // Desktop mouse pan: middle-click, Shift+Left-click, or left-click directly on background canvas
@@ -244,15 +406,7 @@
 
     if (activePointers.size === 2) {
       // Begin 2-finger pan & pinch zoom
-      const pts = Array.from(activePointers.values());
-      const p1 = pts[0];
-      const p2 = pts[1];
-
-      initialDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-      initialMidpoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-      initialPan = { x: panX, y: panY };
-      initialGestureScale = scale;
-
+      beginPinch();
       try {
         containerRef?.setPointerCapture(e.pointerId);
       } catch {}
@@ -261,48 +415,46 @@
   }
 
   function handlePointerMove(e: PointerEvent) {
-    if (!activePointers.has(e.pointerId)) return;
-    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const prev = activePointers.get(e.pointerId);
+    if (!prev) return;
+    prev.x = e.clientX;
+    prev.y = e.clientY;
 
     if (isMousePanning) {
       const dx = e.clientX - mouseStart.x;
       const dy = e.clientY - mouseStart.y;
       const clamped = clampPan(mouseInitialPan.x + dx, mouseInitialPan.y + dy, scale);
-      panX = clamped.x;
-      panY = clamped.y;
+      setView(clamped.x, clamped.y, scale);
       e.preventDefault();
       return;
     }
 
-    if (activePointers.size === 2 && containerRef) {
-      const pts = Array.from(activePointers.values());
-      const p1 = pts[0];
-      const p2 = pts[1];
+    if (activePointers.size === 2 && gestureRect && initialDist > 0) {
+      const it = activePointers.values();
+      const p1 = it.next().value!;
+      const p2 = it.next().value!;
 
       const currentDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-      const currentMidpoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2;
 
-      if (initialDist > 0) {
-        const ratio = currentDist / initialDist;
-        const newScale = Math.min(Math.max(initialGestureScale * ratio, minScale), maxScale);
+      const ratio = currentDist / initialDist;
+      const newScale = clampScale(initialGestureScale * ratio);
 
-        const rect = containerRef.getBoundingClientRect();
-        const contentX = (initialMidpoint.x - rect.left - initialPan.x) / initialGestureScale;
-        const contentY = (initialMidpoint.y - rect.top - initialPan.y) / initialGestureScale;
+      const rect = gestureRect;
+      const contentX = (initialMidpoint.x - rect.left - initialPan.x) / initialGestureScale;
+      const contentY = (initialMidpoint.y - rect.top - initialPan.y) / initialGestureScale;
 
-        const rawPanX = currentMidpoint.x - rect.left - contentX * newScale;
-        const rawPanY = currentMidpoint.y - rect.top - contentY * newScale;
-        const clamped = clampPan(rawPanX, rawPanY, newScale);
-        panX = clamped.x;
-        panY = clamped.y;
-        scale = newScale;
-      }
+      const rawPanX = midX - rect.left - contentX * newScale;
+      const rawPanY = midY - rect.top - contentY * newScale;
+      const clamped = clampPan(rawPanX, rawPanY, newScale);
+      setView(clamped.x, clamped.y, newScale);
       e.preventDefault();
     }
   }
 
   function handlePointerUp(e: PointerEvent) {
-    activePointers.delete(e.pointerId);
+    if (!activePointers.delete(e.pointerId)) return;
 
     if (isMousePanning) {
       isMousePanning = false;
@@ -311,21 +463,43 @@
       } catch {}
     }
 
-    if (activePointers.size < 2) {
+    if (activePointers.size === 2) {
+      // 3 -> 2 fingers: re-baseline so the remaining pair doesn't jump
+      beginPinch();
+    } else if (activePointers.size < 2) {
       initialDist = 0;
+      gestureRect = null;
     }
+  }
+
+  function resetPointers() {
+    activePointers.clear();
+    isMousePanning = false;
+    initialDist = 0;
+    gestureRect = null;
   }
 
   function handleWheel(e: WheelEvent) {
     if (!containerRef) return;
+    stopAutoPan();
     e.preventDefault();
 
     const rect = containerRef.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const factor = e.deltaY < 0 ? 1.15 : 0.85;
-    const newScale = Math.min(Math.max(scale * factor, minScale), maxScale);
+    // Normalize delta: mouse wheels send ~100px notches, trackpads send many tiny deltas
+    // (and ctrlKey+wheel for pinch). A fixed per-event factor made trackpads zoom through the
+    // whole range in a fraction of a second.
+    let dy = e.deltaY;
+    if (e.deltaMode === 1) dy *= 16;
+    else if (e.deltaMode === 2) dy *= containerH || 800;
+    dy = Math.max(-120, Math.min(120, dy));
+    const sensitivity = e.ctrlKey ? 0.01 : 0.0015;
+    const factor = Math.exp(-dy * sensitivity);
+
+    const newScale = clampScale(scale * factor);
+    if (newScale === scale) return;
 
     const contentX = (mouseX - panX) / scale;
     const contentY = (mouseY - panY) / scale;
@@ -333,11 +507,20 @@
     const rawPanX = mouseX - contentX * newScale;
     const rawPanY = mouseY - contentY * newScale;
     const clamped = clampPan(rawPanX, rawPanY, newScale);
-    panX = clamped.x;
-    panY = clamped.y;
-    scale = newScale;
+    setView(clamped.x, clamped.y, newScale);
   }
 </script>
+
+<!--
+  pointerup/cancel are listened on window: if a release happens outside the container (or its
+  implicit-capture target was removed from the DOM), the pointer would otherwise stay in the
+  map forever and break gesture detection.
+-->
+<svelte:window
+  onpointerup={handlePointerUp}
+  onpointercancel={handlePointerUp}
+  onblur={resetPointers}
+/>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
@@ -345,15 +528,12 @@
   class="panzoom-container"
   onpointerdown={handlePointerDown}
   onpointermove={handlePointerMove}
-  onpointerup={handlePointerUp}
-  onpointercancel={handlePointerUp}
   onwheel={handleWheel}
 >
   <div
     bind:this={contentRef}
     class="panzoom-content"
     class:is-animating={isAutoPanning}
-    style="transform: translate3d({panX}px, {panY}px, 0) scale({scale});"
   >
     {#if children}
       {@render children()}
