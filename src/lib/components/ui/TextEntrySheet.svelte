@@ -13,6 +13,8 @@
     discardSpaces?: boolean;
     autocapitalize?: 'none' | 'characters' | 'words' | 'sentences' | 'off' | 'on';
     inputmode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
+    /** Returns an error message to show inline and block saving, or null when valid. */
+    validate?: (val: string) => string | null;
     onSave: (val: string) => void;
     onClose: () => void;
   }
@@ -27,11 +29,13 @@
     discardSpaces = false,
     autocapitalize,
     inputmode,
+    validate,
     onSave,
     onClose
   }: Props = $props();
 
   let draftText = $state('');
+  const error = $derived(validate ? validate(draftText) : null);
   let textareaEl = $state<HTMLTextAreaElement | null>(null);
 
   $effect(() => {
@@ -100,6 +104,7 @@
   }
 
   function handleConfirm() {
+    if (error) return;
     settings.vibrate(25);
     const finalVal = discardSpaces ? draftText.replace(/\s+/g, '') : draftText;
     onSave(finalVal);
@@ -137,6 +142,10 @@
       {/if}
     </div>
 
+    {#if error}
+      <div class="entry-error" role="alert">{error}</div>
+    {/if}
+
     {#if quickInsertChars && quickInsertChars.length > 0}
       <div class="quick-chars-bar">
         {#each quickInsertChars as char}
@@ -162,6 +171,7 @@
     <button
       type="button"
       class="confirm-btn"
+      disabled={!!error}
       onclick={handleConfirm}
     >
       <Check size={18} weight="bold" />
@@ -287,8 +297,23 @@
     transition: opacity 0.12s ease, transform 0.08s ease;
   }
 
-  .confirm-btn:active {
+  .confirm-btn:active:not(:disabled) {
     opacity: 0.85;
     transform: scale(0.98);
+  }
+
+  .confirm-btn:disabled {
+    opacity: 0.4;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .entry-error {
+    font-size: var(--text-xs);
+    line-height: 1.35;
+    color: var(--color-accent-danger);
+    background-color: var(--color-accent-danger-subtle);
+    border-radius: var(--radius-xs);
+    padding: 6px 10px;
   }
 </style>

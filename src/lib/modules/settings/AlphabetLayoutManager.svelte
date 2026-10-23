@@ -2,11 +2,14 @@
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
+  import { MODULES } from '../../types';
+  import { parseAlphabetInput, formatAlphabetInput } from '../../utils/alphabetInput';
   import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
 
   let newLayoutName = $state('');
   let isCreatingLayout = $state(false);
+  let isEditingLetters = $state(false);
 
   let inspectedLayoutId = $state<string>(alphabet.layouts[0]?.id ?? 'english-26');
 
@@ -15,13 +18,21 @@
   );
 
   function handleDeleteCustomLayout(id: string) {
-    alphabet.deleteCustomLayout(id);
+    const resetModules = alphabet.deleteCustomLayout(id);
     if (inspectedLayoutId === id) {
       inspectedLayoutId = alphabet.layouts[0]?.id ?? 'english-26';
     }
-    toast.show('Abeceda smazána', { type: 'info' });
+    if (resetModules.length > 0) {
+      const names = resetModules
+        .map((m) => MODULES.find((mod) => mod.id === m)?.name ?? m)
+        .join(', ');
+      toast.show(`Abeceda smazána, výchozí abeceda obnovena: ${names}`, { type: 'info' });
+    } else {
+      toast.show('Abeceda smazána', { type: 'info' });
+    }
   }
 
+  // New layout starts as a copy of the inspected one; its letters are edited right after.
   function handleSaveLayout(name: string) {
     if (!name.trim()) {
       toast.show('Zadejte název abecedy', { type: 'danger' });
@@ -34,24 +45,17 @@
     inspectedLayoutId = id;
     newLayoutName = '';
     isCreatingLayout = false;
-    toast.show('Abeceda vytvořena', { type: 'success' });
+    isEditingLetters = true;
   }
 
-  function toggleLetter(char: string) {
-    if (inspectedLayout.isBuiltin) {
-      toast.show('Vestavěné nelze upravit', { type: 'info' });
+  function handleSaveLetters(text: string) {
+    const { letters, error } = parseAlphabetInput(text);
+    if (error) {
+      toast.show(error, { type: 'danger' });
       return;
     }
-    settings.vibrate(25);
-    const letters = inspectedLayout.letters;
-    const idx = letters.indexOf(char);
-    let updated: string[];
-    if (idx >= 0) {
-      updated = letters.filter((l) => l !== char);
-    } else {
-      updated = [...letters, char].sort();
-    }
-    alphabet.updateCustomLayout(inspectedLayoutId, updated);
+    alphabet.updateCustomLayout(inspectedLayoutId, letters);
+    toast.show(`Abeceda uložena (${letters.length} znaků)`, { type: 'success' });
   }
 </script>
 
@@ -103,20 +107,24 @@
     {/if}
     <div class="letters-chips">
       {#each inspectedLayout.letters as letter}
-        <button
-          type="button"
-          class="letter-chip"
-          class:disabled-edit={inspectedLayout.isBuiltin}
-          onclick={() => toggleLetter(letter)}
-        >
-          {letter}
-        </button>
+        <span class="letter-chip">{letter}</span>
       {/each}
     </div>
     {#if inspectedLayout.isBuiltin}
       <div class="preview-hint">
         Vestavěnou abecedu nelze upravit, jen zkopírovat.
       </div>
+    {:else}
+      <button
+        type="button"
+        class="secondary-btn"
+        onclick={() => {
+          settings.vibrate(25);
+          isEditingLetters = true;
+        }}
+      >
+        Upravit znaky
+      </button>
     {/if}
   </div>
 
@@ -130,7 +138,7 @@
       isCreatingLayout = true;
     }}
   >
-    + Kopírovat jako vlastní
+    + Nová abeceda z vybrané
   </button>
 </section>
 
@@ -145,6 +153,26 @@
     isCreatingLayout = false;
   }}
 />
+
+<TextEntrySheet
+  open={isEditingLetters}
+  title="Znaky abecedy"
+  value={formatAlphabetInput(inspectedLayout.letters)}
+  placeholder="A, B, C, CH, D, ..."
+  autocapitalize="characters"
+  validate={(val) => parseAlphabetInput(val).error}
+  onSave={handleSaveLetters}
+  onClose={() => {
+    isEditingLetters = false;
+  }}
+>
+  {#snippet options()}
+    <p class="sheet-hint">
+      Znaky oddělte čárkou, pořadí určuje číslování. Dvouznakové položky (např. CH) jsou povolené,
+      duplicity ne.
+    </p>
+  {/snippet}
+</TextEntrySheet>
 
 <style>
   .card {
@@ -266,6 +294,13 @@
     margin-top: 4px;
   }
 
+  .sheet-hint {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+  }
+
   .letters-chips {
     display: flex;
     flex-wrap: wrap;
@@ -281,11 +316,6 @@
     font-size: var(--text-sm);
     font-weight: 600;
     color: inherit;
-    cursor: pointer;
-  }
-
-  .letter-chip.disabled-edit {
-    cursor: default;
   }
 
   .secondary-btn {

@@ -140,11 +140,42 @@ class AlphabetState {
     }
   }
 
-  deleteCustomLayout(id: string) {
-    this.layouts = this.layouts.filter((l) => l.id !== id || l.isBuiltin);
+  /**
+   * Deletes a custom layout and resets every tool that referenced it to its own
+   * default alphabet. Returns ids of the modules that were reset.
+   */
+  deleteCustomLayout(id: string): string[] {
+    const target = this.layouts.find((l) => l.id === id);
+    if (!target || target.isBuiltin) return [];
+
+    this.layouts = this.layouts.filter((l) => l.id !== id);
     if (this.activeId === id) {
       this.activeId = 'english-ch-27';
     }
+    return this.dropLayoutReferences(id);
+  }
+
+  /**
+   * Tools persist the chosen layout id in their module settings (`alphabet_id`,
+   * `alphabet:<variant>`, `polybius:omitted:<size>:<id>`). Removing those keys
+   * makes the tool fall back to its default on next open. Safe to run while the
+   * Settings module is active: no tool is mounted, so none can write the id back.
+   */
+  private dropLayoutReferences(id: string): string[] {
+    const modules = localSettingsService.getRootData().modules ?? {};
+    const affected: string[] = [];
+    for (const [moduleId, store] of Object.entries(modules)) {
+      const scope = localSettingsService.forModule(moduleId);
+      let touched = false;
+      for (const [key, value] of Object.entries(store)) {
+        if ((value === id && key.startsWith('alphabet')) || key.endsWith(':' + id)) {
+          scope.removeItem(key);
+          touched = true;
+        }
+      }
+      if (touched) affected.push(moduleId);
+    }
+    return affected;
   }
 
   letterToIndex(char: string): number {
