@@ -1,6 +1,13 @@
 <script lang="ts">
   import BottomSheet from '../../components/ui/BottomSheet.svelte';
-  import { Globe } from 'phosphor-svelte';
+  import PanZoomViewport from '../../components/ui/PanZoomViewport.svelte';
+  import FlagZoomModal from './FlagZoomModal.svelte';
+  import { settings } from '../../state/settings.svelte';
+  import {
+    Globe,
+    ArrowsOut,
+    ArrowCounterClockwise
+  } from 'phosphor-svelte';
   import type { WorldFlagRecord } from '../../db/database.svelte';
   import {
     WORLD_FLAG_COLORS,
@@ -17,6 +24,39 @@
   }
 
   let { open, flag, onClose }: Props = $props();
+
+  let isFullscreenZoomOpen = $state(false);
+
+  let inlinePanZoomRef = $state<{
+    resetView: (vibrate?: boolean) => void;
+    getScale: () => number;
+    getFitScale: () => number;
+  } | null>(null);
+
+  let inlineScale = $state(1.0);
+
+  const inlineFitScale = $derived(inlinePanZoomRef?.getFitScale() ?? 1.0);
+  const isInlineZoomed = $derived(inlineScale > inlineFitScale * 1.05);
+  const inlineZoomPercent = $derived(Math.round((inlineScale / Math.max(0.001, inlineFitScale)) * 100));
+
+  function handleResetInlineZoom() {
+    settings.vibrate(20);
+    inlinePanZoomRef?.resetView(false);
+  }
+
+  function handleOpenFullscreen() {
+    settings.vibrate(20);
+    isFullscreenZoomOpen = true;
+  }
+
+  $effect(() => {
+    if (flag && open && inlinePanZoomRef) {
+      const t = setTimeout(() => {
+        inlinePanZoomRef?.resetView(false);
+      }, 50);
+      return () => clearTimeout(t);
+    }
+  });
 
   const continentName = $derived.by(() => {
     if (!flag) return '';
@@ -87,9 +127,50 @@
 >
   {#if flag}
     <div class="flag-detail-container" data-allow-copy>
-      <!-- Large Flag SVG Preview -->
-      <div class="flag-large-preview">
-        {@html detailSvg}
+      <!-- Large Flag SVG Preview with PanZoom -->
+      <div class="flag-preview-wrapper">
+        <PanZoomViewport
+          bind:this={inlinePanZoomRef}
+          bind:currentScale={inlineScale}
+          minScale={0.08}
+          maxScale={6.0}
+          initialScale={1.0}
+          contentWidth={640}
+          contentHeight={480}
+          allowSinglePointerPan="when-zoomed"
+          doubleTapToZoom={true}
+          class="flag-inline-viewport"
+        >
+          <div class="flag-stage" style="width: 640px; height: 480px;">
+            {@html detailSvg}
+          </div>
+        </PanZoomViewport>
+
+        <!-- Preview Top-Right Quick Controls -->
+        <div class="preview-actions-bar">
+          {#if isInlineZoomed}
+            <button
+              type="button"
+              class="preview-action-btn reset-btn"
+              onclick={handleResetInlineZoom}
+              aria-label="Obnovit původní velikost"
+              title="Obnovit velikost (100%)"
+            >
+              <ArrowCounterClockwise size={14} weight="bold" />
+              <span class="zoom-pct font-mono">{inlineZoomPercent}%</span>
+            </button>
+          {/if}
+
+          <button
+            type="button"
+            class="preview-action-btn fullscreen-btn"
+            onclick={handleOpenFullscreen}
+            aria-label="Zvětšit na celou obrazovku"
+            title="Zvětšit na celou obrazovku"
+          >
+            <ArrowsOut size={16} weight="bold" />
+          </button>
+        </div>
       </div>
 
       <!-- Country Title & Names -->
@@ -166,6 +247,13 @@
   {/if}
 </BottomSheet>
 
+<!-- Fullscreen Flag Zoom Modal -->
+<FlagZoomModal
+  open={isFullscreenZoomOpen && open}
+  {flag}
+  onClose={() => (isFullscreenZoomOpen = false)}
+/>
+
 <style>
   .flag-detail-container {
     display: flex;
@@ -174,26 +262,86 @@
     padding: var(--space-xs) 0 var(--space-md);
   }
 
-  .flag-large-preview {
+  .flag-preview-wrapper {
+    position: relative;
     width: 100%;
-    max-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    height: clamp(190px, 32vh, 230px);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
-    padding: var(--space-sm);
     overflow: hidden;
   }
 
-  .flag-large-preview :global(svg) {
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    max-height: 180px;
+  :global(.flag-inline-viewport) {
+    background-color: transparent !important;
+  }
+
+  .flag-stage {
+    width: 640px;
+    height: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: var(--radius-xs);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    background-color: var(--color-surface-1);
+  }
+
+  .flag-stage :global(svg) {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+  }
+
+  .preview-actions-bar {
+    position: absolute;
+    top: var(--space-xs);
+    right: var(--space-xs);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+    pointer-events: auto;
+  }
+
+  .preview-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 32px;
+    padding: 0 8px;
+    background-color: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background-color 0.12s, transform 0.08s;
+  }
+
+  .preview-action-btn:active {
+    background-color: var(--color-surface-active);
+    transform: scale(0.96);
+  }
+
+  .preview-action-btn.fullscreen-btn {
+    width: 32px;
+    padding: 0;
+  }
+
+  .preview-action-btn.reset-btn {
+    color: var(--color-accent-primary);
+  }
+
+  .zoom-pct {
+    font-size: 11px;
+    letter-spacing: 0.2px;
   }
 
   .flag-detail-header {
