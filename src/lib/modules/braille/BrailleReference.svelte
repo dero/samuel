@@ -1,89 +1,64 @@
 <script lang="ts">
+  import RefLayout from '../../components/reference/RefLayout.svelte';
+  import RefSection from '../../components/reference/RefSection.svelte';
+  import type { RefHelpData } from '../../components/reference/refTypes';
   import {
-    ALL_BRAILLE_ENTRIES,
     BRAILLE_LETTERS,
     BRAILLE_CZECH_DIACRITICS,
     BRAILLE_DIGITS,
     BRAILLE_PREFIXES,
-    BRAILLE_PUNCTUATION,
-    type BrailleEntry
+    BRAILLE_PUNCTUATION
   } from './brailleData';
+
   const sections = [
-    { title: 'Abeceda', items: BRAILLE_LETTERS },
-    { title: 'Diakritika', items: BRAILLE_CZECH_DIACRITICS },
-    { title: 'Číslice', items: BRAILLE_DIGITS },
-    { title: 'Prefixy a znaky', items: [...BRAILLE_PREFIXES, ...BRAILLE_PUNCTUATION] }
+    { title: 'Abeceda', note: 'Body: levý sloupec `1` `2` `3`, pravý `4` `5` `6`.', items: BRAILLE_LETTERS },
+    { title: 'Diakritika', note: undefined, items: BRAILLE_CZECH_DIACRITICS },
+    { title: 'Číslice', note: 'Prefix `⠼` + tvar A–J.', items: BRAILLE_DIGITS },
+    { title: 'Prefixy a znaky', note: undefined, items: [...BRAILLE_PREFIXES, ...BRAILLE_PUNCTUATION] }
   ];
+
+  const help: RefHelpData = {
+    controls: [
+      ['Klepnutí nebo tah', 'zapne body, další klepnutí bod vypne'],
+      ['Prostřední tlačítko', 'potvrdí znak, bez bodů vloží mezeru'],
+      ['Backspace', 'nejdřív zruší vybrané body, pak maže text'],
+      ['Okamžité vkládání', 'v menu: znak se vloží hned po tahu']
+    ],
+    pitfalls: [
+      ['Číslice', 'tvar A–J za prefixem `⠼` (3456), platí do mezery'],
+      ['Číslice bez prefixu', 'v zadání chybí `⠼` → menu Čísla bez prefixu'],
+      ['W a Ř', 'české W = 12356, mezinárodní W (2456) je česky Ř → menu Česká diakritika'],
+      ['Ražba ze zadní strany', 'sloupce jsou zrcadlově: `1`↔`4`, `2`↔`5`, `3`↔`6`']
+    ]
+  };
 </script>
 
-<div class="ref-container">
-  <!-- Symbols list -->
-  <div class="table-scroll">
-    <div class="sections-container">
-      {#each sections as sec}
-        <div class="section-group">
-          <div class="section-title">{sec.title}</div>
-          <div class="entries-grid">
-            {#each sec.items as entry}
-              <div class="symbol-card" title="{entry.char} – body: {entry.dots.join(', ')}">
-                <span class="symbol-char">{entry.char}</span>
-                <div class="dot-matrix" aria-hidden="true">
-                  <div class="dot" class:is-on={entry.dots.includes(1)}></div>
-                  <div class="dot" class:is-on={entry.dots.includes(4)}></div>
-                  <div class="dot" class:is-on={entry.dots.includes(2)}></div>
-                  <div class="dot" class:is-on={entry.dots.includes(5)}></div>
-                  <div class="dot" class:is-on={entry.dots.includes(3)}></div>
-                  <div class="dot" class:is-on={entry.dots.includes(6)}></div>
-                </div>
+<RefLayout tabs={[{ id: 'chars', label: 'Znaky' }]} {help}>
+  {#snippet content()}
+    {#each sections as sec (sec.title)}
+      <RefSection title={sec.title} note={sec.note}>
+        <div class="entries-grid">
+          {#each sec.items as entry (entry.char)}
+            <div class="symbol-card" title="{entry.char} – body: {entry.dots.join(', ')}">
+              <span class="symbol-char">{entry.char}</span>
+              <div class="dot-matrix" aria-hidden="true">
+                <div class="dot" class:is-on={entry.dots.includes(1)}></div>
+                <div class="dot" class:is-on={entry.dots.includes(4)}></div>
+                <div class="dot" class:is-on={entry.dots.includes(2)}></div>
+                <div class="dot" class:is-on={entry.dots.includes(5)}></div>
+                <div class="dot" class:is-on={entry.dots.includes(3)}></div>
+                <div class="dot" class:is-on={entry.dots.includes(6)}></div>
               </div>
-            {/each}
-          </div>
+            </div>
+          {/each}
         </div>
-      {/each}
-    </div>
-  </div>
-</div>
+      </RefSection>
+    {/each}
+  {/snippet}
+</RefLayout>
 
 <style>
-  .ref-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-    gap: 10px;
-  }
 
-
-
-  .table-scroll {
-    flex: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-right: 2px;
-  }
-
-  .sections-container {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding-bottom: 16px;
-  }
-
-  .section-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .section-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: var(--color-text-secondary);
-    padding-left: 2px;
-  }
 
   /* 3 to 4 items on width */
   .entries-grid {

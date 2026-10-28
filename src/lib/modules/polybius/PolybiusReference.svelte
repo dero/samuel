@@ -1,63 +1,48 @@
-<div class="reference-content">
-  <section class="ref-section">
-    <h3 class="ref-heading">Polybiův čtverec</h3>
-    <p class="ref-text">
-      Znak = souřadnice <strong>řádek, sloupec</strong>. Např. <code>12</code> = B, u písmenných os <code>CE</code> = řádek C, sloupec E.
-    </p>
+<script lang="ts">
+  import RefLayout from '../../components/reference/RefLayout.svelte';
+  import RefList from '../../components/reference/RefList.svelte';
+  import RefSection from '../../components/reference/RefSection.svelte';
+  import type { RefHelpData } from '../../components/reference/refTypes';
 
-    <div class="notation-box">
-      <div class="notation-item"><strong>5×5:</strong> 25 polí, jedno písmeno chybí (obvykle <code>Q</code>) nebo se slučuje <code>I/J</code>.</div>
-      <div class="notation-item"><strong>6×6:</strong> A–Z a číslice 0–9.</div>
-    </div>
-  </section>
-</div>
+  const help: RefHelpData = {
+    controls: [
+      ['5×5 / 6×6', 'lišta nad čtvercem'],
+      ['Řádek a sloupec', 'klepnout na záhlaví v libovolném pořadí, písmeno se vloží samo'],
+      ['Písmeno ve čtverci', 'klepnutí ho vloží přímo'],
+      ['Popisky souřadnic', 'v menu: `1–5` nebo `A–E`'],
+      ['Vynechaná písmena', 'v menu, když má abeceda víc znaků než čtverec']
+    ],
+    pitfalls: [
+      ['Prohozené osy', 'nedává-li text smysl, číst souřadnice jako sloupec, řádek'],
+      ['Sloučené I/J', 'v menu vynechat `J`, místo něj se čte `I`'],
+      ['Ťukací kód', 'bez `K`, místo něj `C` → v menu vynechat `K`'],
+      ['Osy ADFGX', 'popisky `A–E`, převést `A D F G X` → `A B C D E`'],
+      ['Osy ADFGVX (6×6)', 'převést `A D F G V X` → `A B C D E F`']
+    ]
+  };
+</script>
 
-<style>
-  .reference-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
-    padding: var(--space-md);
-    color: var(--color-text-primary);
-  }
+<RefLayout tabs={[{ id: 'notation', label: 'Zápisy' }]} {help}>
+  {#snippet content()}
+    <RefSection title="Zápis souřadnic" note="Vždy řádek, pak sloupec.">
+      <RefList
+        items={[
+          ['Číslice', '`12` = řádek 1, sloupec 2 = B'],
+          ['Písmena', '`AB` = řádek A, sloupec B = B'],
+          ['Ťukání', '`•• •••` = 2, 3 = H (ťukací kód)'],
+          ['Počet znaků', '`|| |||`, `oo ooo` apod. = 2, 3']
+        ]}
+      />
+    </RefSection>
 
-  .ref-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .ref-heading {
-    font-size: var(--text-base);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    margin: 0;
-  }
-
-  .ref-text {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: 1.5;
-    margin: 0;
-  }
-
-  .notation-box {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm) var(--space-md);
-    font-size: var(--text-xs);
-  }
-
-  .ref-text code,
-  .notation-item code {
-    background-color: var(--color-surface-2);
-    padding: 1px 4px;
-    border-radius: var(--radius-xs);
-    color: var(--color-accent-primary);
-    font-family: var(--font-mono);
-  }
-</style>
+    <RefSection title="Velikosti">
+      <RefList
+        items={[
+          ['5×5', '25 polí, 26 písmen → jedno chybí: obvykle `Q`, jinak sloučené `I/J`'],
+          ['6×6', '`A–Z` a číslice `0–9`'],
+          ['S CH (27 znaků)', 'v 5×5 chybí dvě písmena → v menu Vynechaná písmena']
+        ]}
+      />
+    </RefSection>
+  {/snippet}
+</RefLayout>

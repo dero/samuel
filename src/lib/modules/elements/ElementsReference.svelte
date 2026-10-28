@@ -1,149 +1,94 @@
 <script lang="ts">
-  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
+  import RefLayout from '../../components/reference/RefLayout.svelte';
+  import type { RefHelpData, RefTab, RefTool } from '../../components/reference/refTypes';
+  import { elementsState, type ElementsFlavour } from './elementsState.svelte';
   import { ELEMENTS, type ChemicalElement } from './elementsData';
-  import { settings } from '../../state/settings.svelte';
 
   type ElementsRefTab = 'z' | 'name' | 'symbol';
 
-  let activeTab = $state<ElementsRefTab>('z');
-
-  const tabs: SegmentOption<ElementsRefTab>[] = [
-    { id: 'z', label: 'Číslo (Z)' },
-    { id: 'name', label: 'Abeceda' },
+  const tabs: RefTab<ElementsRefTab>[] = [
+    { id: 'z', label: 'Číslo' },
+    { id: 'name', label: 'Název' },
     { id: 'symbol', label: 'Značka' }
   ];
 
-  // 1. Podle atomových čísel (already 1..118)
-  const BY_ATOMIC_NUMBER: ChemicalElement[] = ELEMENTS;
+  const LISTS: Record<ElementsRefTab, ChemicalElement[]> = {
+    // Already ordered 1..118
+    z: ELEMENTS,
+    // Czech collation: Ch after H, diacritics per ČSN
+    name: [...ELEMENTS].sort((a, b) => a.nameCs.localeCompare(b.nameCs, 'cs')),
+    symbol: [...ELEMENTS].sort((a, b) => a.symbol.localeCompare(b.symbol, 'en'))
+  };
 
-  // 2. Podle abecedy (česky: Ch po H, diakritika dle ČSN)
-  const BY_CZECH_NAME: ChemicalElement[] = [...ELEMENTS].sort((a, b) =>
-    a.nameCs.localeCompare(b.nameCs, 'cs')
-  );
+  const tools: RefTool<ElementsFlavour>[] = [
+    {
+      id: 'table',
+      label: 'Tabulka',
+      help: {
+        controls: [
+          ['Dva prsty', 'posun a zoom'],
+          ['Klepnutí na prvek', 'detail'],
+          ['Filtry', 'zvýrazní 1-písmenné značky, skupenství, bloky s-p-d-f, radioaktivní prvky'],
+          ['Filtr České', 'prvky, jejichž český název se liší od latinského']
+        ]
+      }
+    },
+    {
+      id: 'search',
+      label: 'Hledat',
+      help: {
+        controls: [
+          ['Dotaz', 'číslo `26`, značka `Fe` nebo název `zelezo` (bez diakritiky)'],
+          ['Klepnutí na výsledek', 'ukáže prvek v tabulce']
+        ]
+      }
+    }
+  ];
 
-  // 3. Podle značky (abecedně dle symbolu)
-  const BY_SYMBOL: ChemicalElement[] = [...ELEMENTS].sort((a, b) =>
-    a.symbol.localeCompare(b.symbol, 'en')
-  );
-
-  const currentList = $derived(
-    activeTab === 'z'
-      ? BY_ATOMIC_NUMBER
-      : activeTab === 'name'
-        ? BY_CZECH_NAME
-        : BY_SYMBOL
-  );
-
-  function handleTabChange(tab: ElementsRefTab) {
-    if (activeTab === tab) return;
-    settings.vibrate(20);
-    activeTab = tab;
-  }
+  const help: RefHelpData = {
+    controls: [['Tabulka / Hledat', 'lišta nad klávesnicí']],
+    pitfalls: [
+      ['Značka z latiny', '`Fe` = železo (ferrum), `Na` = sodík (natrium) → filtr České'],
+      ['Velikost písmen', '`Co` = kobalt, `CO` = uhlík + kyslík'],
+      ['Číslo prvku', 'v šifrách obvykle protonové číslo (Z), ne relativní atomová hmotnost']
+    ]
+  };
 </script>
 
-<div class="ref-container" data-allow-copy>
-  <!-- Pinned Segmented Tabs -->
-  <div class="ref-header-controls">
-    <SegmentedControl
-      options={tabs}
-      value={activeTab}
-      size="sm"
-      ariaLabel="Řazení referenčního přehledu prvků"
-      onChange={handleTabChange}
-    />
-  </div>
-
-  <!-- 3-Column Elements Table (Number | Symbol | Czech Name) -->
-  <div class="table-card">
-    <table class="data-table">
-      <tbody>
-        {#each currentList as elem (elem.z)}
-          <tr>
-            <td class="col-z font-mono">{elem.z}</td>
-            <td class="col-symbol font-mono font-bold text-accent">{elem.symbol}</td>
-            <td class="col-name">{elem.nameCs}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
-</div>
+<RefLayout {tabs} {help} {tools} activeTool={elementsState.activeFlavour}>
+  {#snippet content(tab)}
+    <div class="ref-table-wrap">
+      <table class="ref-table">
+        <tbody>
+          {#each LISTS[tab] as elem (elem.z)}
+            <tr>
+              <td class="col-num">{elem.z}</td>
+              <td class="col-code symbol">{elem.symbol}</td>
+              <td class="col-name">
+                {elem.nameCs}
+                {#if elem.czechDiffersFromLatin}
+                  <span class="latin">{elem.nameLa.toLowerCase()}</span>
+                {/if}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  {/snippet}
+</RefLayout>
 
 <style>
-  .ref-container {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    box-sizing: border-box;
-    gap: var(--space-sm, 8px);
-  }
-
-  .ref-header-controls {
-    position: sticky;
-    top: calc(-1 * var(--space-md, 12px));
-    z-index: 10;
-    background-color: var(--color-surface-1, #121212);
-    padding-bottom: var(--space-xs, 4px);
-    margin-top: calc(-1 * var(--space-xs, 4px));
-    border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .table-card {
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md, 8px);
-    overflow: hidden;
-  }
-
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: var(--text-sm, 14px);
-    text-align: left;
-  }
-
-  .data-table td {
-    padding: 8px var(--space-md, 12px);
-    border-bottom: 1px solid var(--color-border-subtle);
-    box-sizing: border-box;
-  }
-
-  .data-table tbody tr:last-child td {
-    border-bottom: none;
-  }
-
-  .data-table tbody tr:hover td {
-    background-color: rgba(255, 255, 255, 0.03);
-  }
-
-  .col-z {
-    width: 54px;
-    text-align: right;
-    padding-right: 12px;
-    color: var(--color-text-muted);
-  }
-
-  .col-symbol {
-    width: 68px;
-    text-align: center;
-    font-size: 15px;
-  }
-
-  .col-name {
-    color: var(--color-text-primary);
-    font-weight: 500;
-    padding-left: 8px;
-  }
-
-  .font-mono {
-    font-family: var(--font-mono, monospace);
-  }
-
-  .font-bold {
+  .symbol {
+    min-width: 3ch;
     font-weight: 700;
+    color: var(--color-text-primary);
   }
 
-  .text-accent {
-    color: var(--color-accent-primary, #00d2ff);
+  .latin {
+    margin-left: 6px;
+    font-weight: 400;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
   }
 </style>

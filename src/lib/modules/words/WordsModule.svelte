@@ -406,7 +406,7 @@
 
   <!-- Reference Modal -->
   {#snippet reference()}
-    <WordsReference />
+    <WordsReference activeTool={activeSubmodule} />
   {/snippet}
 </ModuleShell>
 

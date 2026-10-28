@@ -1,5 +1,9 @@
 <script lang="ts">
+  import RefLayout from '../../components/reference/RefLayout.svelte';
+  import RefSection from '../../components/reference/RefSection.svelte';
+  import type { RefHelpData } from '../../components/reference/refTypes';
   import { SEMAPHORE_ENTRIES, SEMAPHORE_DIRECTIONS, type SemaphoreEntry } from './semaphoreData';
+
   // 8 positions on 48x48 SVG
   // center = (24, 24), radius = 17
   const SVG_POINTS = SEMAPHORE_DIRECTIONS.map((dir) => ({
@@ -12,114 +16,85 @@
     .filter((e) => e.char.length === 1 && e.char >= 'A' && e.char <= 'Z')
     .sort((a, b) => a.char.localeCompare(b.char));
 
-  const specialList = SEMAPHORE_ENTRIES.filter((e) => e.char === '#');
+  // Mode switches side by side: `#` to numerals, `J` back to letters (J doubles as the letter), then Omyl.
+  const SPECIALS: { char: string; label: string; name: string }[] = [
+    { char: '#', label: '#', name: 'Přepnutí na číslice' },
+    { char: 'J', label: 'J', name: 'Zpět na písmena' },
+    { char: 'CANCEL', label: '✕', name: 'Omyl' }
+  ];
+  const specialList = SPECIALS.map((s) => ({
+    ...s,
+    entry: SEMAPHORE_ENTRIES.find((e) => e.char === s.char)!
+  }));
+
+  const help: RefHelpData = {
+    controls: [
+      ['Volič', '2 pozice klepnutím, nebo jedním tahem'],
+      ['Prostřední tlačítko', 'mezera'],
+      ['Backspace', 'nejdřív zruší vybraná ramena, pak maže text'],
+      ['Okamžité vkládání', 'v menu: vypnuté = znak potvrdit tlačítkem'],
+      ['`#`', 'další písmena A–I, K se čtou jako číslice. Ve výstupu svítí `#`.'],
+      ['`J` po číslicích', 'zpět na písmena'],
+      ['Omyl', 'smaže předchozí znak']
+    ],
+    pitfalls: [
+      ['Zrcadlově', 'reference je z pohledu příjemce. Zadání ze zad signalisty → menu Pohled vysílajícího.'],
+      ['Číslice bez `#`', 'zadat nejdřív signál `#`']
+    ]
+  };
 </script>
 
-<div class="ref-container">
-  <!-- Scrollable entries area -->
-  <div class="table-scroll">
-    <!-- Letters & Digits Section (A–Z) -->
-    <div class="section-title">Písmena a číslice</div>
-    <div class="ref-grid">
-      {#each lettersList as entry (entry.key)}
-        <div class="ref-card">
-          <div class="card-text">
-            <span class="card-char">{entry.char}</span>
-            {#if entry.digit}
-              <span class="card-digit">/{entry.digit}</span>
-            {/if}
-          </div>
-          <svg class="mini-diagram" viewBox="0 0 48 48" aria-hidden="true">
-            <!-- Inactive dots -->
-            {#each SVG_POINTS as pt}
-              {#if !entry.pair.includes(pt.index)}
-                <circle cx={pt.x} cy={pt.y} r="2" class="dot-inactive" />
+{#snippet diagram(entry: SemaphoreEntry, special: boolean)}
+  <svg class="mini-diagram" viewBox="0 0 48 48" aria-hidden="true">
+    {#each SVG_POINTS as pt (pt.index)}
+      {#if !entry.pair.includes(pt.index)}
+        <circle cx={pt.x} cy={pt.y} r="2" class="dot-inactive" />
+      {/if}
+    {/each}
+    <circle cx="24" cy="24" r="3" class="dot-center" />
+    {#each entry.pair as armIdx (armIdx)}
+      {@const pt = SVG_POINTS[armIdx]}
+      <line x1="24" y1="24" x2={pt.x} y2={pt.y} class="arm-active" class:special-arm={special} />
+      <circle cx={pt.x} cy={pt.y} r="4" class="dot-active" class:special-dot={special} />
+    {/each}
+  </svg>
+{/snippet}
+
+<RefLayout tabs={[{ id: 'chars', label: 'Znaky' }]} {help}>
+  {#snippet content()}
+    <RefSection title="Písmena a číslice" note="Číslo za lomítkem platí po signálu `#`, až do `J`.">
+      <div class="ref-grid">
+        {#each lettersList as entry (entry.key)}
+          <div class="ref-card">
+            <div class="card-text">
+              <span class="card-char">{entry.char}</span>
+              {#if entry.digit}
+                <span class="card-digit">/{entry.digit}</span>
               {/if}
-            {/each}
-
-            <!-- Center dot -->
-            <circle cx="24" cy="24" r="3" class="dot-center" />
-
-            <!-- Active Arms -->
-            {#each entry.pair as armIdx}
-              {@const pt = SVG_POINTS[armIdx]}
-              <line
-                x1="24"
-                y1="24"
-                x2={pt.x}
-                y2={pt.y}
-                class="arm-active"
-              />
-              <circle cx={pt.x} cy={pt.y} r="4" class="dot-active" />
-            {/each}
-          </svg>
-        </div>
-      {/each}
-    </div>
-
-    <!-- Special Signals -->
-    <div class="section-title">Speciální</div>
-    <div class="ref-grid">
-      {#each specialList as entry (entry.key)}
-        <div class="ref-card ref-card-special">
-          <div class="card-text">
-            <span class="card-char special-char">{entry.char}</span>
-            <span class="special-name">{entry.name}</span>
+            </div>
+            {@render diagram(entry, false)}
           </div>
-          <svg class="mini-diagram" viewBox="0 0 48 48" aria-hidden="true">
-            {#each SVG_POINTS as pt}
-              {#if !entry.pair.includes(pt.index)}
-                <circle cx={pt.x} cy={pt.y} r="2" class="dot-inactive" />
-              {/if}
-            {/each}
-            <circle cx="24" cy="24" r="3" class="dot-center" />
-            {#each entry.pair as armIdx}
-              {@const pt = SVG_POINTS[armIdx]}
-              <line x1="24" y1="24" x2={pt.x} y2={pt.y} class="arm-active special-arm" />
-              <circle cx={pt.x} cy={pt.y} r="4" class="dot-active special-dot" />
-            {/each}
-          </svg>
-        </div>
-      {/each}
-    </div>
-  </div>
-</div>
+        {/each}
+      </div>
+    </RefSection>
+
+    <RefSection title="Speciální">
+      <div class="ref-grid">
+        {#each specialList as { entry, label, name } (entry.key)}
+          <div class="ref-card ref-card-special">
+            <div class="card-text">
+              <span class="card-char special-char">{label}</span>
+              <span class="special-name">{name}</span>
+            </div>
+            {@render diagram(entry, true)}
+          </div>
+        {/each}
+      </div>
+    </RefSection>
+  {/snippet}
+</RefLayout>
 
 <style>
-  .ref-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-    gap: var(--space-sm);
-  }
-
-
-
-  .table-scroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    padding-bottom: var(--space-lg);
-    padding-right: 2px;
-  }
-
-  .section-title {
-    font-size: var(--text-xs);
-    font-weight: 700;
-    color: var(--color-text-secondary);
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    margin-top: 4px;
-    flex-shrink: 0;
-  }
-
   .ref-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));

@@ -3,6 +3,7 @@
   import type { ModuleMeta } from '../types';
   import ModuleIcon from '../components/ui/ModuleIcon.svelte';
   import TranslationCard from '../components/ui/TranslationCard.svelte';
+  import RefLayout from '../components/reference/RefLayout.svelte';
 
   interface Props {
     module: ModuleMeta;
@@ -43,12 +44,7 @@
   {/snippet}
 
   {#snippet reference()}
-    <div class="ref-body">
-      <h3>{module.name}</h3>
-      <div class="ref-note">
-        Podrobná referenční tabulka bude doplněna při detailní implementaci tohoto modulu.
-      </div>
-    </div>
+    <RefLayout help={{ controls: ['Modul je ve vývoji, reference přibude s ním.'] }} />
   {/snippet}
 </ModuleShell>
 
@@ -94,24 +90,5 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 700;
-  }
-
-  .ref-body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  .ref-body h3 {
-    margin: 0;
-    color: var(--color-accent-primary);
-  }
-
-  .ref-note {
-    padding: var(--space-md);
-    background-color: var(--color-surface-2);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
   }
 </style>

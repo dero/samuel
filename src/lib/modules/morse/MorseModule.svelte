@@ -15,8 +15,9 @@
     decodeMorse,
     decodeMorseLetter,
     isMorsePrefix,
-    normalizeMorse,
     getPermutations,
+    splitRawMorse,
+    toRawMorse,
     type BruteforceCandidate,
     type PermutationResult
   } from './morseSolver';
@@ -31,11 +32,19 @@
 
   const { state: modState, reset: resetModState } = createModuleState('morse', {
     input: '',
-    parse_ch: true,
-    parse_digits: true,
-    parse_other: true,
     show_wire: true
   });
+
+  // Input is a raw symbol stream (`.`, `-`, `/`, one `/` per press). Older versions stored
+  // a spaced form where the letter's own `/` stood apart from `//` and `///` tokens.
+  if (/\s/.test(modState.input)) {
+    let migrated = '';
+    for (const token of modState.input.trim().split(/\s+/)) {
+      const isSeparatorRun = /^\/+$/.test(token);
+      migrated += isSeparatorRun && migrated.endsWith('/') ? token.slice(1) : token;
+    }
+    modState.input = migrated;
+  }
 
   let currentPulse = $state<PulseEvent | null>(null);
   let pulseCounter = 0;
@@ -52,98 +61,48 @@
   let isSolving = $state(false);
 
   // Derived committed vs pending letter
-  const morseOptions = $derived({
-    parseCH: modState.parse_ch,
-    parseDigits: modState.parse_digits,
-    parseOther: modState.parse_other
-  });
+  // Letters, CH, digits and punctuation never share a code, so all are always decoded.
+  const morseOptions = { parseCH: true, parseDigits: true, parseOther: true };
 
   const parsedMorse = $derived.by(() => {
-    const raw = modState.input;
-    if (!raw.trim()) {
-      return { tokens: [] as InterlinearToken[], pending: null as InterlinearToken | null };
-    }
-
-    const parts = raw.trim().split(/\s+/).filter(Boolean);
     const tokens: InterlinearToken[] = [];
     let pending: InterlinearToken | null = null;
 
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      const isLast = i === parts.length - 1;
-
-      // 1. STOP token (///)
-      if (part === '///' || part.startsWith('///')) {
-        const prev = tokens.at(-1);
-        if (prev && prev.secondary && prev.secondary.endsWith('/')) {
-          prev.secondary = prev.secondary.slice(0, -1);
+    for (const { code, sep } of splitRawMorse(modState.input)) {
+      // Unfinished letter at the end of the stream
+      if (code && sep === 0) {
+        const char = decodeMorseLetter(code, morseOptions);
+        if (char !== '?') {
+          pending = { primary: char, secondary: code, isPending: true };
+        } else {
+          const isPrefix = isMorsePrefix(code, morseOptions);
+          pending = {
+            primary: isPrefix ? '…' : '?',
+            secondary: code,
+            isPending: true,
+            isError: !isPrefix,
+            errorText: !isPrefix ? `Neznámý kód „${code}“` : undefined
+          };
         }
-        tokens.push({
-          primary: 'STOP',
-          secondary: '///',
-          className: 'token-stop'
-        });
         continue;
       }
 
-      // 2. Space token (//)
-      if (part === '//' || part.startsWith('//')) {
-        const prev = tokens.at(-1);
-        if (prev && prev.secondary && prev.secondary.endsWith('/')) {
-          prev.secondary = prev.secondary.slice(0, -1);
-        }
-        tokens.push({
-          primary: '␣',
-          secondary: '//',
-          className: 'token-space'
-        });
-        continue;
-      }
-
-      // 3. Committed letter (ends with /)
-      if (part.endsWith('/')) {
-        const code = part.replace(/\/+$/, '');
-        if (!code) continue;
+      if (code) {
         const char = decodeMorseLetter(code, morseOptions);
         const isError = char === '?';
         tokens.push({
           primary: char,
-          secondary: `${code}/`,
+          secondary: sep === 1 ? `${code}/` : code,
           isError,
           errorText: isError ? `Neznámý kód „${code}“` : undefined
         });
-        continue;
       }
 
-      // 4. Pending dots/dashes
-      if (isLast) {
-        const char = decodeMorseLetter(part, morseOptions);
-        if (char !== '?') {
-          pending = {
-            primary: char,
-            secondary: part,
-            isPending: true
-          };
-        } else {
-          const isPrefix = isMorsePrefix(part, morseOptions);
-          pending = {
-            primary: isPrefix ? '…' : '?',
-            secondary: part,
-            isPending: true,
-            isError: !isPrefix,
-            errorText: !isPrefix ? `Neznámý kód „${part}“` : undefined
-          };
-        }
-      } else {
-        // Non-last part without slash: treat as letter
-        const char = decodeMorseLetter(part, morseOptions);
-        const isError = char === '?';
-        tokens.push({
-          primary: char,
-          secondary: `${part}/`,
-          isError,
-          errorText: isError ? `Neznámý kód „${part}“` : undefined
-        });
+      // Separator runs: 1 = letter end, 2 = word, 3+ = STOP (any length is kept)
+      if (sep >= 3) {
+        tokens.push({ primary: 'STOP', secondary: '/'.repeat(sep), className: 'token-stop' });
+      } else if (sep === 2 || (sep === 1 && !code)) {
+        tokens.push({ primary: '␣', secondary: '/'.repeat(sep), className: 'token-space' });
       }
     }
 
@@ -185,60 +144,11 @@
 
   function appendSlash() {
     sendPulse('/');
-    const trimmed = modState.input.trimEnd();
-    if (!trimmed) {
-      return;
-    }
-
-    // If ends with '///': already STOP, do nothing
-    if (trimmed.endsWith('///')) {
-      return;
-    }
-
-    // If ends with '//': upgrade to '///' (STOP)
-    if (trimmed.endsWith('//')) {
-      const base = trimmed.slice(0, -2).trimEnd();
-      modState.input = base ? `${base} /// ` : '/// ';
-      return;
-    }
-
-    // If ends with '/': add '//' (space)
-    if (trimmed.endsWith('/')) {
-      modState.input = `${trimmed} // `;
-      return;
-    }
-
-    // Otherwise ends with dots/dashes: commit letter with '/'
-    modState.input = `${trimmed}/ `;
+    modState.input += '/';
   }
 
   function handleBackspace() {
     settings.vibrate(25);
-    if (!modState.input) return;
-
-    const trimmed = modState.input.trimEnd();
-
-    // 1. If ends with '///': revert to '//'
-    if (trimmed.endsWith('///')) {
-      const base = trimmed.slice(0, -3).trimEnd();
-      modState.input = base ? `${base} // ` : '// ';
-      return;
-    }
-
-    // 2. If ends with '//': remove space token entirely
-    if (trimmed.endsWith('//')) {
-      const base = trimmed.slice(0, -2).trimEnd();
-      modState.input = base ? `${base} ` : '';
-      return;
-    }
-
-    // 3. If ends with '/': un-commit letter, so code becomes pending dots/dashes
-    if (trimmed.endsWith('/')) {
-      modState.input = trimmed.slice(0, -1);
-      return;
-    }
-
-    // 4. Ends with '.' or '-': delete last character
     modState.input = modState.input.slice(0, -1);
   }
 
@@ -296,48 +206,16 @@
     }
   }
 
-  function formatMorseToCanonical(raw: string): string {
-    if (!raw || !raw.trim()) return '';
-    const normalized = normalizeMorse(raw);
-    const words = normalized.split(/\s*\/\/\s*|\s{2,}/);
-    const parts: string[] = [];
-
-    for (let w = 0; w < words.length; w++) {
-      const word = words[w].trim();
-      if (!word) continue;
-
-      if (w > 0) {
-        parts.push('//');
-      }
-
-      const letters = word.split(/[\/\s]+/).filter(Boolean);
-      for (const letter of letters) {
-        if (letter === '///') {
-          parts.push('///');
-        } else if (letter === '//') {
-          parts.push('//');
-        } else {
-          const clean = letter.replace(/[^.-]/g, '');
-          if (clean) {
-            parts.push(`${clean}/`);
-          }
-        }
-      }
-    }
-
-    return parts.length > 0 ? parts.join(' ') + ' ' : '';
-  }
-
   function applyPermutation(perm: PermutationResult) {
     settings.vibrate(25);
-    modState.input = formatMorseToCanonical(perm.transformedMorse);
+    modState.input = toRawMorse(perm.transformedMorse);
     isPermutationsOpen = false;
     toast.show(`Varianta: ${perm.name}`, 'info');
   }
 
   function applyCandidate(candidate: BruteforceCandidate) {
     settings.vibrate(25);
-    modState.input = formatMorseToCanonical(candidate.spacedMorse);
+    modState.input = toRawMorse(candidate.spacedMorse);
     isBruteforceOpen = false;
     copyToClipboard(candidate.text, 'Řešení vloženo');
   }
@@ -453,21 +331,6 @@
       type="switch"
       checked={modState.show_wire}
       onChange={(v) => (modState.show_wire = v)}
-    />
-    <OptionRow
-      label="Rozpoznávat CH"
-      checked={modState.parse_ch}
-      onChange={(v) => (modState.parse_ch = v)}
-    />
-    <OptionRow
-      label="Rozpoznávat číslice"
-      checked={modState.parse_digits}
-      onChange={(v) => (modState.parse_digits = v)}
-    />
-    <OptionRow
-      label="Rozpoznávat interpunkci"
-      checked={modState.parse_other}
-      onChange={(v) => (modState.parse_other = v)}
     />
   {/snippet}
 

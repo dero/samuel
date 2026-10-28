@@ -427,7 +427,7 @@
 
   <!-- REFERENCE CHEAT SHEET -->
   {#snippet reference()}
-    <ColorsReference />
+    <ColorsReference activeTool={colorModel} />
   {/snippet}
 </ModuleShell>
 

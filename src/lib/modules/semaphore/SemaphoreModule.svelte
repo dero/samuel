@@ -13,9 +13,9 @@
     type SemaphoreEntry
   } from './semaphoreData';
   import {
+    applySemaphoreEntry,
     decodePair,
-    getCharForEntry,
-    normalizeSemaphoreInput,
+    previewSemaphoreEntry,
     type SemaphoreDecodeOptions
   } from './semaphoreSolver';
   import { settings } from '../../state/settings.svelte';
@@ -25,7 +25,7 @@
   const { state: modState, reset: resetState } = createModuleState('semaphore', {
     input: '',
     mirror: false,
-    direct_nums: false,
+    num_mode: false,
     auto_insert: true
   });
 
@@ -43,8 +43,7 @@
 
   // Current options
   let decodeOptions = $derived<SemaphoreDecodeOptions>({
-    mirrorX: modState.mirror,
-    directNumbers: modState.direct_nums
+    mirrorX: modState.mirror
   });
 
   // Decoded character for currently selected pair of directions
@@ -52,18 +51,19 @@
     activeDirs.length === 2 ? decodePair(activeDirs[0], activeDirs[1], decodeOptions) : null
   );
 
-  let currentChar = $derived<string>(
-    currentEntry ? getCharForEntry(currentEntry, decodeOptions) : ''
-  );
+  let currentChar = $derived<string>(previewSemaphoreEntry(currentEntry, modState.num_mode));
 
-  const nonStandardCount = $derived(
-    (modState.mirror ? 1 : 0) +
-    (modState.direct_nums ? 1 : 0)
-  );
+  const nonStandardCount = $derived(modState.mirror ? 1 : 0);
+
+  /** Applies a signal by the standard rules (numerals after `#`, Omyl erases). */
+  function applyEntry(entry: SemaphoreEntry) {
+    const next = applySemaphoreEntry({ text: modState.input, numMode: modState.num_mode }, entry);
+    modState.input = next.text;
+    modState.num_mode = next.numMode;
+  }
 
   function resetSettingsToDefaults() {
     modState.mirror = false;
-    modState.direct_nums = false;
     toast.show('Výchozí nastavení obnoveno', { type: 'success' });
   }
 
@@ -108,8 +108,7 @@
           // Instant decode and commit on 2nd arm, with visual fade-out of the complete sign
           const entry = decodePair(firstDir, dirIdx, decodeOptions);
           if (entry) {
-            const charToInsert = getCharForEntry(entry, decodeOptions);
-            modState.input += charToInsert;
+            applyEntry(entry);
             triggerHaptic('commit');
             activeDirs = [firstDir, dirIdx];
             committedFade = true;
@@ -182,8 +181,8 @@
   }
 
   function commitChar() {
-    if (!currentChar || committedFade) return;
-    modState.input += currentChar;
+    if (!currentEntry || committedFade) return;
+    applyEntry(currentEntry);
     committedFade = true;
     if (fadeTimeout) clearTimeout(fadeTimeout);
     fadeTimeout = setTimeout(() => {
@@ -194,11 +193,10 @@
 
   function handleSpace() {
     clearFadeTimer();
-    if (currentChar) {
-      modState.input += currentChar + ' ';
-    } else {
-      modState.input += ' ';
+    if (currentEntry) {
+      applyEntry(currentEntry);
     }
+    modState.input += ' ';
     activeDirs = [];
   }
 
@@ -215,6 +213,7 @@
   function handleClearAll() {
     clearFadeTimer();
     modState.input = '';
+    modState.num_mode = false;
     activeDirs = [];
   }
 
@@ -239,9 +238,7 @@
   });
 
   function getPotentialChar(firstDir: number, secondDir: number): string {
-    const entry = decodePair(firstDir, secondDir, decodeOptions);
-    if (!entry || entry.char === 'CANCEL') return '';
-    return getCharForEntry(entry, decodeOptions);
+    return previewSemaphoreEntry(decodePair(firstDir, secondDir, decodeOptions), modState.num_mode);
   }
 </script>
 
@@ -252,6 +249,7 @@
   {#snippet output()}
     <TranslationCard
       text={modState.input}
+      pendingText={modState.num_mode ? '#' : ''}
       emptyHint="Zvolte 2 pozice nebo spojte tahem."
     />
   {/snippet}
@@ -375,13 +373,6 @@
       hint="Znak se vloží hned po zvolení obou ramen."
       checked={modState.auto_insert}
       onChange={(v) => (modState.auto_insert = v)}
-    />
-    <OptionRow
-      label="Režim čísel"
-      hint="A–I, K čte jako 1–9, 0."
-      checked={modState.direct_nums}
-      isNonStandard={modState.direct_nums}
-      onChange={(v) => (modState.direct_nums = v)}
     />
     <OptionRow
       label="Pohled vysílajícího"

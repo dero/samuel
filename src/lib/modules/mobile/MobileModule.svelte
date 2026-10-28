@@ -333,7 +333,7 @@
   {/snippet}
 
   {#snippet reference()}
-    <MobileReference />
+    <MobileReference activeTool={modState.phoneMode} />
   {/snippet}
 
   {#snippet output()}

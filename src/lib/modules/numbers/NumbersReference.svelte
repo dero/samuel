@@ -1,616 +1,209 @@
 <script lang="ts">
-  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
+  import RefLayout from '../../components/reference/RefLayout.svelte';
+  import RefList from '../../components/reference/RefList.svelte';
+  import RefSection from '../../components/reference/RefSection.svelte';
+  import type { RefHelpData, RefTab } from '../../components/reference/refTypes';
 
   interface Props {
     letters: string[];
   }
 
-  let { letters: currentLetters }: Props = $props();
+  let { letters }: Props = $props();
 
-  type TabType = 'alphabet' | 'roman' | 'ascii';
+  type NumbersRefTab = 'alphabet' | 'roman' | 'ascii';
 
-  let activeTab = $state<TabType>('alphabet');
-
-  const tabs: SegmentOption<TabType>[] = [
+  const tabs: RefTab<NumbersRefTab>[] = [
     { id: 'alphabet', label: 'Abeceda' },
     { id: 'roman', label: 'Římská' },
     { id: 'ascii', label: 'ASCII' }
   ];
 
-  interface LetterRow {
-    char: string;
-    num: number;
-    bin: string;
-    oct: string;
-    hex: string;
-  }
-
-  const letterRows = $derived.by<LetterRow[]>(() => {
-    return currentLetters.map((char, index) => {
+  const letterRows = $derived(
+    letters.map((char, index) => {
       const num = index + 1;
-      const bin = num.toString(2).padStart(5, '0');
-      const oct = num.toString(8).padStart(2, '0');
-      const hex = num.toString(16).toUpperCase().padStart(2, '0');
-
       return {
         char,
         num,
-        bin,
-        oct,
-        hex
+        bin: num.toString(2).padStart(5, '0'),
+        oct: num.toString(8).padStart(2, '0'),
+        hex: num.toString(16).toUpperCase().padStart(2, '0')
       };
-    });
-  });
+    })
+  );
 
-  // ASCII table printable chars (32 to 126) - Znak, DEC, HEX
+  // Printable ASCII 32–126
   const asciiRows = Array.from({ length: 95 }, (_, i) => {
     const code = 32 + i;
-    const char = code === 32 ? '␣' : String.fromCharCode(code);
     return {
       code,
-      char,
-      hex: code.toString(16).toUpperCase()
+      char: code === 32 ? '␣' : String.fromCharCode(code),
+      hex: code.toString(16).toUpperCase(),
+      bin: code.toString(2).padStart(8, '0')
     };
   });
+
+  const ROMAN_SYMBOLS = [
+    ['I', 1], ['V', 5], ['X', 10], ['L', 50], ['C', 100], ['D', 500], ['M', 1000]
+  ] as const;
+
+  const ROMAN_SUBTRACTIONS = [
+    ['IV', 4], ['IX', 9], ['XL', 40], ['XC', 90], ['CD', 400], ['CM', 900]
+  ] as const;
+
+  const help: RefHelpData = {
+    controls: [
+      ['`Z:` a `DO:`', 'lišta nad klávesnicí: vstup a výstup. Klepnutí zvolí znak, římská čísla nebo soustavu.'],
+      ['Šipky mezi nimi', 'prohodí vstup a výstup'],
+      ['Prostřední tlačítko', 'potvrdí číslo, bez čísla vloží mezeru'],
+      ['Číslo ➔ znak', 'v menu: znak se vloží sám po celém bloku, např. 5 bitů'],
+      ['Indexovat od nuly', 'v menu: A = 0'],
+      ['Režim ASCII', 'v menu: 65 = A'],
+      ['Abeceda', 'v menu, obvykle anglická (26)']
+    ],
+    pitfalls: [
+      ['A = 0, nebo A = 1?', 'nedává-li text smysl → menu Indexovat od nuly'],
+      ['Čísla nad 26', 'nejspíš ASCII: `65` = A, `97` = a → menu Režim ASCII'],
+      ['Abeceda s CH', 'od I dál je vše o 1 vyšší'],
+      ['Bity', 'písmeno = 5 bitů (`00001` = A), ASCII = 7–8 bitů'],
+      ['`IIII`, `IC`, `IIX`', 'nekanonický zápis → vstup Římská volná']
+    ]
+  };
 </script>
 
-<div class="ref-container" data-allow-copy>
-  <div class="ref-header-controls">
-    <SegmentedControl
-      options={tabs}
-      value={activeTab}
-      ariaLabel="Přepínač referenčních tabulek"
-      onChange={(v) => (activeTab = v)}
-    />
+{#snippet tiles(items: readonly (readonly [string, number])[])}
+  <div class="tile-grid">
+    {#each items as [sym, val] (sym)}
+      <div class="tile">
+        <span class="tile-sym">{sym}</span>
+        <span class="tile-val">{val}</span>
+      </div>
+    {/each}
   </div>
+{/snippet}
 
-  <div class="ref-scroll-body">
-    {#if activeTab === 'alphabet'}
-      <div class="table-card">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th class="col-num">#</th>
-              <th class="col-char">Znak</th>
-              <th class="col-bin">BIN</th>
-              <th class="col-oct">OCT</th>
-              <th class="col-hex">HEX</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each letterRows as row (row.char + row.num)}
+<RefLayout {tabs} {help}>
+  {#snippet content(tab)}
+    {#if tab === 'alphabet'}
+      <RefSection title="Pořadí v abecedě" note="Podle abecedy v menu. Od nuly: odečíst 1.">
+        <div class="ref-table-wrap">
+          <table class="ref-table">
+            <thead>
               <tr>
-                <td class="col-num font-mono font-bold text-accent">{row.num}</td>
-                <td class="col-char font-accent">{row.char}</td>
-                <td class="col-bin font-mono">{row.bin}</td>
-                <td class="col-oct font-mono text-muted">{row.oct}</td>
-                <td class="col-hex font-mono">{row.hex}</td>
+                <th class="col-num">#</th>
+                <th>Znak</th>
+                <th class="col-val">BIN</th>
+                <th class="col-val">OCT</th>
+                <th class="col-val">HEX</th>
               </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
-    {:else if activeTab === 'roman'}
-      <div class="roman-ref-container">
-        <!-- 1. Základní symboly v layoutu klávesnice -->
-        <div class="power-card">
-          <div class="power-title">Základní symboly</div>
-          <div class="roman-numpad-ref">
-            <div class="roman-keypad-row row-top">
-              <div class="roman-symbol-tile">
-                <span class="symbol-letter">I</span>
-                <span class="symbol-val">1</span>
-              </div>
-              <div class="roman-symbol-tile">
-                <span class="symbol-letter">V</span>
-                <span class="symbol-val">5</span>
-              </div>
-              <div class="roman-symbol-tile">
-                <span class="symbol-letter">X</span>
-                <span class="symbol-val">10</span>
-              </div>
-            </div>
-            <div class="roman-keypad-row row-bottom">
-              <div class="roman-symbol-tile">
-                <span class="symbol-letter">L</span>
-                <span class="symbol-val">50</span>
-              </div>
-              <div class="roman-symbol-tile">
-                <span class="symbol-letter">C</span>
-                <span class="symbol-val">100</span>
-              </div>
-              <div class="roman-symbol-tile">
-                <span class="symbol-letter">D</span>
-                <span class="symbol-val">500</span>
-              </div>
-              <div class="roman-symbol-tile">
-                <span class="symbol-letter">M</span>
-                <span class="symbol-val">1000</span>
-              </div>
-            </div>
-          </div>
+            </thead>
+            <tbody>
+              {#each letterRows as row (row.num)}
+                <tr>
+                  <td class="col-num">{row.num}</td>
+                  <td class="col-name">{row.char}</td>
+                  <td class="col-val">{row.bin}</td>
+                  <td class="col-val is-muted">{row.oct}</td>
+                  <td class="col-val">{row.hex}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
         </div>
+      </RefSection>
+    {:else if tab === 'roman'}
+      <RefSection title="Symboly">
+        {@render tiles(ROMAN_SYMBOLS)}
+      </RefSection>
 
-        <!-- 2. Odčítací kombinace (Subtrakce) - 3x2 mřížka -->
-        <div class="power-card">
-          <div class="power-title">Odčítání</div>
-          <div class="subtraction-grid">
-            <div class="subtraction-tile">
-              <span class="sub-sym">IV</span>
-              <span class="sub-val">4</span>
-            </div>
-            <div class="subtraction-tile">
-              <span class="sub-sym">XL</span>
-              <span class="sub-val">40</span>
-            </div>
-            <div class="subtraction-tile">
-              <span class="sub-sym">CD</span>
-              <span class="sub-val">400</span>
-            </div>
-            <div class="subtraction-tile">
-              <span class="sub-sym">IX</span>
-              <span class="sub-val">9</span>
-            </div>
-            <div class="subtraction-tile">
-              <span class="sub-sym">XC</span>
-              <span class="sub-val">90</span>
-            </div>
-            <div class="subtraction-tile">
-              <span class="sub-sym">CM</span>
-              <span class="sub-val">900</span>
-            </div>
-          </div>
-        </div>
+      <RefSection title="Odčítání">
+        {@render tiles(ROMAN_SUBTRACTIONS)}
+      </RefSection>
 
-        <!-- 3. Jak se skládají čísla (Pravidla a víceřádkový rozklad) -->
-        <div class="power-card">
-          <div class="power-title">Rozklad po řádech</div>
-          <div class="roman-explanation-card">
-            <div class="roman-examples-list">
-              <div class="example-card">
-                <div class="example-header">
-                  <span class="ex-num font-mono">1984</span>
-                  <span class="ex-arrow">➔</span>
-                  <span class="ex-result font-mono text-accent">MCMLXXXIV</span>
-                </div>
-                <div class="example-breakdown font-mono">
-                  <span class="breakdown-part"><span class="bp-val">1000</span> <span class="bp-rom">M</span></span>
-                  <span class="bp-plus">+</span>
-                  <span class="breakdown-part"><span class="bp-val">900</span> <span class="bp-rom">CM</span></span>
-                  <span class="bp-plus">+</span>
-                  <span class="breakdown-part"><span class="bp-val">80</span> <span class="bp-rom">LXXX</span></span>
-                  <span class="bp-plus">+</span>
-                  <span class="breakdown-part"><span class="bp-val">4</span> <span class="bp-rom">IV</span></span>
-                </div>
-              </div>
+      <RefSection title="Příklady" note="Po řádech, zleva od největšího.">
+        <RefList
+          items={[
+            ['1984', '`M` `CM` `LXXX` `IV` = MCMLXXXIV'],
+            ['49', '`XL` `IX` = XLIX, ne IL'],
+            ['99', '`XC` `IX` = XCIX, ne IC']
+          ]}
+        />
+      </RefSection>
 
-              <div class="example-card">
-                <div class="example-header">
-                  <span class="ex-num font-mono">2026</span>
-                  <span class="ex-arrow">➔</span>
-                  <span class="ex-result font-mono text-accent">MMXXVI</span>
-                </div>
-                <div class="example-breakdown font-mono">
-                  <span class="breakdown-part"><span class="bp-val">2000</span> <span class="bp-rom">MM</span></span>
-                  <span class="bp-plus">+</span>
-                  <span class="breakdown-part"><span class="bp-val">20</span> <span class="bp-rom">XX</span></span>
-                  <span class="bp-plus">+</span>
-                  <span class="breakdown-part"><span class="bp-val">6</span> <span class="bp-rom">VI</span></span>
-                </div>
-              </div>
+      <RefSection title="Kanonický zápis">
+        <RefList
+          items={[
+            '`I` `X` `C` `M` nejvýš 3× za sebou',
+            '`V` `L` `D` se neopakují',
+            'Odčítá se jeden symbol: `I` před `V X`, `X` před `L C`, `C` před `D M`'
+          ]}
+        />
+      </RefSection>
 
-              <div class="example-card">
-                <div class="example-header">
-                  <span class="ex-num font-mono">444</span>
-                  <span class="ex-arrow">➔</span>
-                  <span class="ex-result font-mono text-accent">CDXLIV</span>
-                </div>
-                <div class="example-breakdown font-mono">
-                  <span class="breakdown-part"><span class="bp-val">400</span> <span class="bp-rom">CD</span></span>
-                  <span class="bp-plus">+</span>
-                  <span class="breakdown-part"><span class="bp-val">40</span> <span class="bp-rom">XL</span></span>
-                  <span class="bp-plus">+</span>
-                  <span class="breakdown-part"><span class="bp-val">4</span> <span class="bp-rom">IV</span></span>
-                </div>
-              </div>
-
-              <div class="example-card">
-                <div class="example-header">
-                  <span class="ex-num font-mono">49</span>
-                  <span class="ex-arrow">➔</span>
-                  <span class="ex-result font-mono text-accent">XLIX</span>
-                  <span class="ex-note text-muted">ne IL</span>
-                </div>
-                <div class="example-breakdown font-mono">
-                  <span class="breakdown-part"><span class="bp-val">40</span> <span class="bp-rom">XL</span></span>
-                  <span class="bp-plus">+</span>
-                  <span class="breakdown-part"><span class="bp-val">9</span> <span class="bp-rom">IX</span></span>
-                </div>
-              </div>
-
-              <div class="example-card">
-                <div class="example-header">
-                  <span class="ex-num font-mono">99</span>
-                  <span class="ex-arrow">➔</span>
-                  <span class="ex-result font-mono text-accent">XCIX</span>
-                  <span class="ex-note text-muted">ne IC</span>
-                </div>
-                <div class="example-breakdown font-mono">
-                  <span class="breakdown-part"><span class="bp-val">90</span> <span class="bp-rom">XC</span></span>
-                  <span class="bp-plus">+</span>
-                  <span class="breakdown-part"><span class="bp-val">9</span> <span class="bp-rom">IX</span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Pravidla zápisu -->
-        <div class="power-card">
-          <div class="power-title">Pravidla zápisu</div>
-          <div class="roman-rules-list">
-            <div class="rule-item">
-              <span class="rule-badge is-canonical">Kanonická</span>
-              <ul class="rule-bullets">
-                <li><code>I</code> <code>X</code> <code>C</code> <code>M</code> nejvýše 3× za sebou.</li>
-                <li><code>V</code> <code>L</code> <code>D</code> se neopakují.</li>
-                <li>Odčítá se jen jeden symbol: <code>I</code> před <code>V X</code>, <code>X</code> před <code>L C</code>, <code>C</code> před <code>D M</code>.</li>
-              </ul>
-            </div>
-            <div class="rule-item">
-              <span class="rule-badge is-loose">Volná</span>
-              <ul class="rule-bullets">
-                <li><strong>Aditivní:</strong> <code>IIII</code> = 4, <code>VIIII</code> = 9, <code>XXXX</code> = 40.</li>
-                <li><strong>Zkratky:</strong> <code>IC</code> = 99, <code>IL</code> = 49, <code>XM</code> = 990.</li>
-                <li><strong>Vícenásobné odčítání:</strong> <code>IIV</code> = 3, <code>IIX</code> = 8.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    {:else if activeTab === 'ascii'}
-      <div class="table-card">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th class="col-ascii-char">Znak</th>
-              <th class="col-num">DEC</th>
-              <th class="col-hex">HEX</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each asciiRows as row (row.code)}
+      <RefSection title="Volný zápis">
+        <RefList
+          items={[
+            ['Sčítání', '`IIII` = 4, `VIIII` = 9, `XXXX` = 40'],
+            ['Zkratky', '`IC` = 99, `IL` = 49, `XM` = 990'],
+            ['Víc odčítání', '`IIV` = 3, `IIX` = 8']
+          ]}
+        />
+      </RefSection>
+    {:else}
+      <RefSection title="ASCII" note="Velká písmena `65–90`, malá `97–122`, číslice `48–57`.">
+        <div class="ref-table-wrap">
+          <table class="ref-table">
+            <thead>
               <tr>
-                <td class="col-ascii-char font-accent">{row.char}</td>
-                <td class="col-num font-mono">{row.code}</td>
-                <td class="col-hex font-mono text-accent">{row.hex}</td>
+                <th>Znak</th>
+                <th class="col-val">DEC</th>
+                <th class="col-val">HEX</th>
+                <th class="col-val">BIN</th>
               </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {#each asciiRows as row (row.code)}
+                <tr>
+                  <td class="col-name">{row.char}</td>
+                  <td class="col-val">{row.code}</td>
+                  <td class="col-val">{row.hex}</td>
+                  <td class="col-val is-muted">{row.bin}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </RefSection>
     {/if}
-  </div>
-</div>
+  {/snippet}
+</RefLayout>
 
 <style>
-  .ref-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    gap: var(--space-sm);
-  }
-
-  .ref-header-controls {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    flex-shrink: 0;
-  }
-
-  .ref-scroll-body {
-    flex: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-bottom: var(--space-lg);
-  }
-
-  .table-card {
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-  }
-
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: var(--text-sm);
-    text-align: left;
-  }
-
-  .data-table th {
-    padding: var(--space-sm);
-    background-color: var(--color-surface-2);
-    color: var(--color-text-secondary);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    border-bottom: 1px solid var(--color-border-subtle);
-    position: sticky;
-    top: 0;
-    z-index: 2;
-  }
-
-  .data-table td {
-    padding: var(--space-xs) var(--space-sm);
-    border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .data-table tr:last-child td {
-    border-bottom: none;
-  }
-
-  .col-num {
-    width: 15%;
-  }
-
-  .col-char {
-    width: 20%;
-  }
-
-  .font-accent {
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    font-size: var(--text-base);
-  }
-
-  .font-mono {
-    font-family: var(--font-mono, monospace);
-  }
-
-  .font-bold {
-    font-weight: 700;
-  }
-
-  .text-muted {
-    color: var(--color-text-secondary);
-  }
-
-  .text-accent {
-    color: var(--color-accent-primary);
-  }
-
-  .power-card {
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-  }
-
-  .power-title {
-    padding: var(--space-sm);
-    background-color: var(--color-surface-2);
-    font-weight: 600;
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .roman-ref-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  /* Roman numpad keypad ref layout */
-  .roman-numpad-ref {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    padding: var(--space-sm);
-  }
-
-  .roman-keypad-row {
+  .tile-grid {
     display: grid;
-    gap: var(--space-xs);
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    gap: 4px;
   }
 
-  .roman-keypad-row.row-top {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .roman-keypad-row.row-bottom {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .roman-symbol-tile {
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
+  .tile {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     padding: 6px 4px;
-    gap: 2px;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xs);
   }
 
-  .symbol-letter {
-    font-family: var(--font-mono, monospace);
+  .tile-sym {
+    font-family: var(--font-mono);
     font-size: var(--text-base);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    line-height: 1.1;
-  }
-
-  .symbol-val {
-    font-family: var(--font-mono, monospace);
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-  }
-
-  /* Subtraction 3x2 grid */
-  .subtraction-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-xs);
-    padding: var(--space-sm);
-  }
-
-  .subtraction-tile {
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 4px;
-    gap: 2px;
-  }
-
-  .sub-sym {
-    font-family: var(--font-mono, monospace);
-    font-size: var(--text-sm);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    line-height: 1.1;
-  }
-
-  .sub-val {
-    font-family: var(--font-mono, monospace);
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-  }
-
-  /* Number formation multiline breakdown */
-  .roman-explanation-card {
-    padding: var(--space-sm);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-
-  .roman-examples-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    margin-top: 2px;
-  }
-
-  .example-card {
-    background-color: var(--color-surface-2);
-    border-radius: var(--radius-sm);
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .example-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--text-xs);
-  }
-
-  .ex-num {
-    font-weight: 700;
-    color: var(--color-text-primary);
-  }
-
-  .ex-arrow {
-    color: var(--color-text-muted);
-    font-size: var(--text-2xs);
-  }
-
-  .ex-result {
-    font-weight: 700;
-  }
-
-  .ex-note {
-    font-size: var(--text-xs);
-    margin-left: auto;
-  }
-
-  .example-breakdown {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 6px;
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    padding-top: 2px;
-  }
-
-  .breakdown-part {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background-color: var(--color-surface-1);
-    padding: 1px 5px;
-    border-radius: var(--radius-xs);
-    border: 1px solid var(--color-border-subtle);
-  }
-
-  .bp-val {
-    color: var(--color-text-secondary);
-  }
-
-  .bp-rom {
-    font-weight: 700;
-    color: var(--color-text-primary);
-  }
-
-  .bp-plus {
-    color: var(--color-text-muted);
-    font-size: var(--text-2xs);
-  }
-
-  /* Rules */
-  .roman-rules-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    padding: var(--space-sm);
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    line-height: 1.4;
-  }
-
-  .rule-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .rule-bullets {
-    margin: 4px 0 0 0;
-    padding-left: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-
-  .rule-badge {
-    display: inline-flex;
-    align-self: flex-start;
-    padding: 2px 6px;
-    border-radius: var(--radius-xs);
-    font-size: var(--text-2xs);
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-
-  .rule-badge.is-canonical {
-    background-color: var(--color-accent-primary-subtle);
+    font-weight: 800;
     color: var(--color-accent-primary);
   }
 
-  .rule-badge.is-loose {
-    background-color: var(--color-accent-warning-subtle);
-    color: var(--color-accent-warning);
+  .tile-val {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
   }
 </style>

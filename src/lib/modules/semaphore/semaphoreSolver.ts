@@ -10,7 +10,12 @@ import { removeDiacritics } from '../../utils/text';
 export interface SemaphoreDecodeOptions {
   mirrorX?: boolean;
   rotate180?: boolean;
-  directNumbers?: boolean;
+}
+
+export interface SemaphoreTypingState {
+  text: string;
+  /** Numerals mode: after `#`, A–I and K read as 1–9 and 0 until `J`. */
+  numMode: boolean;
 }
 
 /**
@@ -35,15 +40,35 @@ export function decodePair(
 /**
  * Returns character to insert/display for an entry
  */
-export function getCharForEntry(
-  entry: SemaphoreEntry | null,
-  options: SemaphoreDecodeOptions = {}
-): string {
+export function getCharForEntry(entry: SemaphoreEntry | null, numMode: boolean = false): string {
   if (!entry) return '';
-  if (options.directNumbers && entry.digit) {
+  if (numMode && entry.digit) {
     return entry.digit;
   }
   return entry.char;
+}
+
+/**
+ * Applies one signal by the standard rules: `#` switches to numerals until `J`
+ * (neither is written), and Omyl (CANCEL) erases the previous character.
+ */
+export function applySemaphoreEntry(
+  state: SemaphoreTypingState,
+  entry: SemaphoreEntry
+): SemaphoreTypingState {
+  if (entry.char === '#') return { text: state.text, numMode: true };
+  if (entry.char === 'CANCEL') return { text: state.text.slice(0, -1), numMode: state.numMode };
+  if (entry.char === 'J' && state.numMode) return { text: state.text, numMode: false };
+  return { text: state.text + getCharForEntry(entry, state.numMode), numMode: state.numMode };
+}
+
+/**
+ * Label for a signal before it is applied (pending key, dial hints).
+ */
+export function previewSemaphoreEntry(entry: SemaphoreEntry | null, numMode: boolean): string {
+  if (!entry) return '';
+  if (entry.char === 'CANCEL') return '⌫';
+  return getCharForEntry(entry, numMode);
 }
 
 /**
@@ -69,7 +94,7 @@ export function normalizeSemaphoreInput(
       const d2 = parseInt(digits[i + 1], 10);
       const entry = decodePair(d1, d2, options);
       if (entry) {
-        result += getCharForEntry(entry, options);
+        result += getCharForEntry(entry);
       } else {
         result += '?';
       }

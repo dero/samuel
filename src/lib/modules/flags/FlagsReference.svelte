@@ -1,19 +1,28 @@
 <script lang="ts">
-  import {
-    LETTER_FLAGS,
-    NUMBER_FLAGS,
-    FLAG_COLORS,
-    type FlagItem
-  } from './flagsData';
+  import RefLayout from '../../components/reference/RefLayout.svelte';
+  import type { RefHelpData, RefTab } from '../../components/reference/refTypes';
+  import { LETTER_FLAGS, NUMBER_FLAGS, FLAG_COLORS, type FlagItem } from './flagsData';
   import FlagSvg from './FlagSvg.svelte';
-  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
 
-  let activeTab = $state<'letters' | 'numbers'>('letters');
+  type FlagsRefTab = 'letters' | 'numbers';
 
-  const tabs: SegmentOption<'letters' | 'numbers'>[] = [
+  const tabs: RefTab<FlagsRefTab>[] = [
     { id: 'letters', label: 'Písmena', badge: LETTER_FLAGS.length },
     { id: 'numbers', label: 'Číslice', badge: NUMBER_FLAGS.length }
   ];
+
+  const help: RefHelpData = {
+    controls: [
+      ['Barvy dole', 'nechají jen vlajky, které mají všechny zvolené barvy'],
+      ['Klepnutí na vlajku', 'vloží písmeno'],
+      ['Backspace', 'nejdřív zruší filtr barev, pak maže text'],
+      ['Rušit filtr po zadání', 'v menu: filtr se po každé vlajce vynuluje']
+    ],
+    pitfalls: [
+      ['Filtr barev', 'hledí jen na přítomnost barvy, ne na tvar ani rozmístění'],
+      ['Číslice', 'klávesnice má jen písmena. Číselné praporce jsou v záložce Číslice.']
+    ]
+  };
 
   function getColorHex(colorId: string): string {
     return FLAG_COLORS.find((c) => c.id === colorId)?.hex ?? '#888';
@@ -24,108 +33,42 @@
   }
 </script>
 
-<div class="ref-container">
-  <!-- Pinned Top: Tabs -->
-  <div class="pinned-header">
-    <SegmentedControl
-      options={tabs}
-      value={activeTab}
-      onChange={(val) => (activeTab = val)}
-    />
-  </div>
+{#snippet flagCard(flag: FlagItem, pennant: boolean)}
+  <div class="flag-card">
+    <div class="flag-preview-box" class:pennant>
+      <FlagSvg {flag} />
+    </div>
 
-  <!-- Scrollable entries area -->
-  <div class="table-scroll">
-    {#if activeTab === 'letters'}
-      <div class="flags-list">
-        {#each LETTER_FLAGS as flag (flag.code)}
-          <div class="flag-card">
-            <div class="flag-preview-box">
-              <FlagSvg {flag} />
-            </div>
+    <div class="flag-info">
+      <div class="flag-title-row">
+        <span class="flag-code">{flag.code}</span>
+        <span class="flag-nato">{flag.name}</span>
+      </div>
 
-            <div class="flag-info">
-              <div class="flag-title-row">
-                <span class="flag-code">{flag.code}</span>
-                <span class="flag-nato">{flag.name}</span>
-              </div>
+      {#if !pennant}
+        <div class="flag-meaning">{flag.meaning}</div>
+      {/if}
 
-              <div class="flag-meaning">
-                {flag.meaning}
-              </div>
-
-              <div class="flag-colors-row">
-                {#each flag.colors as c}
-                  <span
-                    class="color-dot"
-                    style:background-color={getColorHex(c)}
-                    title={getColorName(c)}
-                  ></span>
-                {/each}
-              </div>
-            </div>
-          </div>
+      <div class="flag-colors-row">
+        {#each flag.colors as c (c)}
+          <span class="color-dot" style:background-color={getColorHex(c)} title={getColorName(c)}></span>
         {/each}
       </div>
-    {:else}
-      <div class="flags-list">
-        {#each NUMBER_FLAGS as flag (flag.code)}
-            <div class="flag-card">
-              <div class="flag-preview-box pennant">
-                <FlagSvg {flag} />
-              </div>
-
-              <div class="flag-info">
-                <div class="flag-title-row">
-                  <span class="flag-code">{flag.code}</span>
-                  <span class="flag-nato">{flag.name}</span>
-                </div>
-
-                <div class="flag-colors-row">
-                  {#each flag.colors as c}
-                    <span
-                      class="color-dot"
-                      style:background-color={getColorHex(c)}
-                      title={getColorName(c)}
-                    ></span>
-                  {/each}
-                </div>
-              </div>
-            </div>
-          {/each}
-        </div>
-    {/if}
+    </div>
   </div>
-</div>
+{/snippet}
+
+<RefLayout {tabs} {help}>
+  {#snippet content(tab)}
+    <div class="flags-list">
+      {#each tab === 'letters' ? LETTER_FLAGS : NUMBER_FLAGS as flag (flag.code)}
+        {@render flagCard(flag, tab === 'numbers')}
+      {/each}
+    </div>
+  {/snippet}
+</RefLayout>
 
 <style>
-  .ref-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    gap: var(--space-sm);
-  }
-
-  .pinned-header {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-
-
-  .table-scroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: var(--space-lg);
-    padding-right: 2px;
-  }
-
   .flags-list {
     display: flex;
     flex-direction: column;

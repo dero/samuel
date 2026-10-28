@@ -1,223 +1,154 @@
 <script lang="ts">
-  import { settings } from '../../state/settings.svelte';
+  import RefLayout from '../../components/reference/RefLayout.svelte';
+  import RefList from '../../components/reference/RefList.svelte';
+  import RefSection from '../../components/reference/RefSection.svelte';
+  import type { RefHelpData, RefTab, RefTool } from '../../components/reference/refTypes';
+  import type { ShiftType } from './shiftsData';
 
   interface Props {
     letters: string[];
+    /** Cipher currently active in the module (opens its help). */
+    activeTool: ShiftType;
   }
 
-  let { letters }: Props = $props();
+  let { letters, activeTool }: Props = $props();
 
-  let activeTab = $state<'caesar' | 'vigenere' | 'autokey'>('caesar');
+  type ShiftsRefTab = 'table' | 'rules';
+
+  const tabs: RefTab<ShiftsRefTab>[] = [
+    { id: 'table', label: 'Tabula recta' },
+    { id: 'rules', label: 'Vzorce' }
+  ];
+
+  const tools: RefTool<ShiftType>[] = [
+    {
+      id: 'caesar',
+      label: 'Cézar',
+      help: {
+        controls: [
+          ['Výsledek', 'všechny posuny, nejpravděpodobnější zvýrazněný. Klepnutí zkopíruje.'],
+          ['Zvýraznit nejlepší posun', 'v menu']
+        ],
+        pitfalls: [['Nejlepší posun', 'odhad podle češtiny, u krátkého textu nespolehlivý']]
+      }
+    },
+    {
+      id: 'vigenere',
+      label: 'Vigenère',
+      help: {
+        controls: [['Klíč', 'řádek klíče: heslo nebo čísla']],
+        pitfalls: [
+          ['Klíč `A` = posun 0', 'počítá-li zadání A = 1, posunout klíč o jedno písmeno'],
+          ['Posun nad 9', 'čísla oddělit mezerou: `12 5`. Bez mezer `314` = 3, 1, 4.']
+        ]
+      }
+    },
+    {
+      id: 'autokey',
+      label: 'Autokey',
+      help: {
+        controls: [
+          ['Heslo', 'počáteční klíč, dál pokračuje textem zprávy'],
+          ['Pruh Klíč', 'ukáže průběh klíče']
+        ],
+        pitfalls: [
+          ['Varianta', 'jen otevřený text jako klíč, ne šifrový'],
+          ['Heslo `A` = posun 0', 'počítá-li zadání A = 1, posunout heslo o jedno písmeno']
+        ]
+      }
+    }
+  ];
+
+  const help: RefHelpData = {
+    controls: [
+      ['Cézar / Vigenère / Autokey', 'lišta nad zadáním'],
+      ['Text', 'řádek dole otevře editor'],
+      ['Zachovat mezery a interpunkci', 'v menu']
+    ],
+    pitfalls: [['Abeceda s CH', 'posuny v 27 znacích dávají jiný výsledek → menu Abeceda']]
+  };
 </script>
 
-<div class="ref-wrapper">
-  <!-- Reference Tabs -->
-  <div class="ref-tabs">
-    <button
-      type="button"
-      class="ref-tab-btn"
-      class:is-active={activeTab === 'caesar'}
-      onclick={() => {
-        settings.vibrate(15);
-        activeTab = 'caesar';
-      }}
-    >
-      Cézar
-    </button>
-    <button
-      type="button"
-      class="ref-tab-btn"
-      class:is-active={activeTab === 'vigenere'}
-      onclick={() => {
-        settings.vibrate(15);
-        activeTab = 'vigenere';
-      }}
-    >
-      Vigenère
-    </button>
-    <button
-      type="button"
-      class="ref-tab-btn"
-      class:is-active={activeTab === 'autokey'}
-      onclick={() => {
-        settings.vibrate(15);
-        activeTab = 'autokey';
-      }}
-    >
-      Autokey
-    </button>
-  </div>
-
-  <div class="ref-content" data-allow-copy>
-    {#if activeTab === 'caesar'}
-      <section class="ref-section">
-        <h3>Caesarova šifra</h3>
-        <p>Každé písmeno posunuto o stejné <code>k</code> v abecedě délky <code>N</code>.</p>
-
-        <div class="formula-box font-mono">
-          <div>Šifrování: C = (P + k) mod N</div>
-          <div>Dešifrování: P = (C - k) mod N</div>
-        </div>
-
-        <h4>ROT13</h4>
-        <p>Posun o 13 v 26 písmenech. Šifrování i dešifrování je totéž.</p>
-      </section>
-    {:else if activeTab === 'vigenere'}
-      <section class="ref-section">
-        <h3>Vigenèrova šifra</h3>
-        <p>Posun se mění podle písmen opakujícího se hesla.</p>
-
-        <div class="formula-box font-mono">
-          <div>Šifrování: C_i = (P_i + K_i) mod N</div>
-          <div>Dešifrování: P_i = (C_i - K_i) mod N</div>
-        </div>
-
-        <h4>Gronsfeld</h4>
-        <p>Klíčem jsou číslice, např. <code>314159</code>. Zadávají se přímo do pole klíče.</p>
-
-        <h4>Tabula recta</h4>
-        <div class="table-scroll">
-          <table class="tabula-recta font-mono">
+<RefLayout {tabs} {help} {tools} {activeTool}>
+  {#snippet content(tab)}
+    {#if tab === 'table'}
+      <RefSection
+        title="Tabula recta"
+        note="Řádek = písmeno klíče, sloupec = písmeno textu, průsečík = šifra."
+      >
+        <div class="ref-table-wrap">
+          <table class="tabula-recta">
             <thead>
               <tr>
                 <th class="corner-th"></th>
-                {#each letters as l}
+                {#each letters as l, i (i)}
                   <th>{l}</th>
                 {/each}
               </tr>
             </thead>
             <tbody>
-              {#each letters as rowL, rowIdx}
+              {#each letters as rowL, rowIdx (rowIdx)}
                 <tr>
                   <th class="row-th">{rowL}</th>
-                  {#each letters as colL, colIdx}
-                    {@const shiftedIdx = (rowIdx + colIdx) % letters.length}
-                    <td>{letters[shiftedIdx]}</td>
+                  {#each letters as _, colIdx (colIdx)}
+                    <td>{letters[(rowIdx + colIdx) % letters.length]}</td>
                   {/each}
                 </tr>
               {/each}
             </tbody>
           </table>
         </div>
-      </section>
-    {:else if activeTab === 'autokey'}
-      <section class="ref-section">
-        <h3>Autokey</h3>
-        <p>Heslo se neopakuje – po úvodním klíči (primeru) pokračuje textem zprávy.</p>
+      </RefSection>
+    {:else}
+      <RefSection title="Cézar" note="Stejný posun `k` pro všechna písmena, `N` = délka abecedy.">
+        <RefList
+          items={[
+            ['Šifrování', '`C = (P + k) mod N`'],
+            ['Dešifrování', '`P = (C − k) mod N`'],
+            ['Posun zpět', '`−k` = `+(N − k)`'],
+            ['ROT13', 'posun 13 v 26 písmenech, tam i zpět stejně']
+          ]}
+        />
+      </RefSection>
 
-        <h4>Otevřený text jako klíč</h4>
-        <div class="formula-box font-mono">
-          <div>Zpráva:  J D E T E N A R O Z C E S T I</div>
-          <div>Primer:  K O D</div>
-          <div>Klíč:    K O D J D E T E N A R O Z C E</div>
-        </div>
+      <RefSection title="Vigenère" note="Posun se mění podle písmen opakovaného hesla.">
+        <RefList
+          items={[
+            ['Šifrování', '`Cᵢ = (Pᵢ + Kᵢ) mod N`'],
+            ['Dešifrování', '`Pᵢ = (Cᵢ − Kᵢ) mod N`'],
+            ['Gronsfeld', 'klíč z číslic, každá číslice = posun: `314159`']
+          ]}
+        />
+      </RefSection>
 
-        <h4>Šifrový text jako klíč</h4>
-        <p>Po primeru pokračuje klíč už zašifrovanými znaky.</p>
-      </section>
+      <RefSection title="Autokey" note="Heslo se neopakuje, pokračuje otevřeným textem.">
+        <RefList
+          items={[
+            ['Zpráva', '`JDETENAROZCESTI`'],
+            ['Heslo', '`KOD`'],
+            ['Klíč', '`KODJDETENAROZCE`']
+          ]}
+        />
+      </RefSection>
     {/if}
-  </div>
-</div>
+  {/snippet}
+</RefLayout>
 
 <style>
-  .ref-wrapper {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .ref-tabs {
-    display: flex;
-    background-color: var(--color-surface-1);
-    border-bottom: 1px solid var(--color-border-subtle);
-    padding: var(--space-2xs) var(--space-sm);
-    gap: 4px;
-    flex-shrink: 0;
-  }
-
-  .ref-tab-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    padding: 6px 8px;
-    color: var(--color-text-secondary);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: var(--radius-xs);
-    transition: background-color 0.1s ease, color 0.1s ease;
-  }
-
-  .ref-tab-btn.is-active {
-    background-color: var(--color-surface-3);
-    color: var(--color-accent-primary);
-  }
-
-  .ref-content {
-    flex: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: var(--space-md);
-    color: var(--color-text-secondary);
-    font-size: var(--text-sm);
-    line-height: 1.5;
-  }
-
-  .ref-section h3 {
-    color: var(--color-text-primary);
-    font-size: var(--text-base);
-    margin: 0 0 var(--space-xs) 0;
-  }
-
-  .ref-section h4 {
-    color: var(--color-text-primary);
-    font-size: var(--text-sm);
-    margin: var(--space-md) 0 var(--space-2xs) 0;
-  }
-
-  .ref-section p {
-    margin: 0 0 var(--space-sm) 0;
-  }
-
-  .formula-box {
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm);
-    color: var(--color-accent-primary);
-    font-size: var(--text-xs);
-    line-height: 1.6;
-    margin: var(--space-xs) 0 var(--space-sm) 0;
-  }
-
-  .ref-section p code {
-    font-family: var(--font-mono);
-    color: var(--color-accent-primary);
-  }
-
-  .table-scroll {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 280px;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    margin-top: var(--space-xs);
-  }
-
   .tabula-recta {
-    border-collapse: collapse;
-    font-size: 10px;
-    background-color: var(--color-surface-2);
     width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 10px;
     text-align: center;
+    background-color: var(--color-surface-2);
   }
 
   .tabula-recta th,
   .tabula-recta td {
+    min-width: 16px;
     padding: 3px 5px;
     border: 1px solid var(--color-border-subtle);
-    min-width: 16px;
   }
 
   .tabula-recta th {

@@ -108,10 +108,13 @@ export interface KeyToken {
 /**
  * Parses a key string for Vigenère/Gronsfeld:
  * Supports alphabetical letters (index in alphabet) or numerical digits (direct shift value).
+ * Gronsfeld: a run of digits is one shift per digit (`314` = 3, 1, 4). Only when numbers
+ * are separated (`12 5`, `12,5`) is each number one shift, which allows shifts above 9.
  */
 export function parseKey(keyText: string, alphabetLetters: string[]): KeyToken[] {
   if (!keyText) return [];
   const keyTokens: KeyToken[] = [];
+  const separatedNumbers = /\d[\s,;/-]+\d/.test(keyText);
   const sortedLetters = [...alphabetLetters]
     .map((letter, index) => ({ letter, index }))
     .sort((a, b) => b.letter.length - a.letter.length);
@@ -120,6 +123,11 @@ export function parseKey(keyText: string, alphabetLetters: string[]): KeyToken[]
   while (i < keyText.length) {
     // Check for digit (Gronsfeld shift)
     if (/\d/.test(keyText[i])) {
+      if (!separatedNumbers) {
+        keyTokens.push({ raw: keyText[i], shiftVal: parseInt(keyText[i], 10) });
+        i++;
+        continue;
+      }
       let numStr = '';
       while (i < keyText.length && /\d/.test(keyText[i])) {
         numStr += keyText[i];

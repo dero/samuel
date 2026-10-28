@@ -61,6 +61,36 @@ export function normalizeMorse(raw: string): string {
 }
 
 /**
+ * Converts any Morse notation (spaced, `|`, `•`…) to the raw symbol stream the module
+ * stores: only `.`, `-` and `/`, exactly one `/` per separator press.
+ */
+export function toRawMorse(text: string): string {
+  return text
+    .replace(/[•*·]/g, '.')
+    .replace(/[—–_]/g, '-')
+    .replace(/[|]/g, '/')
+    .replace(/[^.\-/]/g, '');
+}
+
+export interface RawMorseSegment {
+  /** Dots and dashes of one letter ('' for a leading separator run). */
+  code: string;
+  /** Number of `/` after the code: 1 = letter, 2 = word, 3+ = STOP, 0 = unfinished. */
+  sep: number;
+}
+
+/**
+ * Splits a raw Morse stream into letters and the separator runs that follow them.
+ * Any number of separators is kept, so permuted input (separator = dot…) survives.
+ */
+export function splitRawMorse(raw: string): RawMorseSegment[] {
+  return [...raw.matchAll(/[.-]+\/*|\/+/g)].map(([part]) => {
+    const code = part.replace(/\/+$/, '');
+    return { code, sep: part.length - code.length };
+  });
+}
+
+/**
  * Decodes a single Morse code token to an uppercase letter, digit, or punctuation mark.
  */
 export function decodeMorseLetter(
@@ -290,20 +320,8 @@ export function getPermutations(
     };
   });
 
-  // Add Reverse - preserve word and letter structures
-  const words = morse.trim().split(/\s*\/\/\s*|\s{2,}/);
-  const reversedMorse = words
-    .filter(Boolean)
-    .reverse()
-    .map((w) =>
-      w
-        .split(/[\/\s]+/)
-        .filter(Boolean)
-        .reverse()
-        .map((letter) => letter.split('').reverse().join(''))
-        .join(' / ')
-    )
-    .join(' // ');
+  // Add Reverse: the whole symbol stream read backwards (letters, codes and separators)
+  const reversedMorse = toRawMorse(morse).split('').reverse().join('');
   const reversedDecoded = decodeMorse(reversedMorse, optionsOrParseCH, parseDigits, parseOther);
 
   results.push({

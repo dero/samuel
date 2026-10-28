@@ -80,6 +80,8 @@
   });
 
   const activeLetters = $derived<string[]>(currentLayout.letters);
+  const lettersForTool = (toolId: CrossType): string[] =>
+    (alphabet.getLayout(toolAlphabetMap[toolId]) ?? alphabet.layouts[0]).letters;
 
   const polishSelectedChar = $derived.by(() => {
     if (selectedAxis1 !== null && selectedAxis2 !== null && selectedAxis3 !== null) {
@@ -182,7 +184,11 @@
   {/snippet}
 
   {#snippet reference()}
-    <CrossReference />
+    <CrossReference
+      largeLetters={lettersForTool('large-polish')}
+      pigpenLetters={lettersForTool('small-polish')}
+      activeTool={crossTypeId}
+    />
   {/snippet}
 
   {#snippet output()}

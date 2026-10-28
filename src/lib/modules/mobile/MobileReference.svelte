@@ -1,101 +1,120 @@
-<div class="reference-content">
-  <section class="ref-section">
-    <h3 class="ref-heading">Klávesnice telefonu</h3>
+<script lang="ts">
+  import RefLayout from '../../components/reference/RefLayout.svelte';
+  import RefList from '../../components/reference/RefList.svelte';
+  import RefSection from '../../components/reference/RefSection.svelte';
+  import type { RefHelpData, RefTool } from '../../components/reference/refTypes';
+  import { PHONE_GRID, getPhoneKeyLetters } from './mobileData';
 
-    <div class="phone-grid-preview">
-      <div class="phone-key-card"><span class="key-num">1</span><span class="key-chars">. , ? !</span></div>
-      <div class="phone-key-card"><span class="key-num">2</span><span class="key-chars">A B C</span></div>
-      <div class="phone-key-card"><span class="key-num">3</span><span class="key-chars">D E F</span></div>
-      <div class="phone-key-card"><span class="key-num">4</span><span class="key-chars">G H I</span></div>
-      <div class="phone-key-card"><span class="key-num">5</span><span class="key-chars">J K L</span></div>
-      <div class="phone-key-card"><span class="key-num">6</span><span class="key-chars">M N O</span></div>
-      <div class="phone-key-card"><span class="key-num">7</span><span class="key-chars">P Q R S</span></div>
-      <div class="phone-key-card"><span class="key-num">8</span><span class="key-chars">T U V</span></div>
-      <div class="phone-key-card"><span class="key-num">9</span><span class="key-chars">W X Y Z</span></div>
-      <div class="phone-key-card"><span class="key-num">*</span><span class="key-chars">* +</span></div>
-      <div class="phone-key-card"><span class="key-num">0</span><span class="key-chars">␣ 0</span></div>
-      <div class="phone-key-card"><span class="key-num">#</span><span class="key-chars">#</span></div>
-    </div>
+  const keys = PHONE_GRID.map(({ digit, keyId }) => ({
+    digit,
+    chars: getPhoneKeyLetters(keyId)
+      .map((c) => (c === ' ' ? '␣' : c))
+      .join(' ')
+  }));
 
-    <div class="notation-box">
-      <div class="notation-item"><strong>Počet stisků:</strong> <code>22</code> = <code>B</code>, <code>7777</code> = <code>S</code>, <code>0</code> = <code>␣</code>, <code>**</code> = <code>+</code></div>
-      <div class="notation-item"><strong>Klávesa a pořadí:</strong> <code>(7, 4)</code> = <code>S</code></div>
-      <div class="notation-item"><strong>T9:</strong> jeden stisk na písmeno, slovo dohledá slovník. <code>*</code> přepíná kandidáty.</div>
-    </div>
-  </section>
-</div>
+  type PhoneMode = 'multitap' | 't9';
+
+  interface Props {
+    /** Input mode currently active in the module (opens its help). */
+    activeTool: PhoneMode;
+  }
+
+  let { activeTool }: Props = $props();
+
+  const tools: RefTool<PhoneMode>[] = [
+    {
+      id: 'multitap',
+      label: 'SMS',
+      help: {
+        controls: [
+          ['Klávesa', 'opakované klepnutí přepíná písmena, po 1 s se zapíše'],
+          ['`0`', 'mezera']
+        ],
+        pitfalls: [['Dvě písmena z jedné klávesy', '`AB` = `2`, pauza, `22`. Bez pauzy vznikne `C`.']]
+      }
+    },
+    {
+      id: 't9',
+      label: 'T9',
+      help: {
+        controls: [
+          ['Klávesa', 'jedno klepnutí na písmeno, slovo dohledá slovník'],
+          ['`*`', 'další kandidát slova'],
+          ['`0`', 'potvrdí slovo a vloží mezeru'],
+          ['`1`', 'potvrdí slovo a vloží tečku']
+        ],
+        pitfalls: [['Bez slovníku', 'ukáže jen první písmena kláves → stáhnout slovník v Nastavení']]
+      }
+    }
+  ];
+
+  const help: RefHelpData = {
+    controls: [
+      ['Podržení klávesy', 'vloží samotnou číslici'],
+      ['SMS / T9', 'přepíná lišta nad klávesnicí']
+    ],
+    pitfalls: [
+      ['Jiný telefon', '`1`, `0`, `*`, `#` se liší podle výrobce. Písmena na `2`–`9` platí všude.'],
+      ['Česká diakritika', 'telefony s češtinou mají na klávesách i `Á`, `Č`… → počty stisků mohou být vyšší']
+    ]
+  };
+</script>
+
+<RefLayout tabs={[{ id: 'keys', label: 'Klávesy' }]} {help} {tools} {activeTool}>
+  {#snippet content()}
+    <RefSection title="Klávesnice">
+      <div class="phone-grid">
+        {#each keys as key (key.digit)}
+          <div class="phone-key">
+            <span class="key-num">{key.digit}</span>
+            <span class="key-chars">{key.chars}</span>
+          </div>
+        {/each}
+      </div>
+    </RefSection>
+
+    <RefSection title="Zápisy v šifrách">
+      <RefList
+        items={[
+          ['Počet stisků', '`22` = B, `7777` = S, `0` = ␣'],
+          ['Klávesa a pořadí', '`7/4` nebo `(7, 4)` = S'],
+          ['T9', 'jedna číslice na písmeno: `3662` = DOMA']
+        ]}
+      />
+    </RefSection>
+  {/snippet}
+</RefLayout>
 
 <style>
-  .reference-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
-    padding: var(--space-md);
-    color: var(--color-text-primary);
-  }
-
-  .ref-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .ref-heading {
-    font-size: var(--text-base);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    margin: 0;
-  }
-
-
-  .phone-grid-preview {
+  .phone-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 4px;
+    padding: var(--space-sm);
     background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    padding: var(--space-sm);
   }
 
-  .phone-key-card {
+  .phone-key {
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: var(--space-xs);
     background-color: var(--color-surface-2);
     border-radius: var(--radius-xs);
-    padding: var(--space-xs);
   }
 
   .key-num {
+    font-family: var(--font-mono);
     font-size: var(--text-base);
     font-weight: 800;
-    font-family: var(--font-mono);
     color: var(--color-text-primary);
   }
 
   .key-chars {
+    font-family: var(--font-mono);
     font-size: var(--text-2xs);
-    font-family: var(--font-mono);
     color: var(--color-text-secondary);
-  }
-
-  .notation-box {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm) var(--space-md);
-    font-size: var(--text-xs);
-  }
-
-  .notation-item code {
-    background-color: var(--color-surface-2);
-    padding: 1px 4px;
-    border-radius: var(--radius-xs);
-    color: var(--color-accent-primary);
-    font-family: var(--font-mono);
   }
 </style>

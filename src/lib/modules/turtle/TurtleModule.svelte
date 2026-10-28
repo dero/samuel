@@ -212,7 +212,7 @@
   {/snippet}
 
   {#snippet reference()}
-    <TurtleReference />
+    <TurtleReference activeTool={flavour} />
   {/snippet}
 
   {#snippet output()}

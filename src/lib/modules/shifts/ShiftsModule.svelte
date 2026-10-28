@@ -530,7 +530,7 @@
 
   <!-- REFERENCE CHEAT SHEET -->
   {#snippet reference()}
-    <ShiftsReference letters={currentLetters} />
+    <ShiftsReference letters={currentLetters} activeTool={activeSubmodule} />
   {/snippet}
 </ModuleShell>
 

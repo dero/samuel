@@ -1,13 +1,32 @@
 <script lang="ts">
-  import { CZECH_MNEMONICS, type MorseEntry } from "./morseData";
-  import SegmentedControl, { type SegmentOption } from "../../components/ui/SegmentedControl.svelte";
+  import { CZECH_MNEMONICS } from "./morseData";
+  import RefLayout from "../../components/reference/RefLayout.svelte";
+  import RefSection from "../../components/reference/RefSection.svelte";
+  import type { RefHelpData, RefTab } from "../../components/reference/refTypes";
 
-  let activeTab = $state<"list" | "tree">("list");
+  type MorseRefTab = "list" | "tree";
 
-  const tabs: SegmentOption<"list" | "tree">[] = [
+  const tabs: RefTab<MorseRefTab>[] = [
     { id: "list", label: "Znaky", badge: CZECH_MNEMONICS.length },
     { id: "tree", label: "Strom" }
   ];
+
+  const help: RefHelpData = {
+    controls: [
+      ["`•` `—`", "tečka, čárka"],
+      ["`/` 1×", "konec písmene"],
+      ["`/` 2×", "mezera mezi slovy"],
+      ["`/` 3× a víc", "STOP, konec věty"],
+      ["Backspace", "maže po jednom symbolu"],
+      ["Permutace", "inverze • ⇄ —, záměna s oddělovačem, pozpátku. Opište šifru přesně, i se všemi lomítky."],
+      ["Vyřešit bez mezer", "rozdělí kód bez oddělovačů na slova (od 4 znaků, potřebuje slovník)"]
+    ],
+    pitfalls: [
+      ["Kód bez oddělovačů", "nehádat ručně → Vyřešit bez mezer"],
+      ["Výsledek nedává smysl", "Permutace: prohozené • a —, čtení pozpátku"],
+      ["`----` = CH", "jen česky, mezinárodně kód nemá význam"]
+    ]
+  };
 
   // Binary tree levels for visualization
   // Level 1: 1 char
@@ -69,19 +88,11 @@
   ];
 </script>
 
-<div class="ref-container">
-  <!-- Sub-Tabs -->
-  <SegmentedControl
-    options={tabs}
-    value={activeTab}
-    onChange={(val) => (activeTab = val)}
-  />
-
-  {#if activeTab === "list"}
-    <!-- Mnemonic table -->
-    <div class="table-scroll">
+<RefLayout {tabs} {help}>
+  {#snippet content(tab)}
+    {#if tab === "list"}
       <div class="entries-grid">
-        {#each CZECH_MNEMONICS as entry}
+        {#each CZECH_MNEMONICS as entry (entry.char)}
           <div class="entry-row">
             <div class="entry-char">{entry.char}</div>
             <div class="entry-code">{entry.code}</div>
@@ -91,60 +102,43 @@
           </div>
         {/each}
       </div>
-    </div>
-  {:else}
-    <!-- Tree View -->
-    <div class="tree-scroll">
-      <div class="tree-container">
-        <!-- Root node -->
-        <div class="tree-row root-row">
-          <div class="tree-node root-node">START</div>
-        </div>
+    {:else}
+      <RefSection title="Morseův strom" note="Doleva tečka, doprava čárka. Strom se posouvá do stran.">
+        <div class="tree-scroll">
+          <div class="tree-container">
+            <div class="tree-row root-row">
+              <div class="tree-node root-node">START</div>
+            </div>
 
-        {#each treeLevels as lvl}
-          <div
-            class="tree-row"
-            style="grid-template-columns: repeat({lvl.nodes.length}, 1fr)"
-          >
-            {#each lvl.nodes as node}
-              {#if node.char}
-                <div
-                  class="tree-node"
-                  class:is-dot={node.dir === "L"}
-                  class:is-dash={node.dir === "R"}
-                >
-                  <span class="node-char">{node.char}</span>
-                  <span class="node-sym">{node.dir === "L" ? "•" : "—"}</span>
-                </div>
-              {:else}
-                <div class="tree-node is-empty" aria-hidden="true"></div>
-              {/if}
+            {#each treeLevels as lvl (lvl.level)}
+              <div
+                class="tree-row"
+                style="grid-template-columns: repeat({lvl.nodes.length}, 1fr)"
+              >
+                {#each lvl.nodes as node (node.code)}
+                  {#if node.char}
+                    <div
+                      class="tree-node"
+                      class:is-dot={node.dir === "L"}
+                      class:is-dash={node.dir === "R"}
+                    >
+                      <span class="node-char">{node.char}</span>
+                      <span class="node-sym">{node.dir === "L" ? "•" : "—"}</span>
+                    </div>
+                  {:else}
+                    <div class="tree-node is-empty" aria-hidden="true"></div>
+                  {/if}
+                {/each}
+              </div>
             {/each}
           </div>
-        {/each}
-      </div>
-    </div>
-  {/if}
-</div>
+        </div>
+      </RefSection>
+    {/if}
+  {/snippet}
+</RefLayout>
 
 <style>
-  .ref-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-    gap: 10px;
-  }
-
-
-
-  .table-scroll {
-    flex: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
-
   .entries-grid {
     display: grid;
     grid-template-columns: max-content max-content 1fr;
@@ -202,10 +196,9 @@
 
   /* Tree View */
   .tree-scroll {
-    flex: 1;
-    overflow: auto;
-    overscroll-behavior: contain;
-    padding: 8px 4px 16px 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 4px 0;
   }
 
   .tree-container {

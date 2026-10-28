@@ -158,3 +158,19 @@ export const IOC_EXPECTED = {
   uniform26: 0.0385,
   uniform42: 0.0238
 } as const;
+
+/**
+ * Short words and doubled letters of Czech (without diacritics), ordered by frequency.
+ * Source: data/cs_all.csv word frequency corpus.
+ */
+export const CZECH_ONE_LETTER_WORDS = ['A', 'V', 'S', 'Z', 'I', 'O', 'K', 'U'] as const;
+
+export const CZECH_TWO_LETTER_WORDS = [
+  'SE', 'NA', 'JE', 'ZE', 'TO', 'DO', 'SI', 'VE',
+  'ZA', 'BY', 'PO', 'CO', 'UZ', 'OD', 'JI', 'HO'
+] as const;
+
+/** `II` comes mostly from the ending -ií once diacritics are stripped. */
+export const CZECH_DOUBLE_LETTERS = ['NN', 'II', 'LL', 'SS', 'OO'] as const;
+
+export const CZECH_VOWELS = ['E', 'A', 'O', 'I', 'U', 'Y'] as const;

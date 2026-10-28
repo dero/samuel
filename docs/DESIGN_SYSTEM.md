@@ -35,7 +35,7 @@ Aplikace striktně rozlišuje mezi **samostatným nástrojem** (vlastní modul v
 - **By Default:** Výchozí chování pokrývající 95 % případů v terénu bez klikání navíc (Morse s CH, Braille bez nutnosti Enteru, přímý zápis).
 - **Sub-Toolbar (36 px nad klávesnicí):** Flavours nástroje a operativní živé akce při psaní.
 - **Module Menu (`[ ☰ ]` vpravo):** Statická konfigurace šifry na stanovišti (odchylky abecedy, zrcadlení pohledu, vynechaná písmena, destruktivní reset celého modulu).
-- **Reference Modal (`[ 📖 ]` vpravo):** Pasivní taháky a encyklopedie ke čtení (pomocná slova, tabulka Brailla, kruh semaforu). Zákaz zadávání přes referenční modály.
+- **Reference Modal (`[ 📖 ]` vpravo):** Pasivní tahák ke čtení se dvěma účely: (1) faktická data (tabulky, seznamy, přehledy) a (2) rychlá nápověda k ovládání a úskalím. Jednotná kostra viz §3 *Reference*. Zákaz zadávání přes referenční modály.
 - **Nastavení (`/settings`):** Systémové preference zařízení (offline DB ~102 MB, haptika, správa globálních abeced).
 
 ---
@@ -72,7 +72,7 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - `output()`: Vykresluje výstup modulu (překlad v `<TranslationCard>`, grafy, frekvenční histogram apod.). Výstup je VŽDY nahoře (`flex: 1`, min. 84 px). Zákaz celostránkového scrollu; scrollovat smí pouze vnitřek výstupní zóny (`overflow-y: auto`).
 - `input()`: Obsahuje Sub-Toolbar (je-li potřeba), zadávací matici v zapuštěném šasi, utilitní trojblok či textové triggery. Vstup je VŽDY dole na dosah palce (thumb zone). Součet výšek nesmí překročit **326 px**.
 - `menuOptions()`: Vykresluje položky `<OptionRow>` a `<AlphabetSelect>`.
-- `reference()`: Vykresluje komponentu taháku modulu.
+- `reference()`: Vykresluje komponentu taháku modulu postavenou na `<RefLayout>` (viz §3 *Reference*).
 
 ---
 
@@ -112,6 +112,17 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 ### Microcopy
 - **POKUD** píšeš nápovědu prázdného stavu (`emptyHint`), **POTOM** formuluj 1 údernou větu bez vatových úvodů („Zde se zobrazuje...“). Při psaní se plynule rozostří (0.7s blur), při vymazání znovu zaostří.
 - **POKUD** zobrazuješ toast, **POTOM** max. **30 znaků + až 2 emoji** v imperativním tvaru (*„Zkopírováno“*, *„Vyčištěno“*).
+
+### Reference (`[ 📖 ]`)
+- **POKUD** píšeš referenci modulu, **POTOM** ji postav na `<RefLayout>` (`src/lib/components/reference/`). Záložky jdou v pevném pořadí: nejdřív datové záložky (max. 3, první se otevře vždy), poslední je VŽDY **„Návod“**. Modul bez dat má jen Návod a lišta záložek se skryje.
+- **POKUD** plníš Návod, **POTOM** předej `help: RefHelpData` se dvěma pevnými sekcemi: **Ovládání** (`controls`: zadávání, lišty, volby v menu) a **Pozor** (`pitfalls`: úskalí ve tvaru *situace → co dělat*). Sekce NIKDY nepřejmenovávej ani nepřidávej další; prázdnou sekci vynech.
+- **POKUD** má modul víc nástrojů (flavours), které se ovládají nebo chovají rozdílně (Sudoku vs. Nonogram, SMS vs. T9), **POTOM** předej `tools: RefTool[]` s návodem pro každý nástroj zvlášť a `activeTool` = aktuální flavour modulu. Návod je lineární: nahoře blok **Společné** (`help`: přepínání, gesta, společná úskalí), pod ním blok každého nástroje v pořadí lišty; aktivní nástroj nese štítek „aktivní“. Uvnitř Návodu NIKDY nepřidávej další přepínač (SegmentedControl) – dvě stejné lišty pod sebou matou. Varianty se stejným chováním (Polybius 5×5 / 6×6) nerozděluj.
+- **POKUD** píšeš položku „Pozor“, **POTOM** nejdřív zvaž, jestli nejde nástroj zjednodušit tak, aby úskalí zmizelo (automatická detekce místo volby v menu, standardní pravidla místo přepínačů). Gotcha je až poslední možnost, ne náhrada za lepší chování.
+- **POKUD** píšeš text reference, **POTOM** piš heslovitě: položka = `['pojem', 'hodnota']` na jeden řádek (~60 znaků), příklad místo vysvětlení (`22 = B`), zápisy v backticku (vykreslí se jako `<code>`). Žádné úvody, hodnocení ani oslovení („Skvělé pro…“, „Ťuknutím vyberte…“).
+- **POKUD** v referenci odkazuješ na ovládací prvek, **POTOM** ho pojmenuj přesně jako v UI (label volby v menu, text tlačítka) a u voleb doplň „→ menu <Label>“.
+- **POKUD** stavíš datovou záložku, **POTOM** použij `<RefSection title note>` pro nadpisy, `<RefList>` pro řádky pojem–hodnota a třídy `.ref-table-wrap` + `.ref-table` (`.col-num`, `.col-val`, `.col-code`, `.col-name`, `tr.desc-row`) pro tabulky. Vlastní CSS jen pro specifické vizualizace (Braillova matice, semafor, vlajky).
+- **POKUD** reference závisí na nastavení modulu (abeceda), **POTOM** předej data přes props (např. `letters`), aby tahák odpovídal aktuální konfiguraci.
+- **POKUD** stejná data používá víc referencí, **POTOM** je drž v jednom `*Data.ts` a sdílené komponentě (např. `frequency/LanguageStats.svelte`). Nikdy je nekopíruj ručně do markupu.
 
 ### Tabulky a encyklopedická data (Fakta & Reference)
 - **POKUD** formátuješ data a stupnice s popisy (Fakta, Reference), **POTOM** delší textové popisy NIKDY nedávej do úzkého samostatného sloupce, ale jako spojený řádek `<tr class="desc-row"><td colspan="...">` přímo pod primární řádek záznamu.
@@ -158,5 +169,8 @@ $$540\text{ px} - [52\text{ (Header)} + 84\text{ (Output min)} + 42\text{ (Utili
 | `<SpaceCommitButton>` | `ui/SpaceCommitButton.svelte` | Kontextová mezera / Enter: props `pendingChar`, `onSpace`, `onCommit`, `commitSymbol` |
 | `<BackspaceButton>` | `ui/BackspaceButton.svelte` | Mazání / rušení rozepsaného znaku (✕ vs ⌫): props `onAction`, `hasActiveSelection`, `disabled` |
 | `<SegmentedControl>` | `ui/SegmentedControl.svelte` | Přepínač flavours v sub-toolbaru: props `options`, `value`, `onChange` |
+| `<RefLayout>` | `reference/RefLayout.svelte` | Kostra reference: datové záložky + „Návod“; props `tabs`, `help`, snippet `content(tab)`. Nese sdílené styly `.ref-table` a `<code>` |
+| `<RefSection>` | `reference/RefSection.svelte` | Nadpis sekce reference s volitelnou jednořádkovou poznámkou: props `title`, `note` |
+| `<RefList>` | `reference/RefList.svelte` | Řádky `pojem: hodnota` (backtick = `<code>`): props `items`, `variant="warn"` |
 | `<TextEntrySheet>` | `ui/TextEntrySheet.svelte` | Celoobrazovkový textový editor zabraňující deformaci layoutu klávesnicí OS |
 | `<LandscapeWarning>` | `layout/LandscapeWarning.svelte` | Systémový overlay vyzývající k otočení do portrait módu při výšce < 540 px |
