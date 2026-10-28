@@ -31,6 +31,9 @@ export type VersionStatus =
   | 'downloading_db'
   | 'error';
 
+/** Outcome of the last update check: never run, server answered, or unreachable. */
+export type UpdateCheckResult = 'none' | 'ok' | 'failed';
+
 export interface VersionState {
   appVersion: string;
   buildTime: number;
@@ -41,6 +44,7 @@ export interface VersionState {
   appUpdateAvailable: boolean;
   dbUpdateAvailable: boolean;
   updateAvailable: boolean;
+  lastCheck: UpdateCheckResult;
   status: VersionStatus;
   progress: number;
   error: string | null;
@@ -59,6 +63,7 @@ class VersionService {
     appUpdateAvailable: false,
     dbUpdateAvailable: false,
     updateAvailable: false,
+    lastCheck: 'none',
     status: 'idle',
     progress: 0,
     error: null
@@ -110,6 +115,7 @@ class VersionService {
     try {
       const remote = await fetchRemoteVersion();
       if (!remote) {
+        this.state.lastCheck = 'failed';
         this.state.status = 'idle';
         return { updateAvailable: false };
       }
@@ -134,11 +140,13 @@ class VersionService {
       this.state.appUpdateAvailable = appNeedsUpdate;
       this.state.dbUpdateAvailable = dbNeedsUpdate;
       this.state.updateAvailable = appNeedsUpdate || dbNeedsUpdate;
+      this.state.lastCheck = 'ok';
       this.state.status = 'idle';
 
       return { updateAvailable: this.state.updateAvailable };
     } catch (err: any) {
       console.log('VersionService: offline or unreachable network');
+      this.state.lastCheck = 'failed';
       this.state.status = 'idle';
       return { updateAvailable: false };
     }

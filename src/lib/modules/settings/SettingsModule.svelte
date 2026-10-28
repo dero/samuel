@@ -60,41 +60,51 @@
           : 'Nainstalováno'
   );
 
+  const vs = versionService.state;
+
+  // The result is shown in place (button, badge, version rows), so no toasts here.
   async function handleCheckUpdates() {
-    try {
-      settings.vibrate(20);
-      toast.show('Kontroluji aktualizace...', { type: 'info', duration: 2000 });
-      const { updateAvailable } = await versionService.checkUpdates();
-      if (!updateAvailable) {
-        toast.show('Máte nejnovější verzi', { type: 'success', duration: 2500 });
-      } else {
-        toast.show('Je dostupná nová verze', { type: 'warning', duration: 3000 });
-      }
-    } catch {
-      toast.show('Chyba kontroly', { type: 'danger' });
-    }
+    settings.vibrate(20);
+    await versionService.checkUpdates();
   }
 
   async function handleApplyUpdate() {
     try {
       settings.vibrate(30);
-      if (versionService.state.appUpdateAvailable && versionService.state.dbUpdateAvailable) {
-        toast.show('Stahuji slovník…', { type: 'info' });
+      if (vs.dbUpdateAvailable) {
         if (!(await versionService.downloadDb())) return;
-        toast.show('Stahuji novou verzi aplikace…', { type: 'info' });
+        if (!vs.appUpdateAvailable) toast.show('Slovník aktualizován', { type: 'success' });
+      }
+      if (vs.appUpdateAvailable) {
+        // Reloads into the new version when done.
         await versionService.updateApp();
-      } else if (versionService.state.dbUpdateAvailable) {
-        toast.show('Stahuji slovník…', { type: 'info' });
-        if (await versionService.downloadDb()) toast.show('Slovník aktualizován', { type: 'success' });
-      } else if (versionService.state.appUpdateAvailable) {
-        toast.show('Stahuji novou verzi...', { type: 'info' });
-        await versionService.updateApp();
-        toast.show('Aplikace aktualizována', { type: 'success' });
       }
     } catch (err: any) {
       toast.show(`Chyba aktualizace: ${err?.message || 'Neznámá chyba'}`, { type: 'danger' });
     }
   }
+
+  /** Update download in flight (a manual dictionary download is not an update). */
+  let isUpdating = $derived(
+    vs.status === 'downloading_app' || (vs.status === 'downloading_db' && vs.dbUpdateAvailable)
+  );
+
+  /** Badge reflects what the last check really found, never an unverified "up to date". */
+  let statusBadge = $derived.by(() => {
+    if (vs.updateAvailable) return { kind: 'update', label: 'Nová verze' };
+    if (vs.lastCheck === 'ok') return { kind: 'online', label: 'Aktuální' };
+    if (vs.lastCheck === 'failed') return { kind: 'offline', label: 'Nelze ověřit' };
+    return null;
+  });
+
+  let newAppVersion = $derived(
+    vs.appUpdateAvailable && vs.remoteVersion ? formatTimestamp(vs.remoteVersion.buildTime) : null
+  );
+  let newDbVersion = $derived(
+    vs.dbUpdateAvailable && vs.remoteVersion
+      ? formatTimestamp(vs.remoteVersion.dbUpdated || vs.remoteVersion.dbVersion)
+      : null
+  );
 
   async function handleDownloadDbManual() {
     try {
@@ -173,94 +183,93 @@
           <h2 class="card-title">Aktualizace</h2>
           <p class="card-desc">Aplikace i data fungují offline.</p>
         </div>
-        {#if !versionService.state.updateAvailable && versionService.state.status === 'idle'}
-          <span class="badge-status online">
-            <CheckCircle size={14} weight="fill" />
-            <span>Aktuální</span>
+        {#if statusBadge}
+          <span class="badge-status {statusBadge.kind}">
+            {#if statusBadge.kind === 'online'}
+              <CheckCircle size={14} weight="fill" />
+            {:else if statusBadge.kind === 'update'}
+              <RocketLaunch size={14} weight="fill" />
+            {/if}
+            <span>{statusBadge.label}</span>
           </span>
         {/if}
       </div>
 
-      <!-- Banner s výzvou k aktualizaci, pokud je k dispozici -->
-      {#if versionService.state.updateAvailable}
-        <div class="update-banner">
-          <div class="update-banner-info">
-            <div class="update-title">
-              <RocketLaunch size={18} weight="duotone" />
-              <span>Nová verze</span>
-            </div>
-            <div class="update-subtitle">
-              {#if versionService.state.dbUpdateAvailable && versionService.state.remoteVersion}
-                Slovník z {formatTimestamp(versionService.state.remoteVersion.dbUpdated || versionService.state.remoteVersion.dbVersion)}
-              {:else if versionService.state.appUpdateAvailable && versionService.state.remoteVersion}
-                Aplikace z {formatTimestamp(versionService.state.remoteVersion.buildTime)}
-              {:else}
-                Novější verze na serveru
-              {/if}
-            </div>
-          </div>
-          <div class="update-actions-cluster">
-            <button
-              class="update-action-btn"
-              disabled={versionService.isBusy}
-              onclick={handleApplyUpdate}
-            >
-              {#if versionService.isBusy}
-                <SpinnerGap size={15} class="spin" />
-                <span>Stahuji ({versionService.state.progress} %)...</span>
-              {:else}
-                <RocketLaunch size={16} weight="bold" />
-                <span>Aktualizovat</span>
-              {/if}
-            </button>
-            {#if versionService.state.status === 'downloading_db'}
-              <button
-                type="button"
-                class="cancel-inline-btn"
-                onclick={() => versionService.cancelDownload()}
-              >
-                Zrušit
-              </button>
-            {/if}
-          </div>
-        </div>
-      {/if}
-
-      {#if versionService.state.error}
-        <div class="update-error-banner">
-          <span>{versionService.state.error}</span>
-        </div>
-      {/if}
-
-      <!-- Evergreen verze aplikace a databáze (datum, čas) -->
+      <!-- Verze: u dostupné aktualizace rovnou i nová verze -->
       <div class="version-box">
         <div class="sys-row">
           <span>Verze aplikace</span>
-          <span class="version-badge">{formattedAppVersion}</span>
+          <span class="version-values">
+            <span class="version-badge">{formattedAppVersion}</span>
+            {#if newAppVersion}
+              <span class="version-new">nová {newAppVersion}</span>
+            {/if}
+          </span>
         </div>
         <div class="sys-row">
           <span>Slovník</span>
-          <span class="version-badge">{formattedDbVersion}</span>
+          <span class="version-values">
+            <span class="version-badge">{formattedDbVersion}</span>
+            {#if newDbVersion}
+              <span class="version-new">nový {newDbVersion}</span>
+            {/if}
+          </span>
         </div>
       </div>
 
-      <!-- Tlačítko pro stažení / smazání slovníku -->
-      {#if !versionService.state.isDbInstalled}
+      {#if vs.error}
+        <div class="update-error-banner">
+          <span>{vs.error}</span>
+        </div>
+      {/if}
+
+      <!-- Jedno tlačítko, které se mění na místě: Zkontrolovat → Aktualizovat → Stahuji -->
+      <div class="update-actions-cluster">
+        {#if vs.updateAvailable}
+          <button class="update-action-btn" disabled={versionService.isBusy} onclick={handleApplyUpdate}>
+            {#if isUpdating}
+              <SpinnerGap size={16} class="spin" />
+              <span>Stahuji ({vs.progress} %)…</span>
+            {:else}
+              <RocketLaunch size={16} weight="bold" />
+              <span>{vs.error ? 'Zkusit znovu' : 'Aktualizovat'}</span>
+            {/if}
+          </button>
+          {#if vs.status === 'downloading_db' && vs.dbUpdateAvailable}
+            <button type="button" class="cancel-inline-btn" onclick={() => versionService.cancelDownload()}>
+              Zrušit
+            </button>
+          {/if}
+        {:else}
+          <button class="secondary-btn flex-1" disabled={versionService.isBusy} onclick={handleCheckUpdates}>
+            {#if vs.status === 'checking'}
+              <SpinnerGap size={16} class="spin" />
+              <span>Kontroluji…</span>
+            {:else}
+              <ArrowsClockwise size={16} weight="bold" />
+              <span>{vs.lastCheck === 'failed' ? 'Zkusit znovu' : 'Zkontrolovat aktualizace'}</span>
+            {/if}
+          </button>
+        {/if}
+      </div>
+
+      <!-- Slovník: stažení / smazání -->
+      {#if !vs.isDbInstalled}
         <div class="db-actions-row">
           <button
             class="secondary-btn flex-1"
             disabled={versionService.isBusy}
             onclick={handleDownloadDbManual}
           >
-            {#if versionService.state.status === 'downloading_db'}
+            {#if vs.status === 'downloading_db'}
               <SpinnerGap size={16} class="spin" />
-              <span>Stahuji slovník ({versionService.state.progress} %)...</span>
+              <span>Stahuji slovník ({vs.progress} %)…</span>
             {:else}
               <DownloadSimple size={16} weight="bold" />
-              <span>{versionService.state.error ? 'Zkusit znovu' : `Stáhnout slovník (${versionService.formattedDbSize})`}</span>
+              <span>Stáhnout slovník ({versionService.formattedDbSize})</span>
             {/if}
           </button>
-          {#if versionService.state.status === 'downloading_db'}
+          {#if vs.status === 'downloading_db'}
             <button
               type="button"
               class="cancel-inline-btn"
@@ -282,21 +291,6 @@
           variant="outline"
         />
       {/if}
-
-      <!-- Tlačítko kontroly aktualizací -->
-      <button
-        class="secondary-btn"
-        disabled={versionService.isBusy}
-        onclick={handleCheckUpdates}
-      >
-        {#if versionService.state.status === 'checking'}
-          <SpinnerGap size={16} class="spin" />
-          <span>Kontroluji aktualizace...</span>
-        {:else}
-          <ArrowsClockwise size={16} weight="bold" />
-          <span>Zkontrolovat aktualizace</span>
-        {/if}
-      </button>
     </section>
 
     <!-- 2. Správa abeced -->
@@ -470,43 +464,37 @@
     border: 1px solid var(--color-border-subtle);
   }
 
+  .badge-status.update {
+    background-color: var(--color-accent-primary-subtle);
+    color: var(--color-accent-primary);
+    border: 1px solid var(--color-accent-primary);
+  }
+
+  .badge-status.offline {
+    background-color: var(--color-surface-2);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border-subtle);
+  }
+
+  .version-values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .version-new {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-accent-primary);
+  }
+
   .version-badge {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: 600;
     color: var(--color-text-primary);
-  }
-
-  .update-banner {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-md);
-    background-color: var(--color-accent-primary-subtle);
-    border: 1px solid var(--color-accent-primary);
-    border-radius: var(--radius-sm);
-    padding: var(--space-md);
-  }
-
-  .update-banner-info {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-  .update-title {
-    font-size: var(--text-sm);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .update-subtitle {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    line-height: 1.35;
   }
 
   .update-action-btn {
