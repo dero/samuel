@@ -119,6 +119,23 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** text sedí v boxu pevné šířky (číselná karta, sloupec), **POTOM** box nech růst s obsahem (`minmax(48px, auto)`), místo aby text ořízl.
 - **POKUD** je text součástí pevné geometrie, která se musí vejít celá (PSP dlaždice, tabula recta), **POTOM** ho výjimečně nech v holých `px`.
 
+### Barvy: role, ne odstíny
+Každá barva v UI má právě jednu roli. Problém vzniká, když jeden odstín slouží dvěma rolím.
+
+| Role | Sděluje | Tokeny | Kde |
+| :--- | :--- | :--- | :--- |
+| **Interakce (akcent)** | vybráno / aktivní / fokus / hlavní akce | `--color-accent-primary` (azurová) | Uvnitř modulů, ovládací prvky |
+| **Stav** | úspěch / chyba / varování | `--color-accent-success`, `-danger`, `-warning` | Výsledky, toasty, validace |
+| **Kategorie** | kde v aplikaci jsem | `--color-group-*` | Jen navigace: Launcher, ikona modulu v Headeru |
+| **Neutrální** | struktura, text, plochy | `--color-surface-*`, `--color-text-*`, `--color-border-*` | Výchozí volba všude |
+
+- **POKUD** přidáváš barevný prvek, **POTOM** si odpověz „proč tu je barva?“: interakce/výběr → akcent; výsledek/varování → stavová barva; orientace v aplikaci → barva skupiny; nic z toho → neutrální.
+- **POKUD** stylizuješ cokoli uvnitř modulu, **POTOM** NIKDY nepoužívej `--color-group-*`. Vybraná buňka, aktivní volba i fokus jsou ve všech modulech azurové – uživatel se nesmí v každém modulu učit znovu, co znamená „vybráno“.
+- **POKUD** stylizuješ navigaci (Launcher, Header), **POTOM** nepoužívej `--color-accent-primary` pro „aktivní modul“ – tuto roli nese barva skupiny (tónovaný podklad, rámeček, název).
+- **POKUD** přidáváš skupinu, **POTOM** zvol tlumený pastel (odlišný od ostatních skupin) a NIKDY modrou/azurovou. Akcent je jediná plně sytá nesémantická barva; skupiny se od něj liší sytostí, nejen odstínem.
+- **POKUD** stavíš barvu skupiny vedle stavových barev, **POTOM** přehodnoť layout: mátová (Kódování) ≈ úspěch, písková (Rébusy) ≈ varování, korálová (Reálie) ≈ chyba. Proto skupinové barvy žijí jen v navigaci.
+- **POKUD** značíš výběr nebo aktivní stav, **POTOM** nikdy jen barvou: přidej tvarový signál (rámeček, tučné písmo, podklad) kvůli slunci v terénu a poruchám barvocitu.
+
 ### Microcopy
 - **POKUD** píšeš nápovědu prázdného stavu (`emptyHint`), **POTOM** formuluj 1 údernou větu bez vatových úvodů („Zde se zobrazuje...“). Při psaní se plynule rozostří (0.7s blur), při vymazání znovu zaostří.
 - **POKUD** zobrazuješ toast, **POTOM** max. **30 znaků + až 2 emoji** v imperativním tvaru (*„Zkopírováno“*, *„Vyčištěno“*).
