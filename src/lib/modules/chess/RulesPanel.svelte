@@ -10,6 +10,23 @@
   let solver = $derived(chessState.solverHere);
   let running = $derived(chessState.solver?.status === 'running');
 
+  /** One muted line next to the solver results: what is running, or what is (not) proven. */
+  let statusText = $derived.by(() => {
+    if (!solver) return '';
+    const report = solver.report;
+    if (solver.status === 'running') {
+      if (report?.result) return `Ověřuji kratší: mat v ${solver.depth}…`;
+      if (solver.phase === 'checks') return `Zkouším šachy: mat v ${solver.depth}…`;
+      return `Hledám mat v ${solver.depth}… ${solver.done}/${solver.total}`;
+    }
+    if (!report) return '';
+    const limit = report.timedOut ? ' · limit 60 s' : '';
+    if (!report.result) {
+      return (report.ruledOut ? `Mat do ${report.ruledOut} není` : 'Mat nenalezen') + limit;
+    }
+    return report.shortest ? '' : `Kratší mat neověřen${limit}`;
+  });
+
   // Keep the current move (or the newest solver chip) in view.
   $effect(() => {
     const _cursor = chessState.cursor;
@@ -56,25 +73,25 @@
 
     {#if chessState.gameOver}
       <span class="chip status">{chessState.gameOver === 'mate' ? 'Mat' : 'Pat'}</span>
-    {:else if solver?.status === 'running'}
-      <span class="chip status muted">
-        Hledám mat v {solver.progressDepth}… {solver.done}/{solver.total}
-      </span>
-    {:else if solver?.result && solver.result.depth === null}
-      <span class="chip status muted">Mat do {solver.depth} nenalezen</span>
-    {:else if solver?.result}
-      {#each solver.result.solutions as s (s.from + s.to + (s.promotion ?? ''))}
-        <button
-          type="button"
-          class="chip solution"
-          onclick={() => {
-            settings.vibrate(30);
-            chessState.playSolution(s.line);
-          }}
-        >
-          Mat {solver.result.depth}: {s.line.map((m) => toCzechSan(m.san)).join(' ')}
-        </button>
-      {/each}
+    {:else if solver}
+      {#if solver.report?.result}
+        {@const result = solver.report.result}
+        {#each result.solutions as s (s.from + s.to + (s.promotion ?? ''))}
+          <button
+            type="button"
+            class="chip solution"
+            onclick={() => {
+              settings.vibrate(30);
+              chessState.playSolution(s.line);
+            }}
+          >
+            Mat {result.depth}: {s.line.map((m) => toCzechSan(m.san)).join(' ')}
+          </button>
+        {/each}
+      {/if}
+      {#if statusText}
+        <span class="chip status muted">{statusText}</span>
+      {/if}
     {:else if strip.items.length === 0}
       <span class="strip-hint">Tahy se zapisují sem</span>
     {/if}
@@ -93,26 +110,6 @@
         <span class="key-label">{chessState.turn === 'w' ? 'Bílý' : 'Černý'}</span>
       </span>
     </button>
-
-    <div class="depth-group" role="radiogroup" aria-label="Mat v počtu tahů">
-      <span class="depth-caption">Mat v</span>
-      {#each [1, 2, 3] as depth (depth)}
-        <button
-          type="button"
-          class="keycap depth-key"
-          class:on={chessState.mateDepth === depth}
-          role="radio"
-          aria-checked={chessState.mateDepth === depth}
-          onpointerdown={(e) =>
-            tap(e, () => {
-              chessState.mateDepth = depth;
-              chessState.saveToStorage();
-            })}
-        >
-          {depth}
-        </button>
-      {/each}
-    </div>
 
     <button
       type="button"
@@ -216,7 +213,7 @@
 
   .controls {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 2px;
   }
 
@@ -282,39 +279,6 @@
   .turn-dot.black {
     background-color: #000000;
     box-shadow: 0 0 0 1.5px var(--color-text-secondary);
-  }
-
-  .depth-group {
-    display: flex;
-    align-items: stretch;
-    gap: 2px;
-  }
-
-  .depth-caption {
-    display: flex;
-    align-items: center;
-    padding: 0 6px;
-    background-color: var(--color-surface-1);
-    border-radius: 2px;
-    color: var(--color-text-muted);
-    font-size: min(var(--text-xs), 3.4vw);
-    font-weight: 700;
-    white-space: nowrap;
-  }
-
-  .depth-key {
-    width: 30px;
-    padding: 0;
-    font-family: var(--font-mono);
-    font-size: var(--text-base);
-    font-weight: 700;
-    color: var(--color-text-secondary);
-  }
-
-  .depth-key.on {
-    background-color: var(--color-accent-primary-subtle);
-    color: var(--color-accent-primary);
-    box-shadow: inset 0 0 0 1px var(--color-accent-primary);
   }
 
   .solve-key {

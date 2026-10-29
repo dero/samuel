@@ -42,13 +42,16 @@
           ['Proměna', 'výběr figury nad polem'],
           ['Lišta tahů', 'ťuk = skok na pozici'],
           ['na tahu', 'přepne stranu'],
-          ['Mat v `1` `2` `3`', 'nejvyšší hledaná délka matu'],
-          ['Řešit', 'najde všechny první tahy nejkratšího matu'],
+          ['Řešit', 'hledá nejkratší mat, dokud ho nenajde (max. 60 s)'],
+          ['Pořadí', 'všechny maty do 2 → jen šachy do 12 → ověření kratšího'],
+          ['Zrušit', 'zastaví hledání, nalezené zůstane'],
           ['Zelená varianta', 'ťuk = zahraje celou až do matu, `Zpět` krokuje']
         ],
         pitfalls: [
           ['Pravidla nejdou zapnout', 'toast řekne proč, např. chybí král'],
           ['Obrana ve variantě', 'nejdelší odpor; jiné obrany vedou k matu stejně nebo dřív'],
+          ['Mat přes šachy (od 3 tahů)', 'tichý klíčový tah stejné délky se už nehledá'],
+          ['Kratší mat neověřen', 'limit vypršel; řešení platí, jen nemusí být nejkratší'],
           ['Rošáda nejde', 'král a věž musí stát na výchozích polích'],
           ['Tah v minulosti', 'nový tah smaže pozdější tahy']
         ]

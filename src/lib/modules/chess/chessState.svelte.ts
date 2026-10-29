@@ -1,7 +1,7 @@
 import { Chess, type Move } from 'chess.js';
 import ChessWorker from './chess.worker.ts?worker';
 import type { ChessWorkerRequest, ChessWorkerResponse } from './chess.worker';
-import type { MateMove, MateResult } from './chessSolver';
+import type { MateMove, SolvePhase, SolveReport } from './chessSolver';
 import {
   START_FEN,
   EMPTY_FEN,
@@ -48,11 +48,13 @@ export interface DragState {
 export interface SolverState {
   status: 'running' | 'done';
   fen: string;
+  phase: SolvePhase;
+  /** Mate length being searched right now. */
   depth: number;
-  progressDepth: number;
   done: number;
   total: number;
-  result: MateResult | null;
+  /** Interim (checks-only) report while running, the final one when done. */
+  report: SolveReport | null;
 }
 
 export interface StripItem {
@@ -72,7 +74,6 @@ class ChessModuleState {
   flipped = $state(false);
   showCoords = $state(true);
   showHints = $state(true);
-  mateDepth = $state(2);
 
   // --- Ephemeral interaction state ---
   armed = $state<TrayTool | null>(null);
@@ -181,7 +182,6 @@ class ChessModuleState {
       if (typeof data.flipped === 'boolean') this.flipped = data.flipped;
       if (typeof data.showCoords === 'boolean') this.showCoords = data.showCoords;
       if (typeof data.showHints === 'boolean') this.showHints = data.showHints;
-      if ([1, 2, 3].includes(data.mateDepth)) this.mateDepth = data.mateDepth;
     } catch (e) {
       console.warn('Failed to load chess state from storage:', e);
     }
@@ -199,8 +199,7 @@ class ChessModuleState {
           mode: this.mode,
           flipped: this.flipped,
           showCoords: this.showCoords,
-          showHints: this.showHints,
-          mateDepth: this.mateDepth
+          showHints: this.showHints
         })
       );
     } catch {}
@@ -600,19 +599,21 @@ class ChessModuleState {
     if (!this.game || this.gameOver) return;
 
     const fen = this.current.fen;
-    const depth = this.mateDepth;
     const id = ++this.solveId;
     this.worker?.terminate();
     this.worker = new ChessWorker();
-    this.solver = { status: 'running', fen, depth, progressDepth: 1, done: 0, total: 0, result: null };
+    this.solver = { status: 'running', fen, phase: 'full', depth: 1, done: 0, total: 0, report: null };
 
     this.worker.onmessage = (e: MessageEvent<ChessWorkerResponse>) => {
       const msg = e.data;
       if (msg.id !== id || !this.solver) return;
       if (msg.type === 'progress') {
-        this.solver = { ...this.solver, progressDepth: msg.depth, done: msg.done, total: msg.total };
+        const { phase, depth, done, total } = msg;
+        this.solver = { ...this.solver, phase, depth, done, total };
+      } else if (msg.type === 'interim') {
+        this.solver = { ...this.solver, report: msg.report };
       } else {
-        this.solver = { ...this.solver, status: 'done', result: msg.result };
+        this.solver = { ...this.solver, status: 'done', report: msg.report };
         this.worker?.terminate();
         this.worker = null;
       }
@@ -621,7 +622,7 @@ class ChessModuleState {
       this.cancelSolve();
       toast.show('Řešič selhal', 'danger');
     };
-    this.worker.postMessage({ id, fen, depth } satisfies ChessWorkerRequest);
+    this.worker.postMessage({ id, fen } satisfies ChessWorkerRequest);
   }
 
   cancelSolve() {

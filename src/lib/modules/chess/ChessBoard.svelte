@@ -41,7 +41,7 @@
   }
 
   let arrows = $derived.by(() => {
-    const result = chessState.solverHere?.result;
+    const result = chessState.solverHere?.report?.result;
     if (!result?.solutions.length) return [];
     return result.solutions.slice(0, 4).map((s) => {
       const a = visual(squareIndex(s.from));
