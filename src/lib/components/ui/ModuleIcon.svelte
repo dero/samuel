@@ -22,6 +22,7 @@
     GlobeSimple,
     Path,
     GridNine,
+    Horse,
     Atom
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
@@ -60,6 +61,7 @@
     freq: ChartBar,
     'freq-ocr': ChartBar,
     sudoku: GridNine,
+    chess: Horse,
     grille: SquaresFour,
     turtle: Path,
     words: BookOpen,
@@ -84,6 +86,7 @@
     textaa: TextAa,
     chartbar: ChartBar,
     gridnine: GridNine,
+    horse: Horse,
     gridfour: GridFour,
     squaresfour: SquaresFour,
     path: Path,

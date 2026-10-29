@@ -12,6 +12,7 @@ export type ModuleId =
   | 'substitution'
   | 'freq'
   | 'sudoku'
+  | 'chess'
   // PLANNED: Future modules (render GenericModulePlaceholder)
   | 'grille'
   | 'turtle'
@@ -49,6 +50,7 @@ export const MODULES: ModuleMeta[] = [
   { id: 'substitution', name: 'Substituce', icon: 'TextAa', hasAlphabet: true },
   { id: 'freq', name: 'Frekvence', icon: 'ChartBar' },
   { id: 'sudoku', name: 'Sudoku atd.', icon: 'GridNine', hasReference: true, hasMenu: true },
+  { id: 'chess', name: 'Šachy', icon: 'Horse' },
   { id: 'grille', name: 'Mřížka', icon: 'SquaresFour' },
   { id: 'turtle', name: 'Želva', icon: 'Path' },
   { id: 'words', name: 'Slovník', icon: 'BookOpen' },

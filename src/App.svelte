@@ -18,6 +18,7 @@
   import SubstitutionModule from './lib/modules/substitution/SubstitutionModule.svelte';
   import FrequencyModule from './lib/modules/frequency/FrequencyModule.svelte';
   import SudokuModule from './lib/modules/sudoku/SudokuModule.svelte';
+  import ChessModule from './lib/modules/chess/ChessModule.svelte';
   import WordsModule from './lib/modules/words/WordsModule.svelte';
   import GrilleModule from './lib/modules/grille/GrilleModule.svelte';
   import TurtleModule from './lib/modules/turtle/TurtleModule.svelte';
@@ -109,6 +110,8 @@
       <FrequencyModule />
     {:else if navigation.activeModuleId === 'sudoku'}
       <SudokuModule />
+    {:else if navigation.activeModuleId === 'chess'}
+      <ChessModule />
     {:else if navigation.activeModuleId === 'words'}
       <WordsModule />
     {:else if navigation.activeModuleId === 'grille'}
