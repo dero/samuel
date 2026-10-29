@@ -151,14 +151,14 @@
   }
 
   .count-val {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.1;
   }
 
   .pct-val {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     color: var(--color-text-secondary);
     line-height: 1.1;
   }
@@ -210,7 +210,7 @@
   }
 
   .diff-tag {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     width: 44px;
     text-align: right;
     color: var(--color-text-secondary);

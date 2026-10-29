@@ -92,7 +92,7 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-xs);
     color: var(--color-text-primary);
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
     padding: 4px 8px;
     cursor: pointer;

@@ -324,7 +324,7 @@
 
   .disabled-icon {
     display: inline-block;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     margin-left: var(--space-2xs);
     vertical-align: middle;
     line-height: 1;
@@ -339,7 +339,7 @@
 
   .disabled-tag {
     display: inline-block;
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     font-weight: 700;
     text-transform: uppercase;
     color: var(--color-text-muted);

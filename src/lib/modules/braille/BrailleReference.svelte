@@ -81,7 +81,7 @@
 
   .symbol-char {
     font-family: var(--font-condensed);
-    font-size: 20px;
+    font-size: calc(20px * var(--font-scale));
     font-weight: 800;
     color: #ffffff;
     line-height: 1;

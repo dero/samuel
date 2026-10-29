@@ -530,7 +530,7 @@
     background-color: rgba(20, 20, 20, 0.85);
     border: 1px solid var(--color-border-subtle);
     color: var(--color-text-primary);
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 600;
     backdrop-filter: blur(8px);
     cursor: pointer;
@@ -639,7 +639,7 @@
 
   .color-name {
     font-family: var(--font-condensed);
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     font-weight: 700;
     letter-spacing: 0.3px;
     line-height: 1;

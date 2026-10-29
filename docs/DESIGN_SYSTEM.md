@@ -36,7 +36,7 @@ Aplikace striktně rozlišuje mezi **samostatným nástrojem** (vlastní modul v
 - **Sub-Toolbar (36 px nad klávesnicí):** Flavours nástroje a operativní živé akce při psaní.
 - **Module Menu (`[ ☰ ]` vpravo):** Statická konfigurace šifry na stanovišti (odchylky abecedy, zrcadlení pohledu, vynechaná písmena, destruktivní reset celého modulu).
 - **Reference Modal (`[ 📖 ]` vpravo):** Pasivní tahák ke čtení se dvěma účely: (1) faktická data (tabulky, seznamy, přehledy) a (2) rychlá nápověda k ovládání a úskalím. Jednotná kostra viz §3 *Reference*. Zákaz zadávání přes referenční modály.
-- **Nastavení (`/settings`):** Systémové preference zařízení (offline DB ~102 MB, haptika, správa globálních abeced).
+- **Nastavení (`/settings`):** Systémové preference zařízení (offline DB ~102 MB, velikost písma, haptika, správa globálních abeced).
 
 ---
 
@@ -108,6 +108,11 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** renderuješ mezerník v `<SpaceCommitButton>`, **POTOM** použij SVG ikonu otevřené klávesy `|_|` (tloušťka 2.2 px). Textový znak `␣` nepoužívej.
 - **POKUD** `<SpaceCommitButton>` zobrazuje potvrzovaný text, **POTOM** musí mít `max-width: 100%`, `text-overflow: ellipsis`, `overflow: hidden`, `white-space: nowrap` a font clampován, aby nepřeteklo.
 - **POKUD** mažeš celý text, **POTOM** VŽDY použij `<HoldToAction>` (bezpečné podržení s horní zářící linkou a varovným toastem při letmém tapnutí). NIKDY nemaž pouhým klikem.
+
+### Typografie & velikost písma
+- **POKUD** nastavuješ velikost textu, **POTOM** použij token `--text-*` (škáluje se volbou *Velikost písma* v Nastavení, 80–125 %). Když token nesedí, piš `calc(Npx * var(--font-scale))`. NIKDY nepiš holé `px` u textu ke čtení (výstupy, seznamy, menu, reference, dialogy).
+- **POKUD** je text vázaný na pevnou geometrii (keycap, buňka mřížky, dlaždice, ikona, úzký sloupec), **POTOM** ho nech v holých `px`, aby nepřetekl.
+- **POKUD** stavíš prvek s pevnou výškou, **POTOM** ho obal třídou `.type-fixed` (tokeny uvnitř zůstanou na 100 %). `ZONE-INPUT` (mimo `fullscreen-input`) a Header ji mají automaticky. Overlaye vykreslené uvnitř (`<BottomSheet>`, `<ConfirmDialog>`) nesou `.type-scaled` a škálují se znovu.
 
 ### Microcopy
 - **POKUD** píšeš nápovědu prázdného stavu (`emptyHint`), **POTOM** formuluj 1 údernou větu bez vatových úvodů („Zde se zobrazuje...“). Při psaní se plynule rozostří (0.7s blur), při vymazání znovu zaostří.

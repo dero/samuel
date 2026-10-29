@@ -174,7 +174,7 @@
   }
 
   .row-tag {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     font-family: var(--font-mono, monospace);
     color: var(--color-text-muted, #666666);
     background-color: var(--color-surface-2, #1c1c1c);

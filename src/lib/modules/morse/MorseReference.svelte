@@ -166,7 +166,7 @@
 
   .entry-char {
     font-family: var(--font-condensed);
-    font-size: 18px;
+    font-size: calc(18px * var(--font-scale));
     font-weight: 700;
     color: var(--color-accent-primary);
     white-space: nowrap;
@@ -174,7 +174,7 @@
 
   .entry-code {
     font-family: var(--font-mono);
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
     font-weight: 700;
     letter-spacing: 2px;
     color: #ffffff;
@@ -188,7 +188,7 @@
   }
 
   .entry-mnemonic .word {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     font-weight: 600;
     color: var(--color-text-primary);
     word-break: break-word;

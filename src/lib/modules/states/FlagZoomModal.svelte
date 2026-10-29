@@ -217,7 +217,7 @@
   }
 
   .zoom-country-code {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     color: var(--color-text-secondary);
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -308,7 +308,7 @@
     border: none;
     border-radius: var(--radius-full);
     color: var(--color-text-primary);
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     font-weight: 600;
     cursor: pointer;
     touch-action: manipulation;
@@ -337,7 +337,7 @@
   }
 
   .dock-zoom-val {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     letter-spacing: 0.3px;
   }
 </style>

@@ -83,7 +83,7 @@
     background: transparent;
     border: none;
     color: var(--color-accent-primary);
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     font-weight: 600;
     cursor: pointer;
     padding: 6px 4px;
@@ -99,7 +99,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 600;
     color: var(--color-text-secondary);
     background-color: var(--color-surface-2);
@@ -123,7 +123,7 @@
   }
 
   .article-title {
-    font-size: 20px;
+    font-size: calc(20px * var(--font-scale));
     font-weight: 700;
     line-height: 1.25;
     color: var(--color-text-primary);
@@ -132,13 +132,13 @@
 
   /* Markdown body typography */
   .markdown-body {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     line-height: 1.6;
     color: var(--color-text-primary);
   }
 
   .markdown-body :global(h2) {
-    font-size: 17px;
+    font-size: calc(17px * var(--font-scale));
     font-weight: 700;
     margin: var(--space-md) 0 var(--space-xs);
     color: var(--color-text-primary);
@@ -147,7 +147,7 @@
   }
 
   .markdown-body :global(h3) {
-    font-size: 15px;
+    font-size: calc(15px * var(--font-scale));
     font-weight: 600;
     margin: var(--space-md) 0 var(--space-xs);
     color: var(--color-text-primary);
@@ -174,7 +174,7 @@
 
   .markdown-body :global(code) {
     font-family: var(--font-mono);
-    font-size: 12.5px;
+    font-size: calc(12.5px * var(--font-scale));
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     padding: 1px 5px;
@@ -187,7 +187,7 @@
     width: 100%;
     border-collapse: collapse;
     margin: var(--space-sm) 0 var(--space-md);
-    font-size: 12.5px;
+    font-size: calc(12.5px * var(--font-scale));
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     overflow: hidden;
@@ -211,7 +211,7 @@
     background-color: var(--color-surface-2);
     color: var(--color-text-secondary);
     font-weight: 700;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 1px solid var(--color-border-medium);
@@ -229,7 +229,7 @@
 
   .markdown-body :global(td.col-num) {
     font-family: var(--font-mono);
-    font-size: 13.5px;
+    font-size: calc(13.5px * var(--font-scale));
     font-weight: 700;
     color: var(--color-accent-primary);
     background-color: rgba(255, 255, 255, 0.015);
@@ -246,14 +246,14 @@
   }
 
   .markdown-body :global(td.col-val) {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     color: var(--color-text-primary);
     padding: 6px 6px;
   }
 
   .markdown-body :global(td.col-val small) {
     display: block;
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     color: var(--color-text-muted);
     line-height: 1.25;
     margin-top: 1px;
@@ -270,11 +270,11 @@
     width: 1%;
     white-space: nowrap;
     font-family: var(--font-mono);
-    font-size: 11.5px;
+    font-size: calc(11.5px * var(--font-scale));
   }
 
   .markdown-body :global(td.col-code code) {
-    font-size: 11.5px;
+    font-size: calc(11.5px * var(--font-scale));
     padding: 0;
     background: none;
     border: none;
@@ -301,7 +301,7 @@
   /* Description row attached under data cells */
   .markdown-body :global(tr.desc-row td) {
     color: var(--color-text-secondary);
-    font-size: 11.5px;
+    font-size: calc(11.5px * var(--font-scale));
     line-height: 1.45;
     padding-top: 2px;
     padding-bottom: 8px;
@@ -336,7 +336,7 @@
     display: inline-block;
     font-family: var(--font-mono);
     font-weight: 700;
-    font-size: 11.5px;
+    font-size: calc(11.5px * var(--font-scale));
     padding: 1px 5px;
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);

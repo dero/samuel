@@ -55,7 +55,7 @@
 
   .empty-hint-text {
     font-family: var(--font-sans);
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     line-height: 1.4;
     color: var(--color-text-muted);
     margin: 0;

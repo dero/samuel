@@ -7,7 +7,7 @@
 
   let active = $derived(navigation.activeModule);
 </script>
-<header class="header">
+<header class="header type-fixed">
   <div class="title-zone">
     <button
       type="button"

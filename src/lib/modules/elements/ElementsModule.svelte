@@ -169,7 +169,7 @@
     border: none;
     border-radius: 4px;
     color: var(--color-text-secondary);
-    font-size: 11.5px;
+    font-size: calc(11.5px * var(--font-scale));
     font-weight: 600;
     cursor: pointer;
     touch-action: manipulation;

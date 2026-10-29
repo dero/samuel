@@ -45,7 +45,7 @@
   .freq-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     text-align: left;
   }
 
@@ -53,7 +53,7 @@
     background-color: var(--color-surface-2);
     color: var(--color-text-secondary);
     padding: 5px 8px;
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     font-weight: 600;
   }
 

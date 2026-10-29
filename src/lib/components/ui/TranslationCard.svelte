@@ -133,7 +133,7 @@
 
   .result-text {
     font-family: var(--font-mono);
-    font-size: 24px;
+    font-size: calc(24px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.35;

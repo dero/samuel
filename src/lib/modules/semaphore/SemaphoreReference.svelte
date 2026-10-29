@@ -145,7 +145,7 @@
   }
 
   .special-char {
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
     color: var(--color-accent-warning);
   }
 

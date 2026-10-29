@@ -199,7 +199,7 @@
   }
 
   .dow-label {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -209,7 +209,7 @@
   }
 
   .date-label {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-primary, #ffffff);
     white-space: nowrap;
@@ -232,7 +232,7 @@
     border: 1px solid var(--color-border-subtle, #2a2a2a);
     border-radius: var(--radius-xs, 4px);
     padding: 2px 5px;
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-secondary, #b3b3b3);
     white-space: nowrap;
@@ -248,7 +248,7 @@
   }
 
   .badge-icon {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     line-height: 1;
     flex-shrink: 0;
   }
@@ -298,7 +298,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 9px;
+    font-size: calc(9px * var(--font-scale));
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 0.05em;
@@ -308,13 +308,14 @@
 
   .action-card.num-card .card-label {
     justify-content: center;
+    /* Fixed: the day/week cards are 44–48px wide columns. */
     font-size: 8.5px;
     letter-spacing: 0.02em;
   }
 
   .holiday-star {
     color: #facc15;
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
   }
 
   .card-val {
@@ -324,7 +325,7 @@
   }
 
   .svatek-name {
-    font-size: 15px;
+    font-size: calc(15px * var(--font-scale));
     font-weight: 800;
     color: var(--color-accent-primary, #00d2ff);
     white-space: nowrap;

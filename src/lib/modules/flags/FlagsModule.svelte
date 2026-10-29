@@ -354,7 +354,7 @@
 
   .color-name {
     font-family: var(--font-sans);
-    font-size: 9px;
+    font-size: calc(9px * var(--font-scale));
     font-weight: 600;
     color: var(--color-text-secondary);
     letter-spacing: 0.2px;

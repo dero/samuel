@@ -227,7 +227,7 @@
     gap: 6px;
     background-color: var(--color-surface-2);
     color: var(--color-accent-success);
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     font-weight: 700;
     cursor: pointer;
     box-shadow:
@@ -267,13 +267,13 @@
   }
 
   .menu-group-title {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-primary);
   }
 
   .menu-info-text {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     color: var(--color-text-secondary);
     line-height: 1.4;
   }
@@ -285,7 +285,7 @@
   }
 
   .stepper-label {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     color: var(--color-text-secondary);
   }
 
@@ -309,7 +309,7 @@
     border: none;
     border-radius: 4px;
     color: var(--color-text-primary);
-    font-size: 18px;
+    font-size: calc(18px * var(--font-scale));
     font-weight: 700;
     cursor: pointer;
     touch-action: manipulation;
@@ -326,7 +326,7 @@
 
   .step-val {
     font-family: var(--font-mono, monospace);
-    font-size: 15px;
+    font-size: calc(15px * var(--font-scale));
     font-weight: 700;
     min-width: 28px;
     text-align: center;

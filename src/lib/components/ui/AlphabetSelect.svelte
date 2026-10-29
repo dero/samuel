@@ -240,7 +240,7 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 600;
     padding: 1px 6px;
     border-radius: var(--radius-full);
@@ -346,7 +346,7 @@
 
   .card-preview {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     letter-spacing: 0.5px;
     color: var(--color-text-muted);
     padding-left: 36px;
@@ -372,7 +372,7 @@
   }
 
   .badge {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 600;
     padding: 2px 7px;
     border-radius: var(--radius-full);

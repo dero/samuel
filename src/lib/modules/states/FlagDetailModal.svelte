@@ -318,7 +318,7 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 600;
     cursor: pointer;
     touch-action: manipulation;
@@ -340,7 +340,7 @@
   }
 
   .zoom-pct {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     letter-spacing: 0.2px;
   }
 

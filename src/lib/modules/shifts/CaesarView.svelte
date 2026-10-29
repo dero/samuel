@@ -172,7 +172,7 @@
 
   .hero-label {
     color: var(--color-text-secondary);
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -191,12 +191,12 @@
     color: var(--color-text-primary);
     padding: 1px 6px;
     border-radius: var(--radius-xs);
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
   }
 
   .hero-text {
-    font-size: 20px;
+    font-size: calc(20px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.3;
@@ -269,7 +269,7 @@
   }
 
   .shift-rev {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-secondary);
     line-height: 1;

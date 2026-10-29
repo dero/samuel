@@ -229,7 +229,7 @@
   }
 
   .count-badge {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     color: var(--color-text-secondary);
     font-weight: 500;
   }
@@ -246,7 +246,7 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-secondary);
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 600;
     padding: 3px 8px;
     cursor: pointer;
@@ -287,13 +287,13 @@
   }
 
   .empty-title {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     font-weight: 600;
     color: var(--color-text-primary);
   }
 
   .empty-hint {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     line-height: 1.4;
     max-width: 260px;
   }
@@ -304,7 +304,7 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-accent-primary);
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     font-weight: 600;
     padding: 6px 14px;
     cursor: pointer;

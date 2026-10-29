@@ -103,7 +103,7 @@
     gap: 6px;
     min-width: 0;
     overflow: hidden;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-secondary);
     white-space: nowrap;

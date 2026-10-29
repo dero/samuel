@@ -278,7 +278,7 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
-    font-size: 15px;
+    font-size: calc(15px * var(--font-scale));
     font-weight: 700;
     cursor: pointer;
     touch-action: manipulation;
@@ -299,7 +299,7 @@
   }
 
   .menu-group-title {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -317,7 +317,7 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     font-weight: 600;
     cursor: pointer;
     touch-action: manipulation;

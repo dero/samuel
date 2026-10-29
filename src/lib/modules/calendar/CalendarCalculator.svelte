@@ -297,7 +297,7 @@
     align-items: baseline;
     justify-content: center;
     gap: 6px;
-    font-size: 14.5px;
+    font-size: calc(14.5px * var(--font-scale));
     color: var(--color-text-secondary, #b3b3b3);
     line-height: 1.25;
   }
@@ -305,7 +305,7 @@
   .eq-dow {
     font-weight: 700;
     text-transform: uppercase;
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     letter-spacing: 0.03em;
     color: var(--color-text-secondary, #b3b3b3);
   }
@@ -326,20 +326,20 @@
 
   .eq-offset-highlight {
     font-family: var(--font-mono, monospace);
-    font-size: 19px;
+    font-size: calc(19px * var(--font-scale));
     font-weight: 900;
     color: var(--color-accent-primary, #00d2ff);
   }
 
   .eq-math-label {
-    font-size: 15px;
+    font-size: calc(15px * var(--font-scale));
     font-weight: 600;
     color: var(--color-text-secondary, #b3b3b3);
   }
 
   /* Big gray equals sign */
   .eq-equals-large {
-    font-size: 26px;
+    font-size: calc(26px * var(--font-scale));
     font-weight: 700;
     line-height: 1;
     color: var(--color-text-muted, #666666);
@@ -365,7 +365,7 @@
 
   .interval-hero-val {
     font-family: var(--font-mono, monospace);
-    font-size: 34px;
+    font-size: calc(34px * var(--font-scale));
     font-weight: 900;
     color: var(--color-accent-primary, #00d2ff);
     line-height: 1;
@@ -374,7 +374,7 @@
 
   .interval-hero-unit {
     font-family: var(--font-sans);
-    font-size: 20px;
+    font-size: calc(20px * var(--font-scale));
     font-weight: 700;
     color: var(--color-accent-primary, #00d2ff);
     line-height: 1;
@@ -420,7 +420,7 @@
     border: none;
     border-radius: 2px;
     font-family: var(--font-mono, monospace);
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     font-weight: 800;
     color: var(--color-text-primary, #ffffff);
     cursor: pointer;
@@ -449,7 +449,7 @@
 
   .offset-btn.reset {
     font-family: var(--font-sans);
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -479,7 +479,7 @@
 
   .row-prefix-label {
     width: 22px;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 800;
     color: var(--color-accent-primary, #00d2ff);
     text-align: center;

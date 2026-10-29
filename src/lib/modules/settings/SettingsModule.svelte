@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import AlphabetLayoutManager from './AlphabetLayoutManager.svelte';
-  import { settings } from '../../state/settings.svelte';
+  import { settings, FONT_SCALES, type FontScale } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import { versionService } from '../../services/versionService.svelte';
   import {
@@ -165,6 +165,14 @@
     }
   }
 
+  let activeFontScale = $derived(FONT_SCALES.find((s) => s.id === settings.fontScale) ?? FONT_SCALES[2]);
+
+  function selectFontScale(id: FontScale) {
+    if (id === settings.fontScale) return;
+    settings.vibrate(20);
+    settings.fontScale = id;
+  }
+
   let isResetting = $state(false);
 
   function handleResetAllData() {
@@ -299,6 +307,30 @@
     <!-- 3. Předvolby aplikace -->
     <section class="card">
       <h2 class="card-title">Předvolby</h2>
+
+      <div class="font-scale-row">
+        <div class="font-scale-text">
+          <span class="pref-label">Velikost písma</span>
+          <span class="pref-hint">
+            {activeFontScale.label} ({Math.round(Number(activeFontScale.id) * 100)} %)
+          </span>
+        </div>
+        <div class="font-scale-picker" role="radiogroup" aria-label="Velikost písma">
+          {#each FONT_SCALES as scale (scale.id)}
+            <button
+              type="button"
+              role="radio"
+              class="font-scale-btn"
+              class:is-active={scale.id === settings.fontScale}
+              aria-checked={scale.id === settings.fontScale}
+              aria-label={scale.label}
+              onclick={() => selectFontScale(scale.id)}
+            >
+              <span style:font-size="calc(16px * {scale.id})">A</span>
+            </button>
+          {/each}
+        </div>
+      </div>
 
       <OptionRow
         label="Haptická odezva"
@@ -495,6 +527,65 @@
     font-size: var(--text-xs);
     font-weight: 600;
     color: var(--color-text-primary);
+  }
+
+  .font-scale-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  .font-scale-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pref-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.35;
+  }
+
+  .pref-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.35;
+  }
+
+  /* Each "A" previews its level at a fixed size, independent of the current scale. */
+  .font-scale-picker {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    padding: 3px;
+    background-color: var(--color-surface-1);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+
+  .font-scale-btn {
+    height: var(--tap-min-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-xs);
+    color: var(--color-text-secondary);
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+  }
+
+  .font-scale-btn.is-active {
+    background-color: var(--color-surface-3);
+    color: var(--color-text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   .update-action-btn {

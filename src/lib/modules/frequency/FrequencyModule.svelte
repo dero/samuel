@@ -234,7 +234,7 @@
   }
 
   .status-counts {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-secondary);
     white-space: nowrap;
@@ -250,7 +250,7 @@
   }
 
   .nature-pill {
-    font-size: 10.5px;
+    font-size: calc(10.5px * var(--font-scale));
     font-weight: 700;
     padding: 2px 7px;
     border-radius: 4px;
@@ -303,7 +303,7 @@
     padding: 24px;
     text-align: center;
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     line-height: 1.4;
   }
 
@@ -324,7 +324,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     font-weight: 600;
     color: var(--color-text-primary);
     cursor: pointer;
@@ -348,7 +348,7 @@
   }
 
   .menu-group-title {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;

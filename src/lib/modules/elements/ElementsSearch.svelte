@@ -92,13 +92,13 @@
 
   .no-matches-query {
     font-family: var(--font-mono, monospace);
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
     font-weight: 700;
     color: var(--color-accent-primary, #00d2ff);
   }
 
   .no-matches-msg {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     color: var(--color-text-secondary);
   }
 
@@ -108,7 +108,7 @@
     justify-content: space-between;
     gap: 8px;
     padding: 4px 6px 8px 6px;
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     border-bottom: 1px solid var(--color-border-subtle);
     margin-bottom: 8px;
   }
@@ -129,12 +129,12 @@
   }
 
   .results-count-sub {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     color: var(--color-text-muted);
   }
 
   .results-hint {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     flex-shrink: 0;
   }
 

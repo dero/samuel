@@ -196,7 +196,7 @@
     justify-content: space-between;
     background-color: var(--color-surface-1);
     border-bottom: 1px solid var(--color-border-subtle);
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
   }
 
   .status-left {
@@ -208,20 +208,20 @@
   }
 
   .status-prefix {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     text-transform: uppercase;
     letter-spacing: 0.3px;
   }
 
   .status-query {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     font-weight: 700;
     color: var(--color-accent-primary);
     letter-spacing: 0.5px;
   }
 
   .status-idle {
-    font-size: 11.5px;
+    font-size: calc(11.5px * var(--font-scale));
     font-weight: 500;
   }
 
@@ -233,7 +233,7 @@
   }
 
   .status-count {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 600;
   }
 
@@ -305,21 +305,21 @@
   }
 
   .card-category {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.3px;
   }
 
   .card-title {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.25;
   }
 
   .card-preview {
-    font-size: 11.5px;
+    font-size: calc(11.5px * var(--font-scale));
     line-height: 1.35;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -356,13 +356,13 @@
   }
 
   .empty-query {
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
     font-weight: 700;
     color: var(--color-accent-primary);
   }
 
   .empty-msg {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     color: var(--color-text-secondary);
   }
 
@@ -372,7 +372,7 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     font-weight: 600;
     padding: 6px 14px;
     cursor: pointer;

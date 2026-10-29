@@ -117,7 +117,7 @@
     border-radius: var(--radius-sm);
     min-height: 32px;
     padding: 3px 1px;
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     font-weight: 600;
     color: var(--color-text-secondary);
     min-width: 0;
@@ -193,7 +193,7 @@
 
   .color-text {
     font-family: var(--font-sans);
-    font-size: 9.5px;
+    font-size: calc(9.5px * var(--font-scale));
     font-weight: 600;
     color: var(--color-text-secondary);
     line-height: 1.1;
@@ -241,7 +241,7 @@
   }
 
   .feature-name {
-    font-size: 9px;
+    font-size: calc(9px * var(--font-scale));
     font-weight: 600;
     color: var(--color-text-secondary);
     text-align: center;

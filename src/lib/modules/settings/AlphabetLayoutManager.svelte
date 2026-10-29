@@ -203,6 +203,7 @@
   .layout-count {
     font-size: var(--text-xs);
     color: var(--color-text-secondary);
+    white-space: nowrap;
   }
 
   .builtin-badge {

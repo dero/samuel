@@ -48,7 +48,7 @@
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <!-- svelte-ignore a11y_interactive_supports_focus -->
   <div
-    class="dialog-backdrop"
+    class="dialog-backdrop type-scaled"
     role="dialog"
     tabindex="-1"
     aria-modal="true"
@@ -120,14 +120,14 @@
 
   .dialog-title {
     margin: 0;
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-primary);
   }
 
   .dialog-message {
     margin: 0;
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     color: var(--color-text-secondary);
     line-height: 1.5;
   }
@@ -145,7 +145,7 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-xs);
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     font-weight: 700;
     cursor: pointer;
     border: none;
