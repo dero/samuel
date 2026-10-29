@@ -598,7 +598,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chess.js@npm:^1.4.0":
+"chess.js@npm:1.4.0":
   version: 1.4.0
   resolution: "chess.js@npm:1.4.0"
   checksum: 10c0/9f49e298cbaabddceb1d1e27e276b9f58665090faaacec3a802b5475f8359397857b0f355e49160fac214fbff54a639432c8155b63806f8dd34d3afc575f690b
@@ -1191,7 +1191,7 @@ __metadata:
     "@sveltejs/vite-plugin-svelte": "npm:^7.3.0"
     "@types/marked": "npm:^6.0.0"
     "@types/sql.js": "npm:^1.4.11"
-    chess.js: "npm:^1.4.0"
+    chess.js: "npm:1.4.0"
     marked: "npm:^18.0.13"
     phosphor-svelte: "npm:^3.1.0"
     sql.js: "npm:^1.14.2"
