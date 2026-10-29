@@ -1,5 +1,3 @@
-export type TurtleFlavour = 'angles' | 'directions';
-
 export type TurtleGranularity = 1 | 5 | 15 | 45 | 90;
 
 export const GRANULARITY_PRESETS: TurtleGranularity[] = [1, 5, 15, 45, 90];

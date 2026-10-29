@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { sudokuState } from './sudokuState.svelte';
+  import { nonogramState } from './nonogramState.svelte';
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
 
@@ -10,8 +10,8 @@
 
   let { onEnsureVisible }: Props = $props();
 
-  let width = $derived(sudokuState.nonogramWidth);
-  let height = $derived(sudokuState.nonogramHeight);
+  let width = $derived(nonogramState.width);
+  let height = $derived(nonogramState.height);
 
   let tableRef: HTMLDivElement | null = $state(null);
 
@@ -30,33 +30,33 @@
   });
 
   function handleColClueClick(c: number) {
-    sudokuState.selectNonogramClue('col', c);
+    nonogramState.selectClue('col', c);
   }
 
   function handleRowClueClick(r: number) {
-    sudokuState.selectNonogramClue('row', r);
+    nonogramState.selectClue('row', r);
   }
 
   function getColCluesDisplay(c: number): string[] {
-    const list = [...(sudokuState.nonogramColClues[c] || [])];
+    const list = [...(nonogramState.colClues[c] || [])];
     if (
-      sudokuState.nonogramSelected.type === 'col' &&
-      sudokuState.nonogramSelected.index === c &&
-      sudokuState.nonogramDraft
+      nonogramState.selected.type === 'col' &&
+      nonogramState.selected.index === c &&
+      nonogramState.draft
     ) {
-      list.push(parseInt(sudokuState.nonogramDraft, 10));
+      list.push(parseInt(nonogramState.draft, 10));
     }
     return list.length > 0 ? list.map(String) : ['·'];
   }
 
   function getRowCluesDisplay(r: number): string[] {
-    const list = [...(sudokuState.nonogramRowClues[r] || [])];
+    const list = [...(nonogramState.rowClues[r] || [])];
     if (
-      sudokuState.nonogramSelected.type === 'row' &&
-      sudokuState.nonogramSelected.index === r &&
-      sudokuState.nonogramDraft
+      nonogramState.selected.type === 'row' &&
+      nonogramState.selected.index === r &&
+      nonogramState.draft
     ) {
-      list.push(parseInt(sudokuState.nonogramDraft, 10));
+      list.push(parseInt(nonogramState.draft, 10));
     }
     return list.length > 0 ? list.map(String) : ['·'];
   }
@@ -64,7 +64,7 @@
   let lastClueKey = '';
   // Auto-pan active clue into view when zoomed
   $effect(() => {
-    const sel = sudokuState.nonogramSelected;
+    const sel = nonogramState.selected;
     const selKey = `${sel.type}:${sel.index}`;
     if (selKey === lastClueKey) return;
     lastClueKey = selKey;
@@ -99,7 +99,7 @@
       style="grid-template-columns: repeat({width}, {cellSize}px);"
     >
       {#each Array(width) as _, c}
-        {@const isSelected = sudokuState.nonogramSelected.type === 'col' && sudokuState.nonogramSelected.index === c}
+        {@const isSelected = nonogramState.selected.type === 'col' && nonogramState.selected.index === c}
         {@const clues = getColCluesDisplay(c)}
         <button
           type="button"
@@ -126,7 +126,7 @@
       style="grid-template-rows: repeat({height}, {cellSize}px);"
     >
       {#each Array(height) as _, r}
-        {@const isSelected = sudokuState.nonogramSelected.type === 'row' && sudokuState.nonogramSelected.index === r}
+        {@const isSelected = nonogramState.selected.type === 'row' && nonogramState.selected.index === r}
         {@const clues = getRowCluesDisplay(r)}
         <button
           type="button"
@@ -154,9 +154,9 @@
     >
       {#each Array(height) as _, r}
         {#each Array(width) as _, c}
-          {@const isColActive = sudokuState.nonogramSelected.type === 'col' && sudokuState.nonogramSelected.index === c}
-          {@const isRowActive = sudokuState.nonogramSelected.type === 'row' && sudokuState.nonogramSelected.index === r}
-          {@const solvedVal = sudokuState.nonogramSolution?.[r]?.[c]}
+          {@const isColActive = nonogramState.selected.type === 'col' && nonogramState.selected.index === c}
+          {@const isRowActive = nonogramState.selected.type === 'row' && nonogramState.selected.index === r}
+          {@const solvedVal = nonogramState.solution?.[r]?.[c]}
           {@const isFilled = solvedVal === 1}
           {@const isEmpty = solvedVal === 0}
 

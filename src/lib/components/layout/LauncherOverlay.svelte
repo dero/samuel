@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MODULES } from '../../types';
+  import { MODULES, MODULE_GROUPS } from '../../types';
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
   import { versionService } from '../../services/versionService.svelte';
@@ -7,12 +7,21 @@
   import ModuleIcon from '../ui/ModuleIcon.svelte';
   import { SquaresFour } from 'phosphor-svelte';
 
+  const COLUMNS = 4;
+
+  // One block per group (in group order), modules sorted alphabetically (Czech) inside
+  const groupBlocks = MODULE_GROUPS.map((group) => {
+    const modules = MODULES.filter((m) => m.group === group.id).sort((a, b) =>
+      a.name.localeCompare(b.name, 'cs')
+    );
+    const fillers = (COLUMNS - (modules.length % COLUMNS)) % COLUMNS;
+    return { group, modules, fillers };
+  }).filter((block) => block.modules.length > 0);
+
   function handleSelect(id: string) {
     settings.vibrate(20);
     navigation.openModule(id as any);
   }
-
-  const fillersCount = MODULES.length % 4 === 0 ? 0 : 4 - (MODULES.length % 4);
 </script>
 
 <BottomSheet
@@ -24,39 +33,83 @@
   maxHeight="80dvh"
   padding={false}
 >
-  <div class="modules-grid">
-    {#each MODULES as mod}
-      <button
-        type="button"
-        class="module-btn"
-        class:is-active={navigation.activeModuleId === mod.id}
-        class:is-system={mod.isSystem}
-        onclick={() => handleSelect(mod.id)}
-      >
-        <span class="icon">
-          <ModuleIcon id={mod.id} weight="duotone" />
-        </span>
-        <span class="name">{mod.name}</span>
-        {#if mod.id === 'settings' && versionService.state.updateAvailable}
-          <span class="update-dot" title="K dispozici je aktualizace"></span>
-        {/if}
-      </button>
-    {/each}
-    {#each Array(fillersCount) as _}
-      <div class="grid-filler" aria-hidden="true"></div>
+  <div class="launcher">
+    {#each groupBlocks as { group, modules, fillers } (group.id)}
+      <section class="group-block" style:--group-color={group.color} aria-label={group.name}>
+        <div class="group-label" aria-hidden="true">
+          <span class="group-label-text">{group.name}</span>
+        </div>
+        <div class="modules-grid">
+          {#each modules as mod (mod.id)}
+            <button
+              type="button"
+              class="module-btn"
+              class:is-active={navigation.activeModuleId === mod.id}
+              onclick={() => handleSelect(mod.id)}
+            >
+              <span class="icon">
+                <ModuleIcon id={mod.id} weight="duotone" />
+              </span>
+              <span class="name">{mod.name}</span>
+              {#if mod.id === 'settings' && versionService.state.updateAvailable}
+                <span class="update-dot" title="K dispozici je aktualizace"></span>
+              {/if}
+            </button>
+          {/each}
+          {#each Array(fillers) as _}
+            <div class="grid-filler" aria-hidden="true"></div>
+          {/each}
+        </div>
+      </section>
     {/each}
   </div>
 </BottomSheet>
 
 <style>
-  .modules-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+  .launcher {
+    display: flex;
+    flex-direction: column;
     gap: 1px;
     background-color: var(--color-border-subtle);
-    width: 100%;
-    margin: 0;
-    padding: 0 0 max(var(--space-md), env(safe-area-inset-bottom, 0px)) 0;
+    padding-bottom: max(var(--space-md), env(safe-area-inset-bottom, 0px));
+  }
+
+  .group-block {
+    display: flex;
+    gap: 1px;
+  }
+
+  /* Vertical group name, read bottom-to-top like a book spine */
+  .group-label {
+    flex: none;
+    width: calc(20px * var(--font-scale));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: var(--group-color);
+  }
+
+  .group-label-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    max-height: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-condensed);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--color-text-inverse);
+  }
+
+  .modules-grid {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
   }
 
   .module-btn,
@@ -73,6 +126,10 @@
     gap: 5px;
     min-height: 68px;
     box-sizing: border-box;
+  }
+
+  .grid-filler {
+    background-color: var(--color-surface-sunken);
   }
 
   .module-btn {
@@ -105,10 +162,6 @@
     font-weight: 700;
   }
 
-  .module-btn.is-system .icon {
-    color: var(--color-text-secondary);
-  }
-
   .update-dot {
     position: absolute;
     top: 6px;
@@ -125,7 +178,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-accent-primary);
+    color: var(--group-color);
   }
 
   .name {

@@ -40,6 +40,14 @@
   --color-accent-warning: #f59e0b;
   --color-accent-warning-subtle: rgba(245, 158, 11, 0.12);
 
+  /* Module Groups (Launcher side labels & icons; muted, distinct from accents) */
+  --color-group-coding: #7dd3a8;
+  --color-group-text: #a99cf0;
+  --color-group-realia: #f0997b;
+  --color-group-puzzles: #e0c068;
+  --color-group-drawing: #e39ac8;
+  --color-group-app: #9a9a9a;
+
   /* Spacing Scale */
   --space-2xs: 2px;
   --space-xs: 4px;

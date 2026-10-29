@@ -1,9 +1,7 @@
-import type { SudokuSolveResult } from './sudokuSolver';
 import type { NonogramSolveResult } from './nonogramSolver';
-import { solveSudoku } from './sudokuSolver';
 import { solveNonogram } from './nonogramSolver';
 
-class PuzzleService {
+class NonogramService {
   private worker: Worker | null = null;
   private pendingRequests = new Map<string, (result: any) => void>();
   private reqIdCounter = 0;
@@ -16,7 +14,7 @@ class PuzzleService {
     if (typeof window === 'undefined') return;
     try {
       // Dynamic worker import
-      this.worker = new Worker(new URL('./puzzle.worker.ts', import.meta.url), {
+      this.worker = new Worker(new URL('./nonogram.worker.ts', import.meta.url), {
         type: 'module'
       });
 
@@ -30,7 +28,7 @@ class PuzzleService {
       };
 
       this.worker.onerror = (err) => {
-        console.error('Puzzle worker error:', err);
+        console.error('Nonogram worker error:', err);
       };
     } catch (e) {
       console.warn('Web Workers unavailable or blocked, using sync fallback:', e);
@@ -38,23 +36,7 @@ class PuzzleService {
     }
   }
 
-  async solveSudokuAsync(grid: (number | null)[][]): Promise<SudokuSolveResult> {
-    if (!this.worker) {
-      return solveSudoku(grid);
-    }
-
-    const id = `sudoku_${++this.reqIdCounter}_${Date.now()}`;
-    return new Promise((resolve) => {
-      this.pendingRequests.set(id, resolve);
-      this.worker!.postMessage({
-        type: 'solve_sudoku',
-        id,
-        grid
-      });
-    });
-  }
-
-  async solveNonogramAsync(
+  async solveAsync(
     width: number,
     height: number,
     rowClues: number[][],
@@ -97,4 +79,4 @@ class PuzzleService {
   }
 }
 
-export const puzzleService = new PuzzleService();
+export const nonogramService = new NonogramService();

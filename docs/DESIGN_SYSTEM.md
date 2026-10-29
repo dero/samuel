@@ -21,6 +21,9 @@ Aplikace striktně rozlišuje mezi **samostatným nástrojem** (vlastní modul v
 ### 1.2 Třívrstvá hierarchie ovládání
 1. **Header Bar (52 px fixně):**
    - Vlevo: `[ Ikona modulu ]` – klepnutím otevírá celoobrazovkový **Launcher všech modulů**.
+     - Moduly jsou v blocích podle skupin (`MODULE_GROUPS` v `types.ts`: Kódování, Text, Reálie, Rébusy, Kreslení, Aplikace), uvnitř skupiny abecedně (`cs`). Každá skupina začíná na novém řádku, zbytek řádku vyplní tmavé prázdné buňky.
+     - Barva skupiny (`--color-group-*`) = svislý proužek vlevo s názvem skupiny (černý text, čte se zdola nahoru) + barva ikon. Žádné filtry ani přepínání stavů v launcheru.
+     - Název skupiny drž do ~8 znaků, aby se vešel do proužku i u jednořádkové skupiny.
    - Střed: `[ Název modulu ]` – jednoznačný název aktivního nástroje.
    - Vpravo: `[ 📖 Reference ]` (tahák a encyklopedie ke čtení) a `[ ☰ Menu ]` (konfigurace modulu a reset).
 2. **Sub-Toolbar (36 px, 100% full-width přímo nad klávesnicí):**
@@ -82,6 +85,7 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** skládáš modul, **POTOM** použij `<ModuleShell>` a dodrž hierarchii: Header (52 px), `<TranslationCard>` či vizualizace (`flex: 1`, min. 84 px), `ZONE-INPUT` (max. 326 px). Žádný celostránkový scroll (`overflow: hidden`).
 - **POKUD** navrhuješ jakýkoliv modul (včetně analytických, šifrovacích či textových), **POTOM** výstup / výsledky / luštěný text patří VŽDY do horní zóny (`ZONE-OUTPUT`) a veškeré zadávání / klávesnice / voliče VŽDY do spodní zóny (`ZONE-INPUT`) na dosah palce (thumb zone). V celé aplikaci je striktně zakázáno obracet tok (vstup nahoře a výstup dole je nepřípustný).
 - **POKUD** navrhuješ rozhraní, **POTOM** minimální garantovaný viewport je **320 × 540 px** (portrait-only). Při landscape s výškou < 540 px se zobrazí overlay `<LandscapeWarning>`.
+- **POKUD** přidáváš modul, **POTOM** mu v `MODULES` přiřaď `group` (systémové moduly patří do `app`). Skupiny jsou nápověda, ne povinná navigace – sporný nástroj dej tam, kde ho hráč hledá nejspíš.
 - **POKUD** má nástroj odlišné vstupní médium (kříž vs polybius vs mobil), **POTOM** vytvoř samostatný modul v Launcheru. NIKDY neslučuj odlišná zadávací média do jednoho modulu.
 - **POKUD** skládáš prvky ve vstupní zóně (`ZONE-INPUT`), **POTOM** použij jednotný kontejner `.zone-input-flow` se striktním odstupem `--zone-input-gap: var(--space-sm)` (8 px) mezi všemi souslednými prvky: `[Sub-Toolbar (36 px)] ➔ 8 px ➔ [Stage / Keypad] ➔ 8 px ➔ [.keypad-utility-row-3col (42 px)]`. NIKDY nepřidávej ad hoc vertikální marginy nebo paddingy, které by tento 8px rytmus narušily.
 - **POKUD** renderuješ Sub-Toolbar, **POTOM** použij kontejner `.subtoolbar-container` (výška přesně 36 px, `overflow: hidden`) a komponenty v něm musí držet výšku 36 px (např. `<SegmentedControl size="sm">`, `.t9-candidate-pill` výška 30 px). Žádný prvek nesmí přetékat.
@@ -122,7 +126,7 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 ### Reference (`[ 📖 ]`)
 - **POKUD** píšeš referenci modulu, **POTOM** ji postav na `<RefLayout>` (`src/lib/components/reference/`). Záložky jdou v pevném pořadí: nejdřív datové záložky (max. 3, první se otevře vždy), poslední je VŽDY **„Návod“**. Modul bez dat má jen Návod a lišta záložek se skryje.
 - **POKUD** plníš Návod, **POTOM** předej `help: RefHelpData` se dvěma pevnými sekcemi: **Ovládání** (`controls`: zadávání, lišty, volby v menu) a **Pozor** (`pitfalls`: úskalí ve tvaru *situace → co dělat*). Sekce NIKDY nepřejmenovávej ani nepřidávej další; prázdnou sekci vynech.
-- **POKUD** má modul víc nástrojů (flavours), které se ovládají nebo chovají rozdílně (Sudoku vs. Nonogram, SMS vs. T9), **POTOM** předej `tools: RefTool[]` s návodem pro každý nástroj zvlášť a `activeTool` = aktuální flavour modulu. Návod je lineární: nahoře blok **Společné** (`help`: přepínání, gesta, společná úskalí), pod ním blok každého nástroje v pořadí lišty; aktivní nástroj nese štítek „aktivní“. Uvnitř Návodu NIKDY nepřidávej další přepínač (SegmentedControl) – dvě stejné lišty pod sebou matou. Varianty se stejným chováním (Polybius 5×5 / 6×6) nerozděluj.
+- **POKUD** má modul víc nástrojů (flavours), které se ovládají nebo chovají rozdílně (SMS vs. T9), **POTOM** předej `tools: RefTool[]` s návodem pro každý nástroj zvlášť a `activeTool` = aktuální flavour modulu. Návod je lineární: nahoře blok **Společné** (`help`: přepínání, gesta, společná úskalí), pod ním blok každého nástroje v pořadí lišty; aktivní nástroj nese štítek „aktivní“. Uvnitř Návodu NIKDY nepřidávej další přepínač (SegmentedControl) – dvě stejné lišty pod sebou matou. Varianty se stejným chováním (Polybius 5×5 / 6×6) nerozděluj.
 - **POKUD** píšeš položku „Pozor“, **POTOM** nejdřív zvaž, jestli nejde nástroj zjednodušit tak, aby úskalí zmizelo (automatická detekce místo volby v menu, standardní pravidla místo přepínačů). Gotcha je až poslední možnost, ne náhrada za lepší chování.
 - **POKUD** píšeš text reference, **POTOM** piš heslovitě: položka = `['pojem', 'hodnota']` na jeden řádek (~60 znaků), příklad místo vysvětlení (`22 = B`), zápisy v backticku (vykreslí se jako `<code>`). Žádné úvody, hodnocení ani oslovení („Skvělé pro…“, „Ťuknutím vyberte…“).
 - **POKUD** v referenci odkazuješ na ovládací prvek, **POTOM** ho pojmenuj přesně jako v UI (label volby v menu, text tlačítka) a u voleb doplň „→ menu <Label>“.
@@ -174,6 +178,7 @@ $$540\text{ px} - [52\text{ (Header)} + 84\text{ (Output min)} + 42\text{ (Utili
 | `<HoldToAction>` | `ui/HoldToAction.svelte` | Bezpečné smazání podržením: props `onAction`, `disabled`, `holdDuration=380` |
 | `<SpaceCommitButton>` | `ui/SpaceCommitButton.svelte` | Kontextová mezera / Enter: props `pendingChar`, `onSpace`, `onCommit`, `commitSymbol` |
 | `<BackspaceButton>` | `ui/BackspaceButton.svelte` | Mazání / rušení rozepsaného znaku (✕ vs ⌫): props `onAction`, `hasActiveSelection`, `disabled` |
+| `<DigitKeypad>` | `ui/DigitKeypad.svelte` | Dvouřádková číselná klávesnice `1–9`, `0` s vysokými `◀` `▶` (mřížkové hlavolamy): props `onDigit`, `onPrev`, `onNext` |
 | `<SegmentedControl>` | `ui/SegmentedControl.svelte` | Přepínač flavours v sub-toolbaru: props `options`, `value`, `onChange` |
 | `<RefLayout>` | `reference/RefLayout.svelte` | Kostra reference: datové záložky + „Návod“; props `tabs`, `help`, snippet `content(tab)`. Nese sdílené styly `.ref-table` a `<code>` |
 | `<RefSection>` | `reference/RefSection.svelte` | Nadpis sekce reference s volitelnou jednořádkovou poznámkou: props `title`, `note` |

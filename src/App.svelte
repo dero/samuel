@@ -18,10 +18,12 @@
   import SubstitutionModule from './lib/modules/substitution/SubstitutionModule.svelte';
   import FrequencyModule from './lib/modules/frequency/FrequencyModule.svelte';
   import SudokuModule from './lib/modules/sudoku/SudokuModule.svelte';
+  import NonogramModule from './lib/modules/nonogram/NonogramModule.svelte';
   import ChessModule from './lib/modules/chess/ChessModule.svelte';
   import WordsModule from './lib/modules/words/WordsModule.svelte';
   import GrilleModule from './lib/modules/grille/GrilleModule.svelte';
   import TurtleModule from './lib/modules/turtle/TurtleModule.svelte';
+  import PlotterModule from './lib/modules/plotter/PlotterModule.svelte';
   import CalendarModule from './lib/modules/calendar/CalendarModule.svelte';
   import FactsModule from './lib/modules/facts/FactsModule.svelte';
   import ColorsModule from './lib/modules/colors/ColorsModule.svelte';
@@ -110,6 +112,8 @@
       <FrequencyModule />
     {:else if navigation.activeModuleId === 'sudoku'}
       <SudokuModule />
+    {:else if navigation.activeModuleId === 'nonogram'}
+      <NonogramModule />
     {:else if navigation.activeModuleId === 'chess'}
       <ChessModule />
     {:else if navigation.activeModuleId === 'words'}
@@ -118,6 +122,8 @@
       <GrilleModule />
     {:else if navigation.activeModuleId === 'turtle'}
       <TurtleModule />
+    {:else if navigation.activeModuleId === 'plotter'}
+      <PlotterModule />
     {:else if navigation.activeModuleId === 'calendar'}
       <CalendarModule />
     {:else if navigation.activeModuleId === 'facts'}

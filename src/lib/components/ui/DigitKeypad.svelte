@@ -1,40 +1,17 @@
 <script lang="ts">
   import { CaretLeft, CaretRight } from 'phosphor-svelte';
-  import { sudokuState } from './sudokuState.svelte';
 
+  /**
+   * Two-row digit keypad (1–9, 0) flanked by tall prev/next buttons.
+   * Shared by grid puzzles (Sudoku, Nonogram); meaning of 0 is up to the caller.
+   */
   interface Props {
-    flavour: 'sudoku' | 'nonogram';
+    onDigit: (digit: number) => void;
+    onPrev: () => void;
+    onNext: () => void;
   }
 
-  let { flavour }: Props = $props();
-
-  function handleDigit(num: number) {
-    if (flavour === 'sudoku') {
-      if (num === 0) {
-        sudokuState.advanceSudoku(1);
-        return;
-      }
-      sudokuState.enterSudokuDigit(num);
-    } else {
-      sudokuState.enterNonogramDigit(num);
-    }
-  }
-
-  function handleLeft() {
-    if (flavour === 'sudoku') {
-      sudokuState.advanceSudoku(-1);
-    } else {
-      sudokuState.advanceNonogram(-1);
-    }
-  }
-
-  function handleRight() {
-    if (flavour === 'sudoku') {
-      sudokuState.advanceSudoku(1);
-    } else {
-      sudokuState.advanceNonogram(1);
-    }
-  }
+  let { onDigit, onPrev, onNext }: Props = $props();
 </script>
 
 <div class="keypad-chassis">
@@ -44,7 +21,7 @@
     class="keycap keycap-nav keycap-left"
     onpointerdown={(e) => {
       e.preventDefault();
-      handleLeft();
+      onPrev();
     }}
     aria-label="Krok zpět"
     title="Krok zpět"
@@ -59,7 +36,7 @@
       class="keycap keycap-num"
       onpointerdown={(e) => {
         e.preventDefault();
-        handleDigit(digit);
+        onDigit(digit);
       }}
       aria-label="Číslice {digit}"
     >
@@ -73,7 +50,7 @@
     class="keycap keycap-nav keycap-right"
     onpointerdown={(e) => {
       e.preventDefault();
-      handleRight();
+      onNext();
     }}
     aria-label="Krok vpřed / Další"
     title="Krok vpřed / Další"
@@ -88,7 +65,7 @@
       class="keycap keycap-num"
       onpointerdown={(e) => {
         e.preventDefault();
-        handleDigit(digit);
+        onDigit(digit);
       }}
       aria-label="Číslice {digit}"
     >
@@ -96,13 +73,13 @@
     </button>
   {/each}
 
-  <!-- Digit 0: Advances to next cell in Sudoku, enters digit in Nonogram -->
+  <!-- Digit 0 -->
   <button
     type="button"
     class="keycap keycap-num"
     onpointerdown={(e) => {
       e.preventDefault();
-      handleDigit(0);
+      onDigit(0);
     }}
     aria-label="Číslice 0"
   >

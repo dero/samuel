@@ -15,7 +15,7 @@ export interface RefHelpData {
 }
 
 /**
- * Help for one tool (flavour) of a multi-tool module, e.g. Sudoku vs. Nonogram.
+ * Help for one tool (flavour) of a multi-tool module, e.g. SMS vs. T9.
  * Listed in "Návod" as its own block after the module-wide "Společné" block.
  */
 export interface RefTool<T extends string = string> {

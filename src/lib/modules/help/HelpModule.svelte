@@ -9,7 +9,7 @@
       <span class="start-arrow"><ArrowUp size={22} weight="bold" /></span>
       <div>
         <h1 class="start-title">Začněte klepnutím na ikonu nebo název nahoře</h1>
-        <p class="start-desc">Otevře se výběr pomůcek. Tudy pak přepínáte kdykoli.</p>
+        <p class="start-desc">Otevře se výběr pomůcek seřazených do barevných skupin. Tudy pak přepínáte kdykoli.</p>
       </div>
     </section>
 
