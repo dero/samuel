@@ -7,7 +7,7 @@
 
   let active = $derived(navigation.activeModule);
 </script>
-<header class="header type-fixed">
+<header class="header">
   <div class="title-zone">
     <button
       type="button"
@@ -117,7 +117,7 @@
   }
 
   .module-icon {
-    font-size: 22px;
+    font-size: calc(22px * var(--font-scale));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -137,7 +137,7 @@
   }
 
   .chevron {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     color: var(--color-text-secondary);
     display: flex;
     align-items: center;
@@ -185,7 +185,7 @@
   }
 
   .icon {
-    font-size: 20px;
+    font-size: calc(20px * var(--font-scale));
     display: flex;
     align-items: center;
     justify-content: center;

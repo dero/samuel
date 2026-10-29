@@ -48,7 +48,7 @@
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <!-- svelte-ignore a11y_interactive_supports_focus -->
   <div
-    class="dialog-backdrop type-scaled"
+    class="dialog-backdrop"
     role="dialog"
     tabindex="-1"
     aria-modal="true"

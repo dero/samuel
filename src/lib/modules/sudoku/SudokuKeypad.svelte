@@ -170,7 +170,7 @@
 
   .num-text {
     font-family: var(--font-mono, monospace);
-    font-size: 20px;
+    font-size: calc(20px * var(--font-scale));
     font-weight: 700;
     line-height: 1;
   }

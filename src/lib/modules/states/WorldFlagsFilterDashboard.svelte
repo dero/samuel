@@ -117,7 +117,8 @@
     border-radius: var(--radius-sm);
     min-height: 32px;
     padding: 3px 1px;
-    font-size: calc(10px * var(--font-scale));
+    /* Capped by width: six chips per row must fit "Oceánie" on 320px. */
+    font-size: min(calc(10px * var(--font-scale)), 3.4vw);
     font-weight: 600;
     color: var(--color-text-secondary);
     min-width: 0;
@@ -241,7 +242,7 @@
   }
 
   .feature-name {
-    font-size: calc(9px * var(--font-scale));
+    font-size: min(calc(9px * var(--font-scale)), 2.7vw);
     font-weight: 600;
     color: var(--color-text-secondary);
     text-align: center;

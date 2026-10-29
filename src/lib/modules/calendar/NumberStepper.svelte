@@ -114,7 +114,7 @@
     background-color: var(--color-surface-1, #121212);
     border: none;
     color: var(--color-text-primary, #ffffff);
-    font-size: 18px;
+    font-size: calc(18px * var(--font-scale));
     font-weight: 700;
     cursor: pointer;
     flex-shrink: 0;
@@ -143,7 +143,7 @@
   }
 
   .stepper-label {
-    font-size: 8px;
+    font-size: calc(8px * var(--font-scale));
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -151,7 +151,7 @@
   }
 
   .stepper-val {
-    font-size: 13.5px;
+    font-size: calc(13.5px * var(--font-scale));
     font-weight: 800;
     font-family: var(--font-mono, monospace);
     color: var(--color-text-primary, #ffffff);

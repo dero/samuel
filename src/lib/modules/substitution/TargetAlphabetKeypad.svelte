@@ -195,7 +195,7 @@
     cursor: pointer;
     touch-action: manipulation;
     padding: 0;
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     font-weight: 700;
     transition: background-color 0.1s ease, transform 0.05s ease;
   }

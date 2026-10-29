@@ -63,8 +63,7 @@
   --font-mono: ui-monospace, "SF Mono", "Roboto Mono", "Cascadia Code", monospace;
 
   /* Text size multiplier chosen in Settings (set on <html> by settings state) */
-  --font-scale-user: 1;
-  --font-scale: var(--font-scale-user);
+  --font-scale: 1.2;
 
   /* Layout & Component Budgets */
   --header-height: 52px;
@@ -86,14 +85,8 @@
   --glow-danger: 0 0 16px rgba(239, 68, 68, 0.4);
 }
 
-/*
- * Typography scale. Declared on every scope that changes --font-scale so the
- * calc() is re-evaluated there (custom properties resolve where declared).
- * Hard-coded reading text uses calc(Npx * var(--font-scale)) directly.
- */
-:root,
-.type-fixed,
-.type-scaled {
+/* Typography scale; hard-coded sizes use calc(Npx * var(--font-scale)) directly. */
+:root {
   --text-2xs: calc(10px * var(--font-scale));
   --text-xs: calc(11px * var(--font-scale));
   --text-sm: calc(13px * var(--font-scale));
@@ -102,16 +95,6 @@
   --text-xl: calc(20px * var(--font-scale));
   --text-2xl: calc(24px * var(--font-scale));
   --text-3xl: calc(32px * var(--font-scale));
-}
-
-/* Fixed-geometry chrome (header, keypads, sub-toolbar) keeps its design size. */
-.type-fixed {
-  --font-scale: 1;
-}
-
-/* Overlays rendered inside a fixed zone (sheets, dialogs) scale again. */
-.type-scaled {
-  --font-scale: var(--font-scale-user);
 }
 
 *, *::before, *::after {

@@ -498,7 +498,7 @@
     border: none;
     border-radius: 2px;
     color: var(--color-text-primary);
-    font-size: 17px;
+    font-size: calc(17px * var(--font-scale));
     font-weight: 700;
     cursor: pointer;
     touch-action: none;

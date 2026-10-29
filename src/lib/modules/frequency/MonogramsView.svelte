@@ -135,7 +135,7 @@
     justify-content: center;
     background-color: var(--color-surface-2);
     border-radius: 4px;
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     font-weight: 700;
     color: var(--color-accent-primary);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.5);

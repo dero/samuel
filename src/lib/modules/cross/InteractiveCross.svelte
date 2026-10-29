@@ -538,7 +538,7 @@
   }
 
   .dot {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     font-weight: 900;
     letter-spacing: -1px;
     line-height: 1;
@@ -606,7 +606,7 @@
   }
 
   .cell-char {
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
     font-weight: 700;
     font-family: var(--font-mono);
     fill: var(--color-text-primary);

@@ -89,7 +89,7 @@
     border: 1px solid rgba(255, 255, 255, 0.09);
     color: var(--color-text-primary);
     font-family: var(--font-mono, monospace);
-    font-size: 17px;
+    font-size: calc(17px * var(--font-scale));
     font-weight: 700;
     cursor: pointer;
     touch-action: manipulation;

@@ -231,7 +231,7 @@
   }
 
   .dim-badge {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-family: var(--font-mono, monospace);
     font-weight: 700;
     color: var(--color-text-secondary);
@@ -318,7 +318,7 @@
 
   .clue-val {
     font-family: var(--font-mono, monospace);
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
     line-height: 1;
   }
@@ -355,7 +355,7 @@
 
   .empty-dot {
     color: var(--color-text-muted);
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
     font-weight: 700;
     user-select: none;
     line-height: 1;

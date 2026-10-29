@@ -411,7 +411,7 @@
 
   .dot-num {
     font-family: var(--font-mono);
-    font-size: 26px;
+    font-size: calc(26px * var(--font-scale));
     font-weight: 900;
     color: var(--color-text-secondary);
     pointer-events: none;

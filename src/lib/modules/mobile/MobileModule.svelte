@@ -524,7 +524,7 @@
   }
 
   .phone-key-num {
-    font-size: 22px;
+    font-size: calc(22px * var(--font-scale));
     font-weight: 800;
     font-family: var(--font-mono);
     color: var(--color-text-primary);
@@ -546,7 +546,7 @@
   }
 
   .phone-sub-char {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 600;
     font-family: var(--font-mono);
     color: var(--color-text-secondary);

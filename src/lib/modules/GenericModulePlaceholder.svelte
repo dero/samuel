@@ -71,7 +71,7 @@
   }
 
   .stub-icon {
-    font-size: 36px;
+    font-size: calc(36px * var(--font-scale));
     display: flex;
     align-items: center;
     justify-content: center;

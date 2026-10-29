@@ -226,7 +226,7 @@
   }
 
   .card-cipher-char {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     font-weight: 700;
     line-height: 1.1;
     color: var(--color-text-primary);
@@ -240,14 +240,14 @@
   }
 
   .card-target-char {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     font-weight: 700;
     line-height: 1.1;
     color: var(--color-text-primary);
   }
 
   .card-target-char.target-unmapped {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     font-weight: 500;
     color: var(--color-text-secondary);
     opacity: 0.65;

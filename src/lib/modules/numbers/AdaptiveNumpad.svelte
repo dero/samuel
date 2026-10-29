@@ -154,13 +154,13 @@
   /* Base 2: Binary */
   .key-bin {
     height: 84px;
-    font-size: 32px;
+    font-size: calc(32px * var(--font-scale));
   }
 
   /* Base 3: Ternary */
   .key-ter {
     height: 76px;
-    font-size: 28px;
+    font-size: calc(28px * var(--font-scale));
   }
 
   /* Medium keys (Bases 4, 5, 6) */

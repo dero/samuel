@@ -140,7 +140,7 @@
 
   .calendar-detail-root.is-compact-mode .split-cards {
     height: 40px;
-    grid-template-columns: minmax(0, 1fr) 48px 48px;
+    grid-template-columns: minmax(0, 1fr) minmax(48px, auto) minmax(48px, auto);
   }
 
   /* Expanded Mode: Search Accordion (Clean integration into list item) */
@@ -156,7 +156,7 @@
 
   .calendar-detail-root.is-expanded-mode .split-cards {
     height: 42px;
-    grid-template-columns: minmax(0, 1fr) 44px 44px;
+    grid-template-columns: minmax(0, 1fr) minmax(44px, auto) minmax(44px, auto);
   }
 
   /* Container */
@@ -308,8 +308,7 @@
 
   .action-card.num-card .card-label {
     justify-content: center;
-    /* Fixed: the day/week cards are 44–48px wide columns. */
-    font-size: 8.5px;
+    font-size: calc(8.5px * var(--font-scale));
     letter-spacing: 0.02em;
   }
 
@@ -334,7 +333,7 @@
   }
 
   .mono-val {
-    font-size: 15px;
+    font-size: calc(15px * var(--font-scale));
     font-weight: 900;
     font-family: var(--font-mono, monospace);
     color: var(--color-text-primary, #ffffff);

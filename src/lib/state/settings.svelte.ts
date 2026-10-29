@@ -1,11 +1,10 @@
 import { localSettingsService } from '../services/localSettingsService';
 
+/** Text size steps (±10 % around the default); the multiplier lives here so the default can be retuned without migrating stored choices. */
 export const FONT_SCALES = [
-  { id: '0.8', label: 'Malý' },
-  { id: '0.9', label: 'Menší' },
-  { id: '1', label: 'Normální' },
-  { id: '1.12', label: 'Větší' },
-  { id: '1.25', label: 'Velký' }
+  { id: 'smaller', label: 'Menší', scale: 1.08 },
+  { id: 'normal', label: 'Normální', scale: 1.2 },
+  { id: 'larger', label: 'Větší', scale: 1.32 }
 ] as const;
 
 export type FontScale = (typeof FONT_SCALES)[number]['id'];
@@ -17,7 +16,7 @@ function isFontScale(value: string): value is FontScale {
 class SettingsState {
   hapticsEnabled = $state<boolean>(true);
   wakeLockEnabled = $state<boolean>(true);
-  fontScale = $state<FontScale>('1');
+  fontScale = $state<FontScale>('normal');
 
   private wakeLockSentinel: WakeLockSentinel | null = null;
 
@@ -26,8 +25,8 @@ class SettingsState {
       const appScope = localSettingsService.forSection('app');
       this.hapticsEnabled = appScope.getBoolean('hapticsEnabled', true);
       this.wakeLockEnabled = appScope.getBoolean('wakeLockEnabled', true);
-      const storedScale = appScope.getString('fontScale', '1');
-      this.fontScale = isFontScale(storedScale) ? storedScale : '1';
+      const storedScale = appScope.getString('fontScale', 'normal');
+      this.fontScale = isFontScale(storedScale) ? storedScale : 'normal';
       // Applied right away so the first paint already uses the chosen size.
       this.applyFontScale();
 
@@ -69,7 +68,8 @@ class SettingsState {
   }
 
   private applyFontScale() {
-    document.documentElement.style.setProperty('--font-scale-user', this.fontScale);
+    const scale = FONT_SCALES.find((s) => s.id === this.fontScale)?.scale ?? 1.2;
+    document.documentElement.style.setProperty('--font-scale', String(scale));
   }
 
   private async requestWakeLock() {

@@ -144,7 +144,7 @@
   }
 
   .key-label {
-    font-size: 22px;
+    font-size: calc(22px * var(--font-scale));
     font-weight: 800;
     line-height: 1;
     color: var(--color-accent-primary);

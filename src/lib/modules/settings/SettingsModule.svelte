@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import AlphabetLayoutManager from './AlphabetLayoutManager.svelte';
-  import { settings, FONT_SCALES, type FontScale } from '../../state/settings.svelte';
+  import { settings, FONT_SCALES } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import { versionService } from '../../services/versionService.svelte';
   import {
@@ -21,6 +21,7 @@
     ShieldWarning
   } from 'phosphor-svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
+  import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
 
   function formatTimestamp(ts: number | string | undefined | null): string {
     if (!ts) return 'Neznámé';
@@ -165,13 +166,7 @@
     }
   }
 
-  let activeFontScale = $derived(FONT_SCALES.find((s) => s.id === settings.fontScale) ?? FONT_SCALES[2]);
-
-  function selectFontScale(id: FontScale) {
-    if (id === settings.fontScale) return;
-    settings.vibrate(20);
-    settings.fontScale = id;
-  }
+  const fontScaleOptions = FONT_SCALES.map(({ id, label }) => ({ id, label }));
 
   let isResetting = $state(false);
 
@@ -309,27 +304,16 @@
       <h2 class="card-title">Předvolby</h2>
 
       <div class="font-scale-row">
-        <div class="font-scale-text">
-          <span class="pref-label">Velikost písma</span>
-          <span class="pref-hint">
-            {activeFontScale.label} ({Math.round(Number(activeFontScale.id) * 100)} %)
-          </span>
-        </div>
-        <div class="font-scale-picker" role="radiogroup" aria-label="Velikost písma">
-          {#each FONT_SCALES as scale (scale.id)}
-            <button
-              type="button"
-              role="radio"
-              class="font-scale-btn"
-              class:is-active={scale.id === settings.fontScale}
-              aria-checked={scale.id === settings.fontScale}
-              aria-label={scale.label}
-              onclick={() => selectFontScale(scale.id)}
-            >
-              <span style:font-size="calc(16px * {scale.id})">A</span>
-            </button>
-          {/each}
-        </div>
+        <span class="pref-label">Velikost písma</span>
+        <SegmentedControl
+          size="md"
+          ariaLabel="Velikost písma"
+          options={fontScaleOptions}
+          value={settings.fontScale}
+          onChange={(id) => {
+            settings.fontScale = id;
+          }}
+        />
       </div>
 
       <OptionRow
@@ -537,55 +521,11 @@
     border-bottom: 1px solid var(--color-border-subtle);
   }
 
-  .font-scale-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
   .pref-label {
     font-size: var(--text-sm);
     font-weight: 600;
     color: var(--color-text-primary);
     line-height: 1.35;
-  }
-
-  .pref-hint {
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-    line-height: 1.35;
-  }
-
-  /* Each "A" previews its level at a fixed size, independent of the current scale. */
-  .font-scale-picker {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 4px;
-    padding: 3px;
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-  }
-
-  .font-scale-btn {
-    height: var(--tap-min-size);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-xs);
-    color: var(--color-text-secondary);
-    font-weight: 700;
-    line-height: 1;
-    cursor: pointer;
-    transition: background-color 0.12s ease, color 0.12s ease;
-  }
-
-  .font-scale-btn.is-active {
-    background-color: var(--color-surface-3);
-    color: var(--color-text-primary);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   .update-action-btn {
@@ -645,6 +585,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--space-md);
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
   }

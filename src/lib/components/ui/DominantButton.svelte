@@ -131,14 +131,15 @@
 
   .btn-symbol {
     font-family: var(--font-mono);
-    font-size: 34px;
+    font-size: calc(34px * var(--font-scale));
     font-weight: 900;
     line-height: 1;
     color: var(--color-text-primary);
   }
 
   .btn-name {
-    font-size: var(--text-xs);
+    /* Capped by width: a third of a 320px keypad must still fit "ODDĚLOVAČ". */
+    font-size: min(var(--text-xs), 3.6vw);
     font-weight: 700;
     color: var(--color-text-secondary);
     text-transform: uppercase;

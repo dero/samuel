@@ -108,7 +108,7 @@
   /* Dense rows (7 rows, e.g. Czech 42) */
   .alphabet-grid.dense-rows .letter-key {
     height: 34px;
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
   }
 
   .letter-key:active:not(:disabled) {

@@ -364,7 +364,7 @@
   .hud-sep {
     color: var(--color-border-medium);
     opacity: 0.6;
-    font-size: 8px;
+    font-size: calc(8px * var(--font-scale));
   }
 
   .pen-down-line {

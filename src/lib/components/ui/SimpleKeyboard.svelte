@@ -196,7 +196,7 @@
   }
 
   .key-label {
-    font-size: 15px;
+    font-size: calc(15px * var(--font-scale));
     font-weight: 700;
     line-height: 1;
   }

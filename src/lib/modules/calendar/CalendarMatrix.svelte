@@ -212,7 +212,7 @@
     cursor: pointer;
     touch-action: none;
     padding: 0;
-    font-size: clamp(11px, 1.7vh, 13px);
+    font-size: calc(clamp(11px, 1.7vh, 13px) * var(--font-scale));
     font-weight: 700;
     letter-spacing: 0.04em;
     box-shadow:
@@ -257,7 +257,7 @@
   }
 
   .dow-label {
-    font-size: clamp(10px, 1.5vh, 12px);
+    font-size: calc(clamp(10px, 1.5vh, 12px) * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-muted, #666666);
     text-transform: uppercase;
@@ -292,7 +292,7 @@
     touch-action: none;
     padding: 0;
     font-family: var(--font-mono, monospace);
-    font-size: clamp(13px, 2.2vh, 16px);
+    font-size: calc(clamp(13px, 2.2vh, 16px) * var(--font-scale));
     font-weight: 700;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -388,13 +388,13 @@
   }
 
   .year-val {
-    font-size: clamp(13px, 2vh, 16px);
+    font-size: calc(clamp(13px, 2vh, 16px) * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-primary, #ffffff);
   }
 
   .year-tag {
-    font-size: clamp(11px, 1.8vh, 13px);
+    font-size: calc(clamp(11px, 1.8vh, 13px) * var(--font-scale));
     color: var(--color-text-muted, #828282);
   }
 
@@ -414,7 +414,7 @@
     border: 1px solid var(--color-border-subtle, #2a2a2a);
     border-radius: var(--radius-sm, 6px);
     color: var(--color-text-secondary, #9e9e9e);
-    font-size: clamp(12px, 1.8vh, 14px);
+    font-size: calc(clamp(12px, 1.8vh, 14px) * var(--font-scale));
     font-weight: 600;
     cursor: pointer;
     user-select: none;

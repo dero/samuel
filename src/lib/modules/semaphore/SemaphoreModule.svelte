@@ -519,7 +519,7 @@
 
   .dir-hint {
     font-family: var(--font-condensed);
-    font-size: 24px;
+    font-size: calc(24px * var(--font-scale));
     font-weight: 800;
     color: rgba(255, 255, 255, 0.42);
     line-height: 1;

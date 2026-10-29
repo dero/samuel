@@ -52,9 +52,7 @@
   {/if}
 
   <!-- Bottom: Input & Keypad Zone -->
-  <!-- Keypads have a fixed height budget, so their text ignores the font size setting
-       (except full-screen modules, which are reading surfaces). -->
-  <div class="zone-input" class:type-fixed={layoutMode !== 'fullscreen-input'}>
+  <div class="zone-input">
     {#if input}
       {@render input()}
     {/if}

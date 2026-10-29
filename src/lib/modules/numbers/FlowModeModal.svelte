@@ -104,7 +104,7 @@
         >
           <div class="mode-left">
             <div class="mode-icon-box">
-              <span class="font-mono" style="font-weight: 800; font-size: 15px;">Ř</span>
+              <span class="font-mono" style="font-weight: 800; font-size: calc(15px * var(--font-scale));">Ř</span>
             </div>
             <div class="mode-info">
               <div class="mode-name">
@@ -136,7 +136,7 @@
         >
           <div class="mode-left">
             <div class="mode-icon-box">
-              <span class="font-mono" style="font-weight: 800; font-size: 15px;">Ř+</span>
+              <span class="font-mono" style="font-weight: 800; font-size: calc(15px * var(--font-scale));">Ř+</span>
             </div>
             <div class="mode-info">
               <div class="mode-name">

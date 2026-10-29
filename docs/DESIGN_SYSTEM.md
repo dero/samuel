@@ -110,9 +110,10 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** mažeš celý text, **POTOM** VŽDY použij `<HoldToAction>` (bezpečné podržení s horní zářící linkou a varovným toastem při letmém tapnutí). NIKDY nemaž pouhým klikem.
 
 ### Typografie & velikost písma
-- **POKUD** nastavuješ velikost textu, **POTOM** použij token `--text-*` (škáluje se volbou *Velikost písma* v Nastavení, 80–125 %). Když token nesedí, piš `calc(Npx * var(--font-scale))`. NIKDY nepiš holé `px` u textu ke čtení (výstupy, seznamy, menu, reference, dialogy).
-- **POKUD** je text vázaný na pevnou geometrii (keycap, buňka mřížky, dlaždice, ikona, úzký sloupec), **POTOM** ho nech v holých `px`, aby nepřetekl.
-- **POKUD** stavíš prvek s pevnou výškou, **POTOM** ho obal třídou `.type-fixed` (tokeny uvnitř zůstanou na 100 %). `ZONE-INPUT` (mimo `fullscreen-input`) a Header ji mají automaticky. Overlaye vykreslené uvnitř (`<BottomSheet>`, `<ConfirmDialog>`) nesou `.type-scaled` a škálují se znovu.
+- **POKUD** nastavuješ velikost textu, **POTOM** použij token `--text-*` (násobí se `--font-scale`: výchozí 1.2, volba *Velikost písma* v Nastavení 1.08 / 1.2 / 1.32). Když token nesedí, piš `calc(Npx * var(--font-scale))`. Platí to pro veškerý text včetně kláves a hlavičky.
+- **POKUD** se krátký popisek v hustém řádku nevejde ani na 320 px (třetina klávesnice, šest čipů vedle sebe), **POTOM** omez písmo šířkou viewportu: `min(var(--text-xs), 3.6vw)`.
+- **POKUD** text sedí v boxu pevné šířky (číselná karta, sloupec), **POTOM** box nech růst s obsahem (`minmax(48px, auto)`), místo aby text ořízl.
+- **POKUD** je text součástí pevné geometrie, která se musí vejít celá (PSP dlaždice, tabula recta), **POTOM** ho výjimečně nech v holých `px`.
 
 ### Microcopy
 - **POKUD** píšeš nápovědu prázdného stavu (`emptyHint`), **POTOM** formuluj 1 údernou větu bez vatových úvodů („Zde se zobrazuje...“). Při psaní se plynule rozostří (0.7s blur), při vymazání znovu zaostří.

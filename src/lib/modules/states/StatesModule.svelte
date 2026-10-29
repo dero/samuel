@@ -365,14 +365,14 @@
   }
 
   .flag-card-code {
-    font-size: 9.5px;
+    font-size: calc(9.5px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-secondary);
     line-height: 1;
   }
 
   .flag-card-name {
-    font-size: 9.5px;
+    font-size: calc(9.5px * var(--font-scale));
     font-weight: 500;
     color: var(--color-text-primary);
     white-space: nowrap;

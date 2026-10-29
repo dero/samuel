@@ -117,7 +117,7 @@
 
   .shape-icon {
     font-family: var(--font-mono);
-    font-size: 22px;
+    font-size: calc(22px * var(--font-scale));
     line-height: 1.1;
     color: var(--color-accent-primary);
   }
@@ -139,7 +139,7 @@
   }
 
   .dots {
-    font-size: 8px;
+    font-size: calc(8px * var(--font-scale));
     letter-spacing: -1px;
     color: var(--color-text-muted);
   }

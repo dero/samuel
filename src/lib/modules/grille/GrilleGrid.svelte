@@ -251,7 +251,7 @@
   }
 
   .placeholder-icon {
-    font-size: 28px;
+    font-size: calc(28px * var(--font-scale));
     color: var(--color-text-muted);
   }
 
@@ -325,7 +325,7 @@
     position: absolute;
     top: 1.5px;
     right: 2.5px;
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     color: var(--color-accent-primary, #00d2ff);
     line-height: 1;
     font-weight: 900;
@@ -334,7 +334,7 @@
 
   /* Order number badge when tapOrderReading is true */
   .cell-hole-indicator.cell-hole-number {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     font-family: var(--font-mono, monospace);
     font-weight: 900;
     background-color: var(--color-accent-primary, #00d2ff);
@@ -371,7 +371,7 @@
     position: absolute;
     top: 0px;
     right: 3px;
-    font-size: 15px;
+    font-size: calc(15px * var(--font-scale));
     color: var(--step-color);
     opacity: 0.85;
     line-height: 1;
@@ -390,7 +390,7 @@
     position: absolute;
     top: 1.5px;
     right: 2.5px;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     color: var(--color-accent-warning, #f59e0b);
     line-height: 1;
     font-weight: 700;
@@ -419,11 +419,11 @@
   }
 
   .cell-token.single-char {
-    font-size: clamp(13px, 3.5vw, 17px);
+    font-size: calc(clamp(13px, 3.5vw, 17px) * var(--font-scale));
   }
 
   .cell-token.multi-char {
-    font-size: clamp(8.5px, 2.2vw, 11px);
+    font-size: calc(clamp(8.5px, 2.2vw, 11px) * var(--font-scale));
     letter-spacing: -1px;
   }
 
@@ -440,7 +440,7 @@
   }
 
   .grille-counter-text {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-secondary);
     letter-spacing: 0.3px;
@@ -457,7 +457,7 @@
     background: transparent;
     border: none;
     color: var(--color-text-muted);
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     font-weight: 600;
     cursor: pointer;
     padding: 2px 4px;

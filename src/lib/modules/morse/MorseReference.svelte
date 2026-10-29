@@ -273,7 +273,7 @@
   .root-node {
     padding: 8px 36px;
     font-weight: 700;
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     letter-spacing: 1px;
     color: var(--color-text-primary);
     background-color: var(--color-surface-2);
@@ -282,7 +282,7 @@
 
   .node-char {
     font-family: var(--font-condensed);
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
     font-weight: 700;
     color: var(--color-text-primary);
     white-space: nowrap;
@@ -291,7 +291,7 @@
 
   .node-sym {
     font-family: var(--font-mono);
-    font-size: 15px;
+    font-size: calc(15px * var(--font-scale));
     font-weight: 900;
     line-height: 1;
     white-space: nowrap;
