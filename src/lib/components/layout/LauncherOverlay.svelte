@@ -149,16 +149,15 @@
     background-color: var(--color-surface-active);
   }
 
+  /* Active module in its group color (primary accent stays for in-module controls) */
   .module-btn.is-active {
-    background-color: var(--color-accent-primary-subtle);
-  }
-
-  .module-btn.is-active .icon {
-    filter: drop-shadow(0 0 6px var(--color-accent-primary-glow));
+    background-color: var(--color-surface-2);
+    background-color: color-mix(in srgb, var(--group-color) 14%, var(--color-surface-1));
+    box-shadow: inset 0 0 0 1px var(--group-color);
   }
 
   .module-btn.is-active .name {
-    color: var(--color-accent-primary);
+    color: var(--group-color);
     font-weight: 700;
   }
 

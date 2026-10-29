@@ -3,9 +3,12 @@
   import { settings } from '../../state/settings.svelte';
   import { versionService } from '../../services/versionService.svelte';
   import ModuleIcon from '../ui/ModuleIcon.svelte';
+  import { MODULE_GROUPS } from '../../types';
   import { List, BookOpen, CaretDown, FlagBanner } from 'phosphor-svelte';
 
   let active = $derived(navigation.activeModule);
+  // Icon carries the launcher group color, so the module is recognizable across both
+  let groupColor = $derived(MODULE_GROUPS.find((g) => g.id === active?.group)?.color);
 </script>
 <header class="header">
   <div class="title-zone">
@@ -19,7 +22,7 @@
         navigation.toggleLauncher();
       }}
     >
-      <span class="module-icon">
+      <span class="module-icon" style:--group-color={groupColor}>
         {#if active}
           <ModuleIcon id={active.id} weight="duotone" />
         {:else}
@@ -121,7 +124,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-accent-primary);
+    color: var(--group-color, var(--color-accent-primary));
     flex-shrink: 0;
   }
 
