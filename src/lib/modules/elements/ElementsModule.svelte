@@ -54,7 +54,7 @@
 </script>
 
 <ModuleShell
-  title="PSP"
+  title="Chemie"
   hasAlphabet={false}
   onReset={() => elementsState.resetModule()}
 >

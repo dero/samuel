@@ -81,7 +81,7 @@ export const MODULES: ModuleMeta[] = [
   { id: 'calendar', name: 'Kalendář', icon: 'CalendarBlank', group: 'realia', hasMenu: false },
   { id: 'facts', name: 'Fakta', icon: 'Lightbulb', group: 'realia', hasReference: false, hasMenu: false },
   { id: 'colors', name: 'Barvy', icon: 'Palette', group: 'realia', hasReference: true, hasMenu: false },
-  { id: 'elements', name: 'PSP', icon: 'Atom', group: 'realia', hasReference: true, hasMenu: false },
+  { id: 'elements', name: 'Chemie', icon: 'Atom', group: 'realia', hasReference: true, hasMenu: false },
   { id: 'help', name: 'Nápověda', icon: 'Question', group: 'app', isSystem: true },
   { id: 'settings', name: 'Nastavení', icon: 'Gear', group: 'app', isSystem: true }
 ];

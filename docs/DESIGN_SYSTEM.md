@@ -117,7 +117,7 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** nastavuješ velikost textu, **POTOM** použij token `--text-*` (násobí se `--font-scale`: výchozí 1.2, volba *Velikost písma* v Nastavení 1.08 / 1.2 / 1.32). Když token nesedí, piš `calc(Npx * var(--font-scale))`. Platí to pro veškerý text včetně kláves a hlavičky.
 - **POKUD** se krátký popisek v hustém řádku nevejde ani na 320 px (třetina klávesnice, šest čipů vedle sebe), **POTOM** omez písmo šířkou viewportu: `min(var(--text-xs), 3.6vw)`.
 - **POKUD** text sedí v boxu pevné šířky (číselná karta, sloupec), **POTOM** box nech růst s obsahem (`minmax(48px, auto)`), místo aby text ořízl.
-- **POKUD** je text součástí pevné geometrie, která se musí vejít celá (PSP dlaždice, tabula recta), **POTOM** ho výjimečně nech v holých `px`.
+- **POKUD** je text součástí pevné geometrie, která se musí vejít celá (dlaždice Chemie, tabula recta), **POTOM** ho výjimečně nech v holých `px`.
 
 ### Barvy: role, ne odstíny
 Každá barva v UI má právě jednu roli. Problém vzniká, když jeden odstín slouží dvěma rolím.
