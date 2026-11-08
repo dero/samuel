@@ -25,7 +25,9 @@
     GridNine,
     PaintBrushBroad,
     Horse,
-    Atom
+    Atom,
+    Binary,
+    NumberSquareThree
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
 
@@ -75,6 +77,10 @@
     elements: Atom,
     settings: Gear,
     help: Question,
+
+    // Launcher shortcuts
+    binary: Binary,
+    ternary: NumberSquareThree,
 
     // Phosphor Name aliases
     atom: Atom,

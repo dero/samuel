@@ -85,3 +85,85 @@ export const MODULES: ModuleMeta[] = [
   { id: 'help', name: 'Nápověda', icon: 'Question', group: 'app', isSystem: true },
   { id: 'settings', name: 'Nastavení', icon: 'Gear', group: 'app', isSystem: true }
 ];
+
+/** Search aliases for the launcher (matched by word prefix, without diacritics). */
+export const MODULE_KEYWORDS: Partial<Record<ModuleId, string[]>> = {
+  morse: ['morseovka', 'tečky', 'čárky', 'telegraf'],
+  braille: ['braillovo písmo', 'slepecké písmo', 'body'],
+  semaphore: ['praporky', 'praporková abeceda'],
+  flags: ['námořní vlajky', 'signální vlajky'],
+  states: ['země', 'státní vlajky', 'hlavní města'],
+  cross: ['polský kříž', 'pigpen', 'zednářská šifra', 'kříž'],
+  polybius: ['polybiův čtverec', 'souřadnice', 'tabulka 5x5'],
+  mobile: ['sms', 't9', 'telefon', 'klávesnice telefonu'],
+  numbers: [
+    'soustavy',
+    'binárka',
+    'dvojkovka',
+    'binární',
+    'trojkovka',
+    'ternárka',
+    'ternární',
+    'osmičková',
+    'šestnáctková',
+    'hex',
+    'římská čísla',
+    'a1z26',
+    'ascii',
+    'čísla na písmena'
+  ],
+  shifts: ['caesar', 'cézar', 'vigenère', 'vigenere', 'autokey', 'rot13', 'posun abecedy'],
+  substitution: ['záměna', 'šifrová abeceda', 'monoalfabetická'],
+  freq: ['četnost', 'frekvenční analýza', 'index koincidence', 'ioc'],
+  nonogram: ['malovaná křížovka', 'japonská křížovka'],
+  chess: ['fen', 'pgn', 'partie', 'mat'],
+  grille: ['otočná mřížka', 'fleissner', 'grille', 'transpozice'],
+  turtle: ['želví grafika', 'kreslení', 'logo'],
+  plotter: ['souřadnice', 'kreslení', 'graf'],
+  words: ['slova', 'maska', 'přesmyčka', 'anagram', 'doplňovačka'],
+  calendar: ['datum', 'den v týdnu', 'svátky'],
+  colors: ['rgb', 'cmy', 'barevný filtr', 'brýle'],
+  elements: ['prvky', 'periodická tabulka', 'psp']
+};
+
+/** Launcher tiles that open an existing module with a preset (e.g. Binárka → Čísla 2 → znak). */
+export interface ModuleShortcut {
+  id: string;
+  name: string;
+  /** Key for <ModuleIcon>. */
+  icon: string;
+  group: ModuleGroupId;
+  target: ModuleId;
+  /** Where it leads, shown under the name (e.g. "v Číslech"). */
+  via: string;
+  keywords: string[];
+  preset: NumbersPreset;
+}
+
+export interface NumbersPreset {
+  source: number;
+  target: 'char';
+}
+
+export const MODULE_SHORTCUTS: ModuleShortcut[] = [
+  {
+    id: 'binary',
+    name: 'Binárka',
+    icon: 'binary',
+    group: 'coding',
+    target: 'numbers',
+    via: 'v Číslech',
+    keywords: ['dvojkovka', 'binární', 'bin', 'dvojková soustava'],
+    preset: { source: 2, target: 'char' }
+  },
+  {
+    id: 'ternary',
+    name: 'Trojkovka',
+    icon: 'ternary',
+    group: 'coding',
+    target: 'numbers',
+    via: 'v Číslech',
+    keywords: ['ternárka', 'ternární', 'tern', 'trojková soustava'],
+    preset: { source: 3, target: 'char' }
+  }
+];

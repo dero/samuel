@@ -36,6 +36,8 @@
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
+  import { launcher } from '../../state/launcher.svelte';
+  import { untrack } from 'svelte';
 
   const modSettings = localSettingsService.forModule('numbers');
 
@@ -419,6 +421,24 @@
   const enterButtonSymbol = $derived(
     isEnterButtonEnabled ? pendingInterlinearToken!.primary : '↵'
   );
+
+  // Launcher shortcuts (Binárka, Trojkovka) hand over a preset flow; zero-based stays as set in the menu
+  $effect(() => {
+    const preset = launcher.takePreset('numbers');
+    if (!preset) return;
+    untrack(() => {
+      if (sourceMode === preset.source && targetMode === preset.target) return;
+      if (rawTokens.length > 0 || buffer) {
+        rawTokens = [];
+        buffer = '';
+        lastCharInput = '';
+        lastCharOutputStr = '';
+        toast.show('Nový převod, vstup vymazán', { type: 'info' });
+      }
+      sourceMode = preset.source;
+      targetMode = preset.target;
+    });
+  });
 
   // Actions
   function handleSwapFlow() {

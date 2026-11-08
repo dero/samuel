@@ -22,8 +22,9 @@ Aplikace striktně rozlišuje mezi **samostatným nástrojem** (vlastní modul v
 1. **Header Bar (52 px fixně):**
    - Vlevo: `[ Ikona modulu ]` – klepnutím otevírá celoobrazovkový **Launcher všech modulů**.
      - Moduly jsou v blocích podle skupin (`MODULE_GROUPS` v `types.ts`: Kódování, Text, Reálie, Rébusy, Kreslení, Aplikace), uvnitř skupiny abecedně (`cs`). Každá skupina začíná na novém řádku, zbytek řádku vyplní tmavé prázdné buňky.
-     - Barva skupiny (`--color-group-*`) = svislý proužek vlevo s názvem skupiny (černý text, čte se zdola nahoru) + barva ikon. Žádné filtry ani přepínání stavů v launcheru.
+     - Barva skupiny (`--color-group-*`) = svislý proužek vlevo s názvem skupiny (černý text, čte se zdola nahoru) + barva ikon. Žádné přepínače stavů ani filtrovací čipy v launcheru; jediné filtrování je hledání.
      - Název skupiny drž do ~8 znaků, aby se vešel do proužku i u jednořádkové skupiny.
+     - Dole (thumb zone) je pole **Hledej modul…** a nad ním řádek **Nedávné** (neutrální proužek, dlaždice v barvě své skupiny). Nad nimi se posouvá úplný seznam. Viz §3 *Launcher*.
    - Střed: `[ Název modulu ]` – jednoznačný název aktivního nástroje.
    - Vpravo: `[ 📄 Podklad ]` (jen moduly s podkladem, viz §3 *Podklad*) a `[ ☰ Menu ]` (tahák a návod, konfigurace modulu, reset).
 2. **Sub-Toolbar (36 px, 100% full-width přímo nad klávesnicí):**
@@ -95,7 +96,14 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** modul nabízí příbuzné varianty téhož nástroje (flavours), **POTOM** umísti `<SegmentedControl size="sm">` do Sub-Toolbaru (36 px, 100% full-width) přímo nad klávesnici.
 - **POKUD** má modul rozepsaný stav vyžadující kontextové akce (např. T9 predikce slov), **POTOM** Sub-Toolbar plynule přepni z nabídky flavours na kontextové akce.
 - **POKUD** uživatel zadává systémovou klávesnicí **parametr** (klíč, heslo, maska), **POTOM** řádek v `ZONE-INPUT` realizuj jako pasivní klikatelný trigger (tlačítko `button.cipher-input-trigger`), který otevírá `<TextEntrySheet>`. V `ZONE-INPUT` NIKDY neumisťuj focusovatelný `<input>` ani `<textarea>`, který by inline otevíral softwarovou klávesnici OS a deformoval layout. Podklad (šifrový text, tabulka) do `ZONE-INPUT` nepatří, viz *Podklad*.
+- **POKUD** stavíš pole s klávesnicí OS mimo modul (hledání v launcheru), **POTOM** je to jediná výjimka z předchozího pravidla: launcher je překryvná vrstva, ne `ZONE-INPUT`. Pole leží dole, bez automatického zaměření, s vypnutými opravami a velkými písmeny a `enterkeyhint="go"`.
 - **POKUD** otevíráš kontextové menu (`ModuleMenu`), **POTOM** záhlaví VŽDY nese název `<Název modulu>: nastavení` (např. `Kříže: nastavení`), NIKDY generické `Menu modulu`.
+
+### Launcher
+- **POKUD** hráč hledá nástroj, **POTOM** hledání odfiltrovává dlaždice (pořadí ani skupiny se nemění, prázdné skupiny zmizí) a výsledky se drží dole u pole, nad klávesnicí. Enter otevře první dlaždici, jejíž název začíná dotazem (jinak první výsledek). Při psaní se řádek Nedávné skryje.
+- **POKUD** přidáváš modul nebo variantu, **POTOM** doplň přezdívky do `MODULE_KEYWORDS` (`types.ts`): komunitní názvy (dvojkovka, pigpen, a1z26), názvy variant a zkratky. Hledá se bez diakritiky podle začátku slov; každé slovo dotazu musí začínat některé slovo položky.
+- **POKUD** řadíš řádek Nedávné, **POTOM** od naposledy otevřeného a bez dlaždice, ve které hráč právě je (přepínání mezi dvěma nástroji = vždy první místo). Zaznamenává se dlaždice, kterou hráč klepnul (odkaz, ne cílový modul).
+- **POKUD** častý úkon žije hluboko v obecném modulu (trojkovka v Číslech), **POTOM** přidej **rychlý odkaz** do `MODULE_SHORTCUTS`: dlaždice s vlastním názvem a ikonou, pod názvem „v <modulu>“, která otevře cílový modul s předvolbou. Žádný nový modul ani kopie kódu. Předvolba nastaví jen to, co odkaz pojmenovává (převod), ostatní volby modulu (od nuly, abeceda) respektuje. Mění-li převod, rozepsaný vstup vymaže a oznámí to toastem.
 
 ### Podklad (vkládání cizího obsahu)
 > Implementace: stav a registr způsobů vložení v `state/podklad.svelte.ts`, komponenty v `components/podklad/`, deklarace přes prop `podklad` na `<ModuleShell>`.

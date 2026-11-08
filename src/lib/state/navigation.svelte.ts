@@ -1,6 +1,7 @@
-import type { ModuleId, ModuleMeta, SubView } from '../types';
+import type { ModuleId, ModuleMeta, ModuleShortcut, SubView } from '../types';
 import { MODULES } from '../types';
 import { localSettingsService } from '../services/localSettingsService';
+import { launcher } from './launcher.svelte';
 
 const DEFAULT_FIRST_MODULE: ModuleId = 'help';
 
@@ -10,6 +11,8 @@ class NavigationState {
   isLauncherOpen = $state<boolean>(false);
   hasMenuWarning = $state<boolean>(false);
   activeModuleKey = $state<number>(0);
+  /** Launcher tile that opened the active module (a shortcut id, or the module id). */
+  activeEntryId = $state<string>(DEFAULT_FIRST_MODULE);
 
   activeModule = $derived(
     MODULES.find((m) => m.id === this.activeModuleId) ?? MODULES.find((m) => m.id === DEFAULT_FIRST_MODULE)!
@@ -53,6 +56,7 @@ class NavigationState {
       // Empty hash: redirect to last used module or help
       const target = this.getPersistedModule();
       this.activeModuleId = target;
+      this.activeEntryId = target;
       this.subView = 'none';
       window.location.replace(`#/${target}`);
       return;
@@ -67,6 +71,7 @@ class NavigationState {
       if (this.activeModuleId !== modId) {
         this.hasMenuWarning = false;
         this.isLauncherOpen = false;
+        this.activeEntryId = modId;
       }
       this.activeModuleId = modId;
 
@@ -86,6 +91,7 @@ class NavigationState {
       // Invalid module id in URL: fallback to persisted or help
       const target = this.getPersistedModule();
       this.activeModuleId = target;
+      this.activeEntryId = target;
       this.subView = 'none';
       this.isLauncherOpen = false;
       window.location.replace(`#/${target}`);
@@ -106,6 +112,15 @@ class NavigationState {
     } else if (this.subView !== 'none') {
       this.closeSubView();
     }
+  }
+
+  /**
+   * Open a launcher shortcut: its target module with the shortcut's preset.
+   */
+  openShortcut(shortcut: ModuleShortcut) {
+    launcher.pendingPreset = { target: shortcut.target, preset: shortcut.preset };
+    this.openModule(shortcut.target);
+    this.activeEntryId = shortcut.id;
   }
 
   /**

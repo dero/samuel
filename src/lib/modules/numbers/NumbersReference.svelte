@@ -58,10 +58,11 @@
       ['Číslo ➔ znak', 'v menu: znak se vloží sám po celém bloku, např. 5 bitů'],
       ['Indexovat od nuly', 'v menu: A = 0'],
       ['Režim ASCII', 'v menu: 65 = A'],
-      ['Abeceda', 'v menu, obvykle anglická (26)']
+      ['Abeceda', 'v menu, obvykle anglická (26)'],
+      ['Binárka, Trojkovka', 'odkazy v launcheru: otevřou Čísla s převodem 2 / 3 ➔ znak']
     ],
     pitfalls: [
-      ['A = 0, nebo A = 1?', 'nedává-li text smysl → menu Indexovat od nuly'],
+      ['A = 0, nebo A = 1?', 'nedává-li text smysl → menu Indexovat od nuly (platí i pro Binárku a Trojkovku)'],
       ['Čísla nad 26', 'nejspíš ASCII: `65` = A, `97` = a → menu Režim ASCII'],
       ['Abeceda s CH', 'od I dál je vše o 1 vyšší'],
       ['Bity', 'písmeno = 5 bitů (`00001` = A), ASCII = 7–8 bitů'],
