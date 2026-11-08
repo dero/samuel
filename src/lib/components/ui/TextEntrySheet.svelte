@@ -1,18 +1,24 @@
 <script lang="ts">
   import BottomSheet from './BottomSheet.svelte';
+  import HoldToAction from './HoldToAction.svelte';
   import { settings } from '../../state/settings.svelte';
-  import { TextT, Check } from 'phosphor-svelte';
+  import { pasteFromClipboard, copyToClipboard } from '../../utils/clipboard';
+  import { TextT, Check, ClipboardText, Copy } from 'phosphor-svelte';
 
   interface Props {
     open: boolean;
     title: string;
     value: string;
     placeholder?: string;
-    options?: import('svelte').Snippet;
+    icon?: any;
     quickInsertChars?: string[];
     discardSpaces?: boolean;
     autocapitalize?: 'none' | 'characters' | 'words' | 'sentences' | 'off' | 'on';
     inputmode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
+    /** Podklad tools under the textarea (DESIGN_SYSTEM §3 Podklad). */
+    paste?: boolean;
+    clearable?: boolean;
+    copyable?: boolean;
     onSave: (val: string) => void;
     onClose: () => void;
   }
@@ -21,22 +27,31 @@
     open = false,
     title = 'Zadání textu',
     value = '',
-    placeholder = 'Zadejte nebo vložte text...',
-    options,
+    placeholder = 'Zadejte nebo vložte text…',
+    icon = TextT,
     quickInsertChars = [],
     discardSpaces = false,
     autocapitalize,
     inputmode,
+    paste = false,
+    clearable = false,
+    copyable = false,
     onSave,
     onClose
   }: Props = $props();
 
   let draftText = $state('');
+  let openedValue = '';
   let textareaEl = $state<HTMLTextAreaElement | null>(null);
+
+  const hasTools = $derived(paste || clearable || copyable);
 
   $effect(() => {
     if (open) {
-      draftText = discardSpaces ? value.replace(/\s+/g, '') : value;
+      // Read only props here: tracking draftText would reset the draft on every keystroke
+      const initial = discardSpaces ? value.replace(/\s+/g, '') : value;
+      draftText = initial;
+      openedValue = initial;
       // Focus textarea on open
       setTimeout(() => {
         if (textareaEl) {
@@ -78,19 +93,18 @@
     }
   }
 
-  function handleQuickInsert(char: string) {
-    settings.vibrate(20);
+  function insertAtCursor(text: string) {
     if (!textareaEl) {
-      draftText += char;
+      draftText += text;
       return;
     }
     const start = textareaEl.selectionStart ?? draftText.length;
     const end = textareaEl.selectionEnd ?? draftText.length;
-    draftText = draftText.slice(0, start) + char + draftText.slice(end);
+    draftText = draftText.slice(0, start) + text + draftText.slice(end);
     if (discardSpaces) {
       draftText = draftText.replace(/\s+/g, '');
     }
-    const nextPos = start + char.length;
+    const nextPos = Math.min(start + text.length, draftText.length);
     setTimeout(() => {
       if (textareaEl) {
         textareaEl.focus();
@@ -99,20 +113,46 @@
     }, 0);
   }
 
+  function handleQuickInsert(char: string) {
+    settings.vibrate(20);
+    insertAtCursor(char);
+  }
+
+  async function handlePaste() {
+    settings.vibrate(20);
+    const text = await pasteFromClipboard();
+    if (text) insertAtCursor(text);
+  }
+
+  function handleCopy() {
+    settings.vibrate(20);
+    copyToClipboard(draftText);
+  }
+
+  function handleClear() {
+    draftText = '';
+    textareaEl?.focus();
+  }
+
+  // Every way out keeps the text: Hotovo, swipe down, backdrop, ✕, Esc.
+  function commitAndClose() {
+    const finalVal = discardSpaces ? draftText.replace(/\s+/g, '') : draftText;
+    if (finalVal !== openedValue) onSave(finalVal);
+    onClose();
+  }
+
   function handleConfirm() {
     settings.vibrate(25);
-    const finalVal = discardSpaces ? draftText.replace(/\s+/g, '') : draftText;
-    onSave(finalVal);
-    onClose();
+    commitAndClose();
   }
 </script>
 
 <BottomSheet
   {open}
   {title}
-  icon={TextT}
+  {icon}
   maxHeight="92dvh"
-  {onClose}
+  onClose={commitAndClose}
 >
   <div class="text-entry-container">
     <div class="textarea-wrapper">
@@ -152,9 +192,33 @@
       </div>
     {/if}
 
-    {#if options}
-      <div class="sheet-options-container">
-        {@render options()}
+    {#if hasTools}
+      <div class="tools-bar">
+        {#if paste}
+          <button type="button" class="tool-btn" onclick={handlePaste}>
+            <ClipboardText size={18} weight="bold" />
+            <span>Vložit</span>
+          </button>
+        {/if}
+        {#if copyable}
+          <button type="button" class="tool-btn" onclick={handleCopy} disabled={!draftText}>
+            <span class="tool-btn-inner">
+              <Copy size={18} weight="bold" />
+              <span>Kopírovat</span>
+            </span>
+          </button>
+        {/if}
+        {#if clearable}
+          <div class="tool-clear">
+            <HoldToAction
+              variant="icon-only"
+              disabled={!draftText}
+              onAction={handleClear}
+              ariaLabel="Podržte pro smazání textu"
+              tapWarning="Podržte pro smazání"
+            />
+          </div>
+        {/if}
       </div>
     {/if}
 
@@ -178,19 +242,13 @@
     width: 100%;
   }
 
-  .sheet-options-container {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 2px 0;
-  }
-
   .textarea-wrapper {
     position: relative;
     width: 100%;
   }
 
-  .quick-chars-bar {
+  .quick-chars-bar,
+  .tools-bar {
     display: flex;
     gap: var(--space-xs);
     width: 100%;
@@ -227,6 +285,43 @@
     color: var(--color-text-secondary);
     font-size: calc(11px * var(--font-scale));
     font-weight: 500;
+  }
+
+  .tool-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    height: 36px;
+    padding: 0 var(--space-sm);
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    transition: background-color 0.12s ease;
+  }
+
+  .tool-btn:active:not(:disabled) {
+    background-color: var(--color-surface-active);
+  }
+
+  /* Disabled keeps the surface, only the content dims */
+  .tool-btn-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .tool-btn:disabled .tool-btn-inner {
+    opacity: 0.48;
+  }
+
+  .tool-clear {
+    flex: 0 0 36px;
+    display: flex;
   }
 
   .entry-textarea {

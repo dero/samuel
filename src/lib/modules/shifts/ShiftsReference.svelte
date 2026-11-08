@@ -62,7 +62,7 @@
   const help: RefHelpData = {
     controls: [
       ['Cézar / Vigenère / Autokey', 'lišta nad zadáním'],
-      ['Text', 'řádek dole otevře editor'],
+      ['Šifrový text', 'ikona podkladu v hlavičce otevře editor'],
       ['Zachovat mezery a interpunkci', 'v menu']
     ],
     pitfalls: [['Abeceda s CH', 'posuny v 27 znacích dávají jiný výsledek → menu Abeceda']]

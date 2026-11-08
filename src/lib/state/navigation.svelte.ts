@@ -1,4 +1,4 @@
-import type { ModuleId, SubView } from '../types';
+import type { ModuleId, ModuleMeta, SubView } from '../types';
 import { MODULES } from '../types';
 import { localSettingsService } from '../services/localSettingsService';
 
@@ -14,6 +14,9 @@ class NavigationState {
   activeModule = $derived(
     MODULES.find((m) => m.id === this.activeModuleId) ?? MODULES.find((m) => m.id === DEFAULT_FIRST_MODULE)!
   );
+
+  /** ☰ also hosts the reference link, so modules with a reference get it even without options. */
+  hasMenuButton = $derived(menuButtonFor(this.activeModule));
 
   private handleHashChange = () => this.syncFromHash();
 
@@ -68,7 +71,7 @@ class NavigationState {
       this.activeModuleId = modId;
 
       let validSub: SubView = 'none';
-      if (sub === 'menu' && mod.hasMenu !== false && !mod.isSystem) {
+      if (sub === 'menu' && menuButtonFor(mod)) {
         validSub = 'menu';
       } else if (sub === 'ref' && mod.hasReference !== false && !mod.isSystem) {
         validSub = 'ref';
@@ -109,7 +112,7 @@ class NavigationState {
    * Open module contextual menu (pushes state: Module > Menu)
    */
   openMenu() {
-    if (this.activeModule.hasMenu === false || this.activeModule.isSystem) {
+    if (!this.hasMenuButton) {
       return;
     }
     this.isLauncherOpen = false;
@@ -132,28 +135,21 @@ class NavigationState {
   }
 
   /**
-   * Open module reference cheat sheet (pushes state: Module > Ref)
+   * Open module reference cheat sheet (pushes state: Module > Ref).
+   * Opened from the menu, it takes the menu's history entry, so Back returns to the module.
    */
   openRef() {
     if (this.activeModule.hasReference === false || this.activeModule.isSystem) {
       return;
     }
     this.isLauncherOpen = false;
+    const fromMenu = this.subView === 'menu';
     this.subView = 'ref';
     const targetHash = `#/${this.activeModuleId}/ref`;
-    if (window.location.hash !== targetHash) {
+    if (fromMenu) {
+      window.history.replaceState(null, '', targetHash);
+    } else if (window.location.hash !== targetHash) {
       window.location.hash = targetHash;
-    }
-  }
-
-  /**
-   * Toggle module reference cheat sheet
-   */
-  toggleRef() {
-    if (this.subView === 'ref') {
-      this.closeSubView();
-    } else {
-      this.openRef();
     }
   }
 
@@ -188,6 +184,10 @@ class NavigationState {
   reloadActiveModule() {
     this.activeModuleKey++;
   }
+}
+
+function menuButtonFor(mod: ModuleMeta): boolean {
+  return !mod.isSystem && (mod.hasMenu !== false || mod.hasReference !== false);
 }
 
 export const navigation = new NavigationState();

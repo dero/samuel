@@ -25,7 +25,7 @@ Aplikace striktně rozlišuje mezi **samostatným nástrojem** (vlastní modul v
      - Barva skupiny (`--color-group-*`) = svislý proužek vlevo s názvem skupiny (černý text, čte se zdola nahoru) + barva ikon. Žádné filtry ani přepínání stavů v launcheru.
      - Název skupiny drž do ~8 znaků, aby se vešel do proužku i u jednořádkové skupiny.
    - Střed: `[ Název modulu ]` – jednoznačný název aktivního nástroje.
-   - Vpravo: `[ 📖 Reference ]` (tahák a encyklopedie ke čtení) a `[ ☰ Menu ]` (konfigurace modulu a reset).
+   - Vpravo: `[ 📄 Podklad ]` (jen moduly s podkladem, viz §3 *Podklad*) a `[ ☰ Menu ]` (tahák a návod, konfigurace modulu, reset).
 2. **Sub-Toolbar (36 px, 100% full-width přímo nad klávesnicí):**
    - **Klidový stav:** Slouží pro bleskové přepínání variant (**Flavours**) daného nástroje (např. `<SegmentedControl size="sm">`: *Caesar | Vigenère | Autokey* nebo *Velký | Malý kříž*).
    - **Aktivní / Rozepsaný stav:** Může se dynamicky proměnit na kontextové akce vstupu (např. živí kandidáti T9 predikce, akce morseovky).
@@ -37,8 +37,9 @@ Aplikace striktně rozlišuje mezi **samostatným nástrojem** (vlastní modul v
 ### 1.3 Separation of Concerns: Kde co leží
 - **By Default:** Výchozí chování pokrývající 95 % případů v terénu bez klikání navíc (Morse s CH, Braille bez nutnosti Enteru, přímý zápis).
 - **Sub-Toolbar (36 px nad klávesnicí):** Flavours nástroje a operativní živé akce při psaní.
-- **Module Menu (`[ ☰ ]` vpravo):** Statická konfigurace šifry na stanovišti (odchylky abecedy, zrcadlení pohledu, vynechaná písmena, destruktivní reset celého modulu).
-- **Reference Modal (`[ 📖 ]` vpravo):** Pasivní tahák ke čtení se dvěma účely: (1) faktická data (tabulky, seznamy, přehledy) a (2) rychlá nápověda k ovládání a úskalím. Jednotná kostra viz §3 *Reference*. Zákaz zadávání přes referenční modály.
+- **Podklad (`[ 📄 ]` vpravo):** Data zvenčí, se kterými modul pracuje (šifrový text, tabulka znaků, fotografie, pozice): vložit, upravit, zkopírovat, smazat. Viz §3 *Podklad*.
+- **Module Menu (`[ ☰ ]` vpravo):** Odkaz **Tahák a návod** (první řádek) a statická konfigurace šifry na stanovišti (odchylky abecedy, zrcadlení pohledu, vynechaná písmena, destruktivní reset celého modulu). Pravidlo dělení: **☰ = jak modul pracuje, 📄 = s čím pracuje.**
+- **Reference Modal (☰ → Tahák a návod):** Pasivní tahák ke čtení se dvěma účely: (1) faktická data (tabulky, seznamy, přehledy) a (2) rychlá nápověda k ovládání a úskalím. Jednotná kostra viz §3 *Reference*. Zákaz zadávání přes referenční modály.
 - **Nastavení (`/settings`):** Systémové preference zařízení (offline DB ~102 MB, velikost písma, haptika, správa globálních abeced).
 
 ---
@@ -50,7 +51,7 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 ```
 ┌────────────────────────────────────────────────────────┐
 │ Header (52px fixně)                                    │
-│ [Ikona modulu]               [Název modulu]   [📖] [☰] │
+│ [Ikona modulu]               [Název modulu]   [📄] [☰] │
 ├────────────────────────────────────────────────────────┤
 │ ZONE-OUTPUT: {#snippet output()}                       │
 │ - <TranslationCard>: flex: 1, min-height: 84px         │
@@ -68,6 +69,7 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 │ KONTEXTOVÁ ROZHRANÍ (Mimo hlavní plochu)               │
 │ - {#snippet menuOptions()}: Položky pro ModuleMenu     │
 │ - {#snippet reference()}: Obsah pro ReferenceModal     │
+│ - Podklad: obrazovka Podklad + editor / sheet z [📄]   │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -75,7 +77,8 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - `output()`: Vykresluje výstup modulu (překlad v `<TranslationCard>`, grafy, frekvenční histogram apod.). Výstup je VŽDY nahoře (`flex: 1`, min. 84 px). Zákaz celostránkového scrollu; scrollovat smí pouze vnitřek výstupní zóny (`overflow-y: auto`).
 - `input()`: Obsahuje Sub-Toolbar (je-li potřeba), zadávací matici v zapuštěném šasi, utilitní trojblok či textové triggery. Vstup je VŽDY dole na dosah palce (thumb zone). Součet výšek nesmí překročit **326 px**.
 - `menuOptions()`: Vykresluje položky `<OptionRow>` a `<AlphabetSelect>`.
-- `reference()`: Vykresluje komponentu taháku modulu postavenou na `<RefLayout>` (viz §3 *Reference*).
+- `reference()`: Vykresluje komponentu taháku modulu postavenou na `<RefLayout>` (viz §3 *Reference*). Otevírá se z ☰ řádkem **Tahák a návod**.
+- Podklad nemá vlastní snippet pro vstup: modul ho jen ohlásí a obrazovku, ikonu i editor vykreslí sdílená vrstva (viz §3 *Podklad*).
 
 ---
 
@@ -91,8 +94,58 @@ Každý modul je zapouzdřen v `<ModuleShell>` a skládá se ze 4 deklarativníc
 - **POKUD** renderuješ Sub-Toolbar, **POTOM** použij kontejner `.subtoolbar-container` (výška přesně 36 px, `overflow: hidden`) a komponenty v něm musí držet výšku 36 px (např. `<SegmentedControl size="sm">`, `.t9-candidate-pill` výška 30 px). Žádný prvek nesmí přetékat.
 - **POKUD** modul nabízí příbuzné varianty téhož nástroje (flavours), **POTOM** umísti `<SegmentedControl size="sm">` do Sub-Toolbaru (36 px, 100% full-width) přímo nad klávesnici.
 - **POKUD** má modul rozepsaný stav vyžadující kontextové akce (např. T9 predikce slov), **POTOM** Sub-Toolbar plynule přepni z nabídky flavours na kontextové akce.
-- **POKUD** uživatel zadává text systémovou klávesnicí, **POTOM** řádek v `ZONE-INPUT` realizuj jako pasivní klikatelný trigger (tlačítko `button.cipher-input-trigger`), který otevírá `<TextEntrySheet>`. V `ZONE-INPUT` NIKDY neumisťuj focusovatelný `<input>` ani `<textarea>`, který by inline otevíral softwarovou klávesnici OS a deformoval layout.
+- **POKUD** uživatel zadává systémovou klávesnicí **parametr** (klíč, heslo, maska), **POTOM** řádek v `ZONE-INPUT` realizuj jako pasivní klikatelný trigger (tlačítko `button.cipher-input-trigger`), který otevírá `<TextEntrySheet>`. V `ZONE-INPUT` NIKDY neumisťuj focusovatelný `<input>` ani `<textarea>`, který by inline otevíral softwarovou klávesnici OS a deformoval layout. Podklad (šifrový text, tabulka) do `ZONE-INPUT` nepatří, viz *Podklad*.
 - **POKUD** otevíráš kontextové menu (`ModuleMenu`), **POTOM** záhlaví VŽDY nese název `<Název modulu>: nastavení` (např. `Kříže: nastavení`), NIKDY generické `Menu modulu`.
+
+### Podklad (vkládání cizího obsahu)
+> Implementace: stav a registr způsobů vložení v `state/podklad.svelte.ts`, komponenty v `components/podklad/`, deklarace přes prop `podklad` na `<ModuleShell>`.
+
+**Podklad** = hromadná data zvenčí, se kterými modul pracuje (šifrový text, tabulka znaků, fotografie, šachová pozice, zadání hlavolamu). Přichází najednou, často odjinud (schránka, fotka, OCR), a mění se zřídka. **Parametr** = krátký údaj laděný naživo s výsledkem před očima (klíč, heslo, maska, posun, řazení).
+
+| Podklad | Moduly | Typ |
+| :--- | :--- | :--- |
+| Povinný | Frekvence, Substituce, Posuny (jen text; klíč a heslo jsou parametry) | text |
+| | Mřížka | tabulka znaků |
+| | Barvy | obrázek |
+| Volitelný | Šachy | pozice (FEN / PGN) |
+| | Sudoku, Nonogram | zadání (ikona přibude s prvním způsobem vložení: OCR nebo text) |
+| Žádný | Přepisovací moduly (Morse, Braille, Semafor, Kříže, Polybius, Mobil, Čísla), vyhledávače a přehledy | – |
+
+**Rozlišení a deklarace**
+- **POKUD** rozhoduješ, jestli je vstup podklad, **POTOM** se zeptej: „Přijdou data zvenčí najednou a modul nad nimi pracuje?“ → podklad. „Ladí se naživo a výsledek se mění s každou změnou?“ → parametr, zůstává ve `ZONE-INPUT` (Sub-Toolbar, vstupní řádek, klávesnice). NIKDY nedávej parametr do podkladu ani podklad do vstupní zóny.
+- **POKUD** je klávesnice modulu jeho vlastním vstupním médiem (přepisovací moduly), **POTOM** zadávání není podklad.
+- **POKUD** má modul podklad, **POTOM** ho ohlas `ModuleShell` (typ, povinný / volitelný, jednověté vysvětlení, příklad). Ikonu, obrazovku Podklad i editor vykresluje sdílená vrstva; modul si NIKDY nestaví vlastní vstupní řádek, CTA ani nahrávací tlačítko pro podklad.
+- **POKUD** přidáváš způsob vložení (OCR, galerie…), **POTOM** ho registruj k **typu** podkladu, ne k modulu. Dostanou ho všechny moduly téhož typu.
+
+| Typ | Způsoby vložení |
+| :--- | :--- |
+| text, tabulka znaků, pozice | Napsat nebo vložit (editor); Vyfotit → OCR → editor (plánováno) |
+| obrázek | Vyfotit; Vybrat z galerie |
+
+**Ikona v hlavičce**
+- **POKUD** má modul podklad (povinný i volitelný), **POTOM** hlavička nese ikonu dokumentu (`FileText` z Phosphor, stejná velikost a váha jako sousední ikony) hned vlevo od ☰. Jeden glyf pro všechny typy, vždy na stejném místě. Modul bez podkladu ikonu nemá.
+- **POKUD** je otevřená obrazovka Podklad nebo editor / sheet podkladu, **POTOM** ikona svítí jako aktivní (akcent + tvarový signál).
+- **POKUD** podklad vyžaduje pozornost (Mřížka: text nevyplní čtverec; OCR: nejisté znaky; Šachy: neplatná pozice), **POTOM** ikona nese varovnou tečku `--color-accent-warning` stejně jako ☰. Tečka NIKDY neznamená „podklad vložen“; to ukazuje výstup.
+
+**Obrazovka Podklad**
+- **POKUD** je podklad povinný a prázdný, **POTOM** `ModuleShell` místo výstupu a vstupu vykreslí obrazovku Podklad. Hlavička zůstává (☰ s tahákem je dostupné). Nahoře (`ZONE-OUTPUT`) typ podkladu, jedna věta vysvětlení a příklad v `<code>`; dole (`ZONE-INPUT`) tlačítka způsobů vložení (výška 48 px) na dosah palce.
+- **POKUD** modul přejde z obrazovky Podklad do práce, **POTOM** podklad krátce (~300 ms) „odletí“ do ikony v hlavičce, aby hráč viděl, kde žije. Při `prefers-reduced-motion` bez animace.
+- **POKUD** píšeš `emptyHint` modulu s podkladem, **POTOM** už nevyzývá k vložení (to dělá obrazovka Podklad), jen k dalšímu kroku (Mřížka: „Označte otvory.“).
+- **POKUD** je podklad volitelný, **POTOM** modul startuje rovnou v práci (ruční zadávání je výchozí) a podklad se načítá jen z ikony.
+
+**Editor a sheet podkladu**
+- **POKUD** způsob vložení vytváří text (psaní, schránka, OCR), **POTOM** vždy skončí v editoru `<TextEntrySheet>`, kde ho hráč zkontroluje. OCR editor jen předvyplní.
+- **POKUD** hráč klepne na ikonu textového podkladu (text, tabulka, pozice), **POTOM** se rovnou otevře editor s aktuálním obsahem. U obrázku se otevře sheet podkladu (náhled, Vyfotit, Vybrat z galerie, Smazat).
+- **POKUD** stavíš editor podkladu, **POTOM** pod textovým polem je řádek `[ Vložit | Vyfotit (OCR) | Smazat ]` a pod ním **Hotovo**. `Vyfotit` jen u typů, které OCR mají; u podkladu vytvořeného v appce (pozice) navíc `Kopírovat`. `Vložit` vkládá schránku na místo kurzoru (`pasteFromClipboard()`) a je VÝHRADNĚ v editoru, nikdy v modulu.
+- **POKUD** volba mění zpracování podkladu (Frekvence: Ignorovat diakritiku / interpunkci), **POTOM** patří do ☰, NIKDY do editoru: editor zakrývá výstup a změna by nebyla vidět. Editor obsahuje jen data.
+- **POKUD** se editor nebo sheet podkladu zavře jakkoli (Hotovo, tažení dolů, klepnutí mimo, ✕, Esc), **POTOM** se obsah VŽDY uloží. Text se nikdy tiše nezahazuje; zahodit jde jen smazáním.
+- **POKUD** mažeš podklad, **POTOM** jen uvnitř podkladu přes `<HoldToAction>`, NIKDY ✕ jedním klepnutím v modulu. V editoru podržení vyprázdní pole (zavření prázdný text uloží, takže jde rovnou vložit nový); ve sheetu obrázku smaže fotku. Po smazání povinného podkladu se modul vrátí na obrazovku Podklad. Reset v ☰ maže podklad i nastavení.
+- **POKUD** modul nabízí export podkladu (Šachy: Kopírovat FEN), **POTOM** patří do podkladu, ne do ☰.
+
+**Úprava a uchování**
+- **POKUD** se podklad upraví, **POTOM** zachovej rozdělanou práci, kde ještě platí (Substituce: přiřazení písmen; Mřížka: otvory, pokud se nezmění velikost). Neplatnou práci zahoď a oznam to toastem.
+- **POKUD** je podklad text, **POTOM** se ukládá přes `localSettingsService` modulu.
+- **POKUD** je podklad obrázek, **POTOM** se NEukládá na disk, ale drží se v paměti ve sdíleném stavu (`.svelte.ts`) po dobu běhu appky, takže přežije přepnutí modulu. NIKDY ho nemaž při `visibilitychange` (otevření fotoaparátu nebo odskok do jiné appky stránku skryje). Mizí po znovunačtení nebo ukončení appky systémem.
 
 ### Klávesnice & Tlačítka
 - **POKUD** navrhuješ vstupní matici, **POTOM** její výška má preferovat maximální povolený rozměr (např. 52 px pro mobilní číselník, 46 px pro kříž, 42 px pro abecedu), přičemž `ZONE-INPUT` má přednost a ukousne si z `ZONE-OUTPUT` tolik prostoru, kolik potřebuje, dokud výstup nenarazí na své minimum 84 px (`var(--output-min-height)`). NIKDY nepoužívej `vh`/`dvh` clampy, které zmenšují tlačítka na úkor volného místa.
@@ -140,13 +193,14 @@ Každá barva v UI má právě jednu roli. Problém vzniká, když jeden odstín
 - **POKUD** píšeš nápovědu prázdného stavu (`emptyHint`), **POTOM** formuluj 1 údernou větu bez vatových úvodů („Zde se zobrazuje...“). Při psaní se plynule rozostří (0.7s blur), při vymazání znovu zaostří.
 - **POKUD** zobrazuješ toast, **POTOM** max. **30 znaků + až 2 emoji** v imperativním tvaru (*„Zkopírováno“*, *„Vyčištěno“*).
 
-### Reference (`[ 📖 ]`)
+### Reference (☰ → Tahák a návod)
+- **POKUD** má modul referenci, **POTOM** ji otevírá první řádek menu ☰ **Tahák a návod**. Modul s referencí má ☰ vždy, i když nemá žádné volby (Barvy, Kalendář, Chemie). Reference NEMÁ vlastní tlačítko v hlavičce; to místo patří podkladu.
 - **POKUD** píšeš referenci modulu, **POTOM** ji postav na `<RefLayout>` (`src/lib/components/reference/`). Záložky jdou v pevném pořadí: nejdřív datové záložky (max. 3, první se otevře vždy), poslední je VŽDY **„Návod“**. Modul bez dat má jen Návod a lišta záložek se skryje.
 - **POKUD** plníš Návod, **POTOM** předej `help: RefHelpData` se dvěma pevnými sekcemi: **Ovládání** (`controls`: zadávání, lišty, volby v menu) a **Pozor** (`pitfalls`: úskalí ve tvaru *situace → co dělat*). Sekce NIKDY nepřejmenovávej ani nepřidávej další; prázdnou sekci vynech.
 - **POKUD** má modul víc nástrojů (flavours), které se ovládají nebo chovají rozdílně (SMS vs. T9), **POTOM** předej `tools: RefTool[]` s návodem pro každý nástroj zvlášť a `activeTool` = aktuální flavour modulu. Návod je lineární: nahoře blok **Společné** (`help`: přepínání, gesta, společná úskalí), pod ním blok každého nástroje v pořadí lišty; aktivní nástroj nese štítek „aktivní“. Uvnitř Návodu NIKDY nepřidávej další přepínač (SegmentedControl) – dvě stejné lišty pod sebou matou. Varianty se stejným chováním (Polybius 5×5 / 6×6) nerozděluj.
 - **POKUD** píšeš položku „Pozor“, **POTOM** nejdřív zvaž, jestli nejde nástroj zjednodušit tak, aby úskalí zmizelo (automatická detekce místo volby v menu, standardní pravidla místo přepínačů). Gotcha je až poslední možnost, ne náhrada za lepší chování.
 - **POKUD** píšeš text reference, **POTOM** piš heslovitě: položka = `['pojem', 'hodnota']` na jeden řádek (~60 znaků), příklad místo vysvětlení (`22 = B`), zápisy v backticku (vykreslí se jako `<code>`). Žádné úvody, hodnocení ani oslovení („Skvělé pro…“, „Ťuknutím vyberte…“).
-- **POKUD** v referenci odkazuješ na ovládací prvek, **POTOM** ho pojmenuj přesně jako v UI (label volby v menu, text tlačítka) a u voleb doplň „→ menu <Label>“.
+- **POKUD** v referenci odkazuješ na ovládací prvek, **POTOM** ho pojmenuj přesně jako v UI (label volby v menu, text tlačítka) a u voleb doplň „→ menu <Label>“, u podkladu „→ ikona podkladu“.
 - **POKUD** stavíš datovou záložku, **POTOM** použij `<RefSection title note>` pro nadpisy, `<RefList>` pro řádky pojem–hodnota a třídy `.ref-table-wrap` + `.ref-table` (`.col-num`, `.col-val`, `.col-code`, `.col-name`, `tr.desc-row`) pro tabulky. Vlastní CSS jen pro specifické vizualizace (Braillova matice, semafor, vlajky).
 - **POKUD** reference závisí na nastavení modulu (abeceda), **POTOM** předej data přes props (např. `letters`), aby tahák odpovídal aktuální konfiguraci.
 - **POKUD** stejná data používá víc referencí, **POTOM** je drž v jednom `*Data.ts` a sdílené komponentě (např. `frequency/LanguageStats.svelte`). Nikdy je nekopíruj ručně do markupu.
@@ -190,7 +244,8 @@ $$540\text{ px} - [52\text{ (Header)} + 84\text{ (Output min)} + 42\text{ (Utili
 
 | Komponenta | Cesta | Účel & Klíčové props |
 | :--- | :--- | :--- |
-| `<ModuleShell>` | `layout/ModuleShell.svelte` | Základní kostra: snippets `#output`, `#input`, `#menuOptions`, `#reference`; props `title`, `hasAlphabet`, `onReset` |
+| `<ModuleShell>` | `layout/ModuleShell.svelte` | Základní kostra: snippets `#output`, `#input`, `#menuOptions`, `#reference`; props `title`, `hasAlphabet`, `onReset`, `podklad` (`PodkladConfig`: `kind`, `required`, `empty`, `title`, `description`, `example`, `attention` + `value`/`onSave` u textu, `preview`/`onFile`/`onClear` u obrázku) |
+| Podklad | `components/podklad/` | `PodkladIntro` + `PodkladMethods` (obrazovka Podklad), `PodkladSheet` (editor / sheet obrázku z ikony), `PodkladMethodButton` (způsob vložení vč. výběru fotky). Vykresluje je `ModuleShell`, moduly je neimportují |
 | `<TranslationCard>` | `ui/TranslationCard.svelte` | OLED výstup s auto-scrollem a 1-tap copy: props `text`, `pendingText`, `emptyHint` |
 | `<HoldToAction>` | `ui/HoldToAction.svelte` | Bezpečné smazání podržením: props `onAction`, `disabled`, `holdDuration=380` |
 | `<SpaceCommitButton>` | `ui/SpaceCommitButton.svelte` | Kontextová mezera / Enter: props `pendingChar`, `onSpace`, `onCommit`, `commitSymbol` |
@@ -200,5 +255,5 @@ $$540\text{ px} - [52\text{ (Header)} + 84\text{ (Output min)} + 42\text{ (Utili
 | `<RefLayout>` | `reference/RefLayout.svelte` | Kostra reference: datové záložky + „Návod“; props `tabs`, `help`, snippet `content(tab)`. Nese sdílené styly `.ref-table` a `<code>` |
 | `<RefSection>` | `reference/RefSection.svelte` | Nadpis sekce reference s volitelnou jednořádkovou poznámkou: props `title`, `note` |
 | `<RefList>` | `reference/RefList.svelte` | Řádky `pojem: hodnota` (backtick = `<code>`): props `items`, `variant="warn"` |
-| `<TextEntrySheet>` | `ui/TextEntrySheet.svelte` | Celoobrazovkový textový editor zabraňující deformaci layoutu klávesnicí OS |
+| `<TextEntrySheet>` | `ui/TextEntrySheet.svelte` | Celoobrazovkový textový editor (podklad i parametry) zabraňující deformaci layoutu klávesnicí OS. Jakékoli zavření ukládá (`onSave` jen při změně). Props `paste`, `copyable`, `clearable` zapínají nástroje podkladu (viz §3 *Podklad*) |
 | `<LandscapeWarning>` | `layout/LandscapeWarning.svelte` | Systémový overlay vyzývající k otočení do portrait módu při výšce < 540 px |

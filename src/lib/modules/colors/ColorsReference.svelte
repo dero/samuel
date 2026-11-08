@@ -44,12 +44,14 @@
 
   const help: RefHelpData = {
     controls: [
-      ['Fotka', 'tlačítko Vyfotit nebo vybrat šifru'],
+      ['Fotka', 'ikona podkladu v hlavičce: Vyfotit, Vybrat z galerie, podržením Smazat'],
       ['RGB / CMY', 'přepíná barevný model'],
-      ['Dva prsty', 'posun a zoom, tlačítko s % vrátí 1×'],
-      ['Podržet koš', 'smaže fotku']
+      ['Dva prsty', 'posun a zoom, tlačítko s % vrátí 1×']
     ],
-    pitfalls: [['Malířské míchání', 'žlutá + modrá = zelená platí jen pro barvy (RYB), ne pro světlo a tisk']]
+    pitfalls: [
+      ['Malířské míchání', 'žlutá + modrá = zelená platí jen pro barvy (RYB), ne pro světlo a tisk'],
+      ['Fotka zmizela', 'neukládá se, vydrží do zavření appky → vyfotit znovu']
+    ]
   };
 </script>
 

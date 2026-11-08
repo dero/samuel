@@ -357,3 +357,25 @@ textarea {
 }
 
 
+
+/* Podklad: document card that flies from the Podklad phase into the header icon */
+.podklad-fly-ghost {
+  position: fixed;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 14px;
+  color: var(--color-accent-primary);
+  background-color: var(--color-surface-2);
+  border: 1.5px solid var(--color-accent-primary);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.podklad-fly-ghost svg {
+  width: 100%;
+  height: 100%;
+}

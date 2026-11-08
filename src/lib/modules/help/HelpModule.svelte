@@ -1,6 +1,6 @@
 <script lang="ts">
   import { APP_NAME } from '../../constants';
-  import { ArrowUp, List, BookOpen } from 'phosphor-svelte';
+  import { ArrowUp, List, FileText } from 'phosphor-svelte';
 </script>
 
 <div class="help-scroll">
@@ -17,16 +17,16 @@
       <h2 class="card-title">Ovládání</h2>
       <ul class="help-list">
         <li>
-          <strong>Menu</strong> <span class="inline-icon"><List size={14} weight="bold" /></span> volby pomůcky, abeceda a vyčištění.
+          <strong>Menu</strong> <span class="inline-icon"><List size={14} weight="bold" /></span> tahák a návod, volby pomůcky, abeceda a vyčištění.
         </li>
         <li>
-          <strong>Reference</strong> <span class="inline-icon"><BookOpen size={14} weight="duotone" /></span> tahák a tabulky.
+          <strong>Podklad</strong> <span class="inline-icon"><FileText size={14} weight="duotone" /></span> vložený text nebo fotka: upravit, vyměnit, smazat.
         </li>
         <li>
           <strong>Kopírování:</strong> klepnutím na výsledek.
         </li>
         <li>
-          <strong>Zpět:</strong> systémové tlačítko zavře menu, referenci i výběr pomůcek.
+          <strong>Zpět:</strong> systémové tlačítko zavře menu, tahák i výběr pomůcek.
         </li>
       </ul>
     </section>

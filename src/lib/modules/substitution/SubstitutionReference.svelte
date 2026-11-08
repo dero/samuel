@@ -12,7 +12,7 @@
 
   const help: RefHelpData = {
     controls: [
-      ['Text', 'řádek dole otevře editor'],
+      ['Šifrový text', 'ikona podkladu v hlavičce otevře editor, přiřazení zůstanou'],
       ['Pás nad klávesnicí', 'šifrové znaky, klepnutím vybrat'],
       ['Klávesnice', 'přiřadí vybranému znaku písmeno, `✕` přiřazení zruší'],
       ['Reset na začátku pásu', 'zruší všechna přiřazení'],

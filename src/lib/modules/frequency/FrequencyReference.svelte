@@ -24,7 +24,7 @@
 
   const help: RefHelpData = {
     controls: [
-      ['Text', 'řádek dole otevře editor'],
+      ['Šifrový text', 'ikona podkladu v hlavičce otevře editor, `Vložit` = schránka'],
       ['Četnost ▾ / Abecedně', 'řazení histogramu'],
       ['Stavový řádek', 'odhad typu šifry podle IoC, klepnutí = vysvětlení'],
       ['Ignorovat diakritiku', 'v menu: Č → C, Á → A…'],

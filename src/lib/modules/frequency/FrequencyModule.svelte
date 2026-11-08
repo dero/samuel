@@ -1,7 +1,6 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
-  import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
   import StatusBar from '../../components/ui/StatusBar.svelte';
   import MonogramsView from './MonogramsView.svelte';
   import FrequencyReference from './FrequencyReference.svelte';
@@ -12,7 +11,6 @@
   import { toast } from '../../state/toast.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
   import { Info } from 'phosphor-svelte';
-  import EmptyHint from '../../components/ui/EmptyHint.svelte';
 
   const modSettings = localSettingsService.forModule('freq');
 
@@ -24,7 +22,6 @@
     (modSettings.getString('sort_by', 'freq') as 'freq' | 'alpha') || 'freq'
   );
 
-  let showTextSheet = $state<boolean>(false);
   let showIocModal = $state<boolean>(false);
 
   // Persistence
@@ -60,16 +57,22 @@
   title="Frekvence"
   hasAlphabet={false}
   onReset={handleReset}
+  podklad={{
+    kind: 'text',
+    required: true,
+    empty: !rawText.trim(),
+    title: 'Šifrový text',
+    description: 'Spočítá četnost písmen a podle indexu koincidence odhadne typ šifry.',
+    example: 'WKLV LV D VHFUHW',
+    value: rawText,
+    onSave: (val) => {
+      rawText = val;
+    }
+  }}
 >
   <!-- TOP ZONE: Output (Letter frequency histogram and status bar) -->
   {#snippet output()}
     <div class="freq-output-stage">
-      <!-- Contextual tooltip: seated directly above input zone, dissolves on input -->
-      <EmptyHint
-        text="Vložte šifrový text."
-        hidden={!!rawText.trim()}
-      />
-
       {#if rawText.trim()}
         <!-- Active Analysis: Simplified 1-line status bar -->
         <StatusBar
@@ -132,17 +135,8 @@
   {#snippet input()}
     <FrequencyToolbar
       {sortBy}
-      {rawText}
       onSortChange={(s) => {
         sortBy = s;
-      }}
-      onOpenEditor={() => {
-        settings.vibrate(20);
-        showTextSheet = true;
-      }}
-      onClearText={() => {
-        settings.vibrate(15);
-        rawText = '';
       }}
     />
   {/snippet}
@@ -176,42 +170,6 @@
     <FrequencyReference />
   {/snippet}
 </ModuleShell>
-
-<!-- Multi-line Text Entry Sheet with In-Sheet Option Toggles -->
-<TextEntrySheet
-  open={showTextSheet}
-  title="Šifrový text"
-  value={rawText}
-  placeholder="Vložte nebo napište šifrový text…"
-  onSave={(val) => {
-    rawText = val;
-  }}
-  onClose={() => {
-    showTextSheet = false;
-  }}
->
-  {#snippet options()}
-    <div class="sheet-filter-toggles-row">
-      <label class="sheet-toggle-label">
-        <input
-          type="checkbox"
-          bind:checked={removeDiacritics}
-          class="sheet-checkbox"
-        />
-        <span>Ignoruj diakritiku</span>
-      </label>
-
-      <label class="sheet-toggle-label">
-        <input
-          type="checkbox"
-          bind:checked={removeSymbols}
-          class="sheet-checkbox"
-        />
-        <span>Ignoruj interpunkci</span>
-      </label>
-    </div>
-  {/snippet}
-</TextEntrySheet>
 
 <!-- IoC Detail Modal -->
 <IocDetailModal
@@ -305,38 +263,6 @@
     color: var(--color-text-secondary);
     font-size: calc(13px * var(--font-scale));
     line-height: 1.4;
-  }
-
-  /* Sheet filter toggles */
-  .sheet-filter-toggles-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 6px 12px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-  }
-
-  .sheet-toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: calc(12px * var(--font-scale));
-    font-weight: 600;
-    color: var(--color-text-primary);
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-  }
-
-  .sheet-checkbox {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--color-accent-primary);
-    cursor: pointer;
   }
 
   /* Menu groups */

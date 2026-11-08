@@ -2,13 +2,21 @@
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
   import { versionService } from '../../services/versionService.svelte';
+  import { podklad } from '../../state/podklad.svelte';
   import ModuleIcon from '../ui/ModuleIcon.svelte';
   import { MODULE_GROUPS } from '../../types';
-  import { List, BookOpen, CaretDown, FlagBanner } from 'phosphor-svelte';
+  import { List, FileText, CaretDown, FlagBanner } from 'phosphor-svelte';
 
   let active = $derived(navigation.activeModule);
   // Icon carries the launcher group color, so the module is recognizable across both
   let groupColor = $derived(MODULE_GROUPS.find((g) => g.id === active?.group)?.color);
+
+  let podkladAttention = $derived(podklad.config?.attention ?? null);
+  let podkladLabel = $derived(
+    podklad.config
+      ? `Podklad: ${podklad.config.title}${podkladAttention ? ` (${podkladAttention})` : ''}`
+      : ''
+  );
 </script>
 <header class="header">
   <div class="title-zone">
@@ -36,22 +44,30 @@
 
   <div class="header-actions">
     {#if !active?.isSystem}
-      {#if active?.hasReference !== false}
+      {#if podklad.config}
         <button
           type="button"
           class="header-btn"
-          aria-label="Reference"
-          title="Reference"
+          class:is-active={podklad.active}
+          aria-label={podkladLabel}
+          aria-pressed={podklad.active}
+          title={podkladLabel}
           onclick={() => {
             settings.vibrate(20);
-            navigation.toggleRef();
+            navigation.closeSubView();
+            podklad.toggle();
           }}
         >
-          <span class="icon"><BookOpen size={20} weight="duotone" /></span>
+          <span class="icon-wrapper" data-podklad-icon>
+            <span class="icon"><FileText size={20} weight="duotone" /></span>
+            {#if podkladAttention}
+              <span class="warning-dot" aria-hidden="true"></span>
+            {/if}
+          </span>
         </button>
       {/if}
 
-      {#if active?.hasMenu !== false}
+      {#if navigation.hasMenuButton}
         <button
           type="button"
           class="header-btn"
@@ -60,6 +76,7 @@
           title={navigation.hasMenuWarning ? `Nastavení: ${active?.name ?? ''} (upozornění: nestandardní nastavení)` : `Nastavení: ${active?.name ?? ''}`}
           onclick={() => {
             settings.vibrate(20);
+            podklad.close();
             navigation.toggleMenu();
           }}
         >
@@ -165,6 +182,13 @@
   }
   .header-btn:active {
     background-color: var(--color-surface-active);
+  }
+
+  /* Podklad phase or sheet showing: accent plus a ring, never color alone */
+  .header-btn.is-active {
+    color: var(--color-accent-primary);
+    background-color: rgba(0, 210, 255, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(0, 210, 255, 0.45);
   }
 
   .icon-wrapper {

@@ -3,7 +3,6 @@
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import AlphabetSelect from '../../components/ui/AlphabetSelect.svelte';
-  import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
   import Filmstrip from './Filmstrip.svelte';
   import TargetAlphabetKeypad from './TargetAlphabetKeypad.svelte';
   import SubstitutionReference from './SubstitutionReference.svelte';
@@ -11,9 +10,7 @@
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { navigation } from '../../state/navigation.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
-  import { PencilSimple } from 'phosphor-svelte';
   import NonStandardAlphabetBanner from '../../components/ui/NonStandardAlphabetBanner.svelte';
 
   const modSettings = localSettingsService.forModule('substitution');
@@ -35,7 +32,6 @@
   );
 
   // Text entry sheet visibility
-  let showTextSheet = $state<boolean>(false);
 
   // Persistence
   $effect(() => {
@@ -107,13 +103,25 @@
   hasAlphabet={true}
   hasWarning={isNonStandardAlphabet}
   onReset={handleResetAll}
+  podklad={{
+    kind: 'text',
+    required: true,
+    empty: !ciphertext.trim(),
+    title: 'Šifrový text',
+    description: 'Písmenům šifry pak dole přiřadíte písmena otevřeného textu.',
+    example: 'XLMW MW E WIGVIX',
+    value: ciphertext,
+    onSave: (val) => {
+      ciphertext = val;
+    }
+  }}
 >
   <!-- TOP ZONE: Output (TranslationCard) -->
   {#snippet output()}
     <div class="substitution-output-wrapper">
       <TranslationCard
         text={result.plainText}
-        emptyHint="Zadejte nebo vložte šifrový text."
+        emptyHint="Přiřaďte písmena na klávesnici dole."
       >
         {#snippet children()}
           {#each result.tokens as token}
@@ -130,44 +138,27 @@
 
   <!-- BOTTOM ZONE: Input & Keypad -->
   {#snippet input()}
-    {#if !ciphertext.trim()}
-      <!-- INITIAL EMPTY STATE: Call to Action for entering text -->
-      <div class="empty-input-state">
-        <button
-          type="button"
-          class="enter-text-cta-btn"
-          onclick={() => {
-            settings.vibrate(20);
-            showTextSheet = true;
-          }}
-        >
-          <PencilSimple size={20} weight="bold" />
-          <span>Zadat šifrový text</span>
-        </button>
-      </div>
-    {:else}
-      <!-- ACTIVE STATE: Filmstrip + Target Alphabet Keypad -->
-      <div class="zone-input-flow">
-        <Filmstrip
-          letters={currentLetters}
-          {mapping}
-          {selectedLetter}
-          {lettersInText}
-          {allowUnusedLetters}
-          onSelectLetter={(letter) => (selectedLetter = letter)}
-          onResetAll={handleResetMappings}
-        />
+    <!-- Filmstrip + Target Alphabet Keypad -->
+    <div class="zone-input-flow">
+      <Filmstrip
+        letters={currentLetters}
+        {mapping}
+        {selectedLetter}
+        {lettersInText}
+        {allowUnusedLetters}
+        onSelectLetter={(letter) => (selectedLetter = letter)}
+        onResetAll={handleResetMappings}
+      />
 
-        <TargetAlphabetKeypad
-          letters={currentLetters}
-          {selectedLetter}
-          {mapping}
-          {allowHomophones}
-          onAssign={handleAssignLetter}
-          onUnassign={handleUnassignLetter}
-        />
-      </div>
-    {/if}
+      <TargetAlphabetKeypad
+        letters={currentLetters}
+        {selectedLetter}
+        {mapping}
+        {allowHomophones}
+        onAssign={handleAssignLetter}
+        onUnassign={handleUnassignLetter}
+      />
+    </div>
   {/snippet}
 
   <!-- CONTEXTUAL MENU: Nastavení modulu -->
@@ -205,21 +196,6 @@
         }}
       />
     </div>
-
-    <div class="menu-group">
-      <div class="menu-group-title">Šifrový text</div>
-      <button
-        type="button"
-        class="menu-action-row"
-        onclick={() => {
-          settings.vibrate(20);
-          showTextSheet = true;
-        }}
-      >
-        <PencilSimple size={18} weight="bold" />
-        <span>Upravit šifrový text</span>
-      </button>
-    </div>
   {/snippet}
 
   <!-- REFERENCE CHEAT SHEET -->
@@ -227,20 +203,6 @@
     <SubstitutionReference />
   {/snippet}
 </ModuleShell>
-
-<!-- Fullscreen Text Entry Sheet -->
-<TextEntrySheet
-  open={showTextSheet}
-  title="Šifrový text"
-  placeholder="Vložte nebo napište šifrovaný text..."
-  value={ciphertext}
-  onSave={(val) => {
-    ciphertext = val;
-  }}
-  onClose={() => {
-    showTextSheet = false;
-  }}
-/>
 
 <style>
   .substitution-output-wrapper {
@@ -259,36 +221,8 @@
   }
 
   /* Empty state for input zone */
-  .empty-input-state {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
-    padding: 4px 0;
-  }
 
-  .enter-text-cta-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    height: 52px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-    font-size: calc(15px * var(--font-scale));
-    font-weight: 700;
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: background-color 0.12s ease, border-color 0.12s ease;
-  }
 
-  .enter-text-cta-btn:active {
-    background-color: var(--color-surface-active);
-    border-color: var(--color-accent-primary);
-  }
 
   /* Menu styles */
   .menu-group {
@@ -306,25 +240,6 @@
     color: var(--color-text-muted);
   }
 
-  .menu-action-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    height: 44px;
-    padding: 0 12px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-    font-size: calc(14px * var(--font-scale));
-    font-weight: 600;
-    cursor: pointer;
-    touch-action: manipulation;
-  }
 
-  .menu-action-row:active {
-    background-color: var(--color-surface-active);
-  }
 
 </style>

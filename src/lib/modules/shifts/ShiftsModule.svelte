@@ -42,7 +42,7 @@
   let text = $state<string>(modSettings.getString('text', ''));
   let keyText = $state<string>(modSettings.getString('key', ''));
   let autokeyPrimer = $state<string>(modSettings.getString('autokey_primer', ''));
-  let activeTextSheet = $state<'text' | 'key' | 'primer' | null>(null);
+  let activeTextSheet = $state<'key' | 'primer' | null>(null);
 
   // Options
   let showBestHighlight = $state<boolean>(
@@ -177,6 +177,18 @@
   hasAlphabet={true}
   hasWarning={isNonStandardAlphabet}
   onReset={handleReset}
+  podklad={{
+    kind: 'text',
+    required: true,
+    empty: !text.trim(),
+    title: 'Šifrový text',
+    description: 'Text se posune podle zvoleného nástroje: Cézar, Vigenère nebo Autokey.',
+    example: 'WKLV LV D VHFUHW',
+    value: text,
+    onSave: (val) => {
+      text = val;
+    }
+  }}
 >
   <!-- TOP ZONE: Output (Translation area only) -->
   {#snippet output()}
@@ -222,53 +234,8 @@
       </div>
 
       {#if activeSubmodule === 'caesar'}
-        <!-- Caesar Single-line Input Row with Spacer -->
+        <!-- Caesar: the text is the podklad; the row slot keeps Vigenère / Autokey height -->
         <div class="inputs-column">
-          <div class="input-row">
-            <button
-              type="button"
-              class="cipher-input-trigger font-mono"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'text';
-              }}
-              title="Klepnutím zadat nebo upravit šifrový text"
-              aria-label="Klepnutím zadat nebo upravit šifrový text"
-            >
-              {#if text}
-                <span class="trigger-text">{text}</span>
-              {:else}
-                <span class="trigger-placeholder">Zadat text…</span>
-              {/if}
-            </button>
-            {#if text}
-              <button
-                type="button"
-                class="input-clear-btn"
-                onclick={() => {
-                  settings.vibrate(15);
-                  text = '';
-                }}
-                title="Vymazat text"
-                aria-label="Vymazat text"
-              >
-                <X size={15} weight="bold" />
-              </button>
-            {/if}
-            <button
-              type="button"
-              class="input-sheet-btn"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'text';
-              }}
-              title="Otevřít textový editor"
-              aria-label="Otevřít textový editor"
-            >
-              <PencilSimple size={16} weight="bold" />
-            </button>
-          </div>
-
           <!-- Easter egg: Caesar's 23 daggers in the reserved spacer slot -->
           <button
             type="button"
@@ -301,53 +268,8 @@
         </div>
 
       {:else if activeSubmodule === 'vigenere'}
-        <!-- Vigenere Inputs: Text & Key -->
+        <!-- Vigenère: key row (the text is the podklad) -->
         <div class="inputs-column">
-          <div class="input-row">
-            <button
-              type="button"
-              class="cipher-input-trigger font-mono"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'text';
-              }}
-              title="Klepnutím zadat nebo upravit šifrový text"
-              aria-label="Klepnutím zadat nebo upravit šifrový text"
-            >
-              {#if text}
-                <span class="trigger-text">{text}</span>
-              {:else}
-                <span class="trigger-placeholder">Zadat text…</span>
-              {/if}
-            </button>
-            {#if text}
-              <button
-                type="button"
-                class="input-clear-btn"
-                onclick={() => {
-                  settings.vibrate(15);
-                  text = '';
-                }}
-                title="Vymazat text"
-                aria-label="Vymazat text"
-              >
-                <X size={15} weight="bold" />
-              </button>
-            {/if}
-            <button
-              type="button"
-              class="input-sheet-btn"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'text';
-              }}
-              title="Otevřít textový editor"
-              aria-label="Otevřít textový editor"
-            >
-              <PencilSimple size={16} weight="bold" />
-            </button>
-          </div>
-
           <div class="input-row">
             <button
               type="button"
@@ -395,53 +317,8 @@
         </div>
 
       {:else if activeSubmodule === 'autokey'}
-        <!-- Autokey Inputs: Text & Primer -->
+        <!-- Autokey: primer row (the text is the podklad) -->
         <div class="inputs-column">
-          <div class="input-row">
-            <button
-              type="button"
-              class="cipher-input-trigger font-mono"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'text';
-              }}
-              title="Klepnutím zadat nebo upravit šifrový text"
-              aria-label="Klepnutím zadat nebo upravit šifrový text"
-            >
-              {#if text}
-                <span class="trigger-text">{text}</span>
-              {:else}
-                <span class="trigger-placeholder">Zadat text…</span>
-              {/if}
-            </button>
-            {#if text}
-              <button
-                type="button"
-                class="input-clear-btn"
-                onclick={() => {
-                  settings.vibrate(15);
-                  text = '';
-                }}
-                title="Vymazat text"
-                aria-label="Vymazat text"
-              >
-                <X size={15} weight="bold" />
-              </button>
-            {/if}
-            <button
-              type="button"
-              class="input-sheet-btn"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'text';
-              }}
-              title="Otevřít textový editor"
-              aria-label="Otevřít textový editor"
-            >
-              <PencilSimple size={16} weight="bold" />
-            </button>
-          </div>
-
           <div class="input-row">
             <button
               type="button"
@@ -536,30 +413,15 @@
 
 <TextEntrySheet
   open={activeTextSheet !== null}
-  title={
-    activeTextSheet === 'text'
-      ? 'Šifrový text'
-      : activeTextSheet === 'key'
-        ? 'Šifrovací klíč'
-        : 'Počáteční heslo'
-  }
-  value={
-    activeTextSheet === 'text'
-      ? text
-      : activeTextSheet === 'key'
-        ? keyText
-        : autokeyPrimer
-  }
+  title={activeTextSheet === 'key' ? 'Šifrovací klíč' : 'Počáteční heslo'}
+  value={activeTextSheet === 'key' ? keyText : autokeyPrimer}
   placeholder={
-    activeTextSheet === 'text'
-      ? 'Zadejte nebo vložte šifrový text...'
-      : activeTextSheet === 'key'
-        ? 'Zadejte heslo nebo číselný klíč...'
-        : 'Zadejte heslo pro autokey...'
+    activeTextSheet === 'key'
+      ? 'Zadejte heslo nebo číselný klíč…'
+      : 'Zadejte heslo pro autokey…'
   }
   onSave={(val) => {
-    if (activeTextSheet === 'text') text = val;
-    else if (activeTextSheet === 'key') keyText = val;
+    if (activeTextSheet === 'key') keyText = val;
     else if (activeTextSheet === 'primer') autokeyPrimer = val;
   }}
   onClose={() => {

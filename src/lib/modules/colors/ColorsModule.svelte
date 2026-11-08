@@ -1,28 +1,33 @@
 <script lang="ts">
-  import { tick } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import ColorsReference from './ColorsReference.svelte';
   import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
-  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import { settings } from '../../state/settings.svelte';
-  import { Camera, Image as ImageIcon, ArrowClockwise } from 'phosphor-svelte';
-  import { applyRgbFilter, applyCmyFilter, getScaledDimensions } from './colorsFilter';
+  import { ArrowClockwise } from 'phosphor-svelte';
+  import { applyRgbFilter, applyCmyFilter } from './colorsFilter';
+  import { colorsPhoto } from './colorsPhoto.svelte';
 
   type ColorModel = 'rgb' | 'cmy';
+  type Channel = 'r' | 'g' | 'b' | 'c' | 'm' | 'y';
+
+  const CHANNELS: Record<ColorModel, { id: Channel; color: string; label: string }[]> = {
+    rgb: [
+      { id: 'r', color: '#ef4444', label: 'Červený kanál (R)' },
+      { id: 'g', color: '#22c55e', label: 'Zelený kanál (G)' },
+      { id: 'b', color: '#3b82f6', label: 'Modrý kanál (B)' }
+    ],
+    cmy: [
+      { id: 'c', color: '#06b6d4', label: 'Azurová vrstva (C)' },
+      { id: 'm', color: '#d946ef', label: 'Purpurová vrstva (M)' },
+      { id: 'y', color: '#eab308', label: 'Žlutá vrstva (Y)' }
+    ]
+  };
 
   let colorModel = $state<ColorModel>('rgb');
-  let rgbChannels = $state({ r: true, g: true, b: true });
-  let cmyChannels = $state({ c: true, m: true, y: true });
+  let channelsOn = $state<Record<Channel, boolean>>({ r: true, g: true, b: true, c: true, m: true, y: true });
 
-  let imageLoaded = $state(false);
   let canvasEl = $state<HTMLCanvasElement | null>(null);
-  let fileInputEl = $state<HTMLInputElement | null>(null);
-
-  // Cached raw image data
-  let sourceImageData = $state<ImageData | null>(null);
   let targetImageData: ImageData | null = null;
-  let imgWidth = $state(0);
-  let imgHeight = $state(0);
 
   // Pan and pinch-to-zoom state
   let zoom = $state(1);
@@ -35,102 +40,39 @@
   let initialPinchDist = 0;
   let initialPinchZoom = 1;
 
-  function handleFileSelect(e: Event) {
-    const input = e.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-    const file = input.files[0];
-    loadImageFromFile(file);
-    input.value = '';
-  }
-
-  function loadImageFromFile(file: File) {
-    const reader = new FileReader();
-    reader.onload = (loadEvt) => {
-      const src = loadEvt.target?.result as string;
-      if (!src) return;
-      const img = new Image();
-      img.onload = () => {
-        setupImage(img);
-      };
-      img.src = src;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  async function setupImage(img: HTMLImageElement) {
-    const { width, height } = getScaledDimensions(img.width, img.height, 1600);
-    imgWidth = width;
-    imgHeight = height;
-
-    const offscreen = document.createElement('canvas');
-    offscreen.width = width;
-    offscreen.height = height;
-    const offCtx = offscreen.getContext('2d', { willReadFrequently: true });
-    if (!offCtx) return;
-
-    offCtx.drawImage(img, 0, 0, width, height);
-    sourceImageData = offCtx.getImageData(0, 0, width, height);
-
-    imageLoaded = true;
-    resetTransform();
-
-    await tick();
-
-    if (canvasEl) {
-      canvasEl.width = width;
-      canvasEl.height = height;
-      const ctx = canvasEl.getContext('2d');
-      if (ctx) {
-        targetImageData = ctx.createImageData(width, height);
-      }
-      applyActiveFilters();
-    }
-  }
-
-  function applyActiveFilters() {
-    if (!canvasEl || !sourceImageData) return;
+  // Redraw whenever the photo, the model or a channel changes
+  $effect(() => {
+    const source = colorsPhoto.source;
+    if (!canvasEl || !source) return;
     const ctx = canvasEl.getContext('2d');
     if (!ctx) return;
 
-    if (canvasEl.width !== imgWidth || canvasEl.height !== imgHeight) {
-      canvasEl.width = imgWidth;
-      canvasEl.height = imgHeight;
+    if (canvasEl.width !== source.width || canvasEl.height !== source.height) {
+      canvasEl.width = source.width;
+      canvasEl.height = source.height;
     }
 
-    if (!targetImageData || targetImageData.width !== imgWidth || targetImageData.height !== imgHeight) {
-      targetImageData = ctx.createImageData(imgWidth, imgHeight);
+    if (!targetImageData || targetImageData.width !== source.width || targetImageData.height !== source.height) {
+      targetImageData = ctx.createImageData(source.width, source.height);
     }
 
     if (colorModel === 'rgb') {
-      applyRgbFilter(
-        sourceImageData.data,
-        targetImageData.data,
-        rgbChannels.r,
-        rgbChannels.g,
-        rgbChannels.b
-      );
+      applyRgbFilter(source.data, targetImageData.data, channelsOn.r, channelsOn.g, channelsOn.b);
     } else {
-      applyCmyFilter(
-        sourceImageData.data,
-        targetImageData.data,
-        cmyChannels.c,
-        cmyChannels.m,
-        cmyChannels.y
-      );
+      applyCmyFilter(source.data, targetImageData.data, channelsOn.c, channelsOn.m, channelsOn.y);
     }
 
     ctx.putImageData(targetImageData, 0, 0);
-  }
+  });
 
-  function toggleChannel(channel: 'r' | 'g' | 'b' | 'c' | 'm' | 'y') {
+  // A new photo starts unzoomed
+  $effect(() => {
+    if (colorsPhoto.source) resetTransform();
+  });
+
+  function toggleChannel(channel: Channel) {
     settings.vibrate(20);
-    if (channel === 'r') rgbChannels.r = !rgbChannels.r;
-    else if (channel === 'g') rgbChannels.g = !rgbChannels.g;
-    else if (channel === 'b') rgbChannels.b = !rgbChannels.b;
-    else if (channel === 'c') cmyChannels.c = !cmyChannels.c;
-    else if (channel === 'm') cmyChannels.m = !cmyChannels.m;
-    else if (channel === 'y') cmyChannels.y = !cmyChannels.y;
-    applyActiveFilters();
+    channelsOn[channel] = !channelsOn[channel];
   }
 
   function resetTransform() {
@@ -139,19 +81,8 @@
     panY = 0;
   }
 
-  function handleReset() {
-    settings.vibrate(30);
-    imageLoaded = false;
-    sourceImageData = null;
-    targetImageData = null;
-    rgbChannels = { r: true, g: true, b: true };
-    cmyChannels = { c: true, m: true, y: true };
-    resetTransform();
-  }
-
   // Pointer & Pinch-to-zoom handlers
   function handlePointerDown(e: PointerEvent) {
-    if (!imageLoaded) return;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
@@ -165,7 +96,7 @@
   }
 
   function handlePointerMove(e: PointerEvent) {
-    if (!imageLoaded || !activePointers.has(e.pointerId)) return;
+    if (!activePointers.has(e.pointerId)) return;
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     if (activePointers.size === 1) {
@@ -193,29 +124,30 @@
   }
 
   function handleWheel(e: WheelEvent) {
-    if (!imageLoaded) return;
     e.preventDefault();
     const factor = e.deltaY < 0 ? 1.15 : 0.85;
     zoom = Math.min(Math.max(0.5, zoom * factor), 8);
   }
-
-  // Effect to re-render filters when model changes
-  $effect(() => {
-    if (imageLoaded) {
-      // track model change
-      const _m = colorModel;
-      applyActiveFilters();
-    }
-  });
 </script>
 
-<ModuleShell title="Barvy">
-  <!-- ZONE-OUTPUT: Viewport with Canvas or Empty State -->
+<ModuleShell
+  title="Barvy"
+  podklad={{
+    kind: 'image',
+    required: true,
+    empty: !colorsPhoto.source,
+    title: 'Fotografie šifry',
+    description: 'Barevné vrstvy fotky se oddělí přes kanály RGB nebo CMY.',
+    preview: colorsPhoto.previewUrl,
+    onFile: (file) => colorsPhoto.load(file),
+    onClear: () => colorsPhoto.clear()
+  }}
+>
+  <!-- ZONE-OUTPUT: Viewport with the filtered photo -->
   {#snippet output()}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="canvas-viewport"
-      class:has-image={imageLoaded}
       role="region"
       aria-label="Plátno s fotografií šifry"
       onpointerdown={handlePointerDown}
@@ -224,57 +156,29 @@
       onpointercancel={handlePointerUp}
       onwheel={handleWheel}
     >
-      {#if !imageLoaded}
-        <div class="empty-upload-state">
-          <div class="empty-icon-circle">
-            <Camera size={36} weight="duotone" />
-          </div>
-          <button
-            type="button"
-            class="upload-trigger-btn"
-            onclick={() => {
-              settings.vibrate(20);
-              fileInputEl?.click();
-            }}
-          >
-            <ImageIcon size={18} weight="bold" />
-            <span>Vyfotit nebo vybrat šifru</span>
-          </button>
-                  </div>
-      {:else}
-        <!-- Canvas Stage with CSS Transform -->
-        <div
-          class="canvas-stage"
-          style:transform="translate({panX}px, {panY}px) scale({zoom})"
+      <!-- Canvas Stage with CSS Transform -->
+      <div
+        class="canvas-stage"
+        style:transform="translate({panX}px, {panY}px) scale({zoom})"
+      >
+        <canvas bind:this={canvasEl}></canvas>
+      </div>
+
+      {#if zoom !== 1 || panX !== 0 || panY !== 0}
+        <button
+          type="button"
+          class="reset-zoom-btn"
+          onclick={() => {
+            settings.vibrate(15);
+            resetTransform();
+          }}
+          aria-label="Obnovit zvětšení na 1×"
+          title="Obnovit zvětšení"
         >
-          <canvas bind:this={canvasEl} width={imgWidth} height={imgHeight}></canvas>
-        </div>
-
-        {#if zoom !== 1 || panX !== 0 || panY !== 0}
-          <button
-            type="button"
-            class="reset-zoom-btn"
-            onclick={() => {
-              settings.vibrate(15);
-              resetTransform();
-            }}
-            aria-label="Obnovit zvětšení na 1×"
-            title="Obnovit zvětšení"
-          >
-            <ArrowClockwise size={14} weight="bold" />
-            <span>{Math.round(zoom * 100)} %</span>
-          </button>
-        {/if}
+          <ArrowClockwise size={14} weight="bold" />
+          <span>{Math.round(zoom * 100)} %</span>
+        </button>
       {/if}
-
-      <!-- Hidden File Input -->
-      <input
-        bind:this={fileInputEl}
-        type="file"
-        accept="image/*"
-        class="hidden-file-input"
-        onchange={handleFileSelect}
-      />
     </div>
   {/snippet}
 
@@ -297,130 +201,25 @@
         />
       </div>
 
-      <!-- 2. Controls Row: HoldToAction (left) + Channel Filters (right) -->
-      <div class="colors-control-row">
-        <!-- Clear Photo Button (Hold to action) -->
-        <div class="clear-btn-wrap">
-          <HoldToAction
-            variant="icon-only"
-            disabled={!imageLoaded}
-            onAction={handleReset}
-            ariaLabel="Podržte pro vymazání fotografie"
-          />
-        </div>
-
-        <!-- Channel Filter Switches (in the style of FlagsModule) -->
-        <div class="color-filter-group" role="group" aria-label="Kanály barevného filtru">
-          {#if colorModel === 'rgb'}
-            <!-- Red Channel -->
-            <button
-              type="button"
-              class="color-filter-btn"
-              class:is-active={rgbChannels.r}
-              disabled={!imageLoaded}
-              onclick={() => toggleChannel('r')}
-              aria-pressed={rgbChannels.r}
-              aria-label="Červený kanál (R)"
-            >
-              <span
-                class="color-swatch"
-                style:background-color="#ef4444"
-                style:border-color="#ef4444"
-              ></span>
-              <span class="color-name">R</span>
-            </button>
-
-            <!-- Green Channel -->
-            <button
-              type="button"
-              class="color-filter-btn"
-              class:is-active={rgbChannels.g}
-              disabled={!imageLoaded}
-              onclick={() => toggleChannel('g')}
-              aria-pressed={rgbChannels.g}
-              aria-label="Zelený kanál (G)"
-            >
-              <span
-                class="color-swatch"
-                style:background-color="#22c55e"
-                style:border-color="#22c55e"
-              ></span>
-              <span class="color-name">G</span>
-            </button>
-
-            <!-- Blue Channel -->
-            <button
-              type="button"
-              class="color-filter-btn"
-              class:is-active={rgbChannels.b}
-              disabled={!imageLoaded}
-              onclick={() => toggleChannel('b')}
-              aria-pressed={rgbChannels.b}
-              aria-label="Modrý kanál (B)"
-            >
-              <span
-                class="color-swatch"
-                style:background-color="#3b82f6"
-                style:border-color="#3b82f6"
-              ></span>
-              <span class="color-name">B</span>
-            </button>
-          {:else}
-            <!-- Cyan Channel -->
-            <button
-              type="button"
-              class="color-filter-btn"
-              class:is-active={cmyChannels.c}
-              disabled={!imageLoaded}
-              onclick={() => toggleChannel('c')}
-              aria-pressed={cmyChannels.c}
-              aria-label="Azurová vrstva (C)"
-            >
-              <span
-                class="color-swatch"
-                style:background-color="#06b6d4"
-                style:border-color="#06b6d4"
-              ></span>
-              <span class="color-name">C</span>
-            </button>
-
-            <!-- Magenta Channel -->
-            <button
-              type="button"
-              class="color-filter-btn"
-              class:is-active={cmyChannels.m}
-              disabled={!imageLoaded}
-              onclick={() => toggleChannel('m')}
-              aria-pressed={cmyChannels.m}
-              aria-label="Purpurová vrstva (M)"
-            >
-              <span
-                class="color-swatch"
-                style:background-color="#d946ef"
-                style:border-color="#d946ef"
-              ></span>
-              <span class="color-name">M</span>
-            </button>
-
-            <!-- Yellow Channel -->
-            <button
-              type="button"
-              class="color-filter-btn"
-              class:is-active={cmyChannels.y}
-              disabled={!imageLoaded}
-              onclick={() => toggleChannel('y')}
-              aria-pressed={cmyChannels.y}
-              aria-label="Žlutá vrstva (Y)"
-            >
-              <span
-                class="color-swatch"
-                style:background-color="#eab308"
-                style:border-color="#eab308"
-              ></span>
-              <span class="color-name">Y</span>
-            </button>
-          {/if}
-        </div>
+      <!-- 2. Channel Filter Switches (in the style of FlagsModule) -->
+      <div class="color-filter-group" role="group" aria-label="Kanály barevného filtru">
+        {#each CHANNELS[colorModel] as channel (channel.id)}
+          <button
+            type="button"
+            class="color-filter-btn"
+            class:is-active={channelsOn[channel.id]}
+            onclick={() => toggleChannel(channel.id)}
+            aria-pressed={channelsOn[channel.id]}
+            aria-label={channel.label}
+          >
+            <span
+              class="color-swatch"
+              style:background-color={channel.color}
+              style:border-color={channel.color}
+            ></span>
+            <span class="color-name">{channel.id.toUpperCase()}</span>
+          </button>
+        {/each}
       </div>
     </div>
   {/snippet}
@@ -471,52 +270,10 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
   }
 
-  /* Empty state */
-  .empty-upload-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-md);
-    padding: var(--space-xl) var(--space-md);
-    text-align: center;
-    pointer-events: auto;
-  }
 
-  .empty-icon-circle {
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-full, 9999px);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-accent-primary);
-  }
 
-  .upload-trigger-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: 10px 18px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.12s ease, border-color 0.12s ease;
-  }
 
-  .upload-trigger-btn:active {
-    background-color: var(--color-surface-active);
-  }
 
-  .hidden-file-input {
-    display: none;
-  }
 
   .reset-zoom-btn {
     position: absolute;
@@ -557,25 +314,10 @@
     display: flex;
   }
 
-  .colors-control-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    width: 100%;
-    height: 36px;
-  }
 
-  .clear-btn-wrap {
-    flex: 0 0 36px;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 
   .color-filter-group {
-    flex: 1;
+    width: 100%;
     height: 36px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -613,10 +355,6 @@
     box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
   }
 
-  .color-filter-btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.35;
-  }
 
   /* Swatch: filled circle when ON, hollow ring when OFF */
   .color-swatch {

@@ -13,7 +13,7 @@
 
   const help: RefHelpData = {
     controls: [
-      ['Tabulka', 'řádek pod mřížkou otevře editor textu'],
+      ['Tabulka', 'ikona podkladu v hlavičce otevře editor textu'],
       ['Bez čárek', 'znak = buňka: `POKLADNASVERU`, mřížka se zvolí nejmenší možná'],
       ['S čárkami', 'čárka odděluje buňky: `JDE, TEN, ARO` nebo `12, 5, 28`'],
       ['Otvory', 'klepnutí do mřížky. Zbylá 3 pole čtveřice se zamknou.'],
@@ -23,7 +23,8 @@
     pitfalls: [
       ['Směr otáčení', 'obvykle po směru hodin → menu Otáčet proti směru'],
       ['Pořadí čtení', 'obvykle po řádcích → menu Číst v pořadí klepnutí'],
-      ['Nesedí počet otvorů', 'z každé čtveřice smí být otvorem jen jedno pole']
+      ['Nesedí počet otvorů', 'z každé čtveřice smí být otvorem jen jedno pole'],
+      ['Tečka na ikoně podkladu', 'text nevyplní čtverec: chybí nebo přebývá buňka']
     ]
   };
 </script>

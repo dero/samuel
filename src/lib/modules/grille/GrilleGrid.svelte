@@ -14,7 +14,6 @@
     holes: string[];
     rotationCCW?: boolean;
     tapOrderReading?: boolean;
-    hasData: boolean;
     onToggleHole: (r: number, c: number) => void;
     onResetHoles: () => void;
   }
@@ -25,7 +24,6 @@
     holes,
     rotationCCW = false,
     tapOrderReading = false,
-    hasData,
     onToggleHole,
     onResetHoles
   }: Props = $props();
@@ -137,82 +135,72 @@
 </script>
 
 <div class="grille-grid-stage">
-  {#if !hasData}
-    <div class="grille-placeholder">
-      <div class="placeholder-box">
-        <span class="placeholder-icon">⊞</span>
-        <span class="placeholder-title">Žádná data</span>
-        <span class="placeholder-desc">Vložte obsah tabulky níže</span>
-      </div>
-    </div>
-  {:else}
-    <div
-      class="grille-chassis"
-      style:grid-template-columns="repeat({gridSize}, 1fr)"
-      style:grid-template-rows="repeat({gridSize}, 1fr)"
-    >
-      {#each cellList as cell (cell.key)}
-        <button
-          type="button"
-          class="grille-cell"
-          class:is-hole={cell.isHole}
-          class:is-locked={cell.isLocked}
-          class:is-center={cell.isCenter}
-          class:is-padding={cell.isPadding}
-          style:--step-color={cell.stepColor ?? 'inherit'}
-          aria-disabled={cell.isLocked || cell.isCenter}
-          aria-label={cell.ariaLabel}
-          onpointerdown={(e) => handleCellPointerDown(e, cell.r, cell.c, cell.isLocked || cell.isCenter)}
-        >
-          {#if cell.isHole}
-            {#if tapOrderReading && cell.tapOrderIndex !== null}
-              <span class="cell-hole-indicator cell-hole-number" aria-hidden="true">{cell.tapOrderIndex}</span>
-            {:else}
-              <span class="cell-hole-indicator" aria-hidden="true">◎</span>
-            {/if}
-          {:else if cell.isLocked}
-            <span class="cell-locked-dot" aria-hidden="true">·</span>
-          {:else if cell.isCenter}
-            <span class="cell-center-symbol" aria-hidden="true">✦</span>
-          {/if}
-
-          <span
-            class="cell-token font-mono"
-            class:single-char={cell.token.length <= 1}
-            class:multi-char={cell.token.length > 1}
-          >
-            {cell.token}
-          </span>
-        </button>
-      {/each}
-    </div>
-
-    <!-- Counter and reset row -->
-    <div class="grille-counter-row">
-      <span
-        class="grille-counter-text"
-        class:is-complete={isComplete}
+  <div
+    class="grille-chassis"
+    style:grid-template-columns="repeat({gridSize}, 1fr)"
+    style:grid-template-rows="repeat({gridSize}, 1fr)"
+  >
+    {#each cellList as cell (cell.key)}
+      <button
+        type="button"
+        class="grille-cell"
+        class:is-hole={cell.isHole}
+        class:is-locked={cell.isLocked}
+        class:is-center={cell.isCenter}
+        class:is-padding={cell.isPadding}
+        style:--step-color={cell.stepColor ?? 'inherit'}
+        aria-disabled={cell.isLocked || cell.isCenter}
+        aria-label={cell.ariaLabel}
+        onpointerdown={(e) => handleCellPointerDown(e, cell.r, cell.c, cell.isLocked || cell.isCenter)}
       >
-        {holes.length} / {requiredHoles} otvorů
-      </span>
+        {#if cell.isHole}
+          {#if tapOrderReading && cell.tapOrderIndex !== null}
+            <span class="cell-hole-indicator cell-hole-number" aria-hidden="true">{cell.tapOrderIndex}</span>
+          {:else}
+            <span class="cell-hole-indicator" aria-hidden="true">◎</span>
+          {/if}
+        {:else if cell.isLocked}
+          <span class="cell-locked-dot" aria-hidden="true">·</span>
+        {:else if cell.isCenter}
+          <span class="cell-center-symbol" aria-hidden="true">✦</span>
+        {/if}
 
-      {#if holes.length > 0}
-        <button
-          type="button"
-          class="grille-clear-holes-btn"
-          onclick={() => {
-            settings.vibrate(25);
-            onResetHoles();
-          }}
-          title="Vymazat všechny otvory"
-          aria-label="Vymazat všechny otvory"
+        <span
+          class="cell-token font-mono"
+          class:single-char={cell.token.length <= 1}
+          class:multi-char={cell.token.length > 1}
         >
-          <Trash size={13} weight="bold" />
-          <span>Vymazat otvory</span>
-        </button>
-      {/if}
-    </div>
-  {/if}
+          {cell.token}
+        </span>
+      </button>
+    {/each}
+  </div>
+
+  <!-- Counter and reset row -->
+  <div class="grille-counter-row">
+    <span
+      class="grille-counter-text"
+      class:is-complete={isComplete}
+    >
+      {holes.length} / {requiredHoles} otvorů
+    </span>
+
+    {#if holes.length > 0}
+      <button
+        type="button"
+        class="grille-clear-holes-btn"
+        onclick={() => {
+          settings.vibrate(25);
+          onResetHoles();
+        }}
+        title="Vymazat všechny otvory"
+        aria-label="Vymazat všechny otvory"
+      >
+        <Trash size={13} weight="bold" />
+        <span>Vymazat otvory</span>
+      </button>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -229,42 +217,10 @@
     -webkit-user-select: none;
   }
 
-  .grille-placeholder {
-    width: 100%;
-    height: 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #000000;
-    border: 1px dashed var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    padding: var(--space-md);
-    box-sizing: border-box;
-  }
 
-  .placeholder-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    text-align: center;
-  }
 
-  .placeholder-icon {
-    font-size: calc(28px * var(--font-scale));
-    color: var(--color-text-muted);
-  }
 
-  .placeholder-title {
-    font-size: var(--text-sm);
-    font-weight: 700;
-    color: var(--color-text-secondary);
-  }
 
-  .placeholder-desc {
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-  }
 
   /* Chassis matching Samuel design system */
   .grille-chassis {

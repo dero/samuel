@@ -64,11 +64,13 @@
       ['Volně / Pravidla', 'lišta nad zásobníkem'],
       ['Zpět / Vpřed', 'každý krok vč. vymazání; podržet = rychle'],
       ['Koš (podržet)', 'prázdná šachovnice'],
-      ['Vložit pozici nebo partii', 'FEN nebo tahy, česky i anglicky → menu'],
+      ['Pozice nebo partie', 'ikona podkladu v hlavičce: FEN nebo tahy, česky i anglicky'],
+      ['Kopírovat', 'v podkladu zkopíruje FEN aktuální pozice'],
       ['Otočit šachovnici', 'černý dole → menu']
     ],
     pitfalls: [
-      ['Partie od diagramu', 'tahy navazují na šachovnici, pokud je ze základní pozice nejde zahrát']
+      ['Partie od diagramu', 'tahy navazují na šachovnici, pokud je ze základní pozice nejde zahrát'],
+      ['Tečka na ikoně podkladu', 'pozice se nedá hrát (chybí král…), Pravidla nepůjdou zapnout']
     ]
   };
 </script>

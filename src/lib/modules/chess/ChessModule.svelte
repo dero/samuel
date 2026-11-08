@@ -1,24 +1,26 @@
 <script lang="ts">
-  import { ArrowUUpLeft, ArrowUUpRight, ClipboardText, Copy } from 'phosphor-svelte';
+  import { ArrowUUpLeft, ArrowUUpRight } from 'phosphor-svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
   import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
-  import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
   import ChessBoard from './ChessBoard.svelte';
   import PieceTray from './PieceTray.svelte';
   import RulesPanel from './RulesPanel.svelte';
   import ChessReference from './ChessReference.svelte';
   import { chessState, type ChessMode } from './chessState.svelte';
+  import { positionProblem } from './chessData';
   import { settings } from '../../state/settings.svelte';
-  import { toast } from '../../state/toast.svelte';
 
   const modeOptions: { id: ChessMode; label: string }[] = [
     { id: 'free', label: 'Volně' },
     { id: 'rules', label: 'Pravidla' }
   ];
 
-  let showImport = $state(false);
+  // An empty board is a deliberate start; a half-built one that cannot be played needs a look
+  const positionAttention = $derived(
+    chessState.parts.board.some(Boolean) ? positionProblem(chessState.current.fen) : null
+  );
 
   // Stop a running search and drop a stuck drag when the module closes.
   $effect(() => {
@@ -51,21 +53,30 @@
     };
     tick(420);
   }
-
-  async function copyFen() {
-    settings.vibrate(20);
-    try {
-      await navigator.clipboard.writeText(chessState.current.fen);
-      toast.show('FEN zkopírován', 'success');
-    } catch {
-      toast.show('Kopírování selhalo', 'danger');
-    }
-  }
 </script>
 
 <svelte:window onpointerup={stopRepeat} onpointercancel={stopRepeat} onblur={stopRepeat} />
 
-<ModuleShell title="Šachy" onReset={() => chessState.resetModule()}>
+<ModuleShell
+  title="Šachy"
+  onReset={() => chessState.resetModule()}
+  podklad={{
+    kind: 'position',
+    required: false,
+    empty: false,
+    title: 'Pozice nebo partie',
+    description: 'FEN, nebo tahy česky i anglicky.',
+    placeholder: 'FEN, nebo tahy: 1. e4 e5 2. Jf3 Jc6 …',
+    autocapitalize: 'none',
+    copyable: true,
+    attention: positionAttention,
+    value: chessState.current.fen,
+    onSave: (val) => {
+      const text = val.trim();
+      if (text && text !== chessState.current.fen) chessState.importText(text);
+    }
+  }}
+>
   {#snippet output()}
     <ChessBoard />
   {/snippet}
@@ -158,41 +169,12 @@
         }}
       />
     </div>
-
-    <div class="menu-group">
-      <div class="menu-group-title">Pozice</div>
-      <button
-        type="button"
-        class="menu-action-row"
-        onclick={() => {
-          settings.vibrate(20);
-          showImport = true;
-        }}
-      >
-        <ClipboardText size={18} weight="bold" />
-        <span>Vložit pozici nebo partii</span>
-      </button>
-      <button type="button" class="menu-action-row" onclick={copyFen}>
-        <Copy size={18} weight="bold" />
-        <span>Kopírovat FEN</span>
-      </button>
-    </div>
   {/snippet}
 
   {#snippet reference()}
     <ChessReference />
   {/snippet}
 </ModuleShell>
-
-<TextEntrySheet
-  open={showImport}
-  title="Pozice nebo partie"
-  value=""
-  placeholder={'FEN, nebo tahy: 1. e4 e5 2. Jf3 Jc6 …'}
-  autocapitalize="none"
-  onSave={(val) => chessState.importText(val)}
-  onClose={() => (showImport = false)}
-/>
 
 <style>
   /* Undo and redo are a symmetric pair, unlike the usual wide Space key in the middle. */
@@ -251,24 +233,5 @@
     color: var(--color-text-primary);
   }
 
-  .menu-action-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    height: 44px;
-    padding: 0 12px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-    font-size: calc(14px * var(--font-scale));
-    font-weight: 600;
-    cursor: pointer;
-    touch-action: manipulation;
-  }
 
-  .menu-action-row:active {
-    background-color: var(--color-surface-active);
-  }
 </style>
