@@ -146,7 +146,7 @@
   }
 
   .module-icon {
-    font-size: calc(20px * var(--font-scale));
+    font-size: 24px;
     display: flex;
     align-items: center;
     justify-content: center;

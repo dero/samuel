@@ -198,7 +198,7 @@
     padding: 24px;
     text-align: center;
     color: var(--color-text-secondary);
-    font-size: calc(13px * var(--font-scale));
+    font-size: 15.5px;
     line-height: 1.4;
   }
 

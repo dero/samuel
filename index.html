@@ -3,6 +3,57 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+    <script>
+      // Global zoom from Settings. It narrows the layout viewport (width = screen / zoom)
+      // and lets the browser scale it back to the full screen, so CSS px, pointer
+      // coordinates and getBoundingClientRect stay consistent for all code. Runs before
+      // first paint; the app changes it via window.__samuelApplyZoom (settings state).
+      // Desktop browsers ignore the meta viewport and use their own zoom instead.
+      (function () {
+        var TAIL = 'user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content';
+        var current = 1;
+
+        function screenWidth() {
+          var a = screen.width;
+          var b = screen.height;
+          var landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+          return landscape ? Math.max(a, b) : Math.min(a, b);
+        }
+
+        function apply(zoom) {
+          current = typeof zoom === 'number' && zoom >= 0.5 && zoom <= 2 ? zoom : 1;
+          var meta = document.querySelector('meta[name="viewport"]');
+          if (!meta) return;
+          var head =
+            current === 1
+              ? 'width=device-width, initial-scale=1.0, maximum-scale=1.0, '
+              : 'width=' + Math.round(screenWidth() / current) +
+                ', initial-scale=' + current +
+                ', minimum-scale=' + current +
+                ', maximum-scale=' + current + ', ';
+          meta.setAttribute('content', head + TAIL);
+        }
+
+        var stored = 1;
+        try {
+          var root = JSON.parse(localStorage.getItem('samuel_settings') || '{}');
+          stored = root && root.app ? root.app.zoom : 1;
+        } catch (e) {}
+        apply(stored);
+
+        // The width is explicit, so a rotated screen needs a fresh one.
+        function onRotate() {
+          if (current !== 1) setTimeout(function () { apply(current); }, 150);
+        }
+        if (screen.orientation && screen.orientation.addEventListener) {
+          screen.orientation.addEventListener('change', onRotate);
+        } else {
+          window.addEventListener('orientationchange', onRotate);
+        }
+
+        window.__samuelApplyZoom = apply;
+      })();
+    </script>
     <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />

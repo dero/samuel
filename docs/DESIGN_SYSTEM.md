@@ -224,19 +224,20 @@ Každá barva má právě jednu roli.
 - **POKUD** značíš výběr nebo aktivní stav, **POTOM** nikdy jen barvou, přidej tvarový signál.
 - **POKUD** navrhuješ plochy a rámečky, **POTOM** musí být rozeznatelné na slabě podsvíceném displeji. Pozadí zůstává OLED černé.
 
-**Písmo.** Velikosti se násobí `--font-scale` (1,08 / 1,2 / 1,32, výchozí 1,2).
+**Písmo.** Velikosti jsou pevné. Uživatel zvětšuje celé rozhraní volbou Zvětšení v Nastavení (pravidlo níže), nikdy jen text.
 
-| Název | Základ | Token | Použití |
+| Název | Velikost | Token | Použití |
 | :--- | :--- | :--- | :--- |
-| Popisek | 11 px | `--text-xs` | lišta, poznámky, drobné popisky |
-| Text | 13 px | `--text-sm` | běžný text, menu |
-| Důraz | 15 px | `--text-base` | výstup, důležité hodnoty |
-| Nadpis | 20 px | `--text-xl` | název modulu, nadpisy |
-| Znak-S | 13 px | `--key-s` | hustá klávesa |
-| Znak-M | 20 px | `--key-m` | běžná klávesa |
-| Znak-L | 32 px | `--key-l` | dominantní klávesa |
+| Popisek | 13 px | `--text-xs` | lišta, poznámky, drobné popisky |
+| Text | 15,5 px | `--text-sm` | běžný text, menu |
+| Důraz | 18 px | `--text-base` | výstup, důležité hodnoty |
+| Nadpis | 24 px | `--text-xl` | název modulu, nadpisy |
+| Znak-S | 15,5 px | `--key-s` | hustá klávesa |
+| Znak-M | 24 px | `--key-m` | běžná klávesa |
+| Znak-L | 38,5 px | `--key-l` | dominantní klávesa |
 
 - **POKUD** nastavuješ velikost textu, **POTOM** použij token, ne vlastní `calc()`. Nový stupeň je odchylka, zeptej se.
+- **POKUD** řešíš velikost rozhraní pro velké telefony, **POTOM** spoléhej na Zvětšení (90 / 100 / 115 / 130 %). Inline skript v `index.html` nastaví `width = šířka obrazovky / zvětšení` v meta viewport, takže pro kód jde jen o užší displej: CSS px, souřadnice dotyku i `getBoundingClientRect` zůstávají konzistentní. Nikdy nepoužívej CSS `zoom` ani násobič písma. Stupeň, který by zúžil layout pod 320 px, se v Nastavení nenabízí.
 - **POKUD** kreslíš popisek klávesy, **POTOM** velikost určí `Keycap` podle typu klávesy a popisek nikdy nepřesáhne 60 % její výšky.
 - **POKUD** se krátký popisek v hustém řádku nevejde na 320 px, **POTOM** omez písmo šířkou: `min(var(--text-xs), 3.6vw)`.
 - **POKUD** text patří do pevné geometrie, která se musí vejít celá (dlaždice Chemie, tabula recta), **POTOM** smí zůstat v holých `px`.
@@ -270,7 +271,7 @@ Každá barva má právě jednu roli.
 
 - **POKUD** přidáváš volbu modulu, **POTOM** patří do záložky Menu: statická konfigurace (odchylky abecedy, zrcadlení, vynechaná písmena) a Reset modulu. Skupiny voleb stav přes sdílený `MenuGroup` a řádky přes `<OptionRow>`.
 - **POKUD** stavíš Reset modulu, **POTOM** vrátí data i volby z Menu na výchozí hodnoty. Zvolená varianta zůstane, je to cesta do modulu, ne nastavení.
-- **POKUD** jde o preference zařízení (offline databáze, velikost písma, haptika, globální abecedy), **POTOM** patří do Nastavení, ne do modulu.
+- **POKUD** jde o preference zařízení (offline databáze, zvětšení, haptika, globální abecedy), **POTOM** patří do Nastavení, ne do modulu.
 
 ### 12. Microcopy
 

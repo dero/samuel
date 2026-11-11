@@ -188,7 +188,7 @@
 
   .entry-char {
     font-family: var(--font-condensed);
-    font-size: calc(18px * var(--font-scale));
+    font-size: 21.5px;
     font-weight: 700;
     color: var(--color-accent-primary);
     white-space: nowrap;
@@ -196,7 +196,7 @@
 
   .entry-code {
     font-family: var(--font-mono);
-    font-size: calc(16px * var(--font-scale));
+    font-size: 19px;
     font-weight: 700;
     letter-spacing: 2px;
     color: #ffffff;
@@ -210,7 +210,7 @@
   }
 
   .entry-mnemonic .word {
-    font-size: calc(14px * var(--font-scale));
+    font-size: 17px;
     font-weight: 600;
     color: var(--color-text-primary);
     word-break: break-word;
@@ -295,7 +295,7 @@
   .root-node {
     padding: 8px 36px;
     font-weight: 700;
-    font-size: calc(13px * var(--font-scale));
+    font-size: 15.5px;
     letter-spacing: 1px;
     color: var(--color-text-primary);
     background-color: var(--color-surface-2);
@@ -304,7 +304,7 @@
 
   .node-char {
     font-family: var(--font-condensed);
-    font-size: calc(16px * var(--font-scale));
+    font-size: 19px;
     font-weight: 700;
     color: var(--color-text-primary);
     white-space: nowrap;
@@ -313,7 +313,7 @@
 
   .node-sym {
     font-family: var(--font-mono);
-    font-size: calc(15px * var(--font-scale));
+    font-size: 18px;
     font-weight: 900;
     line-height: 1;
     white-space: nowrap;

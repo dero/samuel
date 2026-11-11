@@ -572,7 +572,7 @@
 
   .word-rank {
     color: var(--color-text-muted);
-    font-size: calc(11px * var(--font-scale));
+    font-size: 13px;
     font-weight: 600;
     min-width: 22px;
     text-align: left;
@@ -584,7 +584,7 @@
 
   .word-text {
     color: var(--color-text-primary);
-    font-size: calc(14px * var(--font-scale));
+    font-size: 17px;
     font-weight: 700;
     letter-spacing: 0.5px;
     white-space: nowrap;
@@ -594,7 +594,7 @@
 
   .word-len {
     color: var(--color-text-muted);
-    font-size: calc(11px * var(--font-scale));
+    font-size: 13px;
     font-weight: 600;
     margin-left: 8px;
     flex-shrink: 0;
@@ -603,7 +603,7 @@
   .word-tag {
     display: inline-flex;
     align-items: center;
-    font-size: calc(9.5px * var(--font-scale));
+    font-size: 11.5px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;

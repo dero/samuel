@@ -134,7 +134,7 @@
 
   .result-text {
     font-family: var(--font-mono);
-    font-size: calc(24px * var(--font-scale));
+    font-size: 29px;
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.35;

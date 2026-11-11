@@ -72,9 +72,6 @@
   --font-condensed: var(--font-sans);
   --font-mono: ui-monospace, "SF Mono", "Roboto Mono", "Cascadia Code", monospace;
 
-  /* Text size multiplier chosen in Settings (set on <html> by settings state) */
-  --font-scale: 1.2;
-
   /* Layout & Component Budgets */
   --header-height: 52px;
   --tap-min-size: 48px;
@@ -102,16 +99,16 @@
   --glow-danger: 0 0 16px rgba(239, 68, 68, 0.4);
 }
 
-/* Typography scale; hard-coded sizes use calc(Npx * var(--font-scale)) directly. */
+/* Typography scale. Users enlarge the whole UI with the zoom in Settings, never text alone. */
 :root {
-  --text-2xs: calc(10px * var(--font-scale));
-  --text-xs: calc(11px * var(--font-scale));
-  --text-sm: calc(13px * var(--font-scale));
-  --text-base: calc(15px * var(--font-scale));
-  --text-lg: calc(17px * var(--font-scale));
-  --text-xl: calc(20px * var(--font-scale));
-  --text-2xl: calc(24px * var(--font-scale));
-  --text-3xl: calc(32px * var(--font-scale));
+  --text-2xs: 12px;
+  --text-xs: 13px;
+  --text-sm: 15.5px;
+  --text-base: 18px;
+  --text-lg: 20.5px;
+  --text-xl: 24px;
+  --text-2xl: 29px;
+  --text-3xl: 38.5px;
 
   /* Key labels have their own scale; <Keycap> caps them at 60 % of the key height */
   --key-s: var(--text-sm);

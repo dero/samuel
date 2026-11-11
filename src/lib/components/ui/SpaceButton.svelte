@@ -100,7 +100,7 @@
   }
 
   .btn-symbol {
-    font-size: calc(20px * var(--font-scale));
+    font-size: 24px;
     font-weight: 700;
     line-height: 1;
     display: inline-flex;

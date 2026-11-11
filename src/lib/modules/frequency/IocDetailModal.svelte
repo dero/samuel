@@ -91,13 +91,13 @@
   }
 
   .ioc-score-number {
-    font-size: calc(24px * var(--font-scale));
+    font-size: 29px;
     font-weight: 700;
     color: var(--color-accent-primary);
   }
 
   .ioc-classification-badge {
-    font-size: calc(12px * var(--font-scale));
+    font-size: 14.5px;
     font-weight: 700;
     padding: 3px 8px;
     border-radius: 4px;
@@ -130,7 +130,7 @@
 
   .ioc-description-text {
     margin: 0;
-    font-size: calc(13px * var(--font-scale));
+    font-size: 15.5px;
     line-height: 1.45;
     color: var(--color-text-secondary);
   }
@@ -152,12 +152,12 @@
   }
 
   .summary-card-label {
-    font-size: calc(10.5px * var(--font-scale));
+    font-size: 12.5px;
     color: var(--color-text-muted);
   }
 
   .summary-card-val {
-    font-size: calc(14px * var(--font-scale));
+    font-size: 17px;
     font-weight: 700;
     color: var(--color-text-primary);
   }
@@ -173,7 +173,7 @@
   }
 
   .scale-guide-title {
-    font-size: calc(11px * var(--font-scale));
+    font-size: 13px;
     font-weight: 700;
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -185,7 +185,7 @@
     display: flex;
     align-items: baseline;
     gap: 10px;
-    font-size: calc(12px * var(--font-scale));
+    font-size: 14.5px;
   }
 
   .scale-val {

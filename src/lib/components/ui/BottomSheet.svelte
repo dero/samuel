@@ -382,7 +382,7 @@
   .sheet-close-btn {
     width: var(--tap-min-size);
     height: var(--tap-min-size);
-    font-size: calc(18px * var(--font-scale));
+    font-size: 21.5px;
     color: var(--color-text-secondary);
     display: flex;
     align-items: center;

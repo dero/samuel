@@ -135,7 +135,7 @@
   }
 
   .space-symbol {
-    font-size: calc(11px * var(--font-scale));
+    font-size: 13px;
     line-height: 1;
     font-family: var(--font-mono);
   }
@@ -207,7 +207,7 @@
     display: inline-flex;
     align-items: baseline;
     justify-content: center;
-    font-size: calc(18px * var(--font-scale));
+    font-size: 21.5px;
     font-weight: 700;
     line-height: 1;
     color: var(--color-text-primary);
@@ -220,7 +220,7 @@
     display: inline-flex;
     align-items: baseline;
     justify-content: center;
-    font-size: calc(9.5px * var(--font-scale));
+    font-size: 11.5px;
     font-weight: 500;
     line-height: 1;
     color: var(--color-text-secondary);
@@ -252,36 +252,36 @@
 
   /* Adaptive length tiers for cell-primary */
   .tier-short .cell-primary {
-    font-size: calc(18px * var(--font-scale));
+    font-size: 21.5px;
   }
 
   .tier-medium .cell-primary {
-    font-size: calc(14px * var(--font-scale));
+    font-size: 17px;
     letter-spacing: -0.2px;
   }
 
   .tier-dense .cell-primary {
-    font-size: calc(12px * var(--font-scale));
+    font-size: 14.5px;
     letter-spacing: -0.3px;
   }
 
   .tier-long .cell-primary {
-    font-size: calc(10px * var(--font-scale));
+    font-size: 12px;
     letter-spacing: -0.4px;
   }
 
   .tier-xlong .cell-primary {
-    font-size: calc(8.5px * var(--font-scale));
+    font-size: 10px;
     letter-spacing: -0.5px;
     font-weight: 800;
   }
 
   /* Adaptive length tiers for cell-secondary (governed strictly by secondary length) */
   .sec-tier-dense .cell-secondary {
-    font-size: calc(8.5px * var(--font-scale));
+    font-size: 10px;
   }
   .sec-tier-long .cell-secondary {
-    font-size: calc(7.5px * var(--font-scale));
+    font-size: 9px;
     letter-spacing: -0.3px;
   }
 
@@ -341,10 +341,10 @@
     flex: 0 0 11px;
   }
   .size-sm .cell-primary {
-    font-size: calc(15px * var(--font-scale));
+    font-size: 18px;
   }
   .size-sm .cell-secondary {
-    font-size: calc(8.5px * var(--font-scale));
+    font-size: 10px;
   }
 
   .size-lg .interlinear-cell {
@@ -358,16 +358,16 @@
     flex: 0 0 15px;
   }
   .size-lg .cell-primary {
-    font-size: calc(22px * var(--font-scale));
+    font-size: 26.5px;
   }
   .size-lg .cell-secondary {
-    font-size: calc(10.5px * var(--font-scale));
+    font-size: 12.5px;
   }
 
   /* Special tokens (Morse Stop and Space) */
   .interlinear-cell.token-stop .cell-primary {
     color: var(--color-accent-warning, #f59e0b);
-    font-size: calc(11px * var(--font-scale));
+    font-size: 13px;
     font-weight: 800;
     letter-spacing: 0.5px;
   }
@@ -382,7 +382,7 @@
   }
   .interlinear-cell.token-space .cell-primary {
     color: var(--color-text-muted);
-    font-size: calc(14px * var(--font-scale));
+    font-size: 17px;
     opacity: 0.7;
   }
   .interlinear-cell.token-space .cell-secondary {

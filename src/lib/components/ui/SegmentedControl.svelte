@@ -118,7 +118,7 @@
   }
 
   .segment-badge {
-    font-size: calc(10px * var(--font-scale));
+    font-size: 12px;
     padding: 1px 5px;
     border-radius: var(--radius-full);
     background-color: var(--color-surface-2);

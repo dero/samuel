@@ -135,7 +135,7 @@
     justify-content: center;
     background-color: var(--color-surface-2);
     border-radius: 4px;
-    font-size: calc(14px * var(--font-scale));
+    font-size: 17px;
     font-weight: 700;
     color: var(--color-accent-primary);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
@@ -151,14 +151,14 @@
   }
 
   .count-val {
-    font-size: calc(12px * var(--font-scale));
+    font-size: 14.5px;
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.1;
   }
 
   .pct-val {
-    font-size: calc(10px * var(--font-scale));
+    font-size: 12px;
     color: var(--color-text-secondary);
     line-height: 1.1;
   }
@@ -210,7 +210,7 @@
   }
 
   .diff-tag {
-    font-size: calc(10px * var(--font-scale));
+    font-size: 12px;
     width: 44px;
     text-align: right;
     color: var(--color-text-secondary);

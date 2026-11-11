@@ -1,22 +1,36 @@
 import { localSettingsService } from '../services/localSettingsService';
 
-/** Text size steps (±10 % around the default); the multiplier lives here so the default can be retuned without migrating stored choices. */
-export const FONT_SCALES = [
-  { id: 'smaller', label: 'Menší', scale: 1.08 },
-  { id: 'normal', label: 'Normální', scale: 1.2 },
-  { id: 'larger', label: 'Větší', scale: 1.32 }
-] as const;
+/** Global zoom steps. Applied by the inline script in index.html (meta viewport). */
+export const ZOOM_LEVELS = [0.9, 1, 1.15, 1.3] as const;
 
-export type FontScale = (typeof FONT_SCALES)[number]['id'];
+/** DS minimum viewport width; a zoom step that would narrow the layout below it is not offered. */
+const MIN_LAYOUT_WIDTH = 320;
 
-function isFontScale(value: string): value is FontScale {
-  return FONT_SCALES.some((s) => s.id === value);
+declare global {
+  interface Window {
+    __samuelApplyZoom?: (zoom: number) => void;
+  }
+}
+
+function portraitScreenWidth(): number {
+  return Math.min(screen.width, screen.height);
+}
+
+/** Zoom steps this screen can afford, always including the default and the current one. */
+export function availableZoomLevels(current: number): number[] {
+  if (typeof window === 'undefined') return [...ZOOM_LEVELS];
+  const width = portraitScreenWidth();
+  return ZOOM_LEVELS.filter((z) => z === 1 || z === current || width / z >= MIN_LAYOUT_WIDTH);
+}
+
+function isZoomLevel(value: unknown): value is number {
+  return typeof value === 'number' && (ZOOM_LEVELS as readonly number[]).includes(value);
 }
 
 class SettingsState {
   hapticsEnabled = $state<boolean>(true);
   wakeLockEnabled = $state<boolean>(true);
-  fontScale = $state<FontScale>('normal');
+  zoom = $state<number>(1);
 
   private wakeLockSentinel: WakeLockSentinel | null = null;
 
@@ -25,20 +39,20 @@ class SettingsState {
       const appScope = localSettingsService.forSection('app');
       this.hapticsEnabled = appScope.getBoolean('hapticsEnabled', true);
       this.wakeLockEnabled = appScope.getBoolean('wakeLockEnabled', true);
-      const storedScale = appScope.getString('fontScale', 'normal');
-      this.fontScale = isFontScale(storedScale) ? storedScale : 'normal';
-      // Applied right away so the first paint already uses the chosen size.
-      this.applyFontScale();
+      const storedZoom = appScope.get<unknown>('zoom', 1);
+      this.zoom = isZoomLevel(storedZoom) ? storedZoom : 1;
+      // index.html already applied the stored zoom before first paint.
+      appScope.removeItem('fontScale');
 
       $effect.root(() => {
         $effect(() => {
           appScope.setBoolean('hapticsEnabled', this.hapticsEnabled);
           appScope.setBoolean('wakeLockEnabled', this.wakeLockEnabled);
-          appScope.setString('fontScale', this.fontScale);
+          appScope.set('zoom', this.zoom);
         });
 
         $effect(() => {
-          this.applyFontScale();
+          window.__samuelApplyZoom?.(this.zoom);
         });
 
         $effect(() => {
@@ -65,11 +79,6 @@ class SettingsState {
     } catch {
       // ignore
     }
-  }
-
-  private applyFontScale() {
-    const scale = FONT_SCALES.find((s) => s.id === this.fontScale)?.scale ?? 1.2;
-    document.documentElement.style.setProperty('--font-scale', String(scale));
   }
 
   private async requestWakeLock() {

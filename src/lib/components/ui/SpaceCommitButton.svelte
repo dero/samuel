@@ -169,7 +169,7 @@
   }
 
   .btn-symbol {
-    font-size: calc(18px * var(--font-scale));
+    font-size: 21.5px;
     font-weight: 700;
     line-height: 1;
     display: block;
@@ -191,7 +191,7 @@
   }
 
   .btn-symbol.is-char {
-    font-size: calc(clamp(12px, 3.5vw, 16px) * var(--font-scale));
+    font-size: clamp(14.5px, 4.2vw, 19px);
     letter-spacing: 0.5px;
   }
 

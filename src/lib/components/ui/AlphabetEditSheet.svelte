@@ -183,7 +183,7 @@
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
     font: inherit;
-    font-size: calc(14px * var(--font-scale));
+    font-size: 17px;
     font-weight: 600;
     line-height: 1.35;
     padding: 10px 12px;

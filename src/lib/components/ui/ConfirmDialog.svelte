@@ -120,14 +120,14 @@
 
   .dialog-title {
     margin: 0;
-    font-size: calc(16px * var(--font-scale));
+    font-size: 19px;
     font-weight: 700;
     color: var(--color-text-primary);
   }
 
   .dialog-message {
     margin: 0;
-    font-size: calc(13px * var(--font-scale));
+    font-size: 15.5px;
     color: var(--color-text-secondary);
     line-height: 1.5;
   }
@@ -145,7 +145,7 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-xs);
-    font-size: calc(14px * var(--font-scale));
+    font-size: 17px;
     font-weight: 700;
     cursor: pointer;
     border: none;

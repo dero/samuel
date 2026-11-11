@@ -276,14 +276,14 @@
 
   .char-symbol {
     color: var(--color-accent-primary);
-    font-size: calc(16px * var(--font-scale));
+    font-size: 19px;
     font-weight: 800;
     line-height: 1;
   }
 
   .char-desc {
     color: var(--color-text-secondary);
-    font-size: calc(11px * var(--font-scale));
+    font-size: 13px;
     font-weight: 500;
   }
 
@@ -332,7 +332,7 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
-    font-size: calc(14px * var(--font-scale));
+    font-size: 17px;
     font-weight: 600;
     line-height: 1.35;
     padding: 8px 12px 20px 12px;
@@ -358,7 +358,7 @@
     position: absolute;
     bottom: 5px;
     right: 8px;
-    font-size: calc(11px * var(--font-scale));
+    font-size: 13px;
     font-family: var(--font-mono);
     color: var(--color-text-muted);
     pointer-events: none;
