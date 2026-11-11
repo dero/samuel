@@ -61,6 +61,17 @@
     }
   }
 
+  // A sheet opened from a scrolled panel (Menu) would sit inside its ScrollArea, whose fade mask
+  // clips even fixed descendants: the top of the sheet got cut off. Render it at the body instead.
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        node.remove();
+      }
+    };
+  }
+
   function shouldDismiss(): boolean {
     const elapsed = Math.max(1, Date.now() - startTime);
     const velocity = dragOffsetY / elapsed; // px/ms
@@ -169,7 +180,7 @@
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="sheet-backdrop" style:z-index={zIndex} onclick={handleBackdropClick}>
+  <div use:portal class="sheet-backdrop" style:z-index={zIndex} onclick={handleBackdropClick}>
     <div
       class="sheet-panel"
       style:max-width={maxWidth}
