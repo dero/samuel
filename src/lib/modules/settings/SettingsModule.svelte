@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import AlphabetLayoutManager from './AlphabetLayoutManager.svelte';
-  import { settings, availableZoomLevels } from '../../state/settings.svelte';
+  import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import { versionService } from '../../services/versionService.svelte';
   import {
@@ -21,7 +21,6 @@
     ShieldWarning
   } from 'phosphor-svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
-  import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
 
   function formatTimestamp(ts: number | string | undefined | null): string {
     if (!ts) return 'Neznámé';
@@ -166,15 +165,6 @@
     }
   }
 
-  // Screen size does not change while Settings is open, so the steps are fixed per visit.
-  const zoomOptions = availableZoomLevels(settings.zoom).map((z) => ({
-    id: String(z),
-    label: `${Math.round(z * 100)} %`
-  }));
-
-  // Some platforms (iOS, installed PWA) only pick up a new viewport after a restart.
-  let zoomChanged = $state(false);
-
   let isResetting = $state(false);
 
   function handleResetAllData() {
@@ -310,27 +300,6 @@
     <!-- 3. Předvolby aplikace -->
     <section class="card">
       <h2 class="card-title">Předvolby</h2>
-
-      <div class="zoom-row">
-        <span class="pref-label">Zvětšení</span>
-        <SegmentedControl
-          size="md"
-          ariaLabel="Zvětšení"
-          options={zoomOptions}
-          value={String(settings.zoom)}
-          onChange={(id) => {
-            settings.zoom = Number(id);
-            zoomChanged = true;
-          }}
-        />
-        <span class="pref-hint">
-          {#if zoomChanged}
-            Pokud se zvětšení neprojeví, zavřete a znovu otevřete aplikaci.
-          {:else}
-            Zvětší celé rozhraní. Na počítači použijte zoom prohlížeče.
-          {/if}
-        </span>
-      </div>
 
       <OptionRow
         label="Haptická odezva"
@@ -528,27 +497,6 @@
     font-size: var(--text-xs);
     font-weight: 600;
     color: var(--color-text-primary);
-  }
-
-  .zoom-row {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    padding-bottom: var(--space-md);
-    border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .pref-hint {
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-    line-height: 1.35;
-  }
-
-  .pref-label {
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    line-height: 1.35;
   }
 
   .update-action-btn {

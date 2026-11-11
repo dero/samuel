@@ -224,7 +224,7 @@ Každá barva má právě jednu roli.
 - **POKUD** značíš výběr nebo aktivní stav, **POTOM** nikdy jen barvou, přidej tvarový signál.
 - **POKUD** navrhuješ plochy a rámečky, **POTOM** musí být rozeznatelné na slabě podsvíceném displeji. Pozadí zůstává OLED černé.
 
-**Písmo.** Velikosti jsou pevné. Uživatel zvětšuje celé rozhraní volbou Zvětšení v Nastavení (pravidlo níže), nikdy jen text.
+**Písmo.** Velikosti jsou pevné. Na větších telefonech se zvětšuje celé rozhraní automaticky (pravidlo níže), nikdy jen text.
 
 | Název | Velikost | Token | Použití |
 | :--- | :--- | :--- | :--- |
@@ -237,7 +237,7 @@ Každá barva má právě jednu roli.
 | Znak-L | 38,5 px | `--key-l` | dominantní klávesa |
 
 - **POKUD** nastavuješ velikost textu, **POTOM** použij token, ne vlastní `calc()`. Nový stupeň je odchylka, zeptej se.
-- **POKUD** řešíš velikost rozhraní pro velké telefony, **POTOM** spoléhej na Zvětšení (90 / 100 / 115 / 130 %). Inline skript v `index.html` nastaví `width = šířka obrazovky / zvětšení` v meta viewport, takže pro kód jde jen o užší displej: CSS px, souřadnice dotyku i `getBoundingClientRect` zůstávají konzistentní. Nikdy nepoužívej CSS `zoom` ani násobič písma. Stupeň, který by zúžil layout pod 320 px, se v Nastavení nenabízí.
+- **POKUD** řešíš velikost rozhraní pro velké telefony, **POTOM** spoléhej na automatické zvětšení. Inline skript v `index.html` cílí layout na šířku 360 px: `zoom = šířka obrazovky na výšku / 360`, omezeno na 100–120 %, a nastaví `width = šířka / zoom` v meta viewport. Pro kód jde jen o užší displej: CSS px, souřadnice dotyku i `getBoundingClientRect` zůstávají konzistentní. Většina telefonů tak vidí layout široký asi 360 px, minimum 320 × 540 platí dál. Nikdy nepoužívej CSS `zoom` ani násobič písma a nedávej zvětšení do Nastavení.
 - **POKUD** kreslíš popisek klávesy, **POTOM** velikost určí `Keycap` podle typu klávesy a popisek nikdy nepřesáhne 60 % její výšky.
 - **POKUD** se krátký popisek v hustém řádku nevejde na 320 px, **POTOM** omez písmo šířkou: `min(var(--text-xs), 3.6vw)`.
 - **POKUD** text patří do pevné geometrie, která se musí vejít celá (dlaždice Chemie, tabula recta), **POTOM** smí zůstat v holých `px`.
@@ -271,7 +271,7 @@ Každá barva má právě jednu roli.
 
 - **POKUD** přidáváš volbu modulu, **POTOM** patří do záložky Menu: statická konfigurace (odchylky abecedy, zrcadlení, vynechaná písmena) a Reset modulu. Skupiny voleb stav přes sdílený `MenuGroup` a řádky přes `<OptionRow>`.
 - **POKUD** stavíš Reset modulu, **POTOM** vrátí data i volby z Menu na výchozí hodnoty. Zvolená varianta zůstane, je to cesta do modulu, ne nastavení.
-- **POKUD** jde o preference zařízení (offline databáze, zvětšení, haptika, globální abecedy), **POTOM** patří do Nastavení, ne do modulu.
+- **POKUD** jde o preference zařízení (offline databáze, haptika, globální abecedy), **POTOM** patří do Nastavení, ne do modulu.
 
 ### 12. Microcopy
 

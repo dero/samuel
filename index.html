@@ -4,54 +4,50 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
     <script>
-      // Global zoom from Settings. It narrows the layout viewport (width = screen / zoom)
-      // and lets the browser scale it back to the full screen, so CSS px, pointer
-      // coordinates and getBoundingClientRect stay consistent for all code. Runs before
-      // first paint; the app changes it via window.__samuelApplyZoom (settings state).
-      // Desktop browsers ignore the meta viewport and use their own zoom instead.
+      // Automatic UI zoom: the layout targets a 360 px wide portrait screen, so larger
+      // phones scale the whole UI up (100-120 %). It narrows the layout viewport
+      // (width = screen / zoom) and lets the browser scale it back to the full screen,
+      // so CSS px, pointer coordinates and getBoundingClientRect stay consistent for all
+      // code. Runs before first paint. Desktop browsers ignore the meta viewport.
       (function () {
+        var TARGET_WIDTH = 360;
+        var MAX_ZOOM = 1.2;
         var TAIL = 'user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content';
-        var current = 1;
 
-        function screenWidth() {
-          var a = screen.width;
-          var b = screen.height;
-          var landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
-          return landscape ? Math.max(a, b) : Math.min(a, b);
-        }
-
-        function apply(zoom) {
-          current = typeof zoom === 'number' && zoom >= 0.5 && zoom <= 2 ? zoom : 1;
+        function apply() {
           var meta = document.querySelector('meta[name="viewport"]');
           if (!meta) return;
-          var head =
-            current === 1
-              ? 'width=device-width, initial-scale=1.0, maximum-scale=1.0, '
-              : 'width=' + Math.round(screenWidth() / current) +
-                ', initial-scale=' + current +
-                ', minimum-scale=' + current +
-                ', maximum-scale=' + current + ', ';
-          meta.setAttribute('content', head + TAIL);
+          var a = screen.width;
+          var b = screen.height;
+          // Zoom follows the portrait width, so rotating keeps the same UI size.
+          var zoom = Math.min(MAX_ZOOM, Math.max(1, Math.min(a, b) / TARGET_WIDTH));
+          zoom = Math.round(zoom * 100) / 100;
+          if (zoom === 1) {
+            meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, ' + TAIL);
+            return;
+          }
+          var landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+          var width = landscape ? Math.max(a, b) : Math.min(a, b);
+          meta.setAttribute(
+            'content',
+            'width=' + Math.round(width / zoom) +
+              ', initial-scale=' + zoom +
+              ', minimum-scale=' + zoom +
+              ', maximum-scale=' + zoom + ', ' + TAIL
+          );
         }
 
-        var stored = 1;
-        try {
-          var root = JSON.parse(localStorage.getItem('samuel_settings') || '{}');
-          stored = root && root.app ? root.app.zoom : 1;
-        } catch (e) {}
-        apply(stored);
+        apply();
 
         // The width is explicit, so a rotated screen needs a fresh one.
         function onRotate() {
-          if (current !== 1) setTimeout(function () { apply(current); }, 150);
+          setTimeout(apply, 150);
         }
         if (screen.orientation && screen.orientation.addEventListener) {
           screen.orientation.addEventListener('change', onRotate);
         } else {
           window.addEventListener('orientationchange', onRotate);
         }
-
-        window.__samuelApplyZoom = apply;
       })();
     </script>
     <meta name="theme-color" content="#000000" />
