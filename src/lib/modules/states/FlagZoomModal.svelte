@@ -80,12 +80,23 @@
       return () => clearTimeout(t);
     }
   });
+
+  // The detail view is a stacking context below the app header; the zoom must cover the header too
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        node.remove();
+      }
+    };
+  }
 </script>
 
 <svelte:window onkeydown={handleKeyDown} />
 
 {#if open && flag}
   <div
+    use:portal
     class="flag-zoom-overlay"
     role="dialog"
     aria-modal="true"
@@ -95,22 +106,20 @@
     <header class="zoom-header">
       <div class="zoom-title-group">
         <h2 class="zoom-country-name">{flag.name_cs}</h2>
-        <span class="zoom-country-code font-mono">
+        <span class="zoom-country-code">
           {flag.code.toUpperCase()} / {flag.code3.toUpperCase()}
         </span>
       </div>
 
-      <div class="zoom-header-actions">
-        <button
-          type="button"
-          class="zoom-header-btn close-btn"
-          onclick={handleClose}
-          aria-label="Zavřít celoobrazovkový náhled (Esc)"
-          title="Zavřít (Esc)"
-        >
-          <X size={20} weight="bold" />
-        </button>
-      </div>
+      <button
+        type="button"
+        class="zoom-close"
+        onclick={handleClose}
+        aria-label="Zavřít celoobrazovkový náhled (Esc)"
+        title="Zavřít (Esc)"
+      >
+        <X size={20} weight="bold" />
+      </button>
     </header>
 
     <!-- Fullscreen Viewport Area -->
@@ -154,7 +163,7 @@
         title="Obnovit původní velikost (0)"
       >
         <ArrowCounterClockwise size={15} weight="bold" />
-        <span class="dock-zoom-val font-mono">{zoomPercent}%</span>
+        <span class="dock-zoom-val">{zoomPercent} %</span>
       </button>
 
       <button
@@ -175,9 +184,10 @@
     position: fixed;
     inset: 0;
     z-index: 350;
-    background-color: #000000;
+    background-color: var(--color-bg-canvas);
     display: flex;
     flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
     overflow: hidden;
     user-select: none;
     touch-action: none;
@@ -185,15 +195,14 @@
 
   .zoom-header {
     flex-shrink: 0;
-    height: 52px;
+    height: var(--header-height);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 var(--space-md);
-    background-color: rgba(18, 18, 20, 0.88);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid var(--color-border-subtle);
+    gap: var(--space-sm);
+    padding: 0 var(--space-xs) 0 var(--space-lg);
+    background-color: var(--color-surface-1);
+    border-bottom: 1px solid var(--color-border-medium);
     z-index: 10;
   }
 
@@ -217,37 +226,25 @@
   }
 
   .zoom-country-code {
-    font-size: calc(11px * var(--font-scale));
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
     color: var(--color-text-secondary);
     font-weight: 600;
-    letter-spacing: 0.5px;
   }
 
-  .zoom-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .zoom-close {
     flex-shrink: 0;
-  }
-
-  .zoom-header-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
+    width: var(--tap-min-size);
+    height: var(--tap-min-size);
     color: var(--color-text-primary);
-    cursor: pointer;
     touch-action: manipulation;
-    transition: background-color 0.12s, transform 0.08s;
   }
 
-  .zoom-header-btn:active {
+  .zoom-close:active {
     background-color: var(--color-surface-active);
-    transform: scale(0.95);
   }
 
   .zoom-viewport-container {
@@ -259,19 +256,14 @@
   }
 
   :global(.flag-fs-viewport) {
-    background-color: #000000 !important;
+    background-color: var(--color-bg-canvas) !important;
   }
 
   .fullscreen-flag-stage {
     width: 640px;
     height: 480px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--color-surface-1);
-    border-radius: var(--radius-xs);
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+    background-color: var(--color-surface-1);
   }
 
   .fullscreen-flag-stage :global(svg) {
@@ -282,19 +274,16 @@
 
   .zoom-bottom-dock {
     position: absolute;
-    bottom: max(16px, env(safe-area-inset-bottom));
+    bottom: max(var(--space-lg), env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px;
-    background-color: rgba(22, 22, 26, 0.9);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    gap: var(--space-xs);
+    padding: var(--space-xs);
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-medium);
     border-radius: var(--radius-full);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75);
     z-index: 20;
   }
 
@@ -302,42 +291,36 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    height: 38px;
-    background: transparent;
-    border: none;
+    gap: var(--space-xs);
+    height: 40px;
     border-radius: var(--radius-full);
     color: var(--color-text-primary);
-    font-size: calc(12px * var(--font-scale));
-    font-weight: 600;
-    cursor: pointer;
+    font-size: var(--text-xs);
+    font-weight: 700;
     touch-action: manipulation;
-    transition: background-color 0.12s, transform 0.08s;
   }
 
   .dock-btn:active {
-    background-color: rgba(255, 255, 255, 0.14);
-    transform: scale(0.95);
+    background-color: var(--color-surface-active);
   }
 
   .dock-btn.icon-btn {
-    width: 38px;
-    padding: 0;
+    width: 40px;
   }
 
   .dock-btn.reset-btn {
-    min-width: 80px;
-    padding: 0 12px;
-    background-color: rgba(255, 255, 255, 0.08);
+    min-width: 84px;
+    padding: 0 var(--space-md);
+    background-color: var(--color-surface-3);
   }
 
   .dock-btn.reset-btn.is-active {
     color: var(--color-accent-primary);
-    background-color: rgba(0, 210, 255, 0.12);
+    background-color: var(--color-accent-primary-subtle);
   }
 
   .dock-zoom-val {
-    font-size: calc(12px * var(--font-scale));
-    letter-spacing: 0.3px;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
   }
 </style>

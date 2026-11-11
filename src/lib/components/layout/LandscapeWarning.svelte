@@ -1,8 +1,41 @@
 <script lang="ts">
   import { DeviceMobileSpeaker } from 'phosphor-svelte';
+
+  const MIN_HEIGHT = 540;
+
+  /**
+   * Decided by the screen, not the window: the OS keyboard shrinks the window
+   * (interactive-widget=resizes-content), and a CSS orientation query would then read
+   * a phone held upright as landscape.
+   */
+  function isScreenLandscape(): boolean {
+    const type = screen.orientation?.type;
+    if (type) return type.startsWith('landscape');
+    // Older iOS Safari: no screen.orientation, and screen.width never swaps on rotation
+    const legacy = (window as { orientation?: number }).orientation;
+    if (typeof legacy === 'number') return Math.abs(legacy) === 90;
+    return screen.width > screen.height;
+  }
+
+  let show = $state(false);
+
+  $effect(() => {
+    const update = () => {
+      show = isScreenLandscape() && window.innerHeight < MIN_HEIGHT;
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    screen.orientation?.addEventListener('change', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
+      screen.orientation?.removeEventListener('change', update);
+    };
+  });
 </script>
 
-<div class="landscape-warning-overlay" role="alert" aria-live="assertive">
+<div class="landscape-warning-overlay" class:is-visible={show} role="alert" aria-live="assertive">
   <div class="warning-box">
     <div class="phone-icon-anim">
       <DeviceMobileSpeaker size={48} weight="duotone" />
@@ -16,8 +49,7 @@
     display: none;
   }
 
-  @media (orientation: landscape) and (max-height: 539px) {
-    .landscape-warning-overlay {
+  .landscape-warning-overlay.is-visible {
       display: flex;
       position: fixed;
       inset: 0;
@@ -52,7 +84,6 @@
       color: var(--color-text-secondary);
       text-transform: uppercase;
     }
-  }
 
   @keyframes rotatePhone {
     0%, 15% {

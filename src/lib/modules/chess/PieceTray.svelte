@@ -1,9 +1,10 @@
 <script lang="ts">
   import { Eraser } from 'phosphor-svelte';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
   import { chessState, type TrayTool } from './chessState.svelte';
   import { PIECE_SVG } from './chessPieces';
   import { BLACK_PIECES, START_FEN, WHITE_PIECES, pieceColor, pieceLabel } from './chessData';
-  import { settings } from '../../state/settings.svelte';
 
   let trayEl = $state<HTMLDivElement | null>(null);
 
@@ -16,48 +17,55 @@
 
   let removing = $derived(chessState.drag !== null && chessState.drag.source !== 'tray');
 
-  function handleStart(e: PointerEvent) {
-    e.preventDefault();
-    settings.vibrate(30);
+  // Keycap reports only the press; a piece dragged out of the tray needs its pointer
+  let downEvent: PointerEvent | null = null;
+
+  function rememberPointer(e: PointerEvent) {
+    if (e.pointerType !== 'mouse' || e.button === 0) downEvent = e;
+  }
+
+  function pressTool(tool: TrayTool) {
+    const e = downEvent;
+    downEvent = null;
+    if (e) chessState.press(e, 'tray', tool);
+    else chessState.tapTray(tool);
+  }
+
+  function setStart() {
+    downEvent = null;
     chessState.armed = null;
     chessState.loadPosition(START_FEN);
   }
 </script>
 
 {#snippet key(tool: TrayTool)}
-  <button
-    type="button"
-    class="keycap tray-key"
-    class:armed={chessState.armed === tool}
-    aria-pressed={chessState.armed === tool}
-    aria-label={tool === 'erase' ? 'Guma' : pieceLabel(tool)}
-    onpointerdown={(e) => chessState.press(e, 'tray', tool)}
+  <Keycap
+    selected={chessState.armed === tool}
+    ariaLabel={tool === 'erase' ? 'Guma' : pieceLabel(tool)}
+    onPress={() => pressTool(tool)}
   >
     {#if tool === 'erase'}
       <Eraser size={22} weight="bold" />
     {:else}
       <span class="tray-piece" class:outlined={pieceColor(tool) === 'b'}>{@html PIECE_SVG[tool]}</span>
     {/if}
-  </button>
+  </Keycap>
 {/snippet}
 
-<div class="tray-chassis" class:removing bind:this={trayEl}>
-  {#each WHITE_PIECES as piece (piece)}
-    {@render key(piece)}
-  {/each}
-  {@render key('erase')}
+<div class="tray" bind:this={trayEl} onpointerdowncapture={rememberPointer}>
+  <Chassis columns={7} keyHeight="40px">
+    {#each WHITE_PIECES as piece (piece)}
+      {@render key(piece)}
+    {/each}
+    {@render key('erase')}
 
-  {#each BLACK_PIECES as piece (piece)}
-    {@render key(piece)}
-  {/each}
-  <button
-    type="button"
-    class="keycap tray-key start-key"
-    aria-label="Výchozí postavení"
-    onpointerdown={handleStart}
-  >
-    <span class="start-label">Výchozí</span>
-  </button>
+    {#each BLACK_PIECES as piece (piece)}
+      {@render key(piece)}
+    {/each}
+    <Keycap ariaLabel="Výchozí postavení" onPress={setStart}>
+      <span class="start-label">Výchozí</span>
+    </Keycap>
+  </Chassis>
 
   {#if removing}
     <div class="remove-overlay" class:active={chessState.drag?.overRemove}>
@@ -67,61 +75,23 @@
 </div>
 
 <style>
-  .tray-chassis {
+  .tray {
     position: relative;
-    display: grid;
+    touch-action: none;
+  }
+
+  /* The last column is wider for the Výchozí label */
+  .tray :global(.chassis) {
     grid-template-columns: repeat(6, minmax(0, 1fr)) minmax(0, 1.25fr);
-    grid-template-rows: repeat(2, 40px);
-    gap: 2px;
-    padding: 2px;
-    background-color: #000000;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-  }
-
-  .keycap {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    background-color: var(--color-surface-2);
-    border: none;
-    border-radius: 2px;
-    color: var(--color-text-primary);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    touch-action: none;
-    -webkit-tap-highlight-color: transparent;
-    transition: background-color 0.08s ease;
-  }
-
-  .keycap:active {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  }
-
-  .tray-key.armed {
-    background-color: var(--color-accent-primary-subtle);
-    box-shadow:
-      inset 0 0 0 2px var(--color-accent-primary),
-      0 0 10px var(--color-accent-primary-glow);
   }
 
   .tray-piece {
-    width: 34px;
-    height: 34px;
+    width: min(85cqh, 90cqw);
+    height: min(85cqh, 90cqw);
     pointer-events: none;
   }
 
-  /* Black pieces on dark keycaps: thin light outline traced from the piece shape. */
+  /* Black pieces on dark keys: thin light outline traced from the piece shape. */
   .tray-piece.outlined {
     filter: drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.85));
   }

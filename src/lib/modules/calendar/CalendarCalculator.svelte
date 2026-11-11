@@ -1,8 +1,11 @@
 <script lang="ts">
   import { calendarState, type CalcMode } from './calendarState.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import CalendarDetailCard from './CalendarDetailCard.svelte';
   import NumberStepper from './NumberStepper.svelte';
+  import RepeatKey from './RepeatKey.svelte';
 
   interface Props {
     view: 'output' | 'input';
@@ -10,47 +13,32 @@
 
   let { view }: Props = $props();
 
+  const KEY_HEIGHT = '36px';
+
   const calcModeOptions: SegmentOption<CalcMode>[] = [
     { id: 'offset', label: 'Posun data' },
     { id: 'diff', label: 'Interval' }
   ];
 
-  let offsetTimer: ReturnType<typeof setTimeout> | null = null;
-  let offsetInterval: ReturnType<typeof setInterval> | null = null;
+  const OFFSET_STEPS_BACK = [-30, -7, -1];
+  const OFFSET_STEPS_FORWARD = [1, 7, 30];
 
-  function clearOffsetTimers() {
-    if (offsetTimer) {
-      clearTimeout(offsetTimer);
-      offsetTimer = null;
-    }
-    if (offsetInterval) {
-      clearInterval(offsetInterval);
-      offsetInterval = null;
-    }
+  const DIFF_ROWS = [
+    { id: 'from', label: 'OD' },
+    { id: 'to', label: 'DO' }
+  ] as const;
+
+  function dayUnit(n: number): string {
+    const abs = Math.abs(n);
+    if (abs === 1) return 'den';
+    return abs >= 2 && abs <= 4 ? 'dny' : 'dní';
   }
 
-  function handleOffsetBtnDown(e: PointerEvent, delta: number) {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    e.preventDefault();
-    clearOffsetTimers();
-    calendarState.adjustOffset(delta);
-
-    offsetTimer = setTimeout(() => {
-      offsetInterval = setInterval(() => {
-        calendarState.adjustOffset(delta);
-      }, 80);
-    }, 320);
+  function formatStep(delta: number): string {
+    return delta < 0 ? `−${Math.abs(delta)}` : `+${delta}`;
   }
 
   const absOffset = $derived(Math.abs(calendarState.offsetDays));
-  const offsetUnitLabel = $derived(
-    absOffset === 1 ? 'den' : absOffset >= 2 && absOffset <= 4 ? 'dny' : 'dní'
-  );
-
-  const absDiff = $derived(Math.abs(calendarState.diffResult.days));
-  const diffUnitLabel = $derived(
-    absDiff === 1 ? 'den' : absDiff >= 2 && absDiff <= 4 ? 'dny' : 'dní'
-  );
 
   const intervalDisplay = $derived.by(() => {
     const d = calendarState.diffResult.days;
@@ -59,6 +47,14 @@
     return '0';
   });
 </script>
+
+{#snippet offsetKey(delta: number)}
+  <RepeatKey
+    label={formatStep(delta)}
+    ariaLabel="Posun {formatStep(delta)} {dayUnit(delta)}"
+    onStep={() => calendarState.adjustOffset(delta)}
+  />
+{/snippet}
 
 {#if view === 'output'}
   <div class="calc-output-container">
@@ -76,7 +72,7 @@
           <span class="eq-offset-highlight">
             {calendarState.offsetDays >= 0 ? `+ ${calendarState.offsetDays}` : `− ${absOffset}`}
           </span>
-          <span class="eq-math-label">{offsetUnitLabel}</span>
+          <span class="eq-math-label">{dayUnit(calendarState.offsetDays)}</span>
         </div>
 
         <div class="eq-equals-large">=</div>
@@ -88,7 +84,6 @@
     {:else}
       <!-- Interval: Start Date (input) -> Large Days Result (output) -> End Date (input) -->
       <div class="equation-flow interval-flow">
-        <!-- 1. Výchozí den (vstup) -->
         <div class="eq-date-line">
           <span class="eq-dow">{calendarState.diffFromDetail.dayOfWeekName}</span>
           <span class="eq-date">
@@ -96,13 +91,11 @@
           </span>
         </div>
 
-        <!-- 2. Počet dnů (výstup - velký, výrazný) -->
         <div class="interval-hero-line">
           <span class="interval-hero-val">{intervalDisplay}</span>
-          <span class="interval-hero-unit">{diffUnitLabel}</span>
+          <span class="interval-hero-unit">{dayUnit(calendarState.diffResult.days)}</span>
         </div>
 
-        <!-- 3. Finální den (vstup - shodné formátování s výchozím dnem) -->
         <div class="eq-date-line">
           <span class="eq-dow">{calendarState.diffToDetail.dayOfWeekName}</span>
           <span class="eq-date">
@@ -114,149 +107,66 @@
   </div>
 {:else}
   <div class="calc-input-stage">
-    <!-- Sub-selector for Mode -->
-    <div class="calc-subtoolbar">
-      <SegmentedControl
-        options={calcModeOptions}
-        value={calendarState.calcMode}
-        onChange={(m) => calendarState.setCalcMode(m)}
-        size="sm"
-      />
-    </div>
+    <!-- Changes how the dates are entered, so it may sit here as a flat 36 px row -->
+    <SegmentedControl
+      options={calcModeOptions}
+      value={calendarState.calcMode}
+      onChange={(m) => calendarState.setCalcMode(m)}
+      ariaLabel="Režim kalkulátoru"
+      size="sm"
+    />
 
     {#if calendarState.calcMode === 'offset'}
-      <!-- Single row of 7 buttons: [-30] [-7] [-1] [ Reset ] [+1] [+7] [+30] -->
-      <div class="offset-stepper-row">
-        <button
-          type="button"
-          class="offset-btn neg"
-          onpointerdown={(e) => handleOffsetBtnDown(e, -30)}
-          onpointerup={clearOffsetTimers}
-          onpointerleave={clearOffsetTimers}
-          onpointercancel={clearOffsetTimers}
-          oncontextmenu={(e) => e.preventDefault()}
-        >
-          -30
-        </button>
-        <button
-          type="button"
-          class="offset-btn neg"
-          onpointerdown={(e) => handleOffsetBtnDown(e, -7)}
-          onpointerup={clearOffsetTimers}
-          onpointerleave={clearOffsetTimers}
-          onpointercancel={clearOffsetTimers}
-          oncontextmenu={(e) => e.preventDefault()}
-        >
-          -7
-        </button>
-        <button
-          type="button"
-          class="offset-btn neg"
-          onpointerdown={(e) => handleOffsetBtnDown(e, -1)}
-          onpointerup={clearOffsetTimers}
-          onpointerleave={clearOffsetTimers}
-          onpointercancel={clearOffsetTimers}
-          oncontextmenu={(e) => e.preventDefault()}
-        >
-          -1
-        </button>
-        <button
-          type="button"
-          class="offset-btn reset"
-          class:is-dimmed={calendarState.offsetDays === 0}
-          onclick={() => calendarState.resetOffset()}
-          oncontextmenu={(e) => e.preventDefault()}
-          title="Resetovat posun na 0"
-        >
-          Reset
-        </button>
-        <button
-          type="button"
-          class="offset-btn pos"
-          onpointerdown={(e) => handleOffsetBtnDown(e, 1)}
-          onpointerup={clearOffsetTimers}
-          onpointerleave={clearOffsetTimers}
-          onpointercancel={clearOffsetTimers}
-          oncontextmenu={(e) => e.preventDefault()}
-        >
-          +1
-        </button>
-        <button
-          type="button"
-          class="offset-btn pos"
-          onpointerdown={(e) => handleOffsetBtnDown(e, 7)}
-          onpointerup={clearOffsetTimers}
-          onpointerleave={clearOffsetTimers}
-          onpointercancel={clearOffsetTimers}
-          oncontextmenu={(e) => e.preventDefault()}
-        >
-          +7
-        </button>
-        <button
-          type="button"
-          class="offset-btn pos"
-          onpointerdown={(e) => handleOffsetBtnDown(e, 30)}
-          onpointerup={clearOffsetTimers}
-          onpointerleave={clearOffsetTimers}
-          onpointercancel={clearOffsetTimers}
-          oncontextmenu={(e) => e.preventDefault()}
-        >
-          +30
-        </button>
-      </div>
+      <!-- [−30] [−7] [−1] [vynulovat] [+1] [+7] [+30] -->
+      <Chassis columns={7} keyHeight={KEY_HEIGHT}>
+        {#each OFFSET_STEPS_BACK as delta (delta)}
+          {@render offsetKey(delta)}
+        {/each}
+        <div class="offset-reset">
+          <HoldToAction
+            disabled={calendarState.offsetDays === 0}
+            onAction={() => calendarState.resetOffset()}
+            ariaLabel="Vynulovat posun podržením"
+            tapWarning="Podržte pro vynulování"
+          />
+        </div>
+        {#each OFFSET_STEPS_FORWARD as delta (delta)}
+          {@render offsetKey(delta)}
+        {/each}
+      </Chassis>
     {:else}
-      <!-- Diff Steppers: 2 rows (OD and DO) -->
-      <div class="diff-steppers-container">
-        <!-- Row 1: OD -->
-        <div class="diff-stepper-row">
-          <span class="row-prefix-label">OD</span>
-          <div class="steppers-grid">
-            <NumberStepper
-              label="Den"
-              value="{calendarState.diffFrom.day}."
-              onIncrement={() => calendarState.adjustDatePart('from', 'day', 1)}
-              onDecrement={() => calendarState.adjustDatePart('from', 'day', -1)}
-            />
-            <NumberStepper
-              label="Měsíc"
-              value="{calendarState.diffFrom.month}."
-              onIncrement={() => calendarState.adjustDatePart('from', 'month', 1)}
-              onDecrement={() => calendarState.adjustDatePart('from', 'month', -1)}
-            />
-            <NumberStepper
-              label="Rok"
-              value={calendarState.diffFrom.year}
-              onIncrement={() => calendarState.adjustDatePart('from', 'year', 1)}
-              onDecrement={() => calendarState.adjustDatePart('from', 'year', -1)}
-            />
-          </div>
-        </div>
+      <!-- Header row, then OD and DO: [−] den [+] [−] měsíc [+] [−] rok [+] -->
+      <Chassis keyHeight={KEY_HEIGHT}>
+        <div class="diff-grid">
+          <span aria-hidden="true"></span>
+          <span class="diff-head">Den</span>
+          <span class="diff-head">Měsíc</span>
+          <span class="diff-head">Rok</span>
 
-        <!-- Row 2: DO -->
-        <div class="diff-stepper-row">
-          <span class="row-prefix-label">DO</span>
-          <div class="steppers-grid">
+          {#each DIFF_ROWS as row (row.id)}
+            {@const date = row.id === 'from' ? calendarState.diffFrom : calendarState.diffTo}
+            <span class="diff-row-label">{row.label}</span>
             <NumberStepper
-              label="Den"
-              value="{calendarState.diffTo.day}."
-              onIncrement={() => calendarState.adjustDatePart('to', 'day', 1)}
-              onDecrement={() => calendarState.adjustDatePart('to', 'day', -1)}
+              label="den ({row.label})"
+              value="{date.day}."
+              onIncrement={() => calendarState.adjustDatePart(row.id, 'day', 1)}
+              onDecrement={() => calendarState.adjustDatePart(row.id, 'day', -1)}
             />
             <NumberStepper
-              label="Měsíc"
-              value="{calendarState.diffTo.month}."
-              onIncrement={() => calendarState.adjustDatePart('to', 'month', 1)}
-              onDecrement={() => calendarState.adjustDatePart('to', 'month', -1)}
+              label="měsíc ({row.label})"
+              value="{date.month}."
+              onIncrement={() => calendarState.adjustDatePart(row.id, 'month', 1)}
+              onDecrement={() => calendarState.adjustDatePart(row.id, 'month', -1)}
             />
             <NumberStepper
-              label="Rok"
-              value={calendarState.diffTo.year}
-              onIncrement={() => calendarState.adjustDatePart('to', 'year', 1)}
-              onDecrement={() => calendarState.adjustDatePart('to', 'year', -1)}
+              label="rok ({row.label})"
+              value={date.year}
+              onIncrement={() => calendarState.adjustDatePart(row.id, 'year', 1)}
+              onDecrement={() => calendarState.adjustDatePart(row.id, 'year', -1)}
             />
-          </div>
+          {/each}
         </div>
-      </div>
+      </Chassis>
     {/if}
   </div>
 {/if}
@@ -270,7 +180,7 @@
     align-items: center;
     width: 100%;
     box-sizing: border-box;
-    padding-bottom: 4px;
+    padding-bottom: var(--space-xs);
   }
 
   .equation-flow {
@@ -288,34 +198,30 @@
 
   .interval-flow {
     gap: 6px;
-    padding-bottom: 4px;
+    padding-bottom: var(--space-xs);
   }
 
-  /* Date line: gray, centered (both inputs in interval & base in offset) */
   .eq-date-line {
     display: flex;
     align-items: baseline;
     justify-content: center;
     gap: 6px;
-    font-size: calc(14.5px * var(--font-scale));
-    color: var(--color-text-secondary, #b3b3b3);
+    font-size: var(--text-base);
+    color: var(--color-text-secondary);
     line-height: 1.25;
   }
 
   .eq-dow {
     font-weight: 700;
     text-transform: uppercase;
-    font-size: calc(12px * var(--font-scale));
+    font-size: var(--text-xs);
     letter-spacing: 0.03em;
-    color: var(--color-text-secondary, #b3b3b3);
   }
 
   .eq-date {
     font-weight: 600;
-    color: var(--color-text-secondary, #b3b3b3);
   }
 
-  /* Math line: centered, only number is blue */
   .eq-math-line {
     display: flex;
     align-items: baseline;
@@ -325,58 +231,54 @@
   }
 
   .eq-offset-highlight {
-    font-family: var(--font-mono, monospace);
-    font-size: calc(19px * var(--font-scale));
+    font-family: var(--font-mono);
+    font-size: var(--text-xl);
     font-weight: 900;
-    color: var(--color-accent-primary, #00d2ff);
+    color: var(--color-text-primary);
   }
 
   .eq-math-label {
-    font-size: calc(15px * var(--font-scale));
+    font-size: var(--text-base);
     font-weight: 600;
-    color: var(--color-text-secondary, #b3b3b3);
+    color: var(--color-text-secondary);
   }
 
-  /* Big gray equals sign */
   .eq-equals-large {
-    font-size: calc(26px * var(--font-scale));
+    font-size: var(--text-xl);
     font-weight: 700;
     line-height: 1;
-    color: var(--color-text-muted, #666666);
+    color: var(--color-text-muted);
     margin: 2px 0 0 0;
     user-select: none;
     -webkit-user-select: none;
   }
 
-  /* Card wrapper with much larger gap from '=' */
   .eq-card-wrap {
     width: 100%;
-    margin-top: var(--space-2xl, 24px);
+    margin-top: var(--space-2xl);
   }
 
-  /* Hero line in Interval: large prominent output */
   .interval-hero-line {
     display: flex;
     align-items: baseline;
     justify-content: center;
-    gap: 8px;
-    margin: 4px 0;
+    gap: var(--space-sm);
+    margin: var(--space-xs) 0;
+    color: var(--color-text-primary);
   }
 
   .interval-hero-val {
-    font-family: var(--font-mono, monospace);
-    font-size: calc(34px * var(--font-scale));
+    font-family: var(--font-mono);
+    font-size: var(--key-l);
     font-weight: 900;
-    color: var(--color-accent-primary, #00d2ff);
     line-height: 1;
     letter-spacing: -0.02em;
   }
 
   .interval-hero-unit {
     font-family: var(--font-sans);
-    font-size: calc(20px * var(--font-scale));
+    font-size: var(--text-xl);
     font-weight: 700;
-    color: var(--color-accent-primary, #00d2ff);
     line-height: 1;
   }
 
@@ -384,114 +286,57 @@
   .calc-input-stage {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm, 8px);
+    gap: var(--zone-input-gap);
     width: 100%;
     box-sizing: border-box;
   }
 
-  .calc-subtoolbar {
-    width: 100%;
-    height: 36px;
-    box-sizing: border-box;
-  }
-
-  /* Single 7-col offset row */
-  .offset-stepper-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr) 1.2fr repeat(3, 1fr);
-    gap: 2px;
-    width: 100%;
-    height: 42px;
-    background-color: var(--color-bg-canvas, #000000);
-    border: 1px solid var(--color-border-subtle, #2a2a2a);
-    border-radius: var(--radius-sm, 6px);
-    padding: 2px;
-    box-sizing: border-box;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
-  .offset-btn {
+  /* The hold button takes the place and shape of a key; HoldToAction keeps its own look */
+  .offset-reset {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    background-color: var(--color-surface-2, #1c1c1c);
+    min-width: 0;
+  }
+
+  .offset-reset > :global(.hold-btn) {
+    flex: 1;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    padding: 0;
     border: none;
     border-radius: 2px;
-    font-family: var(--font-mono, monospace);
-    font-size: calc(13px * var(--font-scale));
-    font-weight: 800;
-    color: var(--color-text-primary, #ffffff);
-    cursor: pointer;
-    touch-action: none;
-    -webkit-touch-callout: none;
+  }
+
+  /* `ch` follows the value font, so the value columns fit "31." and "2026" exactly */
+  .diff-grid {
+    display: grid;
+    grid-template-columns: auto repeat(2, 1fr 3ch 1fr) 1fr 4ch 1fr;
+    gap: 2px;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    user-select: none;
     -webkit-user-select: none;
-    user-select: none;
-    padding: 0;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.4);
-    transition: background-color 0.08s ease, color 0.08s ease;
   }
 
-  .offset-btn:active {
-    background-color: var(--color-surface-active, #333333);
-  }
-
-  .offset-btn.pos:active {
-    color: var(--color-accent-primary, #00d2ff);
-  }
-
-  .offset-btn.neg:active {
-    color: #f87171;
-  }
-
-  .offset-btn.reset {
+  .diff-head {
+    grid-column: span 3;
+    padding: 2px 0;
     font-family: var(--font-sans);
-    font-size: calc(11px * var(--font-scale));
+    font-size: var(--text-xs);
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--color-text-secondary, #b3b3b3);
-  }
-
-  .offset-btn.reset.is-dimmed {
-    opacity: 0.45;
-  }
-
-  /* Diff steppers 2 rows */
-  .diff-steppers-container {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .diff-stepper-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .row-prefix-label {
-    width: 22px;
-    font-size: calc(11px * var(--font-scale));
-    font-weight: 800;
-    color: var(--color-accent-primary, #00d2ff);
+    line-height: 1;
     text-align: center;
-    flex-shrink: 0;
-    user-select: none;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
   }
 
-  .steppers-grid {
+  .diff-row-label {
     display: flex;
     align-items: center;
-    gap: 4px;
-    flex: 1;
-    min-width: 0;
+    padding: 0 var(--space-xs);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 800;
+    color: var(--color-text-secondary);
   }
 </style>

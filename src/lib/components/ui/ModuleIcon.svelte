@@ -27,7 +27,8 @@
     Horse,
     Atom,
     Binary,
-    NumberSquareThree
+    NumberSquareThree,
+    Bank
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
 
@@ -81,6 +82,7 @@
     // Launcher shortcuts
     binary: Binary,
     ternary: NumberSquareThree,
+    roman: Bank,
 
     // Phosphor Name aliases
     atom: Atom,

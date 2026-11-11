@@ -1,10 +1,5 @@
-import type {
-  TurtleState,
-  TurtleAction,
-  Segment,
-  Marker,
-  Point
-} from './turtleTypes';
+import type { TurtleState, Segment, Marker, Point } from './turtleTypes';
+import { parseDrawingField, type DrawingCommand } from './drawingNotation';
 
 export function cleanCoord(n: number): number {
   const rounded = Math.round(n);
@@ -24,97 +19,21 @@ export function createInitialState(initialHeading = 0): TurtleState {
     penDown: true,
     segments: [],
     markers: [],
-    nextMarkerId: 1,
-    history: []
+    nextMarkerId: 1
   };
 }
 
 export function stepForward(state: TurtleState, distance = 1): TurtleState {
   const rad = (state.heading * Math.PI) / 180;
-  const dx = distance * Math.sin(rad);
-  const dy = distance * Math.cos(rad);
-
-  const nextPos: Point = {
-    x: cleanCoord(state.position.x + dx),
-    y: cleanCoord(state.position.y + dy)
-  };
-
-  const newSegment: Segment = {
-    id: state.segments.length + 1,
-    from: { ...state.position },
-    to: nextPos,
-    penDown: state.penDown
-  };
-
-  const action: TurtleAction = {
-    type: 'step',
-    from: { ...state.position },
-    to: nextPos,
-    prevHeading: state.heading,
-    heading: state.heading,
-    distance,
-    penDown: state.penDown
-  };
-
-  return {
-    ...state,
-    position: nextPos,
-    segments: [...state.segments, newSegment],
-    history: [...state.history, action]
-  };
+  return stepDirection(state, distance * Math.sin(rad), distance * Math.cos(rad), state.heading);
 }
 
 export function stepBackward(state: TurtleState, distance = 1): TurtleState {
-  const rad = (state.heading * Math.PI) / 180;
-  const dx = -distance * Math.sin(rad);
-  const dy = -distance * Math.cos(rad);
-
-  const nextPos: Point = {
-    x: cleanCoord(state.position.x + dx),
-    y: cleanCoord(state.position.y + dy)
-  };
-
-  const newSegment: Segment = {
-    id: state.segments.length + 1,
-    from: { ...state.position },
-    to: nextPos,
-    penDown: state.penDown
-  };
-
-  const action: TurtleAction = {
-    type: 'step',
-    from: { ...state.position },
-    to: nextPos,
-    prevHeading: state.heading,
-    heading: state.heading,
-    distance: -distance,
-    penDown: state.penDown
-  };
-
-  return {
-    ...state,
-    position: nextPos,
-    segments: [...state.segments, newSegment],
-    history: [...state.history, action]
-  };
+  return stepForward(state, -distance);
 }
 
 export function turn(state: TurtleState, deltaAngle: number): TurtleState {
-  const prevHeading = state.heading;
-  const newHeading = normalizeHeading(state.heading + deltaAngle);
-
-  const action: TurtleAction = {
-    type: 'turn',
-    fromHeading: prevHeading,
-    toHeading: newHeading,
-    delta: deltaAngle
-  };
-
-  return {
-    ...state,
-    heading: newHeading,
-    history: [...state.history, action]
-  };
+  return { ...state, heading: normalizeHeading(state.heading + deltaAngle) };
 }
 
 export function stepDirection(
@@ -135,42 +54,16 @@ export function stepDirection(
     penDown: state.penDown
   };
 
-  const prevHeading = state.heading;
-  const nextHeading = normalizeHeading(newHeading);
-  const action: TurtleAction = {
-    type: 'step',
-    from: { ...state.position },
-    to: nextPos,
-    prevHeading,
-    heading: nextHeading,
-    distance: Math.hypot(dx, dy),
-    penDown: state.penDown
-  };
-
   return {
     ...state,
     position: nextPos,
-    heading: nextHeading,
-    segments: [...state.segments, newSegment],
-    history: [...state.history, action]
+    heading: normalizeHeading(newHeading),
+    segments: [...state.segments, newSegment]
   };
 }
 
 export function togglePen(state: TurtleState): TurtleState {
-  const prev = state.penDown;
-  const next = !prev;
-
-  const action: TurtleAction = {
-    type: 'pen',
-    prevPenDown: prev,
-    newPenDown: next
-  };
-
-  return {
-    ...state,
-    penDown: next,
-    history: [...state.history, action]
-  };
+  return { ...state, penDown: !state.penDown };
 }
 
 export function addMarker(state: TurtleState): TurtleState {
@@ -179,59 +72,42 @@ export function addMarker(state: TurtleState): TurtleState {
     position: { ...state.position }
   };
 
-  const action: TurtleAction = {
-    type: 'marker',
-    marker: newMarker
-  };
-
   return {
     ...state,
     markers: [...state.markers, newMarker],
-    nextMarkerId: state.nextMarkerId + 1,
-    history: [...state.history, action]
+    nextMarkerId: state.nextMarkerId + 1
   };
 }
 
-export function undo(state: TurtleState): TurtleState {
-  if (state.history.length === 0) return state;
+// --- Želva notation: `V3,P90,V,L45,T,V,M` ---
 
-  const lastAction = state.history[state.history.length - 1];
-  const newHistory = state.history.slice(0, -1);
+/** `V` vpřed, `Z` zpět; `L` / `P` turn by the angle in degrees. */
+export function parseTurtleField(field: string): DrawingCommand | null {
+  return parseDrawingField(field, ['V', 'Z'], ['L', 'P']);
+}
 
-  if (lastAction.type === 'step') {
-    return {
-      ...state,
-      position: { ...lastAction.from },
-      heading: lastAction.prevHeading,
-      segments: state.segments.slice(0, -1),
-      history: newHistory
-    };
+/** Replays the notation from the start; invalid pieces (null) are skipped. */
+export function replayTurtle(
+  commands: readonly (DrawingCommand | null)[],
+  initialHeading = 0
+): TurtleState {
+  let state = createInitialState(initialHeading);
+  for (const cmd of commands) {
+    if (!cmd) continue;
+    switch (cmd.kind) {
+      case 'move':
+        state = cmd.code === 'V' ? stepForward(state, cmd.count) : stepBackward(state, cmd.count);
+        break;
+      case 'turn':
+        state = turn(state, cmd.code === 'L' ? -cmd.angle : cmd.angle);
+        break;
+      case 'pen':
+        state = togglePen(state);
+        break;
+      case 'marker':
+        state = addMarker(state);
+        break;
+    }
   }
-
-  if (lastAction.type === 'turn') {
-    return {
-      ...state,
-      heading: lastAction.fromHeading,
-      history: newHistory
-    };
-  }
-
-  if (lastAction.type === 'marker') {
-    return {
-      ...state,
-      markers: state.markers.filter((m) => m.id !== lastAction.marker.id),
-      nextMarkerId: lastAction.marker.id,
-      history: newHistory
-    };
-  }
-
-  if (lastAction.type === 'pen') {
-    return {
-      ...state,
-      penDown: lastAction.prevPenDown,
-      history: newHistory
-    };
-  }
-
   return state;
 }

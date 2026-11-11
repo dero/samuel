@@ -136,6 +136,26 @@ export function solveSubstitution(
 }
 
 /**
+ * The part of a mapping that still applies: cipher letters present in the text, or any
+ * letter of the alphabet when unused letters may be assigned too.
+ */
+export function keepApplicableMapping(
+  mapping: Record<string, string>,
+  text: string,
+  alphabetLetters: string[],
+  allowUnusedLetters: boolean
+): Record<string, string> {
+  const applicable = allowUnusedLetters
+    ? new Set(alphabetLetters.map((l) => l.toUpperCase()))
+    : getAlphabetLettersInText(text, alphabetLetters);
+  const kept: Record<string, string> = {};
+  for (const [cipherLetter, target] of Object.entries(mapping)) {
+    if (target && applicable.has(cipherLetter)) kept[cipherLetter] = target;
+  }
+  return kept;
+}
+
+/**
  * Returns a Set of canonical uppercase alphabet letters that actually appear in the text.
  */
 export function getAlphabetLettersInText(
@@ -186,6 +206,7 @@ export function getAlphabetLettersInText(
       }
     }
 
+    if (matched) continue;
     i++;
   }
 

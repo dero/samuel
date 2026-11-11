@@ -2,19 +2,24 @@
   import { onDestroy } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import BrailleReference from './BrailleReference.svelte';
-  import HoldToAction from '../../components/ui/HoldToAction.svelte';
+  import KeypadBottomRow from '../../components/ui/KeypadBottomRow.svelte';
   import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
-  import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
-  import { dotsToMask } from './brailleData';
-  import { decodeSingleMask, normalizeBrailleInput } from './brailleSolver';
+  import InterlinearText, { type InterlinearToken } from '../../components/ui/InterlinearText.svelte';
+  import {
+    brailleFieldsToText,
+    decodeBrailleFields,
+    dotsToField,
+    type DecodedBrailleField
+  } from './brailleSolver';
+  import { parseNotation, serializeNotation } from '../../utils/notation';
   import { settings } from '../../state/settings.svelte';
-  import { toast } from '../../state/toast.svelte';
   import { createModuleState } from '../../state/moduleState.svelte';
 
   const { state: modState, reset: resetState } = createModuleState('braille', {
-    text: '',
+    fields: [] as string[],
     czech: true,
     direct_nums: false,
     auto_insert: false
@@ -25,11 +30,45 @@
   let committedFade = $state<boolean>(false);
   let fadeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  // Derived decoding & metadata
-  let currentMask = $derived(dotsToMask(activeDots));
-  let currentCharInfo = $derived(
-    decodeSingleMask(currentMask, { czechDiacritics: modState.czech, directNumbers: modState.direct_nums })
+  const decodeOptions = $derived({
+    czechDiacritics: modState.czech,
+    directNumbers: modState.direct_nums
+  });
+
+  const decoded = $derived(decodeBrailleFields(modState.fields, decodeOptions));
+  const plainText = $derived(brailleFieldsToText(decoded));
+
+  // The cell still being entered, read in context: after the number prefix it is a digit
+  const pendingField = $derived(
+    activeDots.length > 0 && !committedFade ? dotsToField(activeDots) : null
   );
+  const pendingDecoded = $derived(
+    pendingField !== null
+      ? decodeBrailleFields([...modState.fields, pendingField], decodeOptions).at(-1)!
+      : null
+  );
+
+  function toToken({ field, char, kind }: DecodedBrailleField): InterlinearToken {
+    if (kind === 'space') return { primary: '␣', isSpace: true };
+    if (kind === 'invalid') {
+      return { primary: char, secondary: field, isError: true, errorText: `Neznámé body „${field}“` };
+    }
+    return { primary: char, secondary: field, className: kind === 'prefix' ? 'token-space' : undefined };
+  }
+
+  const tokens = $derived(decoded.map(toToken));
+  const pendingToken = $derived<InterlinearToken | null>(
+    pendingDecoded
+      ? {
+          primary: pendingDecoded.char,
+          secondary: pendingDecoded.field,
+          isPending: true,
+          isError: pendingDecoded.kind === 'invalid'
+        }
+      : null
+  );
+
+  const hasContent = $derived(modState.fields.length > 0 || activeDots.length > 0);
 
   function clearFadeTimer() {
     if (fadeTimeout) {
@@ -37,6 +76,22 @@
       fadeTimeout = null;
     }
     committedFade = false;
+  }
+
+  function appendField(field: string) {
+    modState.fields = [...modState.fields, field];
+  }
+
+  /** Writes the active cell to the notation and lets its dots fade out. */
+  function commitPending() {
+    if (pendingField === null) return;
+    appendField(pendingField);
+    committedFade = true;
+    if (fadeTimeout) clearTimeout(fadeTimeout);
+    fadeTimeout = setTimeout(() => {
+      activeDots = [];
+      committedFade = false;
+    }, 380);
   }
 
   // --- Pointer / Drag-to-Draw Handling on 2x3 Matrix ---
@@ -59,6 +114,7 @@
 
   function handlePointerDown(e: PointerEvent) {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
+    e.preventDefault();
 
     if (committedFade) {
       clearFadeTimer();
@@ -122,17 +178,10 @@
       // ignore
     }
 
-    if (modState.auto_insert && hadInteractedDots && activeDots.length > 0) {
-      const info = currentCharInfo;
-      if (info.isValid) {
-        modState.text += info.char;
+    if (modState.auto_insert && hadInteractedDots && pendingDecoded) {
+      if (pendingDecoded.kind !== 'invalid') {
         settings.vibrate([15, 30, 15]);
-        committedFade = true;
-        if (fadeTimeout) clearTimeout(fadeTimeout);
-        fadeTimeout = setTimeout(() => {
-          activeDots = [];
-          committedFade = false;
-        }, 380);
+        commitPending();
       } else {
         // Unrecognized mask - keep selected
         settings.vibrate(20);
@@ -140,75 +189,73 @@
     }
   }
 
-  function handlePointerCancel(e: PointerEvent) {
+  function handlePointerCancel() {
     isPointerDown = false;
     strokeActivatedDots.clear();
   }
 
   // --- Keypad Actions ---
-  function commitChar() {
-    if (committedFade || activeDots.length === 0) return;
-
-    const info = currentCharInfo;
-    modState.text += info.char;
-    committedFade = true;
-    if (fadeTimeout) clearTimeout(fadeTimeout);
-    fadeTimeout = setTimeout(() => {
-      activeDots = [];
-      committedFade = false;
-    }, 380);
-  }
-
   function handleSpace() {
-    const wasFading = committedFade;
     clearFadeTimer();
-    // If dots are selected and not fading, commit them first then add space
-    if (!wasFading && activeDots.length > 0) {
-      modState.text += currentCharInfo.char;
-    }
     activeDots = [];
-    modState.text += ' ';
+    appendField('');
   }
 
   function handleBackspace() {
-    const wasFading = committedFade;
+    const hadPending = pendingField !== null;
     clearFadeTimer();
-    // 1. If dots are currently selected and not fading, backspace clears only the cell dots
-    if (!wasFading && activeDots.length > 0) {
-      activeDots = [];
-      return;
-    }
-
-    // 2. Otherwise (or if fading), delete last character from text
     activeDots = [];
-    if (modState.text.length > 0) {
-      modState.text = modState.text.slice(0, -1);
-    }
+    if (!hadPending) modState.fields = modState.fields.slice(0, -1);
   }
 
   function handleClearAll() {
     clearFadeTimer();
-    modState.text = '';
+    modState.fields = [];
     activeDots = [];
   }
 
   function handleReset() {
-    handleClearAll();
+    clearFadeTimer();
+    activeDots = [];
+    resetState();
   }
-
-  const brailleEmptyHint = 'Body zadávejte klepnutím nebo tahem.';
 
   onDestroy(() => {
     clearFadeTimer();
   });
 </script>
 
-<ModuleShell onReset={handleReset}>
+<ModuleShell
+  onReset={handleReset}
+  podklad={{
+    kind: 'text',
+    required: false,
+    empty: modState.fields.length === 0,
+    title: 'Zápis',
+    description: 'Čísla bodů znaku: čárka dělí znaky, prázdné pole je mezera.',
+    example: '1,125,135,245,,12',
+    placeholder: 'Např. 1,125,135,245,,12',
+    autocapitalize: 'none',
+    value: serializeNotation(modState.fields),
+    onSave: (val) => {
+      // A half-entered cell belongs to the notation that was just replaced
+      clearFadeTimer();
+      activeDots = [];
+      modState.fields = parseNotation(val);
+    }
+  }}
+  bar={{
+    empty: !hasContent,
+    hint: 'Body zadávejte klepnutím nebo tahem.',
+    charCount: plainText.replace(/\s/g, '').length + (pendingToken ? 1 : 0)
+  }}
+>
   {#snippet output()}
-    <TranslationCard
-      text={modState.text}
-      emptyHint={brailleEmptyHint}
-    />
+    <TranslationCard text={plainText} {hasContent}>
+      {#snippet children()}
+        <InterlinearText {tokens} {pendingToken} scalePrimaryBy="primary" />
+      {/snippet}
+    </TranslationCard>
   {/snippet}
 
   {#snippet input()}
@@ -260,50 +307,49 @@
         </div>
       </div>
 
-      <!-- Utility Row: Slide to Clear, Space/Commit and Smart Backspace (1fr 1.3fr 1fr) -->
-      <div class="keypad-utility-row-3col">
-        <HoldToAction
-          disabled={!modState.text && activeDots.length === 0}
-          onAction={handleClearAll}
-          ariaLabel="Vymazat celý text podržením"
-        />
-
-        <SpaceCommitButton
-          pendingChar={activeDots.length > 0 && !committedFade ? (currentCharInfo.char || '↵') : ''}
-          onSpace={handleSpace}
-          onCommit={commitChar}
-        />
-
-        <BackspaceButton
-          disabled={!modState.text && activeDots.length === 0}
-          hasActiveSelection={activeDots.length > 0 && !committedFade}
-          cancelLabel="Zrušit body"
-          cancelTitle="Zrušit výběr bodů"
-          onAction={handleBackspace}
-        />
-      </div>
+      <KeypadBottomRow
+        clearDisabled={!hasContent}
+        backspaceDisabled={!hasContent}
+        clearLabel="Vymazat celý zápis podržením"
+        hasActiveSelection={pendingField !== null}
+        cancelTitle="Zrušit výběr bodů"
+        onClear={handleClearAll}
+        onBackspace={handleBackspace}
+      >
+        {#snippet middle()}
+          <SpaceCommitButton
+            pendingChar={pendingDecoded?.char ?? ''}
+            onSpace={handleSpace}
+            onCommit={commitPending}
+          />
+        {/snippet}
+      </KeypadBottomRow>
     </div>
   {/snippet}
 
   {#snippet menuOptions()}
-    <OptionRow
-      label="Okamžité vkládání"
-      hint="Znak se vloží hned po dokončení tahu, bez potvrzení."
-      checked={modState.auto_insert}
-      onChange={(v) => (modState.auto_insert = v)}
-    />
-    <OptionRow
-      label="Česká diakritika"
-      hint="Body 2456 = Ř, W = 12356."
-      checked={modState.czech}
-      onChange={(v) => (modState.czech = v)}
-    />
-    <OptionRow
-      label="Čísla bez prefixu"
-      hint="A–J čte jako 1–0."
-      checked={modState.direct_nums}
-      onChange={(v) => (modState.direct_nums = v)}
-    />
+    <MenuGroup title="Zadávání">
+      <OptionRow
+        label="Okamžité vkládání"
+        hint="Znak se vloží hned po dokončení tahu, bez potvrzení."
+        checked={modState.auto_insert}
+        onChange={(v) => (modState.auto_insert = v)}
+      />
+    </MenuGroup>
+    <MenuGroup title="Čtení">
+      <OptionRow
+        label="Česká diakritika"
+        hint="Body 2456 = Ř, W = 12356."
+        checked={modState.czech}
+        onChange={(v) => (modState.czech = v)}
+      />
+      <OptionRow
+        label="Čísla bez prefixu"
+        hint="A–J čte jako 1–0."
+        checked={modState.direct_nums}
+        onChange={(v) => (modState.direct_nums = v)}
+      />
+    </MenuGroup>
   {/snippet}
 
   {#snippet reference()}
@@ -338,9 +384,6 @@
     justify-content: space-around;
     align-items: center;
     padding: 10px clamp(20px, 7vw, 44px);
-    background: transparent;
-    border: none;
-    box-shadow: none;
     box-sizing: border-box;
   }
 
@@ -352,6 +395,11 @@
   }
 
   .matrix-dot-btn {
+    --dot-sunken-shadow:
+      inset 0 4px 8px rgba(0, 0, 0, 0.95),
+      inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
+      inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
+    container-type: size;
     width: 68px;
     height: 68px;
     border-radius: var(--radius-full);
@@ -364,10 +412,7 @@
     -webkit-user-select: none;
     touch-action: none;
     cursor: pointer;
-    box-shadow: 
-      inset 0 4px 8px rgba(0, 0, 0, 0.95),
-      inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
-      inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
+    box-shadow: var(--dot-sunken-shadow);
     transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
     box-sizing: border-box;
   }
@@ -378,8 +423,8 @@
 
   .matrix-dot-btn.is-active {
     background-color: var(--color-accent-primary);
-    border-color: #ffffff;
-    box-shadow: 
+    border-color: var(--color-text-primary);
+    box-shadow:
       0 0 20px var(--color-accent-primary-glow),
       inset 0 0 8px rgba(255, 255, 255, 0.6);
   }
@@ -389,29 +434,21 @@
   }
 
   @keyframes dotFadeOut {
-    0% {
+    0%, 25% {
       background-color: var(--color-accent-primary);
-      border-color: #ffffff;
-      box-shadow: 0 0 24px rgba(0, 210, 255, 1);
-    }
-    25% {
-      background-color: var(--color-accent-primary);
-      border-color: #ffffff;
-      box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
+      border-color: var(--color-text-primary);
+      box-shadow: 0 0 24px var(--color-accent-primary);
     }
     100% {
       background-color: var(--color-surface-sunken);
       border-color: var(--color-border-sunken);
-      box-shadow: 
-        inset 0 4px 8px rgba(0, 0, 0, 0.95),
-        inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
-        inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
+      box-shadow: var(--dot-sunken-shadow);
     }
   }
 
   .dot-num {
     font-family: var(--font-mono);
-    font-size: calc(26px * var(--font-scale));
+    font-size: min(var(--key-l), 60cqh);
     font-weight: 900;
     color: var(--color-text-secondary);
     pointer-events: none;
@@ -427,8 +464,7 @@
   }
 
   @keyframes dotNumFadeOut {
-    0% { color: var(--color-text-inverse); }
-    25% { color: var(--color-text-inverse); }
+    0%, 25% { color: var(--color-text-inverse); }
     100% { color: var(--color-text-secondary); }
   }
 </style>

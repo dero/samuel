@@ -4,7 +4,6 @@
   import { toast } from '../../state/toast.svelte';
   import type { CaesarShiftResult } from './shiftsData';
   import { Sparkle } from 'phosphor-svelte';
-  import EmptyHint from '../../components/ui/EmptyHint.svelte';
 
   interface Props {
     shifts: CaesarShiftResult[];
@@ -37,12 +36,6 @@
 </script>
 
 <div class="caesar-container">
-  <!-- Contextual tooltip: seated at bottom, dissolves into nothingness on first activity -->
-  <EmptyHint
-    text="Vyhodnotí všechny posuny najednou."
-    hidden={!!rawText.trim()}
-  />
-
   {#if rawText.trim()}
     <!-- Top Match Hero Card (if enabled and valid) -->
     {#if showBestHighlight && bestCandidate}
@@ -138,17 +131,15 @@
     cursor: pointer;
     flex-shrink: 0;
     transition: background-color 0.1s ease, border-color 0.1s ease;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .best-hero-card.is-highlight {
-    border-color: rgba(16, 185, 129, 0.45);
-    background: linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, var(--color-surface-2) 100%);
+    border-color: var(--color-accent-success);
+    background: linear-gradient(180deg, var(--color-accent-success-subtle) 0%, var(--color-surface-2) 100%);
   }
 
   .best-hero-card:active {
-    background-color: var(--color-surface-active);
-    transform: translateY(1px);
+    background: var(--color-surface-active);
   }
 
   .hero-top-row {
@@ -166,13 +157,17 @@
   }
 
   .hero-star {
-    color: var(--color-accent-warning);
+    color: var(--color-text-secondary);
     flex-shrink: 0;
+  }
+
+  .is-highlight .hero-star {
+    color: var(--color-accent-success);
   }
 
   .hero-label {
     color: var(--color-text-secondary);
-    font-size: calc(11px * var(--font-scale));
+    font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -191,12 +186,12 @@
     color: var(--color-text-primary);
     padding: 1px 6px;
     border-radius: var(--radius-xs);
-    font-size: calc(11px * var(--font-scale));
+    font-size: var(--text-xs);
     font-weight: 700;
   }
 
   .hero-text {
-    font-size: calc(20px * var(--font-scale));
+    font-size: var(--text-xl);
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.3;
@@ -245,8 +240,8 @@
   }
 
   .shift-row.is-best {
-    background-color: rgba(16, 185, 129, 0.08);
-    border-color: rgba(16, 185, 129, 0.35);
+    background-color: var(--color-accent-success-subtle);
+    border-color: var(--color-accent-success);
   }
 
   .shift-badge-col {
@@ -269,7 +264,7 @@
   }
 
   .shift-rev {
-    font-size: calc(11px * var(--font-scale));
+    font-size: var(--text-xs);
     font-weight: 700;
     color: var(--color-text-secondary);
     line-height: 1;

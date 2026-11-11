@@ -38,13 +38,24 @@
       id: 'large-polish',
       label: 'Velký',
       help: {
+        howTo: [
+          'Devět chlívků po třech písmenech: tvar čar určí chlívek, počet teček pořadí písmene v něm. Písmeno vložíte klepnutím do kříže, nebo ho složíte ze souřadnic pod křížem: řádek, sloupec a počet teček, v libovolném pořadí.'
+        ],
+        example: {
+          title: 'Příklad: AHOJ',
+          steps: [
+            { action: 'Klepněte v kříži na A (levý horní chlívek, jedna tečka).', result: 'Ve výstupu je A a pod ním `111`: řádek 1, sloupec 1, pozice 1.' },
+            { action: 'Pod křížem klepněte na 1 Horní, 3 Pravý a 2 tečky.', result: 'Po třetí volbě se vloží H (`132`) a jeho chlívek v kříži blikne.' },
+            { action: 'Klepněte v kříži na O a na J.', result: 'Výstup ukazuje AHOJ. Na záložce Podklad je totéž jako `111,132,231,212`.' }
+          ]
+        },
         controls: [
-          ['Kříž', 'klepnutí na písmeno ho vloží'],
-          ['Souřadnice', 'řádek, sloupec, počet teček, pak potvrdit']
+          ['Kříž', 'Klepnutí na písmeno ho vloží.'],
+          ['Souřadnice (pod křížem)', 'Sloupce kláves: řádek (Horní, Střední, Dolní), sloupec (Levý, Střední, Pravý) a počet teček. Po jedné volbě z každého se znak vloží sám, druhé klepnutí na stejnou klávesu volbu zruší.'],
+          ['Záložka Podklad', 'Zápis řádek, sloupec, pozice: `111,132,231,212`. Čárka dělí znaky, prázdné pole je mezera.']
         ],
         pitfalls: [
-          ['26 písmen', 'poslední pole (`┌` •••) je mezera'],
-          ['Abeceda s CH', 'výchozí (27 znaků), všechna písmena za H se posunou']
+          ['Od písmene I dál vychází text posunutý o jedno písmeno?', 'Šifra nepočítá s CH. Zvolte Menu → Abeceda → Anglická (26); poslední pole (pravý dolní chlívek, tři tečky) je pak mezera.']
         ]
       }
     },
@@ -52,18 +63,40 @@
       id: 'small-polish',
       label: 'Pigpen',
       help: {
-        controls: [['Kříž', 'klepnutí na písmeno ho vloží, i s tečkou']],
-        pitfalls: [['CH', 'jen 26 znaků, CH se píše jako C + H']]
+        howTo: [
+          'Dvě mřížky # a dva kříže X. Písmena druhé mřížky a druhého kříže mají navíc tečku. Písmeno vložíte klepnutím na jeho místo.'
+        ],
+        example: {
+          title: 'Příklad: SOVA',
+          steps: [
+            { action: 'Klepněte na S v horním výseku prvního kříže X.', result: 'Ve výstupu je S a pod ním `31`: tabulka 3, pozice 1.' },
+            { action: 'Klepněte na O ve druhé mřížce, té s tečkami.', result: 'Přibude O s kódem `26`.' },
+            { action: 'Klepněte na V v dolním výseku prvního kříže X a na A v levém horním poli první mřížky.', result: 'Výstup ukazuje SOVA. Na záložce Podklad je totéž jako `31,26,34,11`.' }
+          ]
+        },
+        controls: [
+          ['Mřížky a kříže', 'Klepnutí na písmeno ho vloží. Tečka u písmene odpovídá tečce v šifře.'],
+          ['Záložka Podklad', 'Zápis tabulka a pozice: `31,26,34,11`. Tabulky `1` a `2` jsou mřížky (pozice `1`–`9` po řádcích), `3` a `4` kříže X (`1` nahoře, `2` vlevo, `3` vpravo, `4` dole).']
+        ],
+        pitfalls: [['Hledáte CH?', 'Pigpen má jen 26 polí a CH v něm není. Píše se jako C a H.']]
       }
     }
   ];
 
   const help: RefHelpData = {
-    controls: [
-      ['Velký / Pigpen', 'lišta nad klávesnicí'],
-      ['Abeceda', 'v menu, pro každý kříž zvlášť']
+    purpose: [
+      'Kříže nahrazují písmeno tvarem jeho chlívku v mřížce, často doplněným tečkami. Nástroj umí Velký polský kříž a Pigpen: klepnutím do kříže skládáte text a pod každým písmenem vidíte jeho souřadnice.'
     ],
-    pitfalls: [['Jiné rozložení', 'existují varianty s jiným pořadím písmen → vlastní abeceda v menu']]
+    controls: [
+      ['Řádek variant: Velký | Pigpen', 'Přepne kříž. Každý má vlastní text, přepnutím o něj nepřijdete.'],
+      ['Mezera (uprostřed dole)', 'Vloží mezeru.'],
+      ['Zpět (vpravo dole)', 'Smaže poslední znak. U Velkého kříže nejdřív zruší rozepsané souřadnice (ukazuje ✕).'],
+      ['Koš (vlevo dole)', 'Podržením smaže text zvoleného kříže.'],
+      ['Menu → Abeceda', 'Abeceda zvoleného kříže, každý má svou. Zadaný text se přepočítá. Nestandardní abecedu připomíná tečka na záložce Menu.']
+    ],
+    pitfalls: [
+      ['Písmena v kříži ze zadání leží v jiném pořadí?', 'Vytvořte vlastní abecedu v Nastavení → Správa abeced (písmena v pořadí polí jako v taháku) a zvolte ji v Menu → Abeceda.']
+    ]
   };
 </script>
 

@@ -39,9 +39,8 @@
   const excessCount = $derived(enabledCount - targetCapacity);
   const canConfirm = $derived(enabledCount <= targetCapacity);
 
-  function handleToggleLetter(e: PointerEvent, char: string) {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    e.preventDefault();
+  // On click, not pointerdown: a finger that scrolls the grid must not cross letters out
+  function handleToggleLetter(char: string) {
     settings.vibrate(18);
 
     const next = new Set(draftOmitted);
@@ -111,7 +110,7 @@
           class:is-omitted={isOmitted}
           aria-pressed={!isOmitted}
           aria-label={`Písmeno ${char}, ${isOmitted ? 'vynecháno' : 'povoleno'}`}
-          onpointerdown={(e) => handleToggleLetter(e, char)}
+          onclick={() => handleToggleLetter(char)}
         >
           <span class="letter-char">{char}</span>
           {#if isOmitted}
@@ -123,19 +122,19 @@
       {/each}
     </div>
 
-    <!-- Action footer -->
-    <div class="modal-action-footer">
-      <button
-        type="button"
-        class="confirm-btn"
-        disabled={!canConfirm}
-        onclick={handleConfirm}
-      >
-        <Check size={18} weight="bold" />
-        <span>Potvrdit</span>
-      </button>
-    </div>
   </div>
+
+  {#snippet footer()}
+    <button
+      type="button"
+      class="confirm-btn"
+      disabled={!canConfirm}
+      onclick={handleConfirm}
+    >
+      <Check size={18} weight="bold" />
+      <span>Potvrdit</span>
+    </button>
+  {/snippet}
 </BottomSheet>
 
 <style>
@@ -175,14 +174,14 @@
   }
 
   .status-counter-row.is-warning {
-    background: rgba(245, 158, 11, 0.12);
-    border-color: rgba(245, 158, 11, 0.35);
+    background: var(--color-accent-warning-subtle);
+    border-color: var(--color-accent-warning);
     color: var(--color-accent-warning);
   }
 
   .status-counter-row.is-valid {
-    background: rgba(16, 185, 129, 0.12);
-    border-color: rgba(16, 185, 129, 0.35);
+    background: var(--color-accent-success-subtle);
+    border-color: var(--color-accent-success);
     color: var(--color-accent-success);
   }
 
@@ -199,7 +198,7 @@
 
   .letter-toggle-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 6px;
     user-select: none;
     -webkit-user-select: none;
@@ -211,8 +210,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 48px;
-    height: 48px;
+    min-height: 40px;
+    height: 40px;
     background: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
@@ -220,7 +219,7 @@
     font-size: var(--text-base);
     font-weight: 700;
     cursor: pointer;
-    touch-action: none;
+    touch-action: manipulation;
     transition: all 0.15s ease;
   }
 
@@ -229,8 +228,8 @@
   }
 
   .letter-toggle-btn.is-omitted {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.35);
+    background: var(--color-accent-danger-subtle);
+    border-color: var(--color-accent-danger);
     color: var(--color-text-muted);
   }
 
@@ -249,11 +248,6 @@
     color: var(--color-accent-danger);
   }
 
-  .modal-action-footer {
-    margin-top: var(--space-xs);
-    display: flex;
-    flex-direction: column;
-  }
 
   .confirm-btn {
     display: flex;
@@ -264,7 +258,7 @@
     min-height: 48px;
     height: 48px;
     background: var(--color-accent-primary);
-    color: #000000;
+    color: var(--color-text-inverse);
     border: none;
     border-radius: var(--radius-md);
     font-size: var(--text-sm);
@@ -279,7 +273,6 @@
   }
 
   .confirm-btn:disabled {
-    opacity: 0.35;
     cursor: not-allowed;
     background: var(--color-surface-3);
     color: var(--color-text-muted);

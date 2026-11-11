@@ -25,10 +25,33 @@
       id: 'rgb',
       label: 'RGB',
       help: {
-        controls: [['`R` `G` `B`', 'vypnutý kanál zčerná, zbude jen světlo zapnutých']],
+        example: {
+          title: 'Příklad: červené brýle',
+          steps: [
+            {
+              action: 'Na záložce Podklad klepněte na Vyfotit a vyfoťte šifru: modrý text přeškrtaný červenými čarami.',
+              result: 'Fotka je ve výstupu, nástroj se vrátí na Interakci a lišta hlásí Původní barvy.'
+            },
+            {
+              action: 'Klepněte na `G` a na `B`.',
+              result:
+                'Svítí jen `R` a lišta hlásí Jen kanál R. Papír i červené čáry jsou teď stejně červené a modrý text zčerná, takže jde přečíst.'
+            },
+            {
+              action: 'Roztáhněte fotku dvěma prsty.',
+              result: 'V liště přibude zvětšení, třeba `200 %`. Klepnutím na něj se fotka vrátí na 100 %.'
+            }
+          ]
+        },
+        controls: [
+          ['`R` `G` `B`', 'Klepnutím kanál zapnete nebo vypnete, zapnutý je zvýrazněný. Vypnutý kanál zčerná.']
+        ],
         pitfalls: [
-          ['Červené brýle', 'nechat jen `R`: červená splyne s papírem, modrá a azurová zčernají'],
-          ['Skrytý text', 'zkusit postupně jen `R`, jen `G`, jen `B`']
+          [
+            'Zadání mluví o červených brýlích?',
+            'Nechte zapnuté jen `R`: červená splyne s papírem, modrá, zelená a azurová zčernají.'
+          ],
+          ['Text se neukazuje?', 'Zkuste postupně jen `R`, jen `G` a jen `B`. Pak zkuste CMY.']
         ]
       }
     },
@@ -36,21 +59,63 @@
       id: 'cmy',
       label: 'CMY',
       help: {
-        controls: [['`C` `M` `Y`', 'vypnutá vrstva se neotiskne, papír v ní zbělá']],
-        pitfalls: [['Text v jedné barvě', 'zmizí po vypnutí vrstvy jeho inkoustu']]
+        example: {
+          title: 'Příklad: azurový text pod čmáranicemi',
+          steps: [
+            {
+              action:
+                'Na záložce Podklad klepněte na Z galerie a zvolte fotku šifry: azurový text pod červenými a žlutými čmáranicemi.',
+              result: 'Fotka je ve výstupu a nástroj se vrátí na Interakci.'
+            },
+            {
+              action: 'V řádku variant zvolte CMY.',
+              result: 'Klávesy se změní na `C` `M` `Y` a lišta hlásí Původní barvy.'
+            },
+            {
+              action: 'Klepněte na `M` a na `Y`.',
+              result:
+                'Zůstane jen azurová vrstva a lišta hlásí Jen vrstva C. Červené i žluté čmáranice zbělají a azurový text zůstane na bílém papíře.'
+            }
+          ]
+        },
+        controls: [
+          [
+            '`C` `M` `Y`',
+            'Klepnutím vrstvu zapnete nebo vypnete, zapnutá je zvýrazněná. Vypnutá vrstva se neotiskne a papír na jejím místě zbělá.'
+          ]
+        ],
+        pitfalls: [
+          [
+            'Chcete se zbavit rušivé barvy?',
+            'Vypněte vrstvy, ze kterých je: žlutá zmizí bez `Y`, azurová bez `C`, purpurová bez `M`, červená bez `M` i `Y`.'
+          ]
+        ]
       }
     }
   ];
 
   const help: RefHelpData = {
+    purpose: [
+      'Některé šifry schovávají text do barev: splývá s pozadím a objeví se až přes barevný filtr, třeba červené brýle. Nástroj vyfocenou šifru rozloží na barevné kanály, které zapínáte a vypínáte.'
+    ],
+    howTo: [
+      'RGB pracuje se světlem jako displej: vypnutý kanál zčerná. CMY pracuje s inkousty jako tiskárna: vypnutá vrstva se neotiskne a na jejím místě zbělá papír. Zkoušejte kanály po jednom, dokud se text neoddělí od pozadí.'
+    ],
     controls: [
-      ['Fotka', 'ikona podkladu v hlavičce: Vyfotit, Vybrat z galerie, podržením Smazat'],
-      ['RGB / CMY', 'přepíná barevný model'],
-      ['Dva prsty', 'posun a zoom, tlačítko s % vrátí 1×']
+      [
+        'Záložka Podklad',
+        'Fotka šifry: Vyfotit, Z galerie, nebo Smazat podržením. Po výběru fotky se nástroj vrátí na Interakci.'
+      ],
+      ['Řádek variant: RGB | CMY', 'Přepne mezi kanály světla a vrstvami inkoustu.'],
+      ['Fotka (ve výstupu)', 'Jeden prst ji posouvá, dva prsty přibližují.'],
+      ['Zvětšení v % (v liště)', 'Objeví se po posunu nebo přiblížení. Klepnutím vrátíte fotku na 100 % a na střed.']
     ],
     pitfalls: [
-      ['Malířské míchání', 'žlutá + modrá = zelená platí jen pro barvy (RYB), ne pro světlo a tisk'],
-      ['Fotka zmizela', 'neukládá se, vydrží do zavření appky → vyfotit znovu']
+      ['Fotka zmizela?', 'Fotka se neukládá: vydrží přepnutí nástroje, ale ne zavření aplikace. Vyfoťte ji znovu.'],
+      [
+        'Čekáte, že žlutá a modrá dají zelenou?',
+        'To platí jen pro malířské barvy. Světlo a tisk se míchají jinak, viz záložka Míchání.'
+      ]
     ]
   };
 </script>

@@ -1,14 +1,11 @@
 import { localSettingsService } from '../../services/localSettingsService';
-import {
-  ELEMENTS,
-  searchElements,
-  type ChemicalElement,
-  type TacticalFilter
-} from './elementsData';
-import { settings } from '../../state/settings.svelte';
+import { searchElements, type TacticalFilter } from './elementsData';
 
 export type ElementsFlavour = 'table' | 'search';
 
+const DEFAULT_SELECTED_Z = 26; // Fe
+
+// Haptics live in the controls (SegmentedControl, Keycap, HoldToAction, tile tap), never here
 class ElementsState {
   private modSettings = localSettingsService.forModule('elements');
 
@@ -29,7 +26,7 @@ class ElementsState {
 
   // Selected element for highlight / inspection
   selectedElementZ = $state<number | null>(
-    this.modSettings.getNumber('selected_z', 26) // default Fe
+    this.modSettings.getNumber('selected_z', DEFAULT_SELECTED_Z)
   );
 
   // Target Z for zooming in from search to table
@@ -40,21 +37,13 @@ class ElementsState {
     return searchElements(this.searchQuery);
   });
 
-  // Derived selected element object
-  selectedElement = $derived.by(() => {
-    if (!this.selectedElementZ) return null;
-    return ELEMENTS.find((e) => e.z === this.selectedElementZ) ?? null;
-  });
-
   setFlavour(val: ElementsFlavour) {
     if (this.activeFlavour === val) return;
-    settings.vibrate(20);
     this.activeFlavour = val;
     this.modSettings.setString('flavour', val);
   }
 
   setFilter(val: TacticalFilter) {
-    settings.vibrate(20);
     this.tacticalFilter = val;
     this.modSettings.setString('filter', val);
   }
@@ -83,15 +72,15 @@ class ElementsState {
     }
   }
 
+  // Data back to a fresh start; the flavour is the variant and stays (DESIGN_SYSTEM §11)
   resetModule() {
-    settings.vibrate(30);
-    this.activeFlavour = 'table';
     this.tacticalFilter = 'none';
     this.searchQuery = '';
-    this.selectedElementZ = null;
-    this.modSettings.setString('flavour', 'table');
+    this.targetFocusZ = null;
+    this.selectedElementZ = DEFAULT_SELECTED_Z;
     this.modSettings.setString('filter', 'none');
     this.modSettings.setString('search_query', '');
+    this.modSettings.setNumber('selected_z', DEFAULT_SELECTED_Z);
   }
 }
 

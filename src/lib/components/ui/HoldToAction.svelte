@@ -14,6 +14,8 @@
     holdDuration?: number;
     variant?: "utility" | "outline" | "menu" | "icon-only";
     iconSize?: number;
+    /** Icon above a small uppercase caption, like the captions of the main keys. */
+    stacked?: boolean;
     class?: string;
   }
 
@@ -28,6 +30,7 @@
     holdDuration = 380,
     variant = "utility",
     iconSize,
+    stacked = false,
     class: customClass = "",
   }: Props = $props();
 
@@ -181,6 +184,7 @@
   class:is-holding={isHolding}
   class:is-confirmed={isConfirmed}
   class:is-shaking={isShaking}
+  class:is-stacked={stacked}
   {disabled}
   title={ariaLabel || label}
   aria-label={ariaLabel || label}
@@ -258,7 +262,7 @@
     min-height: var(--tap-min-size, 48px);
     padding: var(--space-md);
     background-color: var(--color-surface-2);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid color-mix(in srgb, var(--color-accent-danger) 30%, transparent);
     border-radius: var(--radius-md);
     font-size: var(--text-base);
     font-weight: 600;
@@ -287,7 +291,7 @@
     min-height: 36px;
     padding: 0;
     background-color: transparent;
-    border: 1px solid rgba(239, 68, 68, 0.25);
+    border: 1px solid color-mix(in srgb, var(--color-accent-danger) 25%, transparent);
     border-radius: var(--radius-sm);
     color: var(--color-accent-danger);
     justify-content: center;
@@ -328,7 +332,7 @@
     width: 0%;
     opacity: 0;
     background: var(--color-accent-danger);
-    box-shadow: 0 0 6px rgba(239, 68, 68, 0.8), 0 0 2px rgba(239, 68, 68, 1);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--color-accent-danger) 80%, transparent), 0 0 2px var(--color-accent-danger);
     pointer-events: none;
     transition: width 0.15s ease-out, opacity 0.1s ease;
   }
@@ -348,7 +352,7 @@
 
   .hold-btn.is-confirmed {
     background-color: var(--color-accent-danger);
-    color: #ffffff;
+    color: var(--color-text-primary);
     border-color: var(--color-accent-danger);
   }
 
@@ -388,6 +392,29 @@
 
   .variant-menu .btn-content {
     gap: var(--space-md);
+  }
+
+  /* Same caption as `Keycap` sublabels, so the bottom row reads as one set of keys */
+  /* A size container like `Keycap`, so the caption also scales with the key height */
+  .hold-btn.is-stacked {
+    container-type: size;
+  }
+
+  /* Full width, so the caption's 95 % is of the key, not of the caption itself */
+  .is-stacked .btn-content {
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+  }
+
+  .is-stacked .btn-label {
+    max-width: 95%;
+    font-size: min(var(--text-xs), 3.6vw, 28cqh);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
   }
 
   .btn-icon {

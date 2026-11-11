@@ -1,11 +1,9 @@
 import {
   PAIR_TO_ENTRY,
-  CHAR_TO_ENTRY,
   makePairKey,
   transformDirection,
   type SemaphoreEntry
 } from './semaphoreData';
-import { removeDiacritics } from '../../utils/text';
 
 export interface SemaphoreDecodeOptions {
   mirrorX?: boolean;
@@ -15,6 +13,22 @@ export interface SemaphoreDecodeOptions {
 export interface SemaphoreTypingState {
   text: string;
   /** Numerals mode: after `#`, A–I and K read as 1–9 and 0 until `J`. */
+  numMode: boolean;
+}
+
+export interface DecodedSemaphoreField {
+  field: string;
+  /** What the field shows: character, `␣`, `#`, `⌫`, `?` for an invalid field. */
+  symbol: string;
+  /** `control` writes nothing: `#`, `J` leaving numerals, Omyl. */
+  kind: 'char' | 'space' | 'control' | 'invalid';
+  /** A later Omyl erased this field's character. */
+  erased: boolean;
+}
+
+export interface DecodedSemaphoreFields {
+  items: DecodedSemaphoreField[];
+  text: string;
   numMode: boolean;
 }
 
@@ -71,39 +85,72 @@ export function previewSemaphoreEntry(entry: SemaphoreEntry | null, numMode: boo
   return getCharForEntry(entry, numMode);
 }
 
+/** Arm number of the notation: 1 is down, then clockwise. */
+export function directionToArm(direction: number): number {
+  return ((direction + 4) % 8) + 1;
+}
+
+function armToDirection(arm: number): number {
+  return (arm + 3) % 8;
+}
+
+/** Notation field of two direction indices, smaller arm first. */
+export function dirsToField(a: number, b: number): string {
+  return [directionToArm(a), directionToArm(b)].sort((x, y) => x - y).join('');
+}
+
+/** Direction indices of a field in either order; `null` unless it is two different arms 1–8. */
+export function fieldToDirs(field: string): [number, number] | null {
+  if (!/^[1-8]{2}$/.test(field) || field[0] === field[1]) return null;
+  return [armToDirection(Number(field[0])), armToDirection(Number(field[1]))];
+}
+
 /**
- * Parses pasted text or sequence of numbers (e.g. "45 46 67" or "AHOJ")
+ * Replays the notation fields from the start. Numerals mode and Omyl are not stored,
+ * so a changed option or an edited field recomputes everything after it.
  */
-export function normalizeSemaphoreInput(
-  rawText: string,
+export function decodeSemaphoreFields(
+  fields: string[],
   options: SemaphoreDecodeOptions = {}
-): string {
-  const trimmed = rawText.trim();
-  if (!trimmed) return '';
+): DecodedSemaphoreFields {
+  let state: SemaphoreTypingState = { text: '', numMode: false };
+  const items: DecodedSemaphoreField[] = [];
+  // Index of the item behind each character of `state.text`, for Omyl to strike out
+  const written: number[] = [];
 
-  // Check if input looks like direction pairs (e.g. "45 56", "4-5 5-6", "0,4 1,4")
-  const pairMatch = trimmed.match(/^([0-7][\s,\-_/]*[0-7][\s|;/\n]+)+[0-7][\s,\-_/]*[0-7]$/);
-  const numberStreamMatch = trimmed.match(/^[0-7]{2,}(\s+[0-7]{2,})*$/);
+  for (const field of fields) {
+    const index = items.length;
 
-  if (pairMatch || numberStreamMatch) {
-    // Parse digits in pairs
-    const digits = trimmed.replace(/[^0-7]/g, '');
-    let result = '';
-    for (let i = 0; i + 1 < digits.length; i += 2) {
-      const d1 = parseInt(digits[i], 10);
-      const d2 = parseInt(digits[i + 1], 10);
-      const entry = decodePair(d1, d2, options);
-      if (entry) {
-        result += getCharForEntry(entry);
-      } else {
-        result += '?';
-      }
+    if (field === '') {
+      state = { ...state, text: state.text + ' ' };
+      written.push(index);
+      items.push({ field, symbol: '␣', kind: 'space', erased: false });
+      continue;
     }
-    return result;
+
+    const dirs = fieldToDirs(field);
+    const entry = dirs && decodePair(dirs[0], dirs[1], options);
+    if (!entry) {
+      state = { ...state, text: state.text + '?' };
+      written.push(index);
+      items.push({ field, symbol: '?', kind: 'invalid', erased: false });
+      continue;
+    }
+
+    const next = applySemaphoreEntry(state, entry);
+    if (next.text.length < state.text.length) {
+      items[written.pop()!].erased = true;
+    } else if (next.text.length > state.text.length) {
+      written.push(index);
+    }
+    items.push({
+      field,
+      symbol: previewSemaphoreEntry(entry, state.numMode),
+      kind: next.text.length > state.text.length ? 'char' : 'control',
+      erased: false
+    });
+    state = next;
   }
 
-  // Otherwise, treat as Latin text
-  const clean = removeDiacritics(trimmed).toUpperCase();
-
-  return clean;
+  return { items, text: state.text, numMode: state.numMode };
 }

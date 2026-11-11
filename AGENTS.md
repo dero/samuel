@@ -4,7 +4,7 @@
 
 ## 1. Zdroje & Plánování
 - **POKUD** tvoříš nebo upravuješ UI, **POTOM** se řiď [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)
-- **POKUD** měníš chování modulu (ovládání, volby v menu), **POTOM** aktualizuj i jeho referenci (záložka „Návod“, viz DESIGN_SYSTEM §3 *Reference*).
+- **POKUD** měníš chování modulu (ovládání, volby v menu), **POTOM** aktualizuj i jeho tahák (záložka „Návod“, viz DESIGN_SYSTEM §10 *Tahák*).
 - **POKUD** navrhuješ nový modul nebo šifrovací logiku, **POTOM** vycházej z [`research/PLAN.md`](research/PLAN.md) (heuristiky, paralelní varianty, algoritmy).
 
 ## 2. Tooling & Příkazy

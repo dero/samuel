@@ -18,17 +18,36 @@
   ];
 
   const help: RefHelpData = {
+    purpose: [
+      'Braillovo písmo zapisuje znaky vystouplými body v mřížce o dvou sloupcích a třech řádcích. Nástroj převede body na text a pod každým znakem ukáže čísla jeho bodů.'
+    ],
+    howTo: [
+      'Body jsou číslované vlevo shora `1`, `2`, `3` a vpravo `4`, `5`, `6`. Zapněte body znaku a potvrďte ho prostřední klávesou dole. Číslice se píšou jako A–J za znakem `⠼` (body `3456`), který platí až do mezery nebo jiného znaku než A–J.'
+    ],
+    example: {
+      title: 'Příklad: AHOJ',
+      steps: [
+        { action: 'Klepněte na bod `1`.', result: 'Bod svítí, ve výstupu je rozepsané A a prostřední klávesa dole ukazuje A.' },
+        { action: 'Klepněte na prostřední klávesu.', result: 'A je vložené, pod ním je `1` a body zhasnou.' },
+        { action: 'Táhněte prstem přes body `1`, `2` a `5`, pak klepněte na prostřední klávesu.', result: 'Přibude H s čísly `125`.' },
+        { action: 'Klepnutím na body zadejte O (`1`, `3`, `5`) a J (`2`, `4`, `5`), každé potvrďte.', result: 'Výstup ukazuje AHOJ. Na záložce Podklad je totéž jako `1,125,135,245`.' }
+      ]
+    },
     controls: [
-      ['Klepnutí nebo tah', 'zapne body, další klepnutí bod vypne'],
-      ['Prostřední tlačítko', 'potvrdí znak, bez bodů vloží mezeru'],
-      ['Backspace', 'nejdřív zruší vybrané body, pak maže text'],
-      ['Okamžité vkládání', 'v menu: znak se vloží hned po tahu']
+      ['Body `1`–`6`', 'Klepnutím bod zapnete, dalším klepnutím vypnete. Tahem prstu zapnete několik bodů najednou.'],
+      ['Mezera (uprostřed dole)', 'Bez vybraných bodů vloží mezeru. S vybranými body ukazuje rozepsaný znak a klepnutím ho vloží.'],
+      ['Zpět (vpravo dole)', 'Zruší vybrané body (ukazuje ✕), jinak smaže poslední znak.'],
+      ['Koš (vlevo dole)', 'Podržením smaže celý zápis.'],
+      ['Záložka Podklad', 'Celý zápis jako čísla bodů: `1,125,,12`. Čárka dělí znaky, prázdné pole je mezera. Neznámá kombinace bodů zůstane v textu a označí se.'],
+      ['Menu → Okamžité vkládání', 'Znak se vloží hned po zvednutí prstu, bez potvrzení. Celý znak pak zadejte jedním tahem.'],
+      ['Menu → Česká diakritika', 'Zapnutá (výchozí) čte česká písmena s diakritikou a body `2456` jako Ř. Vypnutá čte mezinárodně, `2456` je W.'],
+      ['Menu → Čísla bez prefixu', 'Čte A–J jako číslice `1`–`0` i bez znaku `⠼`.']
     ],
     pitfalls: [
-      ['Číslice', 'tvar A–J za prefixem `⠼` (3456), platí do mezery'],
-      ['Číslice bez prefixu', 'v zadání chybí `⠼` → menu Čísla bez prefixu'],
-      ['W a Ř', 'české W = 12356, mezinárodní W (2456) je česky Ř → menu Česká diakritika'],
-      ['Ražba ze zadní strany', 'sloupce jsou zrcadlově: `1`↔`4`, `2`↔`5`, `3`↔`6`']
+      ['Šifra má číslice bez znaku `⠼`?', 'Zapněte Menu → Čísla bez prefixu. Body A–J se pak čtou jen jako číslice.'],
+      ['V textu je Ř tam, kde čekáte W?', 'Mezinárodní Braille píše W body `2456`, česky je to Ř. Vypněte Menu → Česká diakritika.'],
+      ['Šifra má před písmeny body `6` nebo `56`?', 'To jsou prefixy velkých písmen. Nástroj velká písmena nerozlišuje, proto je nezadávejte, jinak se ukážou jako `?`.'],
+      ['Čtete ražbu ze zadní strany papíru?', 'Body jsou zrcadlově: zadávejte `4` místo `1`, `5` místo `2`, `6` místo `3` a naopak.']
     ]
   };
 </script>
@@ -81,9 +100,9 @@
 
   .symbol-char {
     font-family: var(--font-condensed);
-    font-size: calc(20px * var(--font-scale));
+    font-size: var(--text-xl);
     font-weight: 800;
-    color: #ffffff;
+    color: var(--color-text-primary);
     line-height: 1;
     flex: 1;
     text-align: center;
@@ -97,7 +116,7 @@
     padding: 3px;
     background-color: var(--color-surface-2);
     border-radius: 3px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border-subtle);
     flex-shrink: 0;
   }
 
@@ -105,7 +124,7 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.12);
+    background-color: var(--color-border-subtle);
   }
 
   .dot.is-on {

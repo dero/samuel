@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { CaretDown, Plus } from 'phosphor-svelte';
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
@@ -14,6 +15,16 @@
   let inspectedLayout = $derived(
     alphabet.getLayout(inspectedLayoutId) ?? alphabet.layouts[0]
   );
+
+  // The list has its own count column, so a built-in name's "(26)" would only repeat it
+  function listName(name: string, count: number): string {
+    return name.replace(new RegExp(`\\s*\\(${count}\\)$`), '');
+  }
+
+  function formatCount(n: number): string {
+    if (n === 1) return '1 znak';
+    return n >= 2 && n <= 4 ? `${n} znaky` : `${n} znaků`;
+  }
 
   function handleDeleteCustomLayout(id: string) {
     const resetModules = alphabet.deleteCustomLayout(id);
@@ -42,76 +53,79 @@
 </script>
 
 <section class="card">
-  <h2 class="card-title">Správa abeced</h2>
-  <p class="card-desc">Abecedu pro nástroj zvolíte v jeho menu.</p>
+  <div class="card-head">
+    <h2 class="card-title">Správa abeced</h2>
+    <p class="card-desc">Abecedu pro nástroj zvolíte v jeho menu.</p>
+  </div>
 
-  <div class="layouts-list">
+  <ul class="layout-list">
     {#each alphabet.layouts as layout (layout.id)}
-      {@const isInspected = layout.id === inspectedLayoutId}
-      <div class="layout-row" class:active={isInspected}>
+      {@const open = layout.id === inspectedLayoutId}
+      <li class="layout-item" class:is-open={open}>
         <button
           type="button"
-          class="layout-select-btn"
+          class="layout-row"
+          aria-expanded={open}
           onclick={() => {
+            if (open) return;
             settings.vibrate(20);
             inspectedLayoutId = layout.id;
           }}
         >
-          <span class="layout-name">{layout.name}</span>
-          <span class="layout-count">{layout.letters.length} znaků</span>
-          {#if layout.isBuiltin}
-            <span class="builtin-badge">Vestavěná</span>
-          {:else}
-            <span class="custom-badge">Vlastní</span>
+          <span class="layout-name">{listName(layout.name, layout.letters.length)}</span>
+          {#if !layout.isBuiltin}
+            <span class="custom-tag">Vlastní</span>
           {/if}
+          <span class="layout-count">{formatCount(layout.letters.length)}</span>
+          <span class="layout-caret" aria-hidden="true">
+            <CaretDown size={14} weight="bold" />
+          </span>
         </button>
 
-        {#if !layout.isBuiltin}
-          <HoldToAction
-            onAction={() => handleDeleteCustomLayout(layout.id)}
-            showLabel={false}
-            ariaLabel="Podržte pro smazání vlastní abecedy"
-            holdDuration={400}
-            variant="icon-only"
-          />
+        {#if open}
+          <div class="layout-detail">
+            <!-- A custom name may be cut in the row; its stored description says nothing -->
+            {#if !layout.isBuiltin}
+              <p class="layout-desc">{layout.name}</p>
+            {:else if layout.description}
+              <p class="layout-desc">{layout.description}</p>
+            {/if}
+            <div class="letters-grid">
+              {#each layout.letters as letter, i (i)}
+                <span class="letter-chip">{letter}</span>
+              {/each}
+            </div>
+            {#if layout.isBuiltin}
+              <p class="layout-note">Vestavěnou abecedu nelze upravit, jen zkopírovat.</p>
+            {:else}
+              <div class="layout-actions">
+                <button
+                  type="button"
+                  class="secondary-btn"
+                  onclick={() => {
+                    settings.vibrate(25);
+                    editorMode = 'edit';
+                    editorOpen = true;
+                  }}
+                >
+                  Upravit
+                </button>
+                <HoldToAction
+                  onAction={() => handleDeleteCustomLayout(layout.id)}
+                  label="Smazat"
+                  confirmedLabel="Smazáno"
+                  ariaLabel="Podržte pro smazání vlastní abecedy"
+                  holdDuration={400}
+                  variant="outline"
+                />
+              </div>
+            {/if}
+          </div>
         {/if}
-      </div>
+      </li>
     {/each}
-  </div>
+  </ul>
 
-  <!-- Letters grid for inspected layout -->
-  <div class="letters-preview">
-    <div class="preview-label">
-      <strong>{inspectedLayout.name}</strong>
-    </div>
-    {#if inspectedLayout.description}
-      <div class="preview-desc">{inspectedLayout.description}</div>
-    {/if}
-    <div class="letters-chips">
-      {#each inspectedLayout.letters as letter}
-        <span class="letter-chip">{letter}</span>
-      {/each}
-    </div>
-    {#if inspectedLayout.isBuiltin}
-      <div class="preview-hint">
-        Vestavěnou abecedu nelze upravit, jen zkopírovat.
-      </div>
-    {:else}
-      <button
-        type="button"
-        class="secondary-btn"
-        onclick={() => {
-          settings.vibrate(25);
-          editorMode = 'edit';
-          editorOpen = true;
-        }}
-      >
-        Upravit
-      </button>
-    {/if}
-  </div>
-
-  <!-- Create Custom Layout -->
   <button
     type="button"
     class="secondary-btn"
@@ -121,7 +135,8 @@
       editorOpen = true;
     }}
   >
-    + Nová abeceda
+    <Plus size={16} weight="bold" />
+    Nová abeceda
   </button>
 </section>
 
@@ -138,14 +153,15 @@
 />
 
 <style>
+  /* Matches the cards in SettingsModule */
   .card {
     background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
-    padding: var(--space-md);
+    padding: var(--space-lg);
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 14px;
   }
 
   .card-title {
@@ -155,145 +171,171 @@
   }
 
   .card-desc {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
     line-height: 1.4;
-    margin: 0;
+    margin: 3px 0 0 0;
   }
 
-  .layouts-list {
+  /* One box with hairlines, like the version box above: names left, counts in one column */
+  .layout-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-  }
-
-  .layout-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    margin: 0;
+    padding: 0;
+    list-style: none;
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    padding: 6px 10px;
+    overflow: hidden;
   }
 
-  .layout-row.active {
-    border-color: var(--color-accent-primary);
+  .layout-item + .layout-item {
+    border-top: 1px solid var(--color-border-subtle);
   }
 
-  .layout-select-btn {
-    display: flex;
+  .layout-item.is-open {
+    background-color: var(--color-surface-3);
+    box-shadow: inset 3px 0 0 var(--color-accent-primary);
+  }
+
+  .layout-row {
+    display: grid;
+    /* Fixed columns: name, optional tag, count pushed right, caret */
+    grid-template-columns: minmax(0, auto) auto 1fr 16px;
     align-items: center;
-    gap: var(--space-sm);
-    flex: 1;
-    text-align: left;
-    padding: 6px 0;
+    column-gap: var(--space-sm);
+    width: 100%;
+    min-height: 44px;
+    padding: var(--space-sm) var(--space-md);
     background: none;
     border: none;
-    cursor: pointer;
-    font: inherit;
     color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .layout-item:not(.is-open) .layout-row:active {
+    background-color: var(--color-surface-active);
   }
 
   .layout-name {
+    grid-column: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: var(--text-sm);
     font-weight: 600;
   }
 
-  .layout-count {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-  }
-
-  .builtin-badge {
-    font-size: var(--text-2xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    padding: 1px 6px;
-    border-radius: var(--radius-full);
-    background-color: var(--color-surface-active);
-    color: var(--color-text-secondary);
-  }
-
-  .custom-badge {
-    font-size: var(--text-2xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+  .custom-tag {
+    grid-column: 2;
     padding: 1px 6px;
     border-radius: var(--radius-full);
     background-color: var(--color-accent-primary-subtle);
     color: var(--color-accent-primary);
+    font-size: var(--text-2xs);
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    white-space: nowrap;
   }
 
-  .letters-preview {
+  .layout-count {
+    grid-column: 3;
+    justify-self: end;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+
+  .layout-caret {
+    grid-column: 4;
+    display: flex;
+    justify-content: center;
+    color: var(--color-text-muted);
+  }
+
+  .is-open .layout-caret {
+    color: var(--color-accent-primary);
+    transform: rotate(180deg);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .layout-caret {
+      transition: transform 0.15s ease;
+    }
+  }
+
+  .layout-detail {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    padding: var(--space-md);
-    background-color: var(--color-surface-2);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border-subtle);
+    padding: 0 var(--space-md) var(--space-md);
   }
 
-  .preview-label {
+  .layout-desc,
+  .layout-note {
+    margin: 0;
     font-size: var(--text-xs);
-    font-weight: 600;
+    line-height: 1.4;
     color: var(--color-text-secondary);
   }
 
-  .preview-desc {
-    font-size: var(--text-xs);
+  .layout-note {
     color: var(--color-text-muted);
-    line-height: 1.35;
   }
 
-  .preview-hint {
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-    font-style: italic;
-    line-height: 1.35;
-    margin-top: 4px;
-  }
-
-  .letters-chips {
-    display: flex;
-    flex-wrap: wrap;
+  /* Equal cells so the letters line up in columns on every width */
+  .letters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
     gap: 4px;
   }
 
   .letter-chip {
-    padding: 4px 8px;
-    background-color: var(--color-surface-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-xs);
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     font-weight: 600;
-    color: inherit;
+  }
+
+  .layout-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
   }
 
   .secondary-btn {
-    padding: 10px 14px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-accent-primary);
-    text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
+    min-height: 40px;
+    padding: 10px 14px;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-accent-primary);
+    text-align: center;
     cursor: pointer;
-    font: inherit;
   }
 
   .secondary-btn:active:not(:disabled) {
     background-color: var(--color-surface-active);
   }
-
 </style>

@@ -2,19 +2,25 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
   import SimpleKeyboard from '../../components/ui/SimpleKeyboard.svelte';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
   import ElementsTable from './ElementsTable.svelte';
   import ElementsSearch from './ElementsSearch.svelte';
   import ElementsReference from './ElementsReference.svelte';
   import { elementsState, type ElementsFlavour } from './elementsState.svelte';
-  import type { TacticalFilter, ChemicalElement } from './elementsData';
-  import { settings } from '../../state/settings.svelte';
+  import {
+    ELEMENTS,
+    isElementRadioactive,
+    type TacticalFilter,
+    type ChemicalElement
+  } from './elementsData';
 
-  const flavourOptions: SegmentOption<ElementsFlavour>[] = [
+  const FLAVOUR_OPTIONS: SegmentOption<ElementsFlavour>[] = [
     { id: 'table', label: 'Tabulka' },
-    { id: 'search', label: 'Hledat' }
+    { id: 'search', label: 'Hledání' }
   ];
 
-  const filterOptions: { id: TacticalFilter; label: string }[] = [
+  const FILTERS: { id: TacticalFilter; label: string }[] = [
     { id: 'none', label: 'Vše' },
     { id: 'letters', label: '1-písmenné' },
     { id: 'state', label: 'Skupenství' },
@@ -23,173 +29,123 @@
     { id: 'czech', label: 'České' }
   ];
 
+  const count = (match: (el: ChemicalElement) => boolean) => ELEMENTS.filter(match).length;
+
+  // What the highlighted tiles are, per filter (the data never changes)
+  const TABLE_STATUS: Record<TacticalFilter, string> = {
+    none: `Všech ${ELEMENTS.length} prvků`,
+    letters: `Jednopísmenné značky: ${count((el) => el.symbol.length === 1)}`,
+    state: `Skupenství: plyny ${count((el) => el.state === 'gas')}, kapaliny ${count((el) => el.state === 'liquid')}`,
+    spdf: `Bloky: ${(['s', 'p', 'd', 'f'] as const).map((b) => `${b} ${count((el) => el.block === b)}`).join(', ')}`,
+    radioactive: `Radioaktivní: ${count(isElementRadioactive)}`,
+    czech: `Vlastní český název: ${count((el) => el.czechDiffersFromLatin)}`
+  };
+
   let tableRef = $state<{ resetView: () => void } | null>(null);
 
-  function handleFlavourChange(val: ElementsFlavour) {
-    elementsState.setFlavour(val);
-  }
+  const isSearch = $derived(elementsState.activeFlavour === 'search');
 
-  function handleFilterChange(val: TacticalFilter) {
-    elementsState.setFilter(val);
-  }
+  const searchStatus = $derived.by(() => {
+    const found = elementsState.searchMatches.length;
+    return found === 0 ? 'Nic nenalezeno' : `Nalezeno ${found}`;
+  });
 
-  function handleKeyChar(char: string) {
-    elementsState.addSearchChar(char);
-  }
-
-  function handleBackspace() {
-    elementsState.backspaceSearch();
-  }
-
-  function handleClear() {
-    elementsState.clearSearch();
-  }
-
+  // The tile tap already vibrated (ElementCard)
   function handleShowInTable(el: ChemicalElement) {
-    settings.vibrate(20);
     elementsState.targetFocusZ = el.z;
     elementsState.selectElement(el.z);
     elementsState.setFlavour('table');
+  }
+
+  function handleReset() {
+    elementsState.resetModule();
+    tableRef?.resetView();
   }
 </script>
 
 <ModuleShell
   title="Chemie"
   hasAlphabet={false}
-  onReset={() => elementsState.resetModule()}
+  onReset={handleReset}
+  bar={{
+    empty: isSearch && !elementsState.searchQuery,
+    hint: 'Zadejte číslo, značku nebo název.',
+    status: isSearch ? searchStatus : TABLE_STATUS[elementsState.tacticalFilter]
+  }}
 >
-  <!-- ZONE-OUTPUT -->
   {#snippet output()}
-    <div class="elements-output-wrapper">
-      {#if elementsState.activeFlavour === 'table'}
-        <ElementsTable bind:this={tableRef} />
-      {:else}
+    <div class="elements-output">
+      {#if isSearch}
         <ElementsSearch onShowInTable={handleShowInTable} />
-      {/if}
-    </div>
-  {/snippet}
-
-  <!-- ZONE-INPUT: Sub-Toolbar + Keypad or Tactical Filters -->
-  {#snippet input()}
-    <div class="zone-input-flow">
-      <!-- 1. Sub-Toolbar (36px): Flavour switch -->
-      <div class="subtoolbar-container">
-        <SegmentedControl
-          options={flavourOptions}
-          value={elementsState.activeFlavour}
-          onChange={handleFlavourChange}
-          size="sm"
-        />
-      </div>
-
-      <!-- 2. Active Stage per Flavour -->
-      {#if elementsState.activeFlavour === 'table'}
-        <!-- 2-Row Tactical Filters Stage -->
-        <div class="filters-grid" role="group" aria-label="Taktické filtry">
-          {#each filterOptions as f}
-            <button
-              type="button"
-              class="filter-pill-btn"
-              class:is-active={elementsState.tacticalFilter === f.id}
-              onclick={() => handleFilterChange(f.id)}
-            >
-              <span class="filter-pill-label">{f.label}</span>
-            </button>
-          {/each}
-        </div>
       {:else}
-        <!-- Search Keyboard with Numbers and Letters -->
-        <SimpleKeyboard
-          includeNumbers={true}
-          hasInput={!!elementsState.searchQuery}
-          onChar={handleKeyChar}
-          onBackspace={handleBackspace}
-          onClear={handleClear}
-        />
+        <ElementsTable bind:this={tableRef} />
       {/if}
     </div>
   {/snippet}
 
-  <!-- Reference Modal Content -->
+  {#snippet variants()}
+    <SegmentedControl
+      options={FLAVOUR_OPTIONS}
+      value={elementsState.activeFlavour}
+      size="sm"
+      ariaLabel="Pohled"
+      onChange={(flavour) => elementsState.setFlavour(flavour)}
+    />
+  {/snippet}
+
+  {#snippet input()}
+    {#if isSearch}
+      <SimpleKeyboard
+        includeNumbers={true}
+        query={elementsState.searchQuery}
+        placeholder="Značka, název, číslo…"
+        hasInput={!!elementsState.searchQuery}
+        onChar={(char) => elementsState.addSearchChar(char)}
+        onBackspace={() => elementsState.backspaceSearch()}
+        onClear={() => elementsState.clearSearch()}
+      />
+    {:else}
+      <Chassis columns={3} keyHeight="42px">
+        {#each FILTERS as filter (filter.id)}
+          {@const isActive = elementsState.tacticalFilter === filter.id}
+          <Keycap
+            selected={isActive}
+            title="Filtr {filter.label}"
+            ariaLabel="Filtr {filter.label}{isActive ? ', vybráno' : ''}"
+            onPress={() => elementsState.setFilter(filter.id)}
+          >
+            <span class="filter-key">{filter.label}</span>
+          </Keycap>
+        {/each}
+      </Chassis>
+    {/if}
+  {/snippet}
+
   {#snippet reference()}
     <ElementsReference />
   {/snippet}
 </ModuleShell>
 
 <style>
-  .elements-output-wrapper {
+  .elements-output {
     flex: 1;
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
-    min-height: var(--output-min-height, 84px);
+    min-height: 0;
     overflow: hidden;
     position: relative;
-    box-sizing: border-box;
-    padding: 0;
   }
 
-  .zone-input-flow {
-    display: flex;
-    flex-direction: column;
-    gap: var(--zone-input-gap, 8px);
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .subtoolbar-container {
-    height: 36px;
-    display: flex;
-    align-items: center;
+  /* Filter names are words, not glyphs: capped by width so "Radioaktivita" fits a third of 320 px */
+  .filter-key {
+    max-width: 95%;
     overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  /* 2-Row Tactical Filters Grid */
-  .filters-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(2, 34px);
-    gap: 4px;
-    width: 100%;
-    padding: 2px;
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm, 6px);
-    box-sizing: border-box;
-  }
-
-  .filter-pill-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    background-color: var(--color-surface-2);
-    border: none;
-    border-radius: 4px;
-    color: var(--color-text-secondary);
-    font-size: calc(11.5px * var(--font-scale));
-    font-weight: 600;
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: all 0.12s ease;
-    white-space: nowrap;
-    padding: 0 4px;
-  }
-
-  .filter-pill-btn:active {
-    transform: scale(0.97);
-  }
-
-  .filter-pill-btn.is-active {
-    background-color: var(--color-surface-active);
-    color: var(--color-accent-primary, #00d2ff);
+    font-size: min(var(--text-xs), 3.6vw);
     font-weight: 700;
-    box-shadow: inset 0 0 0 1px var(--color-border-focus, #00d2ff);
-  }
-
-  .filter-pill-label {
     line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 </style>

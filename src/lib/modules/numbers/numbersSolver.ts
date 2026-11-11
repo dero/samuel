@@ -1,4 +1,6 @@
-import { ROMAN_VALUES, type FlowMode } from './numbersData';
+import { BASE_CONFIGS, ROMAN_VALUES, type FlowMode } from './numbersData';
+import { parseNotation, serializeNotation } from '../../utils/notation';
+import type { InterlinearToken } from '../../components/ui/InterlinearText.svelte';
 
 export interface DecodeOptions {
   base?: number;
@@ -109,6 +111,17 @@ export function formatRoman(num: number): string | null {
 }
 
 /**
+ * Strict positional parse: unlike `parseInt`, a digit outside the base invalidates the
+ * whole field, so a typo in the Podklad text gets marked instead of being cut off.
+ */
+export function parseInBase(text: string, base: number): number | null {
+  const digits = BASE_CONFIGS[base]?.digits;
+  const upper = text.trim().toUpperCase();
+  if (!digits || !upper || [...upper].some((digit) => !digits.includes(digit))) return null;
+  return parseInt(upper, base);
+}
+
+/**
  * Decodes the current input buffer into a numeric value and resulting character.
  */
 export function decodeBuffer(buffer: string, options: DecodeOptions): DecodeResult {
@@ -137,9 +150,8 @@ export function decodeBuffer(buffer: string, options: DecodeOptions): DecodeResu
     }
     val = parsed.val;
   } else {
-    const base = options.base ?? 10;
-    const parsedVal = parseInt(trimmed, base);
-    if (isNaN(parsedVal)) {
+    const parsedVal = parseInBase(trimmed, options.base ?? 10);
+    if (parsedVal === null) {
       return {
         rawBuffer: trimmed,
         numericValue: null,
@@ -277,62 +289,147 @@ export function convertCharToRoman(
   return formatRoman(val);
 }
 
-/**
- * Converts a numeric value in fromBase to targetBase string.
- */
-export function convertNumberToNumber(
-  buffer: string,
-  fromBase: number,
-  toBase: number
-): { val: number | null; result: string | null; error?: string } {
-  const trimmed = buffer.trim();
-  if (!trimmed) return { val: null, result: null };
-  const val = parseInt(trimmed, fromBase);
-  if (isNaN(val)) return { val: null, result: null, error: 'Neplatná číslice' };
-  return { val, result: val.toString(toBase).toUpperCase() };
+export interface TokenOptions {
+  zeroBased: boolean;
+  asciiMode: boolean;
+  letters: string[];
+}
+
+function invalidToken(
+  tok: string,
+  errorText: string,
+  isPending: boolean,
+  secondarySub?: number
+): InterlinearToken {
+  return { primary: '?', secondary: tok, secondarySub, isError: true, errorText, isPending };
+}
+
+/** One entered field as an interlinear cell: the converted value over the source text. */
+export function decodeToken(
+  tok: string,
+  source: FlowMode,
+  target: FlowMode,
+  options: TokenOptions,
+  isPending = false
+): InterlinearToken {
+  if (tok === ' ') {
+    return { primary: ' ', secondary: '', isSpace: true, isPending };
+  }
+
+  const { zeroBased, asciiMode, letters } = options;
+  const toBase = typeof target === 'number' ? target : null;
+  const toRoman = target === 'roman' || target === 'roman_loose';
+
+  if (source === 'char') {
+    // Keys only give exact letters, the Podklad text may hold anything
+    const char = asciiMode || letters.includes(tok) ? tok : tok.toUpperCase();
+    const isValid = asciiMode ? [...tok].length === 1 : letters.includes(char);
+    if (!isValid) return invalidToken(tok, 'Znak není v abecedě', isPending);
+
+    if (toBase !== null) {
+      const numStr = convertCharToNumber(char, toBase, letters, zeroBased, asciiMode);
+      if (numStr === null) return invalidToken(tok, 'Znak není v abecedě', isPending);
+      return { primary: numStr, primarySub: toBase, secondary: tok, isPending };
+    }
+    if (toRoman) {
+      const roman = convertCharToRoman(char, letters, zeroBased, asciiMode);
+      if (roman === null) return invalidToken(tok, 'Mimo rozsah římských čísel (1–3999)', isPending);
+      return { primary: roman, secondary: tok, isPending };
+    }
+    return { primary: char, secondary: '', isPending };
+  }
+
+  const sourceBase = typeof source === 'number' ? source : undefined;
+  const isStrictRoman = source === 'roman';
+
+  let val: number;
+  if (sourceBase !== undefined) {
+    const parsed = parseInBase(tok, sourceBase);
+    if (parsed === null) {
+      return invalidToken(tok, `Číslice „${tok}“ neplatí v soustavě ${sourceBase}`, isPending, sourceBase);
+    }
+    val = parsed;
+  } else {
+    const parsed = parseRoman(tok, isStrictRoman);
+    if (parsed.val === null) {
+      return invalidToken(tok, parsed.error || 'Neplatný římský zápis', isPending);
+    }
+    val = parsed.val;
+  }
+
+  if (toBase !== null) {
+    return {
+      primary: val.toString(toBase).toUpperCase(),
+      primarySub: toBase,
+      secondary: tok,
+      secondarySub: sourceBase,
+      isPending
+    };
+  }
+
+  if (toRoman) {
+    const roman = formatRoman(val);
+    if (roman) return { primary: roman, secondary: tok, secondarySub: sourceBase, isPending };
+    if (sourceBase === undefined) return { primary: tok, secondary: tok, isPending };
+    return invalidToken(tok, 'Mimo rozsah římských čísel (1–3999)', isPending, sourceBase);
+  }
+
+  const res = decodeBuffer(tok, {
+    base: sourceBase,
+    isRoman: sourceBase === undefined,
+    strictRoman: isStrictRoman,
+    zeroBased,
+    asciiMode,
+    alphabetLetters: letters
+  });
+  if (res.status === 'valid' && res.character) {
+    return { primary: res.character, secondary: tok, secondarySub: sourceBase, isPending };
+  }
+  return invalidToken(tok, res.errorText || 'Mimo rozsah abecedy', isPending, sourceBase);
 }
 
 /**
- * Converts a numeric value in fromBase to Roman numerals.
+ * Podklad text of the keypad state. Spaces are `' '` in `raw_tokens` and empty fields in
+ * the notation; the unfinished buffer is written as the last field.
  */
-export function convertNumberToRoman(
-  buffer: string,
-  fromBase: number
-): { val: number | null; result: string | null; error?: string } {
-  const trimmed = buffer.trim();
-  if (!trimmed) return { val: null, result: null };
-  const val = parseInt(trimmed, fromBase);
-  if (isNaN(val)) return { val: null, result: null, error: 'Neplatná číslice' };
-  const roman = formatRoman(val);
-  if (!roman) return { val, result: null, error: 'Mimo rozsah (1–3999)' };
-  return { val, result: roman };
+export function tokensToNotation(tokens: string[], buffer: string): string {
+  const fields = tokens.map((token) => (token === ' ' ? '' : token));
+  return serializeNotation(buffer ? [...fields, buffer] : fields);
 }
 
 /**
- * Converts a Roman numeral string to targetBase.
+ * Inverse of `tokensToNotation`. Every field of an edited text counts as closed, except
+ * that under auto-enter (`blockLength` > 0) a last field shorter than a block goes back to
+ * the buffer, so the block being typed is not closed early. A trailing comma closes it.
  */
-export function convertRomanToNumber(
-  buffer: string,
-  toBase: number,
-  strictRoman = false
-): { val: number | null; result: string | null; error?: string } {
-  const parsed = parseRoman(buffer, strictRoman);
-  if (parsed.val === null) return { val: null, result: null, error: parsed.error };
-  return { val: parsed.val, result: parsed.val.toString(toBase).toUpperCase() };
+export function notationToTokens(text: string, blockLength = 0): { tokens: string[]; buffer: string } {
+  const tokens = parseNotation(text).map((field) => (field === '' ? ' ' : field));
+  const last = tokens.at(-1);
+  const isLastOpen =
+    !!last && last !== ' ' && last.length < blockLength && !/,\s*$/.test(text);
+  return isLastOpen ? { tokens: tokens.slice(0, -1), buffer: last } : { tokens, buffer: '' };
 }
 
 /**
- * Converts / normalizes a Roman numeral string to canonical Roman numerals.
+ * Fields rewritten in the target system when source and target swap; invalid fields stay
+ * verbatim. Null when a field converts to a comma (ASCII 44), which cannot be a field.
  */
-export function convertRomanToRoman(
-  buffer: string,
-  strictRoman = false
-): { val: number | null; result: string | null; error?: string } {
-  const parsed = parseRoman(buffer, strictRoman);
-  if (parsed.val === null) return { val: null, result: null, error: parsed.error };
-  const roman = formatRoman(parsed.val);
-  if (!roman) return { val: parsed.val, result: null, error: 'Mimo rozsah (1–3999)' };
-  return { val: parsed.val, result: roman };
+export function swapTokens(
+  tokens: string[],
+  source: FlowMode,
+  target: FlowMode,
+  options: TokenOptions
+): string[] | null {
+  const swapped: string[] = [];
+  for (const tok of tokens) {
+    const decoded = tok === ' ' ? null : decodeToken(tok, source, target, options);
+    if (!decoded || decoded.isError) {
+      swapped.push(tok);
+    } else if (decoded.primary.includes(',')) {
+      return null;
+    } else {
+      swapped.push(decoded.primary);
+    }
+  }
+  return swapped;
 }
-
-

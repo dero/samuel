@@ -17,7 +17,7 @@
     checked,
     type = 'checkbox',
     disabled = false,
-    isNonStandard = false,
+    isNonStandard,
     onChange
   }: Props = $props();
 
@@ -34,6 +34,7 @@
   class="option-row"
   class:is-disabled={disabled}
   class:is-nonstandard={isNonStandard}
+  class:can-be-nonstandard={isNonStandard !== undefined}
   onclick={(e) => {
     // If clicked on input itself, native change fires; otherwise toggle manually
     if ((e.target as HTMLElement).tagName !== 'INPUT') {
@@ -45,8 +46,14 @@
   <div class="option-content">
     <span class="option-label">
       {label}
-      {#if isNonStandard}
-        <span class="nonstandard-badge" title="Nestandardní nastavení" aria-label="Nestandardní nastavení">⚠</span>
+      {#if isNonStandard !== undefined}
+        <!-- Always in the layout, so switching the option never reflows the label -->
+        <span
+          class="nonstandard-badge"
+          class:is-visible={isNonStandard}
+          title={isNonStandard ? 'Nestandardní nastavení' : undefined}
+          aria-hidden={!isNonStandard}
+        >⚠</span>
       {/if}
     </span>
     {#if hint}
@@ -87,7 +94,10 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-md);
-    padding: var(--space-sm) 0;
+    padding: var(--space-sm) var(--space-xs) var(--space-sm) var(--space-sm);
+    border-left: 3px solid transparent;
+    /* The gutter for the non-standard bar reaches into the parent's padding: labels line up */
+    margin-left: calc(-1 * (var(--space-sm) + 3px));
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
@@ -104,17 +114,20 @@
   }
 
   .option-row.is-nonstandard {
-    border-left: 3px solid var(--color-accent-warning, #f59e0b);
-    padding-left: var(--space-sm);
-    background-color: rgba(245, 158, 11, 0.05);
-    border-radius: var(--radius-xs);
+    border-left-color: var(--color-accent-warning);
+    background-color: color-mix(in srgb, var(--color-accent-warning) 6%, transparent);
   }
 
   .nonstandard-badge {
-    color: var(--color-accent-warning, #f59e0b);
+    visibility: hidden;
+    color: var(--color-accent-warning);
     font-size: 0.85em;
     margin-left: 4px;
     font-weight: 700;
+  }
+
+  .nonstandard-badge.is-visible {
+    visibility: visible;
   }
 
   .option-content {

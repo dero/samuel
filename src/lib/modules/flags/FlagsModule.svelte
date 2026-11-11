@@ -1,9 +1,11 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
-  import HoldToAction from '../../components/ui/HoldToAction.svelte';
-  import SpaceButton from '../../components/ui/SpaceButton.svelte';
-  import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
+  import InterlinearText from '../../components/ui/InterlinearText.svelte';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
+  import KeypadBottomRow from '../../components/ui/KeypadBottomRow.svelte';
+  import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import FlagSvg from './FlagSvg.svelte';
   import FlagsReference from './FlagsReference.svelte';
@@ -14,6 +16,7 @@
     type FlagColor,
     type FlagItem
   } from './flagsData';
+  import { flagTextToTokens } from './flagsSolver';
   import { settings } from '../../state/settings.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
 
@@ -34,6 +37,9 @@
     modSettings.setBoolean('show_sailboat', showSailboat);
   });
 
+  const tokens = $derived(flagTextToTokens(inputLetters));
+  const hasFilter = $derived(selectedColors.length > 0);
+
   // Check if a maritime flag matches currently selected colors
   function matchesFilter(flag: FlagItem): boolean {
     if (selectedColors.length === 0) return true;
@@ -45,6 +51,11 @@
     LETTER_FLAGS.filter((f) => matchesFilter(f)).length
   );
 
+  function formatFlagCount(n: number): string {
+    if (n === 1) return '1 vlajka';
+    return n >= 2 && n <= 4 ? `${n} vlajky` : `${n} vlajek`;
+  }
+
   function toggleColor(color: FlagColor) {
     settings.vibrate(20);
     if (selectedColors.includes(color)) {
@@ -55,7 +66,6 @@
   }
 
   function handleFlagClick(flag: FlagItem) {
-    settings.vibrate(25);
     inputLetters += flag.code;
 
     if (autoResetFilter && selectedColors.length > 0) {
@@ -67,7 +77,7 @@
     if (selectedColors.length > 0) {
       selectedColors = [];
     } else if (inputLetters.length > 0) {
-      inputLetters = inputLetters.slice(0, -1);
+      inputLetters = Array.from(inputLetters).slice(0, -1).join('');
     }
   }
 
@@ -76,101 +86,112 @@
     selectedColors = [];
   }
 
+  // Data and Menu options back to defaults
+  function handleReset() {
+    handleClearAll();
+    autoResetFilter = false;
+    showSailboat = true;
+  }
+
   function handleSpace() {
     inputLetters += ' ';
   }
 </script>
 
 <ModuleShell
-  onReset={handleClearAll}
+  onReset={handleReset}
+  podklad={{
+    kind: 'text',
+    required: false,
+    empty: !inputLetters,
+    title: 'Zápis',
+    description: 'Přímo písmena vlajek, mezera je mezera.',
+    example: 'AHOJ SVETE',
+    placeholder: 'Např. AHOJ SVETE',
+    autocapitalize: 'characters',
+    value: inputLetters,
+    onSave: (val) => {
+      inputLetters = val;
+    }
+  }}
+  bar={{
+    empty: !inputLetters && !hasFilter,
+    hint: 'Filtrujte barvami, klepněte na vlajku.',
+    status: hasFilter ? `Filtr: ${formatFlagCount(matchCount)}` : undefined,
+    charCount: tokens.filter((t) => !t.isSpace).length
+  }}
 >
   {#snippet output()}
-    <div class="flags-output-container">
-      <TranslationCard
-        text={inputLetters}
-        emptyHint="Filtrujte vlajky barvami dole."
-      />
+    <TranslationCard text={inputLetters.toUpperCase()} hasContent={!!inputLetters}>
+      {#snippet children()}
+        <InterlinearText {tokens} scalePrimaryBy="primary" />
+      {/snippet}
+    </TranslationCard>
+  {/snippet}
+
+  {#snippet variants()}
+    <div class="color-filter" role="group" aria-label="Filtr barev">
+      {#each FLAG_COLORS as color (color.id)}
+        {@const isActive = selectedColors.includes(color.id)}
+        <button
+          type="button"
+          class="color-filter-btn"
+          class:is-active={isActive}
+          onpointerdown={(e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            toggleColor(color.id);
+          }}
+          aria-pressed={isActive}
+          aria-label="Filtrovat barvu {color.name}"
+        >
+          <span
+            class="color-swatch"
+            style:background-color={color.hex}
+            style:border-color={color.borderHex || color.hex}
+          ></span>
+          <span class="color-name">{color.name}</span>
+        </button>
+      {/each}
     </div>
   {/snippet}
 
   {#snippet input()}
     <div class="flags-keypad">
-      <!-- 26 Flags Grid (A–Z) with Sailboat Easter Egg in Top-Left Corner (2x2) -->
-      <div class="flags-grid">
+      <!-- 26 flags, with the sailboat filling the top-left 2×2 corner -->
+      <Chassis columns={5} keyHeight="40px">
         {#if showSailboat}
           <SailboatEasterEgg />
         {/if}
         {#each LETTER_FLAGS as flag (flag.code)}
           {@const isMatching = matchesFilter(flag)}
-          <button
-            type="button"
-            class="flag-tile"
-            class:is-dimmed={!isMatching}
-            onpointerdown={(e) => {
-              if (e.button !== 0) return;
-              e.preventDefault();
-              handleFlagClick(flag);
-            }}
-            aria-label="{flag.code} - {flag.name}"
-          >
-            <div class="flag-tile-preview">
-              <FlagSvg {flag} dimmed={!isMatching} />
-            </div>
-            <span class="flag-tile-code">{flag.code}</span>
-          </button>
+          <Keycap ariaLabel="{flag.code} - {flag.name}" onPress={() => handleFlagClick(flag)}>
+            <span class="flag-key" class:is-dimmed={!isMatching}>
+              <span class="flag-key-image">
+                <FlagSvg {flag} dimmed={!isMatching} />
+              </span>
+              <span class="flag-key-code">{flag.code}</span>
+            </span>
+          </Keycap>
         {/each}
         {#if !showSailboat}
-          <div class="grid-filler" style="grid-column: span 4;" aria-hidden="true"></div>
+          <div class="grid-filler" aria-hidden="true"></div>
         {/if}
-      </div>
+      </Chassis>
 
-      <!-- Utility Row: HoldToAction (Vymazat) + Mezera + Backspace (1.2fr 1fr 1fr) -->
-      <div class="keypad-utility-row-3col">
-        <HoldToAction
-          disabled={!inputLetters && selectedColors.length === 0}
-          onAction={handleClearAll}
-          label="Vymazat"
-          ariaLabel="Vymazat text podržením"
-        />
-
-        <SpaceButton
-          onAction={handleSpace}
-        />
-
-        <BackspaceButton
-          disabled={!inputLetters && selectedColors.length === 0}
-          hasActiveSelection={selectedColors.length > 0}
-          cancelLabel="Zrušit filtr"
-          cancelTitle="Zrušit aktivní filtr barev"
-          onAction={handleBackspace}
-        />
-      </div>
-
-      <!-- Dominant Row: 5 Large Color Filter Buttons (Bottom Thumb Reach) -->
-      <div class="color-filter-row">
-        {#each FLAG_COLORS as color (color.id)}
-          {@const isActive = selectedColors.includes(color.id)}
-          <button
-            type="button"
-            class="color-filter-btn"
-            class:is-active={isActive}
-            onpointerdown={(e) => {
-              if (e.button !== 0) return;
-              e.preventDefault();
-              toggleColor(color.id);
-            }}
-            aria-pressed={isActive}
-            aria-label="Filtrovat barvu {color.name}"
-          >
-            <span
-              class="color-swatch"
-              style:background-color={color.hex}
-              style:border-color={color.borderHex || color.hex}
-            ></span>
-            <span class="color-name">{color.name}</span>
-          </button>
-        {/each}
-      </div>
+      <KeypadBottomRow
+        clearDisabled={!inputLetters && !hasFilter}
+        backspaceDisabled={!inputLetters && !hasFilter}
+        clearLabel="Vymazat text podržením"
+        hasActiveSelection={hasFilter}
+        cancelTitle="Zrušit filtr barev"
+        onClear={handleClearAll}
+        onBackspace={handleBackspace}
+      >
+        {#snippet middle()}
+          <SpaceCommitButton onSpace={handleSpace} />
+        {/snippet}
+      </KeypadBottomRow>
     </div>
   {/snippet}
 
@@ -203,110 +224,49 @@
     gap: var(--zone-input-gap);
     width: 100%;
     user-select: none;
+    -webkit-user-select: none;
   }
 
-  /* Flags Output Container & Floating Filter Bar */
-  .flags-output-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
+  /* Side by side: a 40 px key has no room for a readable flag above its letter */
+  .flag-key {
     display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-
-  /* Flags Grid: 5 columns x 6 rows (with Sailboat in top-left 2x2) */
-  .flags-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: 48px;
-    gap: 2px;
-    padding: 2px;
-    width: 100%;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background-color: var(--color-bg-canvas);
-    border: 1px solid var(--color-border-subtle);
-    box-sizing: border-box;
-  }
-
-  .flag-tile {
-    display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: var(--color-surface-2);
-    border: none;
-    border-radius: 2px;
-    padding: 3px 2px;
-    gap: 2px;
-    height: 100%;
-    min-height: 0;
-    box-sizing: border-box;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s, box-shadow 0.08s, opacity 0.12s;
-    touch-action: manipulation;
+    gap: var(--space-xs);
   }
 
-  .grid-filler {
-    background-color: var(--color-surface-2);
-    opacity: 0.35;
-    border-radius: 2px;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.4);
-    pointer-events: none;
-    user-select: none;
-    height: 100%;
-  }
-
-  .flag-tile:active {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: none;
-  }
-
-  .flag-tile.is-dimmed {
-    background-color: var(--color-surface-1);
-    box-shadow: none;
-    opacity: 0.35;
-  }
-
-  .flag-tile-preview {
+  .flag-key-image {
+    flex: none;
     width: 28px;
     height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
-  .flag-tile-code {
-    font-family: var(--font-condensed);
-    font-size: var(--text-2xs);
-    font-weight: 700;
-    color: var(--color-text-primary);
+  .flag-key-code {
+    font-family: var(--font-mono);
+    font-size: var(--key-s);
+    font-weight: 800;
     line-height: 1;
   }
 
-  .flag-tile.is-dimmed .flag-tile-code {
+  .flag-key.is-dimmed .flag-key-code {
     color: var(--color-text-muted);
   }
 
-  /* Color Filter Row: 5 Compact Color Buttons (42px) */
-  .color-filter-row {
+  .grid-filler {
+    grid-column: span 4;
+    height: 100%;
+    background-color: var(--color-surface-2);
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .color-filter {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 2px;
-    padding: 2px;
+    gap: var(--space-xs);
     width: 100%;
-    height: var(--utility-row-height, 42px);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background-color: var(--color-bg-canvas);
-    border: 1px solid var(--color-border-subtle);
-    box-sizing: border-box;
+    height: 100%;
+    touch-action: manipulation;
   }
 
   .color-filter-btn {
@@ -315,54 +275,41 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
+    min-width: 0;
+    padding: 0;
     background-color: var(--color-surface-2);
-    border: none;
-    border-radius: 2px;
-    padding: 2px;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s, box-shadow 0.08s;
-    touch-action: manipulation;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xs);
+    color: var(--color-text-secondary);
     box-sizing: border-box;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
   }
 
   .color-filter-btn:active {
     background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: none;
   }
 
   .color-filter-btn.is-active {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
+    background-color: var(--color-accent-primary-subtle);
+    border-color: var(--color-accent-primary);
+    box-shadow: inset 0 0 0 1px var(--color-accent-primary);
+    color: var(--color-accent-primary);
   }
 
   .color-swatch {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
+    width: 12px;
+    height: 12px;
     border: 1.5px solid;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    transition: transform 0.12s, box-shadow 0.12s;
-  }
-
-  .color-filter-btn.is-active .color-swatch {
-    transform: scale(1.15);
-    box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    box-sizing: border-box;
   }
 
   .color-name {
-    font-family: var(--font-sans);
-    font-size: calc(9px * var(--font-scale));
+    max-width: 100%;
+    overflow: hidden;
+    font-size: min(var(--text-xs), 3.6vw);
     font-weight: 600;
-    color: var(--color-text-secondary);
-    letter-spacing: 0.2px;
     line-height: 1;
-  }
-
-  .color-filter-btn.is-active .color-name {
-    color: var(--color-accent-primary);
-    font-weight: 700;
+    white-space: nowrap;
   }
 </style>

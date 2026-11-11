@@ -3,6 +3,7 @@
   import RefLayout from "../../components/reference/RefLayout.svelte";
   import RefSection from "../../components/reference/RefSection.svelte";
   import type { RefHelpData, RefTab } from "../../components/reference/refTypes";
+  import sosImage from "./navod/rozepsane-sos.webp";
 
   type MorseRefTab = "list" | "tree";
 
@@ -12,19 +13,40 @@
   ];
 
   const help: RefHelpData = {
+    purpose: [
+      "Morseovka zapisuje písmena tečkami `•` a čárkami `—`. Nástroj ji převede na text a pod každým písmenem ukáže jeho kód."
+    ],
+    howTo: [
+      "Za každé písmeno patří oddělovač `/`, jinak nejde poznat, kde končí. Jedno lomítko ukončí písmeno, dvě slovo, tři a víc znamenají STOP."
+    ],
+    example: {
+      title: "Příklad: SOS",
+      steps: [
+        { action: "Klepněte třikrát na `•`.", result: "Ve výstupu svítí rozepsané S s kódem `...`." },
+        { action: "Klepněte na `/`.", result: "S je hotové a další tečka už začne nové písmeno." },
+        { action: "Klepněte třikrát na `—` a pak na `/`.", result: "Přibude O." },
+        { action: "Klepněte třikrát na `•` a dvakrát na `/`.", result: "Výstup ukazuje SOS a mezeru, můžete psát další slovo. Na záložce Podklad je totéž jako `.../---/...//`." }
+      ]
+    },
+    media: {
+      src: sosImage,
+      alt: "Výstup se třemi písmeny S, O, S; pod každým je jeho kód a poslední S svítí jako rozepsané.",
+      caption: "Pod každým písmenem je jeho kód. Poslední S ještě nemá lomítko, proto svítí jako rozepsané."
+    },
     controls: [
-      ["`•` `—`", "tečka, čárka"],
-      ["`/` 1×", "konec písmene"],
-      ["`/` 2×", "mezera mezi slovy"],
-      ["`/` 3× a víc", "STOP, konec věty"],
-      ["Backspace", "maže po jednom symbolu"],
-      ["Permutace", "inverze • ⇄ —, záměna s oddělovačem, pozpátku. Opište šifru přesně, i se všemi lomítky."],
-      ["Vyřešit bez mezer", "rozdělí kód bez oddělovačů na slova (od 4 znaků, potřebuje slovník)"]
+      ["`•` a `—`", "Přidají tečku nebo čárku k rozepsanému písmenu."],
+      ["`/` Oddělovač", "Jednou ukončí písmeno, dvakrát slovo, třikrát a víc je STOP."],
+      ["Zpět (vpravo dole)", "Smaže poslední symbol, i lomítko."],
+      ["Koš (vlevo dole)", "Podržením smaže celý kód."],
+      ["Záložka Podklad", "Celý kód jako text: `/` dělí písmena, `//` slova, `///` je STOP. Hodí se pro delší šifru nebo opravu uprostřed."],
+      ["Bez mezer (v liště)", "Rozdělí kód zapsaný bez lomítek na slova podle slovníku. Potřebuje aspoň 4 znaky a stažený slovník."],
+      ["Menu → Permutace", "Vyzkouší obvyklé záludnosti: prohozené tečky a čárky, záměnu s oddělovačem a čtení pozpátku."],
+      ["Menu → Telegrafní vedení", "Zapne nebo vypne animaci pod klávesami."]
     ],
     pitfalls: [
-      ["Kód bez oddělovačů", "nehádat ručně → Vyřešit bez mezer"],
-      ["Výsledek nedává smysl", "Permutace: prohozené • a —, čtení pozpátku"],
-      ["`----` = CH", "jen česky, mezinárodně kód nemá význam"]
+      ["V šifře nejsou oddělovače mezi tečkami a čárkami?", "Nehádejte ručně. Zapište ji bez lomítek a použijte Bez mezer v liště."],
+      ["Výsledek nedává smysl?", "Zkuste Menu → Permutace: prohozené tečky a čárky, nebo čtení pozpátku. Šifru opište přesně, i se všemi lomítky."],
+      ["Místo `----` se ukazuje CH?", "Tak je to jen v češtině, mezinárodní morseovka tento kód nezná."]
     ]
   };
 

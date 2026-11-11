@@ -1,13 +1,23 @@
 <script lang="ts">
-  import { settings } from '../../state/settings.svelte';
-  import { Backspace, Trash } from 'phosphor-svelte';
+  import { Backspace, MagnifyingGlass } from 'phosphor-svelte';
+  import Chassis from './Chassis.svelte';
+  import Keycap from './Keycap.svelte';
+  import HoldToAction from './HoldToAction.svelte';
 
+  /**
+   * In-app QWERTY for search fields of Přehled modules (Fakta, Chemie), so the OS keyboard
+   * never covers the results. Clearing the whole query is a hold, deleting a character a tap.
+   * 20-column grid: a letter spans 2, the half-key offsets of row 2 span 1, clear and backspace 3.
+   */
   interface Props {
     hasInput?: boolean;
     includeNumbers?: boolean;
     onChar: (char: string) => void;
     onBackspace: () => void;
     onClear: () => void;
+    /** The typed query, shown in a flat read-only line above the keys (the keys type it, not the OS). */
+    query?: string;
+    placeholder?: string;
     class?: string;
   }
 
@@ -17,6 +27,8 @@
     onChar,
     onBackspace,
     onClear,
+    query,
+    placeholder = 'Hledat…',
     class: customClass = ''
   }: Props = $props();
 
@@ -24,193 +36,121 @@
   const ROW_1 = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'];
   const ROW_2 = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'];
   const ROW_3 = ['Z', 'X', 'C', 'V', 'B', 'N', 'M'];
-
-  function handleKey(char: string, e: PointerEvent) {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    settings.vibrate(20);
-    onChar(char);
-  }
-
-  function handleBackspace(e: PointerEvent) {
-    if (e.button !== 0 || !hasInput) return;
-    e.preventDefault();
-    settings.vibrate(20);
-    onBackspace();
-  }
-
-  function handleClear(e: PointerEvent) {
-    if (e.button !== 0 || !hasInput) return;
-    e.preventDefault();
-    settings.vibrate(25);
-    onClear();
-  }
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-  class="simple-keyboard-chassis {customClass}"
-  oncontextmenu={(e) => e.preventDefault()}
->
-  <!-- Optional Row 0: 1 - 0 (Numbers) -->
+{#if query !== undefined}
+  <div class="kb-query" aria-live="polite">
+    <MagnifyingGlass size={16} weight="bold" />
+    {#if query}
+      <span class="kb-query-text">{query}</span><span class="kb-caret" aria-hidden="true"></span>
+    {:else}
+      <span class="kb-query-placeholder">{placeholder}</span>
+    {/if}
+  </div>
+{/if}
+
+<Chassis columns={20} keyHeight="42px" class="simple-keyboard {customClass}">
   {#if includeNumbers}
-    <div class="keyboard-row">
-      {#each ROW_NUM as num}
-        <button
-          type="button"
-          class="keycap num-key"
-          onpointerdown={(e) => handleKey(num, e)}
-          aria-label="Klávesa {num}"
-        >
-          <span class="key-label font-mono">{num}</span>
-        </button>
-      {/each}
-    </div>
+    {#each ROW_NUM as num (num)}
+      <Keycap class="kb-key" label={num} ariaLabel="Klávesa {num}" onPress={() => onChar(num)} />
+    {/each}
   {/if}
 
-  <!-- Row 1: Q - P (10 keys) -->
-  <div class="keyboard-row">
-    {#each ROW_1 as char}
-      <button
-        type="button"
-        class="keycap"
-        onpointerdown={(e) => handleKey(char, e)}
-        aria-label="Klávesa {char}"
-      >
-        <span class="key-label font-mono">{char}</span>
-      </button>
-    {/each}
+  {#each ROW_1 as char (char)}
+    <Keycap class="kb-key" label={char} ariaLabel="Klávesa {char}" onPress={() => onChar(char)} />
+  {/each}
+
+  <div class="kb-offset" aria-hidden="true"></div>
+  {#each ROW_2 as char (char)}
+    <Keycap class="kb-key" label={char} ariaLabel="Klávesa {char}" onPress={() => onChar(char)} />
+  {/each}
+  <div class="kb-offset" aria-hidden="true"></div>
+
+  <div class="kb-clear">
+    <HoldToAction disabled={!hasInput} onAction={onClear} ariaLabel="Vymazat hledání podržením" />
   </div>
-
-  <!-- Row 2: A - L (9 keys with 0.5fr spacers on sides) -->
-  <div class="keyboard-row row-2">
-    <div class="row-spacer" aria-hidden="true"></div>
-    {#each ROW_2 as char}
-      <button
-        type="button"
-        class="keycap"
-        onpointerdown={(e) => handleKey(char, e)}
-        aria-label="Klávesa {char}"
-      >
-        <span class="key-label font-mono">{char}</span>
-      </button>
-    {/each}
-    <div class="row-spacer" aria-hidden="true"></div>
-  </div>
-
-  <!-- Row 3: Clear + Z - M + Backspace -->
-  <div class="keyboard-row row-3">
-    <button
-      type="button"
-      class="keycap action-key clear-key"
-      disabled={!hasInput}
-      onpointerdown={handleClear}
-      aria-label="Vymazat hledání"
-      title="Vymazat hledání"
-    >
-      <Trash size={16} weight="bold" />
-    </button>
-
-    {#each ROW_3 as char}
-      <button
-        type="button"
-        class="keycap"
-        onpointerdown={(e) => handleKey(char, e)}
-        aria-label="Klávesa {char}"
-      >
-        <span class="key-label font-mono">{char}</span>
-      </button>
-    {/each}
-
-    <button
-      type="button"
-      class="keycap action-key backspace-key"
-      disabled={!hasInput}
-      onpointerdown={handleBackspace}
-      aria-label="Smazat poslední znak"
-      title="Smazat poslední znak"
-    >
-      <Backspace size={17} weight="bold" />
-    </button>
-  </div>
-</div>
+  {#each ROW_3 as char (char)}
+    <Keycap class="kb-key" label={char} ariaLabel="Klávesa {char}" onPress={() => onChar(char)} />
+  {/each}
+  <Keycap
+    class="kb-wide"
+    ariaLabel="Smazat poslední znak"
+    title="Smazat poslední znak"
+    disabled={!hasInput}
+    onPress={onBackspace}
+  >
+    <Backspace size={18} weight="bold" />
+  </Keycap>
+</Chassis>
 
 <style>
-  .simple-keyboard-chassis {
-    width: 100%;
-    background-color: #000000;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    padding: 2px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    box-sizing: border-box;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
-    margin: 0;
-  }
-
-  .keyboard-row {
-    display: flex;
-    gap: 2px;
-    width: 100%;
-    height: 38px;
-  }
-
-  .row-spacer {
-    flex: 0.5;
-    pointer-events: none;
-  }
-
-  .keycap {
-    flex: 1;
-    min-width: 0;
-    height: 100%;
-    background-color: var(--color-surface-2);
-    border: none;
-    border-radius: 2px;
-    color: var(--color-text-primary);
+  .kb-query {
+    flex: none;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 0;
-    cursor: pointer;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.08s;
+    gap: var(--space-sm);
+    height: var(--subtoolbar-height);
+    padding: 0 var(--space-sm);
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
-  .keycap:active {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  }
-
-  .keycap:disabled {
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-
-  .keycap:disabled > * {
-    opacity: 0.35;
-  }
-
-  .key-label {
-    font-size: calc(15px * var(--font-scale));
+  .kb-query-text {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    direction: rtl;
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
     font-weight: 700;
-    line-height: 1;
+    color: var(--color-text-primary);
   }
 
-  .action-key {
-    flex: 1.4;
-    color: var(--color-text-secondary);
+  /* Marks where the next key goes */
+  .kb-caret {
+    flex: none;
+    width: 2px;
+    height: 1.1em;
+    margin-left: -6px;
+    background-color: var(--color-accent-primary);
   }
 
-  .clear-key:not(:disabled):active {
-    color: var(--color-danger, #ef4444);
+  .kb-query-placeholder {
+    font-size: var(--text-sm);
   }
 
-  .backspace-key:not(:disabled):active {
-    color: var(--color-accent-primary);
+  /* Keycap and Chassis render the elements, so the placement has to reach into them */
+  :global(.chassis.simple-keyboard .kb-key) {
+    grid-column: span 2;
+  }
+
+  :global(.chassis.simple-keyboard .kb-wide) {
+    grid-column: span 3;
+  }
+
+  .kb-offset {
+    grid-column: span 1;
+  }
+
+  .kb-clear {
+    grid-column: span 3;
+    display: flex;
+    min-width: 0;
+    height: 42px;
+  }
+
+  /* The hold button takes the key's place and shape */
+  .kb-clear > :global(*) {
+    flex: 1;
+    width: 100%;
+    height: 100% !important;
+    min-height: 0 !important;
+    border: none !important;
+    border-radius: 2px !important;
   }
 </style>

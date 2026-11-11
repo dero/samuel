@@ -25,21 +25,79 @@
       id: 'caesar',
       label: 'Cézar',
       help: {
+        example: {
+          title: 'Příklad: SRNODG MH SRG PRVWHP',
+          steps: [
+            {
+              action: 'Na záložce Podklad napište `SRNODG MH SRG PRVWHP`.',
+              result: 'Po zavření klávesnice ukáže výstup všech 25 posunů pod sebou, od `+1` po `+25`.'
+            },
+            {
+              action: 'Podívejte se na kartu Nejlepší shoda nahoře ve výstupu.',
+              result:
+                'Ukazuje `+23` `-3` a text POKLAD JE POD MOSTEM. Šifra tedy vznikla posunem o 3 dopředu. Lišta hlásí Nejlepší posun +23 a jeho shodu s češtinou.'
+            },
+            {
+              action: 'Klepněte na kartu.',
+              result: 'Rozluštěný text je ve schránce a toast potvrdí Posun +23 zkopírován.'
+            }
+          ]
+        },
         controls: [
-          ['Výsledek', 'všechny posuny, nejpravděpodobnější zvýrazněný. Klepnutí zkopíruje.'],
-          ['Zvýraznit nejlepší posun', 'v menu']
+          ['Karta Nejlepší shoda (nahoře ve výstupu)', 'Posun, který se nejvíc podobá češtině. Klepnutím ho zkopírujete.'],
+          [
+            'Seznam posunů (ve výstupu)',
+            'Všechny posuny, každý v obou směrech: `+23` je totéž co `-3`. Čtvereček vpravo ukazuje shodu s češtinou od červené po zelenou. Klepnutím řádek zkopírujete.'
+          ],
+          ['Menu → Zvýraznit nejlepší posun', 'Vypnuté skryje kartu i zvýraznění, zbude jen seznam.']
         ],
-        pitfalls: [['Nejlepší posun', 'odhad podle češtiny, u krátkého textu nespolehlivý']]
+        pitfalls: [
+          [
+            'Nejlepší shoda nedává smysl?',
+            'U krátkého textu se odhad plete. Projděte seznam očima; se staženým slovníkem (Nastavení → Stáhnout slovník) je odhad přesnější.'
+          ]
+        ]
       }
     },
     {
       id: 'vigenere',
       label: 'Vigenère',
       help: {
-        controls: [['Klíč', 'řádek klíče: heslo nebo čísla']],
+        example: {
+          title: 'Příklad: klíč LES',
+          steps: [
+            {
+              action: 'Na záložce Podklad napište `DVSK Y KEEJPLG OYTF`.',
+              result: 'Výstup zatím ukazuje šifru beze změny a lišta žádá klíč.'
+            },
+            {
+              action: 'Na záložce Interakce klepněte na řádek Heslo nebo čísla…, napište `LES` a klepněte na Hotovo.',
+              result:
+                'Výstup ukazuje SRAZ U STAREHO DUBU. Pruh Klíč pod ním ukazuje, které písmeno klíče patří ke kterému písmenu textu, a lišta hlásí Posuny klíče: 11, 4, 18.'
+            },
+            {
+              action: 'Přepište klíč na čísla `11 4 18`.',
+              result: 'Výsledek se nezmění: písmeno klíče je jen jiný zápis posunu.'
+            }
+          ]
+        },
+        controls: [
+          [
+            'Klíč (řádek pod variantami)',
+            'Klepnutím nebo tužkou vpravo otevřete editor. Klíč je heslo (`LES`), nebo čísla (`314` jsou posuny 3, 1 a 4).'
+          ],
+          ['Koš (v řádku klíče)', 'Podržením klíč smaže.']
+        ],
         pitfalls: [
-          ['Klíč `A` = posun 0', 'počítá-li zadání A = 1, posunout klíč o jedno písmeno'],
-          ['Posun nad 9', 'čísla oddělit mezerou: `12 5`. Bez mezer `314` = 3, 1, 4.']
+          [
+            'Každé písmeno výsledku je o jedno dál v abecedě?',
+            'Zadání počítá `A` = 1, nástroj `A` = 0. Posuňte každé písmeno klíče o jedno dál (`LES` → `MFT`), nebo zadejte čísla `12 5 19`.'
+          ],
+          ['Posun je větší než 9?', 'Čísla oddělte mezerou nebo čárkou: `12 5`. Bez oddělovače je `125` posun 1, 2 a 5.'],
+          [
+            'Výsledek je čitelný jen místy a chyba se pravidelně opakuje?',
+            'Jedno písmeno klíče je špatně. Chyba se vrací po délce klíče, takže podle její polohy poznáte, které.'
+          ]
         ]
       }
     },
@@ -47,25 +105,68 @@
       id: 'autokey',
       label: 'Autokey',
       help: {
+        example: {
+          title: 'Příklad: heslo KOD',
+          steps: [
+            {
+              action: 'Na záložce Podklad napište `TRHCH RT VBZTSRVM`.',
+              result: 'Výstup zatím ukazuje šifru beze změny a lišta žádá počáteční heslo.'
+            },
+            {
+              action: 'Na záložce Interakce klepněte na řádek Heslo…, napište `KOD` a klepněte na Hotovo.',
+              result: 'Výstup ukazuje JDETE NA ROZCESTI a lišta hlásí Posuny hesla: 10, 14, 3.'
+            },
+            {
+              action: 'Podívejte se na pruh Klíč pod výstupem.',
+              result: '`KODJD ET ENAROZCE`: po hesle pokračuje klíč rozluštěnou zprávou.'
+            }
+          ]
+        },
         controls: [
-          ['Heslo', 'počáteční klíč, dál pokračuje textem zprávy'],
-          ['Pruh Klíč', 'ukáže průběh klíče']
+          [
+            'Heslo (řádek pod variantami)',
+            'Klepnutím nebo tužkou vpravo otevřete editor. Heslo je začátek klíče, dál ho tvoří zpráva sama. Čísla fungují jako u Vigenèra.'
+          ],
+          ['Koš (v řádku hesla)', 'Podržením heslo smaže.'],
+          ['Pruh Klíč (pod výstupem)', 'Celý průběh klíče, písmeno pod písmenem.']
         ],
         pitfalls: [
-          ['Varianta', 'jen otevřený text jako klíč, ne šifrový'],
-          ['Heslo `A` = posun 0', 'počítá-li zadání A = 1, posunout heslo o jedno písmeno']
+          [
+            'Prvních pár písmen sedí, dál je jen nesmysl?',
+            'Šifra nejspíš bere do klíče šifrový text místo zprávy. Tuto variantu Autokey nástroj neumí.'
+          ],
+          [
+            'Výsledek je čitelný jen místy a chyba se pravidelně opakuje?',
+            'Jedno písmeno hesla je špatně. Chyba se vrací po délce hesla, takže podle její polohy poznáte, které.'
+          ]
         ]
       }
     }
   ];
 
   const help: RefHelpData = {
-    controls: [
-      ['Cézar / Vigenère / Autokey', 'lišta nad zadáním'],
-      ['Šifrový text', 'ikona podkladu v hlavičce otevře editor'],
-      ['Zachovat mezery a interpunkci', 'v menu']
+    purpose: [
+      'Posunové šifry nahrazují každé písmeno písmenem o několik míst dál v abecedě. Nástroj je luští: Cézar vyzkouší všechny posuny naráz, Vigenère a Autokey rozšifrují text podle klíče, který zadáte.'
     ],
-    pitfalls: [['Abeceda s CH', 'posuny v 27 znacích dávají jiný výsledek → menu Abeceda']]
+    howTo: [
+      'Písmena se posouvají v kruhu: `A` = 0, `B` = 1 … a za `Z` se pokračuje od `A`. Cézar posune všechna písmena o stejné číslo, Vigenère střídá posuny podle opakovaného klíče a Autokey po hesle pokračuje samotnou zprávou.'
+    ],
+    controls: [
+      [
+        'Řádek variant: Cézar | Vigenère | Autokey',
+        'Přepne nástroj. Šifrový text zůstane, klíč a heslo si každý nástroj pamatuje zvlášť.'
+      ],
+      ['Záložka Podklad', 'Šifrový text. Ze schránky ho vloží do prázdného editoru, Smazat ho podržením vymaže.'],
+      ['Menu → Abeceda', 'V jaké abecedě se posouvá. Obvykle anglická (26), nebo s CH jako samostatným písmenem (27).'],
+      ['Menu → Zachovat mezery a interpunkci', 'Vypnuté: výsledek je jen z písmen, bez mezer.'],
+      ['Menu → Reset nástroje', 'Podržením smaže šifru, klíč i heslo a vrátí volby v Menu. Zvolený nástroj zůstane.']
+    ],
+    pitfalls: [
+      [
+        'Šifra počítá CH jako jedno písmeno?',
+        'Zvolte Menu → Abeceda → Anglická + CH (27). V 27 znacích vycházejí posuny jinak než v 26.'
+      ]
+    ]
   };
 </script>
 

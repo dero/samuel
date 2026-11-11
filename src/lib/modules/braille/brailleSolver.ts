@@ -5,8 +5,7 @@ import {
   MASK_TO_PUNCTUATION,
   BRAILLE_NUMBER_PREFIX_MASK,
   dotsToMask,
-  maskToUnicode,
-  unicodeToMask
+  maskToUnicode
 } from './brailleData';
 import { removeDiacritics } from '../../utils/text';
 
@@ -20,6 +19,13 @@ export interface DecodedCharInfo {
   altHint?: string;
   isPrefix?: boolean;
   isValid: boolean;
+}
+
+export interface DecodedBrailleField {
+  field: string;
+  /** Decoded character; a space, `⠼` for the number prefix, `?` for an invalid field. */
+  char: string;
+  kind: 'char' | 'space' | 'prefix' | 'invalid';
 }
 
 /**
@@ -87,96 +93,62 @@ export function decodeSingleMask(
   return { char: '?', isValid: false };
 }
 
-/**
- * Decodes a sequence of masks, supporting the number prefix (3,4,5,6) statefully.
- */
-export function decodeBrailleSequence(
-  masks: number[],
-  options: BrailleDecodeOptions = {}
-): string {
-  if (masks.length === 0) return '';
+/** Notation field of a cell: its dot numbers in ascending order. */
+export function dotsToField(dots: number[]): string {
+  return [...dots].sort((a, b) => a - b).join('');
+}
 
+/** Mask of a notation field: `''` is the empty cell, `null` anything but distinct dots 1–6. */
+export function fieldToMask(field: string): number | null {
+  if (field === '') return 0;
+  if (!/^[1-6]+$/.test(field)) return null;
+  const dots = [...field].map(Number);
+  if (new Set(dots).size !== dots.length) return null;
+  return dotsToMask(dots);
+}
+
+/**
+ * Decodes notation fields in order. The number prefix (3456) reads A–J as digits
+ * until the next space or a field that is not a digit.
+ */
+export function decodeBrailleFields(
+  fields: string[],
+  options: BrailleDecodeOptions = {}
+): DecodedBrailleField[] {
   const czech = options.czechDiacritics ?? true;
   const directNums = options.directNumbers ?? false;
-
-  let result = '';
   let inNumberMode = directNums;
 
-  for (let i = 0; i < masks.length; i++) {
-    const mask = masks[i];
+  return fields.map((field): DecodedBrailleField => {
+    const mask = fieldToMask(field);
+    if (mask === null) return { field, char: '?', kind: 'invalid' };
 
     if (mask === 0) {
-      result += ' ';
       if (!directNums) inNumberMode = false;
-      continue;
+      return { field, char: ' ', kind: 'space' };
     }
 
     if (mask === BRAILLE_NUMBER_PREFIX_MASK) {
       inNumberMode = true;
-      continue;
+      return { field, char: '⠼', kind: 'prefix' };
     }
 
     if (inNumberMode) {
-      if (mask in MASK_TO_DIGIT) {
-        result += MASK_TO_DIGIT[mask];
-        continue;
-      } else {
-        // Exited number mode if non-digit appears (unless space)
-        if (!directNums) inNumberMode = false;
-      }
+      if (mask in MASK_TO_DIGIT) return { field, char: MASK_TO_DIGIT[mask], kind: 'char' };
+      if (!directNums) inNumberMode = false;
     }
 
-    const decoded = decodeSingleMask(mask, { czechDiacritics: czech, directNumbers: false });
-    result += decoded.char;
-  }
-
-  return result;
+    const decoded = decodeSingleMask(mask, { czechDiacritics: czech });
+    return { field, char: decoded.char, kind: decoded.isValid ? 'char' : 'invalid' };
+  });
 }
 
-/**
- * Normalizes pasted text from clipboard:
- * 1. If it contains Unicode Braille (⠁..⠿), decodes each symbol to readable text.
- * 2. If it contains numeric dot groups (e.g. "1 / 125 / 135 / 245" or "1, 125, 135"), parses dots and decodes.
- * 3. If it is already plain text, returns uppercase text.
- */
-export function normalizeBrailleInput(
-  raw: string,
-  options: BrailleDecodeOptions = {}
-): string {
-  if (!raw || !raw.trim()) return '';
-
-  const trimmed = raw.trim();
-
-  // 1. Check for Unicode Braille
-  const brailleChars = trimmed.match(/[\u2800-\u283F]/g);
-  if (brailleChars && brailleChars.length >= trimmed.replace(/\s/g, '').length * 0.5) {
-    const masks: number[] = [];
-    for (const char of trimmed) {
-      if (char === ' ' || char === '\n' || char === '\t') {
-        masks.push(0);
-      } else {
-        const mask = unicodeToMask(char);
-        masks.push(mask);
-      }
-    }
-    return decodeBrailleSequence(masks, options);
-  }
-
-  // 2. Check for numeric dot lists like "1 125 135 245" or "1 / 1-2-5 / 1-3-5"
-  const tokens = trimmed.split(/[\s/,|;]+/).filter(Boolean);
-  const isAllDotTokens = tokens.length > 0 && tokens.every((tok) => /^[1-6]+(-[1-6]+)*$/.test(tok));
-  if (isAllDotTokens) {
-    const masks: number[] = [];
-    for (const tok of tokens) {
-      const cleanDigits = tok.replace(/[^1-6]/g, '');
-      const dots = Array.from(new Set(cleanDigits.split('').map(Number)));
-      masks.push(dotsToMask(dots));
-    }
-    return decodeBrailleSequence(masks, options);
-  }
-
-  // 3. Fallback: plain Latin text
-  return trimmed.toUpperCase();
+/** Readable text of decoded fields; the number prefix is not a character of its own. */
+export function brailleFieldsToText(decoded: DecodedBrailleField[]): string {
+  return decoded
+    .filter((item) => item.kind !== 'prefix')
+    .map((item) => item.char)
+    .join('');
 }
 
 /**

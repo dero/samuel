@@ -8,12 +8,25 @@ import {
   type DayDetail,
   type SearchMatch
 } from './calendarData';
-import { settings } from '../../state/settings.svelte';
 
 export type CalendarFlavour = 'calendar' | 'search' | 'calc';
 export type CalcMode = 'offset' | 'diff';
 
+function readToday() {
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+}
+
 class CalendarState {
+  /** Today's date; refreshed when the app comes back, so an app left open past midnight moves on. */
+  today = $state(readToday());
+
+  refreshToday() {
+    const next = readToday();
+    const t = this.today;
+    if (next.year !== t.year || next.month !== t.month || next.day !== t.day) this.today = next;
+  }
+
   private modSettings = localSettingsService.forModule('calendar');
 
   // Flavour
@@ -45,7 +58,6 @@ class CalendarState {
   offsetDays = $state<number>(
     this.modSettings.getNumber('offset_days', 0)
   );
-  activeDiffSlot = $state<'from' | 'to'>('to');
   diffFrom = $state<{ year: number; month: number; day: number }>({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
@@ -115,10 +127,8 @@ class CalendarState {
     });
   }
 
-  // Actions
+  // Actions (the keys and controls that call them vibrate themselves)
   setFlavour(f: CalendarFlavour) {
-    if (f === this.activeFlavour) return;
-    settings.vibrate(20);
     this.activeFlavour = f;
   }
 
@@ -126,10 +136,6 @@ class CalendarState {
     this.year = year;
     this.month = month;
     this.day = day;
-  }
-
-  setYear(year: number) {
-    this.year = year;
   }
 
   setToday() {
@@ -146,14 +152,12 @@ class CalendarState {
 
   backspaceSearch() {
     if (this.searchQuery.length > 0) {
-      settings.vibrate(20);
       this.searchQuery = this.searchQuery.slice(0, -1);
       this.expandedDayKey = null;
     }
   }
 
   clearSearch() {
-    settings.vibrate(25);
     this.searchQuery = '';
     this.expandedDayKey = null;
   }
@@ -170,23 +174,18 @@ class CalendarState {
 
   // Calculator actions
   setCalcMode(m: CalcMode) {
-    if (m === this.calcMode) return;
-    settings.vibrate(20);
     this.calcMode = m;
   }
 
   adjustOffset(delta: number) {
-    settings.vibrate(20);
     this.offsetDays += delta;
   }
 
   resetOffset() {
-    settings.vibrate(25);
     this.offsetDays = 0;
   }
 
   adjustDatePart(target: 'from' | 'to', part: 'day' | 'month' | 'year', delta: number) {
-    settings.vibrate(15);
     const current = target === 'from' ? { ...this.diffFrom } : { ...this.diffTo };
 
     if (part === 'year') {
@@ -215,33 +214,7 @@ class CalendarState {
     }
   }
 
-  adjustDiffActive(delta: number) {
-    settings.vibrate(20);
-    if (this.activeDiffSlot === 'from') {
-      this.diffFrom = addDays(this.diffFrom, delta);
-    } else {
-      this.diffTo = addDays(this.diffTo, delta);
-    }
-  }
-
-  swapDiff() {
-    settings.vibrate(25);
-    const temp = { ...this.diffFrom };
-    this.diffFrom = { ...this.diffTo };
-    this.diffTo = temp;
-  }
-
-  resetDiffToToday() {
-    settings.vibrate(25);
-    const now = new Date();
-    const today = { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
-    if (this.activeDiffSlot === 'from') {
-      this.diffFrom = today;
-    } else {
-      this.diffTo = today;
-    }
-  }
-
+  // Data back to defaults; the flavour and the calculator mode are ways in and stay
   resetModule() {
     this.setToday();
     this.searchQuery = '';
@@ -249,7 +222,6 @@ class CalendarState {
     this.offsetDays = 0;
     this.diffFrom = { year: this.year, month: this.month, day: this.day };
     this.diffTo = addDays(this.diffFrom, 42);
-    this.activeFlavour = 'calendar';
   }
 }
 

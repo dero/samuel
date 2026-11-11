@@ -1,10 +1,15 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
-  import HoldToAction from '../../components/ui/HoldToAction.svelte';
+  import InterlinearText, { type InterlinearToken } from '../../components/ui/InterlinearText.svelte';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
+  import KeypadBottomRow from '../../components/ui/KeypadBottomRow.svelte';
   import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
-  import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
+  import MenuAction from '../../components/ui/MenuAction.svelte';
+  import OptionRow from '../../components/ui/OptionRow.svelte';
   import AlphabetSelect from '../../components/ui/AlphabetSelect.svelte';
   import PolybiusOmissionModal from './PolybiusOmissionModal.svelte';
   import PolybiusReference from './PolybiusReference.svelte';
@@ -14,17 +19,22 @@
     type PolybiusSize,
     type PolybiusCoordLabel
   } from './polybiusData';
-  import { polybiusCoordToChar } from './polybiusSolver';
+  import {
+    convertPolybiusFields,
+    polybiusCoordLabel,
+    polybiusField,
+    polybiusFieldToToken
+  } from './polybiusSolver';
   import { alphabet, type AlphabetLayout } from '../../state/alphabet.svelte';
-  import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
-  import { navigation } from '../../state/navigation.svelte';
+  import { parseNotation, serializeNotation } from '../../utils/notation';
   import { Sliders } from 'phosphor-svelte';
 
   const modSettings = localSettingsService.forModule('polybius');
 
-  let text = $state<string>(modSettings.getString('text', ''));
+  // The notation is the data: letters are derived, so every option recomputes what is entered
+  let fields = $state.raw<string[]>(modSettings.getJSON<string[]>('fields', []));
   let polybiusSize = $state<PolybiusSize>(
     (modSettings.getString('size', '5x5') as PolybiusSize) || '5x5'
   );
@@ -37,6 +47,7 @@
     { id: '6x6', label: '6×6 (36)' }
   ];
 
+  // Half-entered field: a tapped row or column waiting for its other axis
   let selectedRow = $state<number | null>(null);
   let selectedCol = $state<number | null>(null);
 
@@ -52,8 +63,8 @@
   }
 
   $effect(() => {
+    modSettings.setJSON('fields', fields);
     modSettings.update({
-      text,
       size: polybiusSize,
       coordLabels: polybiusCoordLabels
     });
@@ -73,8 +84,11 @@
   const omissionStorageKey = $derived(`polybius:omitted:${polybiusSize}:${currentAlphabetId}`);
   let isOmissionModalOpen = $state<boolean>(false);
   let omittedLetters = $state<string[]>([]);
+  // Bumped by Reset modulu, so the stored omissions are read (and defaulted) again
+  let omissionRevision = $state(0);
 
   $effect(() => {
+    void omissionRevision;
     const cap = activeConfig.capacity;
     const rawLetters = currentLayout.letters;
     const key = omissionStorageKey;
@@ -119,98 +133,132 @@
     return padded;
   });
 
-  const pendingChar = $derived.by<string | null>(() => {
-    if (selectedRow !== null && selectedCol !== null) {
-      return polybiusCoordToChar(selectedRow, selectedCol, activeConfig.sizeNum, effectiveLetters);
-    }
-    return null;
+  const tokens = $derived(
+    fields.map((field) =>
+      polybiusFieldToToken(field, activeConfig.sizeNum, polybiusCoordLabels, effectiveLetters)
+    )
+  );
+  const plainText = $derived(tokens.map((t) => (t.isSpace ? ' ' : t.primary)).join(''));
+
+  const hasSelection = $derived(selectedRow !== null || selectedCol !== null);
+  const pendingToken = $derived.by<InterlinearToken | null>(() => {
+    if (!hasSelection) return null;
+    const row = selectedRow !== null ? getCoordLabel(selectedRow) : '·';
+    const col = selectedCol !== null ? getCoordLabel(selectedCol) : '·';
+    return { primary: '…', secondary: row + col, isPending: true };
   });
 
+  const notationExample = $derived(
+    convertPolybiusFields(['11', '23', '35', '25'], 'numbers', polybiusCoordLabels).join(',')
+  );
+
+  const axis = $derived(Array.from({ length: activeConfig.sizeNum }, (_, i) => i + 1));
+  // At 320 × 540 the square gets 258 px: 308 budget − 42 bottom row − 8 gap
+  const letterKeyHeight = $derived(activeConfig.sizeNum === 6 ? '34px' : '42px');
+
   function getCoordLabel(index: number): string {
-    if (polybiusCoordLabels === 'letters') {
-      return String.fromCharCode(65 + index - 1);
-    }
-    return String(index);
+    return polybiusCoordLabel(index, polybiusCoordLabels);
   }
 
-  function handleSizeChange(newSize: PolybiusSize) {
-    if (polybiusSize === newSize) return;
-    settings.vibrate(25);
-    polybiusSize = newSize;
+  function clearSelection() {
     selectedRow = null;
     selectedCol = null;
   }
 
-  function handleCoordSelect(axis: 1 | 2, val: number) {
-    settings.vibrate(18);
-    if (axis === 1) {
+  function handleSizeChange(newSize: PolybiusSize) {
+    if (polybiusSize === newSize) return;
+    polybiusSize = newSize;
+    clearSelection();
+  }
+
+  function handleLabelsChange(newLabels: PolybiusCoordLabel) {
+    fields = convertPolybiusFields(fields, polybiusCoordLabels, newLabels);
+    polybiusCoordLabels = newLabels;
+  }
+
+  function appendField(row: number, col: number) {
+    fields = [...fields, polybiusField(row, col, polybiusCoordLabels)];
+    clearSelection();
+  }
+
+  function handleCoordSelect(kind: 'row' | 'col', val: number) {
+    if (kind === 'row') {
       selectedRow = selectedRow === val ? null : val;
     } else {
       selectedCol = selectedCol === val ? null : val;
     }
 
     if (selectedRow !== null && selectedCol !== null) {
-      const char = polybiusCoordToChar(selectedRow, selectedCol, activeConfig.sizeNum, effectiveLetters);
-      if (char) {
-        settings.vibrate(28);
-        text += char;
-        selectedRow = null;
-        selectedCol = null;
-      }
+      appendField(selectedRow, selectedCol);
     }
   }
 
-  function handleLetterTap(char: string) {
-    settings.vibrate(18);
-    text += char;
-    selectedRow = null;
-    selectedCol = null;
-  }
-
   function handleSpace() {
-    text += ' ';
-    selectedRow = null;
-    selectedCol = null;
+    fields = [...fields, ''];
+    clearSelection();
   }
 
   function handleBackspace() {
-    if (selectedRow !== null || selectedCol !== null) {
-      selectedRow = null;
-      selectedCol = null;
-    } else if (text.length > 0) {
-      text = text.slice(0, -1);
+    if (hasSelection) {
+      clearSelection();
+    } else {
+      fields = fields.slice(0, -1);
     }
   }
 
   function handleClearAll() {
-    settings.vibrate(35);
-    text = '';
-    selectedRow = null;
-    selectedCol = null;
+    fields = [];
+    clearSelection();
+  }
+
+  // Data and Menu options back to defaults; the chosen size is a variant and stays
+  function handleReset() {
+    handleClearAll();
+    polybiusCoordLabels = 'numbers';
+    setSizeAlphabet('5x5', POLYBIUS_CONFIGS['5x5'].defaultAlphabetId);
+    setSizeAlphabet('6x6', POLYBIUS_CONFIGS['6x6'].defaultAlphabetId);
+    // Forget chosen omissions; the omission effect derives the default for the alphabet again
+    for (const key of Object.keys(modSettings.getAll())) {
+      if (key.startsWith('polybius:omitted:')) modSettings.removeItem(key);
+    }
+    omissionRevision++;
   }
 </script>
 
 <ModuleShell
-  title="Polybius"
   hasWarning={isNonStandardAlphabet}
-  onReset={handleClearAll}
+  onReset={handleReset}
+  podklad={{
+    kind: 'text',
+    required: false,
+    empty: fields.length === 0,
+    title: 'Zápis',
+    description: 'Řádek a sloupec, čárka dělí znaky, prázdné pole je mezera.',
+    example: notationExample,
+    placeholder: `Např. ${notationExample}`,
+    autocapitalize: polybiusCoordLabels === 'letters' ? 'characters' : 'none',
+    value: serializeNotation(fields),
+    onSave: (val) => {
+      fields = parseNotation(val);
+      clearSelection();
+    }
+  }}
+  bar={{
+    empty: fields.length === 0,
+    hint: 'Zadejte řádek a sloupec.',
+    charCount: tokens.filter((t) => !t.isSpace).length
+  }}
 >
   {#snippet menuOptions()}
-    <div class="menu-group">
-      <div class="menu-group-title">Popisky souřadnic</div>
-      <SegmentedControl
-        options={[
-          { id: 'numbers', label: polybiusSize === '6x6' ? '1–6' : '1–5' },
-          { id: 'letters', label: polybiusSize === '6x6' ? 'A–F' : 'A–E' }
-        ]}
-        value={polybiusCoordLabels}
-        ariaLabel="Popisky souřadnic"
-        onChange={(v) => (polybiusCoordLabels = v)}
-      />
-    </div>
+    <OptionRow
+      label="Souřadnice písmeny"
+      hint={polybiusSize === '6x6' ? 'A–F místo 1–6' : 'A–E místo 1–5'}
+      type="switch"
+      checked={polybiusCoordLabels === 'letters'}
+      onChange={(v) => handleLabelsChange(v ? 'letters' : 'numbers')}
+    />
 
-    <div class="menu-group">
-      <div class="menu-group-title">Abeceda</div>
+    <MenuGroup title="Abeceda">
       <NonStandardAlphabetBanner
         isWarning={isNonStandardAlphabet}
         description="Obvykle {polybiusSize === '6x6'
@@ -222,26 +270,15 @@
         value={currentAlphabetId}
         onChange={(newId) => setSizeAlphabet(polybiusSize, newId)}
       />
-    </div>
+    </MenuGroup>
 
     {#if currentLayout.letters.length > activeConfig.capacity}
-      <div class="menu-group">
-        <div class="menu-group-title">Vynechaná písmena</div>
-        <button
-          type="button"
-          class="omission-open-btn"
-          onclick={() => {
-            settings.vibrate(20);
-            isOmissionModalOpen = true;
-          }}
-        >
-          <span class="omission-btn-icon"><Sliders size={18} weight="duotone" /></span>
-          <div class="omission-btn-content">
-            <span class="omission-btn-label">Vynecháno ({omittedLetters.length})</span>
-            <span class="omission-btn-val">{omittedPillText}</span>
-          </div>
-        </button>
-      </div>
+      <MenuAction
+        label="Vynechaná písmena"
+        hint="Vynecháno ({omittedLetters.length}): {omittedPillText}"
+        icon={Sliders}
+        onClick={() => (isOmissionModalOpen = true)}
+      />
     {/if}
   {/snippet}
 
@@ -250,131 +287,76 @@
   {/snippet}
 
   {#snippet output()}
-    <TranslationCard
-      {text}
-      pendingText={pendingChar ?? ''}
-      emptyHint="Zadejte řádek a sloupec."
+    <TranslationCard text={plainText} hasContent={fields.length > 0 || hasSelection}>
+      {#snippet children()}
+        <InterlinearText {tokens} {pendingToken} scalePrimaryBy="primary" />
+      {/snippet}
+    </TranslationCard>
+  {/snippet}
+
+  {#snippet variants()}
+    <SegmentedControl
+      options={sizeOptions}
+      value={polybiusSize}
+      size="sm"
+      ariaLabel="Velikost Polybiova čtverce"
+      onChange={handleSizeChange}
     />
   {/snippet}
 
   {#snippet input()}
-    <div class="zone-input-flow">
-      <!-- 1. Sub-Toolbar: Přepínač velikosti 5x5 vs 6x6 (36px) -->
-      <div class="subtoolbar-container">
-        <SegmentedControl
-          options={sizeOptions}
-          value={polybiusSize}
-          size="sm"
-          ariaLabel="Velikost Polybiova čtverce"
-          onChange={handleSizeChange}
-        />
-      </div>
-
-      <!-- 2. Vstupní zóna: Matice Polybia -->
-      <div class="polybius-stage">
-        <div class="polybius-board-wrapper" class:size-6={polybiusSize === '6x6'}>
-          <div
-            class="polybius-grid"
-            style:grid-template-columns="32px repeat({activeConfig.sizeNum}, 1fr)"
-          >
-            <!-- Horní prázdný roh + tlačítka sloupců -->
-            <div class="polybius-corner-cell" aria-hidden="true"></div>
-            {#each Array.from({ length: activeConfig.sizeNum }, (_, i) => i + 1) as c}
-              {@const isColActive = selectedCol === c}
-              <button
-                type="button"
-                class="polybius-header-btn col-header-btn"
-                class:is-active={isColActive}
-                onpointerdown={(e) => {
-                  if (e.button !== 0 && e.pointerType === 'mouse') return;
-                  e.preventDefault();
-                  handleCoordSelect(2, c);
-                }}
-                aria-label={`Sloupec ${getCoordLabel(c)}`}
-              >
-                <span>{getCoordLabel(c)}</span>
-              </button>
-            {/each}
-
-            <!-- Řádky s hlavičkou a písmeny -->
-            {#each Array.from({ length: activeConfig.sizeNum }, (_, i) => i + 1) as r}
-              {@const isRowActive = selectedRow === r}
-              <button
-                type="button"
-                class="polybius-header-btn row-header-btn"
-                class:is-active={isRowActive}
-                onpointerdown={(e) => {
-                  if (e.button !== 0 && e.pointerType === 'mouse') return;
-                  e.preventDefault();
-                  handleCoordSelect(1, r);
-                }}
-                aria-label={`Řádek ${getCoordLabel(r)}`}
-              >
-                <span>{getCoordLabel(r)}</span>
-              </button>
-              {#each Array.from({ length: activeConfig.sizeNum }, (_, i) => i + 1) as c}
-                {@const idx = (r - 1) * activeConfig.sizeNum + (c - 1)}
-                {@const char = effectiveLetters[idx] ?? ''}
-                {@const isExact = selectedRow === r && selectedCol === c}
-                {@const isHighlighted = (selectedRow === r || selectedCol === c) && (selectedRow !== null || selectedCol !== null)}
-                <div
-                  class="polybius-cell"
-                  class:is-row-matched={selectedRow === r}
-                  class:is-col-matched={selectedCol === c}
-                  class:is-exact-matched={isExact}
-                >
-                  {#if char && char !== ' '}
-                    <button
-                      type="button"
-                      class="polybius-char-btn"
-                      class:is-highlighted={isHighlighted}
-                      class:is-exact={isExact}
-                      onpointerdown={(e) => {
-                        if (e.button !== 0 && e.pointerType === 'mouse') return;
-                        e.preventDefault();
-                        handleLetterTap(char);
-                      }}
-                      aria-label={`Písmeno ${char}`}
-                    >
-                      <span class="polybius-char">{char}</span>
-                    </button>
-                  {:else}
-                    <div class="polybius-empty-cell"></div>
-                  {/if}
-                </div>
-              {/each}
-            {/each}
-          </div>
+    <div class="polybius-keypad">
+      <Chassis columns={activeConfig.sizeNum + 1} keyHeight={letterKeyHeight}>
+        <div class="header-row">
+          <div class="grid-filler" aria-hidden="true"></div>
+          {#each axis as c (c)}
+            <Keycap
+              size="s"
+              label={getCoordLabel(c)}
+              ariaLabel="Sloupec {getCoordLabel(c)}"
+              selected={selectedCol === c}
+              onPress={() => handleCoordSelect('col', c)}
+            />
+          {/each}
         </div>
-      </div>
 
-      <!-- 3. Utilitní trojblok: Clear | Space/Commit | Backspace -->
-      <div class="keypad-utility-row-3col">
-        <HoldToAction
-          disabled={!text && !pendingChar}
-          onAction={handleClearAll}
-          ariaLabel="Vymazat text podržením"
-        />
+        {#each axis as r (r)}
+          <Keycap
+            size="s"
+            label={getCoordLabel(r)}
+            ariaLabel="Řádek {getCoordLabel(r)}"
+            selected={selectedRow === r}
+            onPress={() => handleCoordSelect('row', r)}
+          />
+          {#each axis as c (c)}
+            {@const char = effectiveLetters[(r - 1) * activeConfig.sizeNum + (c - 1)] ?? ''}
+            {#if char.trim()}
+              <Keycap
+                label={char}
+                ariaLabel="Písmeno {char}"
+                related={selectedRow === r || selectedCol === c}
+                onPress={() => appendField(r, c)}
+              />
+            {:else}
+              <div class="grid-filler" aria-hidden="true"></div>
+            {/if}
+          {/each}
+        {/each}
+      </Chassis>
 
-        <SpaceCommitButton
-          pendingChar={pendingChar}
-          disabled={false}
-          onSpace={handleSpace}
-          onCommit={() => {
-            if (pendingChar) {
-              text += pendingChar;
-              selectedRow = null;
-              selectedCol = null;
-            }
-          }}
-        />
-
-        <BackspaceButton
-          disabled={!text && !pendingChar}
-          hasActiveSelection={!!pendingChar}
-          onAction={handleBackspace}
-        />
-      </div>
+      <KeypadBottomRow
+        clearDisabled={fields.length === 0 && !hasSelection}
+        backspaceDisabled={fields.length === 0 && !hasSelection}
+        clearLabel="Vymazat text podržením"
+        hasActiveSelection={hasSelection}
+        cancelTitle="Zrušit výběr řádku nebo sloupce"
+        onClear={handleClearAll}
+        onBackspace={handleBackspace}
+      >
+        {#snippet middle()}
+          <SpaceCommitButton onSpace={handleSpace} />
+        {/snippet}
+      </KeypadBottomRow>
     </div>
   {/snippet}
 </ModuleShell>
@@ -392,200 +374,24 @@
 {/if}
 
 <style>
-  .polybius-stage {
+  .polybius-keypad {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  .polybius-board-wrapper {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  .polybius-grid {
-    display: grid;
-    gap: 2px;
-    padding: 2px;
+    gap: var(--zone-input-gap);
     width: 100%;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: none;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background-color: var(--color-bg-canvas);
-    border: 1px solid var(--color-border-subtle);
-    box-sizing: border-box;
   }
 
-  .polybius-header-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-surface-1);
-    border: none;
-    border-radius: 2px;
-    font-size: var(--text-xs);
-    font-weight: 700;
-    font-family: var(--font-mono);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    touch-action: none;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s ease, box-shadow 0.08s ease, color 0.12s ease;
-    padding: 0;
+  .header-row {
+    display: contents;
+    --key-height: var(--control-min-height);
   }
 
-  .polybius-header-btn:active {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: none;
-  }
-
-  .polybius-header-btn.col-header-btn {
-    min-height: 32px;
-    height: 32px;
-  }
-
-  .polybius-header-btn.row-header-btn {
-    min-width: 32px;
-    width: 32px;
+  .grid-filler {
     height: 100%;
-  }
-
-  .polybius-header-btn.is-active {
-    background: var(--color-accent-primary);
-    color: #000000;
-    font-weight: 800;
-    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4), inset 0 0 4px rgba(255, 255, 255, 0.4);
-  }
-
-  .polybius-cell {
-    display: flex;
-    aspect-ratio: 1 / 1;
-    min-width: 0;
-    min-height: 0;
-    border-radius: 2px;
-    transition: all 0.15s ease;
-  }
-
-  .polybius-cell.is-row-matched,
-  .polybius-cell.is-col-matched {
-    background: rgba(0, 210, 255, 0.06);
-  }
-
-  .polybius-cell.is-exact-matched {
-    background: rgba(0, 210, 255, 0.16);
-  }
-
-  .polybius-char-btn {
-    width: 100%;
-    height: 100%;
-    min-height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-surface-2);
-    border: none;
-    border-radius: 2px;
-    color: var(--color-text-primary);
-    font-size: calc(17px * var(--font-scale));
-    font-weight: 700;
-    cursor: pointer;
-    touch-action: none;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s ease, box-shadow 0.08s ease, color 0.12s ease;
-    padding: 0;
-  }
-
-  .polybius-char-btn:active {
-    background: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: none;
-  }
-
-  .polybius-char-btn.is-highlighted {
-    box-shadow: inset 0 0 0 1.5px rgba(0, 210, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    color: var(--color-text-primary);
-  }
-
-  .polybius-char-btn.is-exact {
-    background: rgba(0, 210, 255, 0.22);
-    color: var(--color-accent-primary);
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4), inset 0 0 0 1.5px var(--color-accent-primary);
-  }
-
-  .polybius-empty-cell {
-    width: 100%;
-    height: 100%;
-    border-radius: var(--radius-xs);
-    background: rgba(255, 255, 255, 0.02);
-  }
-
-  .menu-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-  }
-
-  .menu-group-title {
-    font-size: var(--text-xs);
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-    letter-spacing: 0.5px;
-  }
-
-  .omission-open-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm) var(--space-md);
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .omission-open-btn:active {
-    background-color: var(--color-surface-active);
-  }
-
-  .omission-btn-icon {
-    color: var(--color-accent-primary);
-    display: flex;
-    align-items: center;
-  }
-
-  .omission-btn-content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .omission-btn-label {
-    font-size: var(--text-sm);
-    color: var(--color-text-primary);
-    font-weight: 600;
-  }
-
-  .omission-btn-val {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    font-family: var(--font-mono);
+    background-color: var(--color-surface-2);
+    opacity: 0.35;
+    pointer-events: none;
   }
 </style>

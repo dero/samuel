@@ -66,8 +66,8 @@
 
   function handleSelectElement(el: ChemicalElement) {
     // ElementCard already vibrates on tap -> no extra haptics here
-    if (elementsState.selectedElementZ === el.z) return;
-    elementsState.selectElement(el.z);
+    // The selected element (Fe at start) still zooms to its card
+    if (elementsState.selectedElementZ !== el.z) elementsState.selectElement(el.z);
     const tile = findTile(el.z);
     if (tile) panZoomRef?.focusElement(tile, FOCUS_SCALE, false);
   }
@@ -186,7 +186,7 @@
     height: 100%;
     position: relative;
     overflow: hidden;
-    background-color: var(--color-bg-canvas, #000000);
+    background-color: var(--color-bg-canvas);
   }
 
   /* Periodic Table Grid Stage: Col 1 is 50px, Cols 2..19 are 150px; Row 1 is 50px */

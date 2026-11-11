@@ -1,16 +1,18 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+  import ModuleBar, { type ModuleBarConfig } from './ModuleBar.svelte';
   import ModuleMenu from './ModuleMenu.svelte';
-  import ReferenceModal from './ReferenceModal.svelte';
+  import TahakView from './TahakView.svelte';
   import PodkladIntro from '../podklad/PodkladIntro.svelte';
-  import PodkladMethods from '../podklad/PodkladMethods.svelte';
-  import PodkladSheet from '../podklad/PodkladSheet.svelte';
+  import PodkladPanel from '../podklad/PodkladPanel.svelte';
+  import ScrollArea from '../ui/ScrollArea.svelte';
   import { navigation } from '../../state/navigation.svelte';
-  import {
-    podklad as podkladState,
-    flyToPodkladIcon,
-    type PodkladConfig
-  } from '../../state/podklad.svelte';
+  import { podklad as podkladState, type PodkladConfig } from '../../state/podklad.svelte';
 
+  /**
+   * Module skeleton: output → status bar → optional variants row → lower panel.
+   * The header tabs switch only the lower panel (Interakce / Podklad / Menu).
+   */
   interface Props {
     title?: string;
     hasAlphabet?: boolean;
@@ -18,33 +20,52 @@
     hasWarning?: boolean;
     onReset?: () => void;
     layoutMode?: 'default' | 'compact-output' | 'fullscreen-input';
-    /** External data the module works on (DESIGN_SYSTEM §3 Podklad). */
+    /** User data the module works on (DESIGN_SYSTEM §7). */
     podklad?: PodkladConfig;
-    output?: import('svelte').Snippet;
-    input?: import('svelte').Snippet;
-    menuOptions?: import('svelte').Snippet;
-    reference?: import('svelte').Snippet;
+    /** Left text and action of the status bar (DESIGN_SYSTEM §5). */
+    bar?: ModuleBarConfig;
+    output?: Snippet;
+    /** Flavour switcher at the top of the Interakce panel. */
+    variants?: Snippet;
+    input?: Snippet;
+    menuOptions?: Snippet;
+    reference?: Snippet;
+    /** One item over the whole area (`#/<module>/detail/<id>`), rendered from its id. */
+    detail?: Snippet<[string]>;
+    /** Heading of the detail overlay, from the item id. */
+    detailTitle?: (id: string) => string;
   }
 
   let {
-    title,
-    hasAlphabet = false,
-    alphabetHint,
     hasWarning = false,
     onReset,
     layoutMode = 'default',
     podklad,
+    bar,
     output,
+    variants,
     input,
     menuOptions,
-    reference
+    reference,
+    detail,
+    detailTitle
   }: Props = $props();
+
+  const view = $derived(navigation.subView);
+  const isFullscreen = $derived(layoutMode === 'fullscreen-input');
+  // A Menu holding only Reset adds nothing to the hold-clear, so only options make a Menu
+  const hasMenu = $derived(!!menuOptions);
+  const hasTahak = $derived(!!reference && navigation.activeModule?.hasReference !== false);
+  const showInteraction = $derived(view !== 'podklad' && view !== 'menu');
+  const isPodkladMissing = $derived(!!podklad && podklad.required && podklad.empty);
 
   $effect(() => {
     navigation.setMenuWarning(hasWarning);
-    return () => {
-      navigation.setMenuWarning(false);
-    };
+    return () => navigation.setMenuWarning(false);
+  });
+
+  $effect(() => {
+    navigation.hasMenu = hasMenu;
   });
 
   $effect(() => {
@@ -55,62 +76,105 @@
     return () => podkladState.reset();
   });
 
-  // Required podklad still empty: the module shows the Podklad phase instead of its zones
-  const showPodkladPhase = $derived(!!podklad && podklad.required && podklad.empty);
+  // Views this module cannot show (old links), and the required podklad that must come first
+  $effect(() => {
+    if (navigation.isLauncherOpen) return; // the route belongs to the launcher, keep it
+    if (view === 'menu' && !hasMenu) navigation.replaceView('none');
+    else if (view === 'podklad' && !podklad) navigation.replaceView('none');
+    else if (view === 'tahak' && !hasTahak) navigation.replaceView('none');
+    else if (view === 'detail' && !detail) navigation.replaceView('none');
+    else if (view === 'none' && isPodkladMissing) navigation.replaceView('podklad');
+  });
 
-  let outputEl = $state<HTMLDivElement | null>(null);
-  let wasPodkladPhase: boolean | null = null;
+  let zoneEl = $state<HTMLDivElement | null>(null);
+
+  // Typing in Podklad with the OS keyboard open: the output steps aside for the editor
+  const isKeyboardEditing = $derived(view === 'podklad' && podkladState.keyboardOpen);
+
+  // A short slide when a tab changes the panel height
+  let heightBefore = 0;
+
+  $effect.pre(() => {
+    void view;
+    if (zoneEl) heightBefore = zoneEl.offsetHeight;
+  });
 
   $effect(() => {
-    const phase = showPodkladPhase;
-    if (wasPodkladPhase === true && !phase && outputEl) {
-      flyToPodkladIcon(outputEl.getBoundingClientRect());
-    }
-    wasPodkladPhase = phase;
+    void view;
+    if (!zoneEl || !heightBefore) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const heightAfter = zoneEl.offsetHeight;
+    if (heightAfter === heightBefore) return;
+    zoneEl.animate(
+      [{ height: `${heightBefore}px` }, { height: `${heightAfter}px` }],
+      { duration: 160, easing: 'ease-out' }
+    );
   });
 </script>
 
 <div
   class="module-shell"
   class:compact-output={layoutMode === 'compact-output'}
-  class:fullscreen-input={layoutMode === 'fullscreen-input'}
+  class:fullscreen-input={isFullscreen}
+  class:is-keyboard={isKeyboardEditing}
+  style:padding-bottom={podkladState.keyboardInset ? `${podkladState.keyboardInset}px` : undefined}
 >
-  <!-- Top: Output & State Zone -->
-  {#if layoutMode !== 'fullscreen-input'}
-    <div class="zone-output" bind:this={outputEl}>
-      {#if showPodkladPhase && podklad}
+  {#if !isFullscreen}
+    <div class="zone-output">
+      {#if isPodkladMissing && podklad}
         <PodkladIntro config={podklad} />
       {:else if output}
         {@render output()}
       {/if}
     </div>
+
+    <ModuleBar config={bar} {hasTahak} />
   {/if}
 
-  <!-- Bottom: Input & Keypad Zone -->
-  <div class="zone-input">
-    {#if showPodkladPhase && podklad}
-      <PodkladMethods config={podklad} />
-    {:else if input}
-      {@render input()}
+  <div
+    class="zone-input"
+    class:is-panel={!showInteraction}
+    bind:this={zoneEl}
+  >
+    <!-- Stays mounted: switching tabs must not lose what the keypad holds -->
+    <div class="panel-interaction" class:is-hidden={!showInteraction}>
+      {#if variants}
+        <div class="variants-row">
+          {@render variants()}
+        </div>
+      {/if}
+      {#if input}
+        {@render input()}
+      {/if}
+    </div>
+
+    {#if view === 'podklad' && podklad}
+      <!-- Both editors fill the panel: the text scrolls itself, the photo fits its frame -->
+      <div class="panel-fill">
+        <PodkladPanel config={podklad} />
+      </div>
+    {:else if view === 'menu' && hasMenu}
+      <ScrollArea outset="var(--space-md)" outsetLeft="var(--space-md)">
+        <ModuleMenu {onReset} options={menuOptions} />
+      </ScrollArea>
     {/if}
   </div>
 
-  {#if podklad}
-    <PodkladSheet />
-  {/if}
-
-  <!-- Contextual Menu -->
-  {#if navigation.hasMenuButton}
-    <ModuleMenu {title} {hasAlphabet} {alphabetHint} {onReset} options={menuOptions} />
-  {/if}
-
-  <!-- Reference Modal -->
-  {#if navigation.activeModule?.hasReference !== false}
-    <ReferenceModal>
-      {#if reference}
-        {@render reference()}
-      {/if}
-    </ReferenceModal>
+  {#if view === 'tahak' && hasTahak && reference}
+    <TahakView>
+      {@render reference()}
+    </TahakView>
+  {:else if view === 'detail' && detail && navigation.detailId}
+    {@const detailId = navigation.detailId}
+    <TahakView
+      title={detailTitle?.(detailId) ?? ''}
+      closeLabel="Zavřít"
+      showIcon={false}
+      scrollable
+      onClose={() => navigation.closeDetail()}
+    >
+      {@render detail(detailId)}
+    </TahakView>
   {/if}
 </div>
 
@@ -124,6 +188,7 @@
     overflow: hidden;
     position: relative;
     background-color: var(--color-bg-canvas);
+    box-sizing: border-box;
   }
 
   .zone-output {
@@ -137,16 +202,55 @@
     box-sizing: border-box;
   }
 
+  .variants-row {
+    flex: none;
+    display: flex;
+    align-items: center;
+    height: var(--subtoolbar-height);
+    overflow: hidden;
+  }
+
   .zone-input {
     flex: 0 0 auto;
-    max-height: calc(100% - var(--output-min-height));
-    padding: var(--space-sm) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px)) var(--space-md);
+    max-height: calc(100% - var(--output-min-height) - var(--status-bar-height));
+    padding: var(--zone-input-offset) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: var(--zone-input-gap);
     background-color: var(--color-surface-1);
-    border-top: 1px solid var(--color-border-subtle);
     box-sizing: border-box;
+  }
+
+  .panel-interaction {
+    display: contents;
+  }
+
+  .panel-interaction.is-hidden {
+    display: none;
+  }
+
+  /* Podklad and Menu: always half the screen, whatever the Interakce panel needs */
+  .zone-input.is-panel {
+    height: 50dvh;
+  }
+
+  .panel-fill {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* Keyboard open in Podklad: header, bar and the editor fill what the keyboard leaves */
+  .module-shell.is-keyboard .zone-output {
+    display: none;
+  }
+
+  .module-shell.is-keyboard .zone-input {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    max-height: none;
   }
 
   .compact-output .zone-output {
@@ -167,7 +271,6 @@
     min-height: 0;
     height: 100%;
     max-height: none;
-    border-top: none;
     background-color: var(--color-bg-canvas);
     padding: 0;
     overflow: hidden;

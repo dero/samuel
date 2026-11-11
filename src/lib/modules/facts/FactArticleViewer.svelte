@@ -1,144 +1,45 @@
 <script lang="ts">
   import type { FactArticle } from './factsService';
-  import { settings } from '../../state/settings.svelte';
-  import { ArrowLeft, BookOpen } from 'phosphor-svelte';
 
+  /** Body of one article; the detail view of ModuleShell draws the title, ✕ and the scrolling. */
   interface Props {
     article: FactArticle;
-    onBack: () => void;
   }
 
-  let { article, onBack }: Props = $props();
-  let scrollContainer = $state<HTMLElement | null>(null);
-
-  $effect(() => {
-    if (article && scrollContainer) {
-      scrollContainer.scrollTop = 0;
-    }
-  });
-
-  function handleBack() {
-    settings.vibrate(20);
-    onBack();
-  }
+  let { article }: Props = $props();
 </script>
 
-<div class="article-viewer" data-allow-copy>
-  <!-- Top navigation bar -->
-  <header class="article-header-bar">
-    <button
-      type="button"
-      class="back-btn"
-      onclick={handleBack}
-      aria-label="Zpět na vyhledávání faktů"
-    >
-      <ArrowLeft size={18} weight="bold" />
-      <span class="back-text">Zpět k hledání</span>
-    </button>
-    <div class="article-category-badge">
-      <BookOpen size={13} weight="bold" />
-      <span>{article.category}</span>
-    </div>
-  </header>
+<article class="article" data-allow-copy>
+  <p class="article-category">{article.category}</p>
 
-  <!-- Scrollable article content (max height) -->
-  <main class="article-scroll-container" bind:this={scrollContainer}>
-    <div class="article-content-wrapper">
-      <h1 class="article-title">{article.title}</h1>
-
-      <div class="markdown-body">
-        {@html article.html}
-      </div>
-    </div>
-  </main>
-</div>
+  <div class="markdown-body">
+    {@html article.html}
+  </div>
+</article>
 
 <style>
-  .article-viewer {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-    background-color: var(--color-bg-canvas);
+  .article {
     color: var(--color-text-primary);
   }
 
-  .article-header-bar {
-    flex-shrink: 0;
-    height: 44px;
-    padding: 0 var(--space-sm);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: var(--color-bg-surface);
-    border-bottom: 1px solid var(--color-border-subtle);
-    gap: var(--space-sm);
-  }
-
-  .back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: transparent;
-    border: none;
-    color: var(--color-accent-primary);
-    font-size: calc(13px * var(--font-scale));
-    font-weight: 600;
-    cursor: pointer;
-    padding: 6px 4px;
-    border-radius: var(--radius-xs);
-    transition: opacity 0.12s;
-  }
-
-  .back-btn:active {
-    opacity: 0.7;
-  }
-
-  .article-category-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: calc(11px * var(--font-scale));
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    background-color: var(--color-surface-2);
-    padding: 3px 8px;
-    border-radius: var(--radius-full, 9999px);
-    border: 1px solid var(--color-border-subtle);
-  }
-
-  .article-scroll-container {
-    flex: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: var(--space-md);
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .article-content-wrapper {
-    max-width: 680px;
-    margin: 0 auto;
-    padding-bottom: var(--space-xl);
-  }
-
-  .article-title {
-    font-size: calc(20px * var(--font-scale));
+  .article-category {
+    margin: 0 0 var(--space-sm);
+    font-size: var(--text-xs);
     font-weight: 700;
-    line-height: 1.25;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--space-md) 0;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
   }
 
   /* Markdown body typography */
   .markdown-body {
-    font-size: calc(14px * var(--font-scale));
+    font-size: var(--text-sm);
     line-height: 1.6;
     color: var(--color-text-primary);
   }
 
   .markdown-body :global(h2) {
-    font-size: calc(17px * var(--font-scale));
+    font-size: var(--text-base);
     font-weight: 700;
     margin: var(--space-md) 0 var(--space-xs);
     color: var(--color-text-primary);
@@ -147,8 +48,8 @@
   }
 
   .markdown-body :global(h3) {
-    font-size: calc(15px * var(--font-scale));
-    font-weight: 600;
+    font-size: var(--text-sm);
+    font-weight: 700;
     margin: var(--space-md) 0 var(--space-xs);
     color: var(--color-text-primary);
   }
@@ -174,12 +75,12 @@
 
   .markdown-body :global(code) {
     font-family: var(--font-mono);
-    font-size: calc(12.5px * var(--font-scale));
+    font-size: var(--text-xs);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     padding: 1px 5px;
-    border-radius: 3px;
-    color: var(--color-accent-primary);
+    border-radius: var(--radius-xs);
+    color: var(--color-text-primary);
   }
 
   /* Table styles */
@@ -187,7 +88,7 @@
     width: 100%;
     border-collapse: collapse;
     margin: var(--space-sm) 0 var(--space-md);
-    font-size: calc(12.5px * var(--font-scale));
+    font-size: var(--text-sm);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     overflow: hidden;
@@ -211,7 +112,7 @@
     background-color: var(--color-surface-2);
     color: var(--color-text-secondary);
     font-weight: 700;
-    font-size: calc(11px * var(--font-scale));
+    font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 1px solid var(--color-border-medium);
@@ -229,9 +130,9 @@
 
   .markdown-body :global(td.col-num) {
     font-family: var(--font-mono);
-    font-size: calc(13.5px * var(--font-scale));
+    font-size: var(--text-sm);
     font-weight: 700;
-    color: var(--color-accent-primary);
+    color: var(--color-text-secondary);
     background-color: rgba(255, 255, 255, 0.015);
     vertical-align: middle;
   }
@@ -246,14 +147,14 @@
   }
 
   .markdown-body :global(td.col-val) {
-    font-size: calc(12px * var(--font-scale));
+    font-size: var(--text-xs);
     color: var(--color-text-primary);
     padding: 6px 6px;
   }
 
   .markdown-body :global(td.col-val small) {
     display: block;
-    font-size: calc(10px * var(--font-scale));
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
     line-height: 1.25;
     margin-top: 1px;
@@ -270,15 +171,14 @@
     width: 1%;
     white-space: nowrap;
     font-family: var(--font-mono);
-    font-size: calc(11.5px * var(--font-scale));
+    font-size: var(--text-xs);
   }
 
   .markdown-body :global(td.col-code code) {
-    font-size: calc(11.5px * var(--font-scale));
+    font-size: var(--text-xs);
     padding: 0;
     background: none;
     border: none;
-    color: var(--color-accent-primary);
   }
 
   /* Standard zebra striping for tables without desc-row */
@@ -301,7 +201,7 @@
   /* Description row attached under data cells */
   .markdown-body :global(tr.desc-row td) {
     color: var(--color-text-secondary);
-    font-size: calc(11.5px * var(--font-scale));
+    font-size: var(--text-xs);
     line-height: 1.45;
     padding-top: 2px;
     padding-bottom: 8px;
@@ -320,7 +220,7 @@
     border-bottom: none;
   }
 
-  /* Inline color swatches and badges */
+  /* Inline colour swatches (the colour itself is content) and plate badges */
   .markdown-body :global(.color-dot) {
     display: inline-block;
     width: 9px;
@@ -328,7 +228,7 @@
     border-radius: 50%;
     margin-right: 6px;
     vertical-align: middle;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--color-border-medium);
     flex-shrink: 0;
   }
 
@@ -336,12 +236,12 @@
     display: inline-block;
     font-family: var(--font-mono);
     font-weight: 700;
-    font-size: calc(11.5px * var(--font-scale));
+    font-size: var(--text-xs);
     padding: 1px 5px;
     background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 3px;
-    color: var(--color-accent-primary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-xs);
+    color: var(--color-text-primary);
     white-space: nowrap;
   }
 </style>

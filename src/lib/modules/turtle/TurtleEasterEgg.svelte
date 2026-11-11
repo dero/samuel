@@ -125,10 +125,10 @@
 </button>
 
 <style>
+  /* A flat filler in the keypad, not a plastic key (DESIGN_SYSTEM §8) */
   .turtle-card {
     width: 100%;
-    height: 100%;
-    max-height: 100%;
+    height: var(--key-height, 100%);
     min-height: 0;
     min-width: 0;
     display: flex;
@@ -143,10 +143,7 @@
     cursor: pointer;
     touch-action: manipulation;
     color: var(--color-text-muted);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s, box-shadow 0.08s, color 0.15s;
+    transition: background-color 0.12s, color 0.15s;
     user-select: none;
     -webkit-user-select: none;
   }
@@ -157,7 +154,6 @@
 
   .turtle-card:active {
     background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
   }
 
   .turtle-svg {

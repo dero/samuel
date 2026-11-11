@@ -2,7 +2,7 @@
  * World Flags Data Models & Taxonomy Definitions
  */
 
-export type WorldContinent = 'europe' | 'asia' | 'africa' | 'oceania' | 'americas' | 'all';
+export type WorldContinent = 'europe' | 'asia' | 'africa' | 'oceania' | 'americas';
 
 export type WorldFlagColorId =
   | 'blue'
@@ -43,17 +43,16 @@ export interface ContinentDef {
   name: string;
 }
 
-// 6 continents in Olympic ring order + All
+// Olympic ring order; no continent selected means all of them
 export const WORLD_CONTINENTS: ContinentDef[] = [
   { id: 'europe', name: 'Evropa' },
   { id: 'asia', name: 'Asie' },
   { id: 'africa', name: 'Afrika' },
   { id: 'oceania', name: 'Oceánie' },
-  { id: 'americas', name: 'Amerika' },
-  { id: 'all', name: 'Vše' }
+  { id: 'americas', name: 'Amerika' }
 ];
 
-// 6 colors directly corresponding to Olympic ring order above + White flag canvas
+// Olympic ring colours + the white flag canvas; the hex values are content (DESIGN_SYSTEM §9)
 export const WORLD_FLAG_COLORS: WorldColorDef[] = [
   { id: 'blue', name: 'Modrá', hex: '#2563eb', borderHex: '#1d4ed8' },
   { id: 'yellow', name: 'Žlutá', hex: '#eab308', borderHex: '#ca8a04' },
@@ -63,16 +62,14 @@ export const WORLD_FLAG_COLORS: WorldColorDef[] = [
   { id: 'white', name: 'Bílá', hex: '#f8fafc', borderHex: '#94a3b8' }
 ];
 
-// 12 features (2 rows x 6 items)
+// Geometry first, then symbols and figures
 export const WORLD_FLAG_FEATURES: WorldFeatureDef[] = [
-  // Row 1: Geometry & Layout
   { id: 'horizontal_stripes', name: 'Horiz. pruhy' },
   { id: 'vertical_stripes', name: 'Vertik. pruhy' },
   { id: 'diagonal_stripes', name: 'Diagonála' },
   { id: 'cross', name: 'Kříž' },
   { id: 'triangle', name: 'Klín' },
   { id: 'canton', name: 'Kanton' },
-  // Row 2: Symbols & Figures
   { id: 'stars', name: 'Hvězdy' },
   { id: 'sun_circle', name: 'Slunce / Kruh' },
   { id: 'crescent', name: 'Půlměsíc' },

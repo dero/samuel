@@ -13,10 +13,7 @@
 
 <div class="autokey-container">
   <div class="output-wrapper">
-    <TranslationCard
-      text={resultText}
-      emptyHint="Po vyčerpání hesla se klíč doplňuje textem zprávy."
-    />
+    <TranslationCard text={resultText} />
   </div>
 
   {#if text && primerText && keyStream}
@@ -53,7 +50,7 @@
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    font-size: calc(11px * var(--font-scale));
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
     flex-shrink: 0;
   }
@@ -61,7 +58,7 @@
   .ribbon-tag {
     font-weight: 700;
     text-transform: uppercase;
-    font-size: calc(10px * var(--font-scale));
+    font-size: var(--text-xs);
     color: var(--color-text-secondary);
     letter-spacing: 0.5px;
   }

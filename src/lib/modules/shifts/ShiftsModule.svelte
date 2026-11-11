@@ -1,8 +1,11 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
-  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
+  import type { ModuleBarConfig } from '../../components/layout/ModuleBar.svelte';
+  import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import AlphabetSelect from '../../components/ui/AlphabetSelect.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
   import CaesarView from './CaesarView.svelte';
   import VigenereView from './VigenereView.svelte';
   import AutokeyView from './AutokeyView.svelte';
@@ -18,22 +21,25 @@
     buildCaesarShiftTexts,
     assembleCaesarResults,
     solveVigenere,
-    solveAutokey
+    solveAutokey,
+    parseKey,
+    describeKeyShifts
   } from './shiftsSolver';
   import type { CaesarShiftResult } from './shiftsData';
   import { alphabet } from '../../state/alphabet.svelte';
   import { settings } from '../../state/settings.svelte';
   import { versionService } from '../../services/versionService.svelte';
-  import { navigation } from '../../state/navigation.svelte';
   import { toast } from '../../state/toast.svelte';
-  import { X, PencilSimple } from 'phosphor-svelte';
+  import { PencilSimple } from 'phosphor-svelte';
   import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
   import NonStandardAlphabetBanner from '../../components/ui/NonStandardAlphabetBanner.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
 
   const modSettings = localSettingsService.forModule('shifts');
 
-  // Submodule selection (in the main view via SegmentedControl)
+  const DEFAULT_ALPHABET_ID = 'english-26';
+
+  // Tool selection (variants row)
   let activeSubmodule = $state<ShiftType>(
     (modSettings.getString('submodule', 'caesar') as ShiftType) || 'caesar'
   );
@@ -52,7 +58,7 @@
     modSettings.getBoolean('preserve_special_chars', true)
   );
   let alphabetId = $state<string>(
-    modSettings.getString('alphabet_id', 'english-26')
+    modSettings.getString('alphabet_id', DEFAULT_ALPHABET_ID)
   );
 
   // Persistence effect
@@ -135,11 +141,51 @@
       : { text: '', keyStream: '' }
   );
 
+  // The parameter of the active tool: Vigenère key or Autokey primer
+  const activeKey = $derived(activeSubmodule === 'autokey' ? autokeyPrimer : keyText);
+  const activeKeyTokens = $derived(
+    activeSubmodule === 'caesar' ? [] : parseKey(activeKey, currentLetters)
+  );
+
+  const bar = $derived.by<ModuleBarConfig>(() => {
+    if (!text.trim()) return { empty: true, hint: 'Vložte šifrový text.' };
+
+    if (activeSubmodule === 'caesar') {
+      const best = caesarShifts.find((s) => s.isBest);
+      return {
+        status: best ? `Nejlepší posun +${best.shift} · shoda ${best.percentage} %` : undefined,
+        charCount: text.trim().length
+      };
+    }
+
+    const isVigenere = activeSubmodule === 'vigenere';
+    if (!activeKey.trim()) {
+      return {
+        empty: true,
+        hint: isVigenere ? 'Zadejte klíč: heslo nebo čísla.' : 'Zadejte počáteční heslo.'
+      };
+    }
+    if (activeKeyTokens.length === 0) {
+      return { warning: isVigenere ? 'Klíč nemá platné znaky.' : 'Heslo nemá platné znaky.' };
+    }
+    return {
+      status: describeKeyShifts(isVigenere ? 'Posuny klíče:' : 'Posuny hesla:', activeKeyTokens)
+    };
+  });
+
+  // Data and Menu options back to defaults; the chosen tool stays
   function handleReset() {
-    settings.vibrate(35);
     text = '';
     keyText = '';
     autokeyPrimer = '';
+    showBestHighlight = true;
+    preserveSpecialChars = true;
+    alphabetId = DEFAULT_ALPHABET_ID;
+  }
+
+  function openTextSheet(sheet: 'key' | 'primer') {
+    settings.vibrate(20);
+    activeTextSheet = sheet;
   }
 
   // Easter egg: Caesar's 23 daggers
@@ -172,8 +218,48 @@
   });
 </script>
 
+{#snippet keyRow(sheet: 'key' | 'primer', value: string, placeholder: string, noun: string)}
+  <div class="input-row">
+    <button
+      type="button"
+      class="cipher-input-trigger font-mono"
+      onclick={() => openTextSheet(sheet)}
+      title="Klepnutím zadat nebo upravit {noun}"
+      aria-label="Klepnutím zadat nebo upravit {noun}"
+    >
+      {#if value}
+        <span class="trigger-text">{value}</span>
+      {:else}
+        <span class="trigger-placeholder">{placeholder}</span>
+      {/if}
+    </button>
+    {#if value}
+      <div class="input-clear-slot">
+        <HoldToAction
+          variant="icon-only"
+          onAction={() => {
+            if (sheet === 'key') keyText = '';
+            else autokeyPrimer = '';
+          }}
+          ariaLabel="Podržte pro vymazání: {noun}"
+          tapWarning="Podržte pro vymazání"
+        />
+      </div>
+    {/if}
+    <button
+      type="button"
+      class="input-sheet-btn"
+      onclick={() => openTextSheet(sheet)}
+      title="Otevřít editor: {noun}"
+      aria-label="Otevřít editor: {noun}"
+    >
+      <PencilSimple size={16} weight="bold" />
+    </button>
+  </div>
+{/snippet}
+
 <ModuleShell
-  title={activeSubmodule === 'caesar' ? 'Cézar' : activeSubmodule === 'vigenere' ? 'Vigenère' : 'Autokey'}
+  title="Posuny"
   hasAlphabet={true}
   hasWarning={isNonStandardAlphabet}
   onReset={handleReset}
@@ -183,14 +269,15 @@
     empty: !text.trim(),
     title: 'Šifrový text',
     description: 'Text se posune podle zvoleného nástroje: Cézar, Vigenère nebo Autokey.',
+    format: 'Šifrový text, mezery a interpunkce zůstanou.',
     example: 'WKLV LV D VHFUHW',
     value: text,
     onSave: (val) => {
       text = val;
     }
   }}
+  {bar}
 >
-  <!-- TOP ZONE: Output (Translation area only) -->
   {#snippet output()}
     <div class="submodule-content">
       {#if activeSubmodule === 'caesar'}
@@ -217,161 +304,57 @@
     </div>
   {/snippet}
 
-  <!-- BOTTOM ZONE: Single-line Text Inputs & Quick Actions -->
-  {#snippet input()}
-    <div class="zone-input-flow">
-      <!-- Submodule Selector Segment: Cézar | Vigenère | Autokey -->
-      <div class="subtoolbar-container">
-        <SegmentedControl
-          options={SHIFT_SEGMENT_OPTIONS}
-          value={activeSubmodule}
-          size="sm"
-          onChange={(m) => {
-            activeSubmodule = m;
-          }}
-          ariaLabel="Výběr šifrovacího nástroje"
-        />
-      </div>
-
-      {#if activeSubmodule === 'caesar'}
-        <!-- Caesar: the text is the podklad; the row slot keeps Vigenère / Autokey height -->
-        <div class="inputs-column">
-          <!-- Easter egg: Caesar's 23 daggers in the reserved spacer slot -->
-          <button
-            type="button"
-            class="input-row input-row-spacer"
-            class:daggers-shaking={isDaggersShaking}
-            onclick={handleDaggerClick}
-            aria-label="Skrytá funkce: Cézarovy dýky"
-          >
-            {#if daggerCount === 0}
-              <span class="spacer-ghost font-mono">&nbsp;</span>
-            {:else}
-              <div class="daggers-cluster">
-                {#each Array.from({ length: daggerCount }, (_, i) => i) as idx (idx)}
-                  <svg
-                    viewBox="0 0 16 24"
-                    class="dagger-svg"
-                    aria-hidden="true"
-                    style="--dagger-rot: {((idx % 5) - 2) * 3}deg; --dagger-offset-y: {(idx % 3) - 1}px;"
-                  >
-                    <!-- Roman Pugio Dagger -->
-                    <circle cx="8" cy="2.2" r="1.7" fill="currentColor" />
-                    <rect x="7.2" y="3.9" width="1.6" height="3.8" rx="0.4" fill="currentColor" />
-                    <path d="M4 7.8 C4 7.4 12 7.4 12 7.8 L12.5 9 C12.5 9.4 10.5 9.4 10.5 9.4 L5.5 9.4 C5.5 9.4 3.5 9.4 3.5 9 Z" fill="currentColor" />
-                    <path d="M5.5 9.4 L10.5 9.4 L9.6 16.5 C9.2 19.5 8 23 8 23 C8 23 6.8 19.5 6.4 16.5 Z" fill="currentColor" />
-                  </svg>
-                {/each}
-              </div>
-            {/if}
-          </button>
-        </div>
-
-      {:else if activeSubmodule === 'vigenere'}
-        <!-- Vigenère: key row (the text is the podklad) -->
-        <div class="inputs-column">
-          <div class="input-row">
-            <button
-              type="button"
-              class="cipher-input-trigger font-mono"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'key';
-              }}
-              title="Klepnutím zadat nebo upravit klíč"
-              aria-label="Klepnutím zadat nebo upravit klíč"
-            >
-              {#if keyText}
-                <span class="trigger-text">{keyText}</span>
-              {:else}
-                <span class="trigger-placeholder">Heslo nebo čísla…</span>
-              {/if}
-            </button>
-            {#if keyText}
-              <button
-                type="button"
-                class="input-clear-btn"
-                onclick={() => {
-                  settings.vibrate(15);
-                  keyText = '';
-                }}
-                title="Vymazat klíč"
-                aria-label="Vymazat klíč"
-              >
-                <X size={15} weight="bold" />
-              </button>
-            {/if}
-            <button
-              type="button"
-              class="input-sheet-btn"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'key';
-              }}
-              title="Otevřít editor klíče"
-              aria-label="Otevřít editor klíče"
-            >
-              <PencilSimple size={16} weight="bold" />
-            </button>
-          </div>
-        </div>
-
-      {:else if activeSubmodule === 'autokey'}
-        <!-- Autokey: primer row (the text is the podklad) -->
-        <div class="inputs-column">
-          <div class="input-row">
-            <button
-              type="button"
-              class="cipher-input-trigger font-mono"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'primer';
-              }}
-              title="Klepnutím zadat nebo upravit heslo"
-              aria-label="Klepnutím zadat nebo upravit heslo"
-            >
-              {#if autokeyPrimer}
-                <span class="trigger-text">{autokeyPrimer}</span>
-              {:else}
-                <span class="trigger-placeholder">Heslo…</span>
-              {/if}
-            </button>
-            {#if autokeyPrimer}
-              <button
-                type="button"
-                class="input-clear-btn"
-                onclick={() => {
-                  settings.vibrate(15);
-                  autokeyPrimer = '';
-                }}
-                title="Vymazat heslo"
-                aria-label="Vymazat heslo"
-              >
-                <X size={15} weight="bold" />
-              </button>
-            {/if}
-            <button
-              type="button"
-              class="input-sheet-btn"
-              onclick={() => {
-                settings.vibrate(20);
-                activeTextSheet = 'primer';
-              }}
-              title="Otevřít editor hesla"
-              aria-label="Otevřít editor hesla"
-            >
-              <PencilSimple size={16} weight="bold" />
-            </button>
-          </div>
-        </div>
-      {/if}
-    </div>
+  {#snippet variants()}
+    <SegmentedControl
+      options={SHIFT_SEGMENT_OPTIONS}
+      value={activeSubmodule}
+      size="sm"
+      onChange={(m) => {
+        activeSubmodule = m;
+      }}
+      ariaLabel="Výběr šifrovacího nástroje"
+    />
   {/snippet}
 
-  <!-- CONTEXTUAL MENU: Abeceda & Možnosti -->
+  {#snippet input()}
+    {#if activeSubmodule === 'caesar'}
+      <!-- Caesar has no parameter; its row slot keeps the Vigenère / Autokey height -->
+      <!-- Easter egg: Caesar's 23 daggers in the reserved spacer slot -->
+      <button
+        type="button"
+        class="input-row-spacer"
+        class:daggers-shaking={isDaggersShaking}
+        onclick={handleDaggerClick}
+        aria-label="Skrytá funkce: Cézarovy dýky"
+      >
+        {#if daggerCount > 0}
+          <div class="daggers-cluster">
+            {#each Array.from({ length: daggerCount }, (_, i) => i) as idx (idx)}
+              <svg
+                viewBox="0 0 16 24"
+                class="dagger-svg"
+                aria-hidden="true"
+                style="--dagger-rot: {((idx % 5) - 2) * 3}deg; --dagger-offset-y: {(idx % 3) - 1}px;"
+              >
+                <!-- Roman Pugio Dagger -->
+                <circle cx="8" cy="2.2" r="1.7" fill="currentColor" />
+                <rect x="7.2" y="3.9" width="1.6" height="3.8" rx="0.4" fill="currentColor" />
+                <path d="M4 7.8 C4 7.4 12 7.4 12 7.8 L12.5 9 C12.5 9.4 10.5 9.4 10.5 9.4 L5.5 9.4 C5.5 9.4 3.5 9.4 3.5 9 Z" fill="currentColor" />
+                <path d="M5.5 9.4 L10.5 9.4 L9.6 16.5 C9.2 19.5 8 23 8 23 C8 23 6.8 19.5 6.4 16.5 Z" fill="currentColor" />
+              </svg>
+            {/each}
+          </div>
+        {/if}
+      </button>
+    {:else if activeSubmodule === 'vigenere'}
+      {@render keyRow('key', keyText, 'Heslo nebo čísla…', 'klíč')}
+    {:else if activeSubmodule === 'autokey'}
+      {@render keyRow('primer', autokeyPrimer, 'Heslo…', 'heslo')}
+    {/if}
+  {/snippet}
+
   {#snippet menuOptions()}
-    <div class="menu-group">
-      <div class="menu-group-title">Abeceda modulu</div>
+    <MenuGroup title="Abeceda">
       <NonStandardAlphabetBanner
         isWarning={isNonStandardAlphabet}
         description="Obvykle anglická (26) nebo s CH (27)."
@@ -382,10 +365,9 @@
           alphabetId = id;
         }}
       />
-    </div>
+    </MenuGroup>
 
-    <div class="menu-group">
-      <div class="menu-group-title">Zobrazení</div>
+    <MenuGroup title="Zobrazení">
       {#if activeSubmodule === 'caesar'}
         <OptionRow
           label="Zvýraznit nejlepší posun"
@@ -402,10 +384,9 @@
           preserveSpecialChars = val;
         }}
       />
-    </div>
+    </MenuGroup>
   {/snippet}
 
-  <!-- REFERENCE CHEAT SHEET -->
   {#snippet reference()}
     <ShiftsReference letters={currentLetters} activeTool={activeSubmodule} />
   {/snippet}
@@ -438,33 +419,87 @@
     overflow: hidden;
   }
 
-  .inputs-column {
-    display: flex;
-    flex-direction: column;
-    gap: var(--zone-input-gap);
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  /* Single-line Input Row */
+  /* Parameter row: a trigger that opens TextEntrySheet, never an inline field */
   .input-row {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-xs);
     width: 100%;
-    min-height: 42px;
-    height: 42px;
+    height: var(--utility-row-height);
+    flex-shrink: 0;
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
-    padding: 3px 6px;
+    padding: 2px 6px;
     box-sizing: border-box;
     transition: border-color 0.12s ease;
   }
 
+  .input-row:focus-within {
+    border-color: var(--color-border-focus);
+  }
+
+  .cipher-input-trigger {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    padding: 0 var(--space-xs);
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  .trigger-text {
+    color: var(--color-text-primary);
+    font-size: var(--text-base);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.5px;
+  }
+
+  .trigger-placeholder {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    font-weight: 400;
+  }
+
+  .input-clear-slot {
+    flex: none;
+    display: flex;
+  }
+
+  .input-sheet-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background-color: var(--color-surface-3);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xs);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.1s ease, color 0.1s ease;
+  }
+
+  .input-sheet-btn:active {
+    color: var(--color-accent-primary);
+    background-color: var(--color-surface-active);
+  }
+
+  /* Caesar: empty slot of the parameter row's height, home of the dagger easter egg */
   .input-row-spacer {
-    min-height: 42px;
-    height: 42px;
+    height: var(--utility-row-height);
+    flex-shrink: 0;
     border: none;
     background: transparent;
     cursor: pointer;
@@ -477,13 +512,8 @@
     width: 100%;
     position: relative;
     overflow: hidden;
-    padding: 0 4px;
+    padding: 0 var(--space-xs);
     box-sizing: border-box;
-  }
-
-  .spacer-ghost {
-    visibility: hidden;
-    pointer-events: none;
   }
 
   .daggers-cluster {
@@ -541,101 +571,4 @@
     color: var(--color-accent-danger);
     opacity: 0.95;
   }
-
-  .input-row:focus-within {
-    border-color: var(--color-border-focus);
-    box-shadow: 0 0 8px rgba(0, 210, 255, 0.15);
-  }
-
-  .cipher-input-trigger {
-    flex: 1;
-    min-width: 0;
-    height: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    display: flex;
-    align-items: center;
-    text-align: left;
-    padding: 0 4px;
-    cursor: pointer;
-    overflow: hidden;
-  }
-
-  .trigger-text {
-    color: var(--color-text-primary);
-    font-size: var(--text-base);
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    letter-spacing: 0.5px;
-  }
-
-  .trigger-placeholder {
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-    font-family: var(--font-sans);
-    font-weight: 400;
-  }
-
-  .input-clear-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: transparent;
-    border: none;
-    color: var(--color-text-muted);
-    cursor: pointer;
-    border-radius: var(--radius-xs);
-    flex-shrink: 0;
-    transition: color 0.1s ease, background-color 0.1s ease;
-  }
-
-  .input-clear-btn:hover {
-    color: var(--color-text-primary);
-    background-color: var(--color-surface-3);
-  }
-
-  .input-sheet-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    background-color: var(--color-surface-3);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-xs);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background-color 0.1s ease, color 0.1s ease, transform 0.08s ease;
-  }
-
-  .input-sheet-btn:hover {
-    color: var(--color-accent-primary);
-    background-color: var(--color-surface-active);
-  }
-
-  .input-sheet-btn:active {
-    transform: scale(0.96);
-  }
-
-  .menu-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-md);
-  }
-
-  .menu-group-title {
-    font-size: var(--text-xs);
-    font-weight: 700;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
 </style>

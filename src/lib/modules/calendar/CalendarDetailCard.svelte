@@ -48,7 +48,7 @@
       <div class="badges-group">
         <button
           type="button"
-          class="astro-badge"
+          class="astro-badge zodiac-badge"
           title="Znamení zvěrokruhu (kopírovat)"
           onclick={() => copyValue(detail.zodiac.name, 'Znamení')}
         >
@@ -59,7 +59,7 @@
         <button
           type="button"
           class="astro-badge"
-          title="Fáze Měsíce (kopírovat)"
+          title="{detail.moonPhase.phaseName} (kopírovat)"
           onclick={() => copyValue(detail.moonPhase.phaseName, 'Fáze Měsíce')}
         >
           <span class="badge-icon">{detail.moonPhase.icon}</span>
@@ -122,7 +122,7 @@
   .calendar-detail-root {
     width: 100%;
     box-sizing: border-box;
-    background-color: var(--color-bg-canvas, #000000);
+    background-color: var(--color-bg-canvas);
   }
 
   /* Compact Mode: Main Tool Output Zone (Strictly <= 64px, zero scroll) */
@@ -159,7 +159,6 @@
     grid-template-columns: minmax(0, 1fr) minmax(44px, auto) minmax(44px, auto);
   }
 
-  /* Container */
   .card-container {
     display: flex;
     flex-direction: column;
@@ -168,7 +167,7 @@
     box-sizing: border-box;
   }
 
-  /* Row 1: Slim Header (20px) */
+  /* Row 1: Slim Header (20px). The date never truncates; the badges give way. */
   .header-strip {
     display: flex;
     align-items: center;
@@ -187,54 +186,51 @@
     border: none;
     padding: 0;
     cursor: pointer;
-    min-width: 0;
-    flex-shrink: 1;
-    color: var(--color-text-secondary, #b3b3b3);
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
     transition: color 0.1s ease;
-    overflow: hidden;
   }
 
   .date-btn:active {
-    color: var(--color-accent-primary, #00d2ff);
+    color: var(--color-accent-primary);
   }
 
   .dow-label {
-    font-size: calc(11px * var(--font-scale));
+    font-size: var(--text-xs);
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--color-accent-primary, #00d2ff);
     white-space: nowrap;
-    flex-shrink: 0;
   }
 
   .date-label {
-    font-size: calc(13px * var(--font-scale));
+    font-size: var(--text-sm);
     font-weight: 700;
-    color: var(--color-text-primary, #ffffff);
+    color: var(--color-text-primary);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .badges-group {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 4px;
-    flex-shrink: 0;
+    min-width: 0;
   }
 
   .astro-badge {
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    background-color: var(--color-surface-2, #1c1c1c);
-    border: 1px solid var(--color-border-subtle, #2a2a2a);
-    border-radius: var(--radius-xs, 4px);
+    min-width: 0;
+    overflow: hidden;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xs);
     padding: 2px 5px;
-    font-size: calc(10px * var(--font-scale));
+    font-size: min(var(--text-xs), 3.6vw);
     font-weight: 700;
-    color: var(--color-text-secondary, #b3b3b3);
+    color: var(--color-text-secondary);
     white-space: nowrap;
     line-height: 1;
     cursor: pointer;
@@ -242,18 +238,26 @@
     transition: background-color 0.1s ease, border-color 0.1s ease;
   }
 
+  /* Zodiac names are short; a long Moon phase name is the one to shorten */
+  .astro-badge.zodiac-badge {
+    flex-shrink: 0;
+  }
+
   .astro-badge:active {
-    background-color: var(--color-surface-active, #333333);
-    border-color: var(--color-accent-primary, #00d2ff);
+    background-color: var(--color-surface-active);
+    border-color: var(--color-accent-primary);
   }
 
   .badge-icon {
-    font-size: calc(11px * var(--font-scale));
+    font-size: var(--text-xs);
     line-height: 1;
     flex-shrink: 0;
   }
 
   .badge-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     line-height: 1;
     white-space: nowrap;
   }
@@ -272,10 +276,10 @@
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    padding: 3px 6px;
-    background-color: var(--color-surface-1, #121212);
-    border: 1px solid var(--color-border-subtle, #2a2a2a);
-    border-radius: var(--radius-sm, 6px);
+    padding: 1px 6px;
+    background-color: var(--color-surface-1);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
     cursor: pointer;
     min-width: 0;
     box-sizing: border-box;
@@ -284,12 +288,12 @@
   }
 
   .action-card:active {
-    background-color: var(--color-surface-active, #333333);
-    border-color: var(--color-accent-primary, #00d2ff);
+    background-color: var(--color-surface-active);
+    border-color: var(--color-accent-primary);
   }
 
   .action-card.num-card {
-    padding: 3px 2px;
+    padding: 1px 2px;
     align-items: center;
     text-align: center;
   }
@@ -298,45 +302,42 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: calc(9px * var(--font-scale));
+    font-size: var(--text-xs);
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 0.05em;
-    color: var(--color-text-muted, #828282);
+    color: var(--color-text-muted);
     line-height: 1;
   }
 
   .action-card.num-card .card-label {
     justify-content: center;
-    font-size: calc(8.5px * var(--font-scale));
     letter-spacing: 0.02em;
   }
 
   .holiday-star {
-    color: #facc15;
-    font-size: calc(10px * var(--font-scale));
+    color: var(--color-text-secondary);
   }
 
   .card-val {
     width: 100%;
-    margin-top: 2px;
-    line-height: 1.15;
+    line-height: 1.1;
   }
 
   .svatek-name {
-    font-size: calc(15px * var(--font-scale));
+    font-size: var(--text-base);
     font-weight: 800;
-    color: var(--color-accent-primary, #00d2ff);
+    color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .mono-val {
-    font-size: calc(15px * var(--font-scale));
+    font-size: var(--text-base);
     font-weight: 900;
-    font-family: var(--font-mono, monospace);
-    color: var(--color-text-primary, #ffffff);
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

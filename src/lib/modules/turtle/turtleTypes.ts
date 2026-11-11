@@ -19,20 +19,7 @@ export interface Marker {
   position: Point;
 }
 
-export type TurtleAction =
-  | {
-      type: 'step';
-      from: Point;
-      to: Point;
-      prevHeading: number;
-      heading: number;
-      distance: number;
-      penDown: boolean;
-    }
-  | { type: 'turn'; fromHeading: number; toHeading: number; delta: number }
-  | { type: 'marker'; marker: Marker }
-  | { type: 'pen'; prevPenDown: boolean; newPenDown: boolean };
-
+/** A drawing replayed from its notation; nothing here is stored. */
 export interface TurtleState {
   position: Point;
   heading: number; // 0 = up/north, 90 = right/east, 180 = down/south, 270 = left/west
@@ -40,5 +27,4 @@ export interface TurtleState {
   segments: Segment[];
   markers: Marker[];
   nextMarkerId: number;
-  history: TurtleAction[];
 }

@@ -153,8 +153,8 @@
   }
 
   .element-tile.is-selected {
-    outline: 2px solid var(--color-accent-primary, #00d2ff);
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+    outline: 2px solid var(--color-accent-primary);
+    box-shadow: 0 0 10px var(--color-accent-primary-glow);
     z-index: 5;
   }
 

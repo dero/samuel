@@ -1,8 +1,9 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import ColorsReference from './ColorsReference.svelte';
-  import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
-  import { settings } from '../../state/settings.svelte';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
+  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
   import { ArrowClockwise } from 'phosphor-svelte';
   import { applyRgbFilter, applyCmyFilter } from './colorsFilter';
   import { colorsPhoto } from './colorsPhoto.svelte';
@@ -10,6 +11,7 @@
   type ColorModel = 'rgb' | 'cmy';
   type Channel = 'r' | 'g' | 'b' | 'c' | 'm' | 'y';
 
+  // Swatch colours are content: they name the channel, the Keycap shows whether it is on
   const CHANNELS: Record<ColorModel, { id: Channel; color: string; label: string }[]> = {
     rgb: [
       { id: 'r', color: '#ef4444', label: 'Červený kanál (R)' },
@@ -23,8 +25,15 @@
     ]
   };
 
+  const MODEL_OPTIONS: SegmentOption<ColorModel>[] = [
+    { id: 'rgb', label: 'RGB' },
+    { id: 'cmy', label: 'CMY' }
+  ];
+
+  const ALL_CHANNELS_ON: Record<Channel, boolean> = { r: true, g: true, b: true, c: true, m: true, y: true };
+
   let colorModel = $state<ColorModel>('rgb');
-  let channelsOn = $state<Record<Channel, boolean>>({ r: true, g: true, b: true, c: true, m: true, y: true });
+  let channelsOn = $state<Record<Channel, boolean>>({ ...ALL_CHANNELS_ON });
 
   let canvasEl = $state<HTMLCanvasElement | null>(null);
   let targetImageData: ImageData | null = null;
@@ -39,6 +48,21 @@
   let lastPanPoint = { x: 0, y: 0 };
   let initialPinchDist = 0;
   let initialPinchZoom = 1;
+
+  const isTransformed = $derived(zoom !== 1 || panX !== 0 || panY !== 0);
+
+  // What the photo shows now
+  const filterStatus = $derived.by(() => {
+    const channels = CHANNELS[colorModel];
+    const on = channels.filter((ch) => channelsOn[ch.id]).map((ch) => ch.id.toUpperCase());
+    if (on.length === channels.length) return 'Původní barvy';
+    if (colorModel === 'rgb') {
+      if (on.length === 0) return 'Žádný kanál, vše černé';
+      return on.length === 1 ? `Jen kanál ${on[0]}` : `Kanály ${on.join(' + ')}`;
+    }
+    if (on.length === 0) return 'Žádná vrstva, vše bílé';
+    return on.length === 1 ? `Jen vrstva ${on[0]}` : `Vrstvy ${on.join(' + ')}`;
+  });
 
   // Redraw whenever the photo, the model or a channel changes
   $effect(() => {
@@ -71,7 +95,6 @@
   });
 
   function toggleChannel(channel: Channel) {
-    settings.vibrate(20);
     channelsOn[channel] = !channelsOn[channel];
   }
 
@@ -81,7 +104,14 @@
     panY = 0;
   }
 
-  // Pointer & Pinch-to-zoom handlers
+  // Photo and channels back to defaults; the colour model is the variant and stays
+  function handleReset() {
+    colorsPhoto.clear();
+    channelsOn = { ...ALL_CHANNELS_ON };
+    resetTransform();
+  }
+
+  // Pointer & Pinch-to-zoom handlers (read-only photo: one finger pans)
   function handlePointerDown(e: PointerEvent) {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -132,15 +162,29 @@
 
 <ModuleShell
   title="Barvy"
+  onReset={handleReset}
   podklad={{
     kind: 'image',
     required: true,
-    empty: !colorsPhoto.source,
+    empty: !colorsPhoto.source && !colorsPhoto.loading,
     title: 'Fotografie šifry',
     description: 'Barevné vrstvy fotky se oddělí přes kanály RGB nebo CMY.',
     preview: colorsPhoto.previewUrl,
     onFile: (file) => colorsPhoto.load(file),
     onClear: () => colorsPhoto.clear()
+  }}
+  bar={{
+    empty: !colorsPhoto.source,
+    hint: 'Vyfoťte nebo vyberte fotku šifry.',
+    status: filterStatus,
+    action: isTransformed
+      ? {
+          label: `${Math.round(zoom * 100)} %`,
+          icon: ArrowClockwise,
+          title: 'Obnovit zvětšení na 100 %',
+          onClick: resetTransform
+        }
+      : undefined
   }}
 >
   <!-- ZONE-OUTPUT: Viewport with the filtered photo -->
@@ -156,72 +200,44 @@
       onpointercancel={handlePointerUp}
       onwheel={handleWheel}
     >
-      <!-- Canvas Stage with CSS Transform -->
       <div
         class="canvas-stage"
         style:transform="translate({panX}px, {panY}px) scale({zoom})"
       >
         <canvas bind:this={canvasEl}></canvas>
       </div>
-
-      {#if zoom !== 1 || panX !== 0 || panY !== 0}
-        <button
-          type="button"
-          class="reset-zoom-btn"
-          onclick={() => {
-            settings.vibrate(15);
-            resetTransform();
-          }}
-          aria-label="Obnovit zvětšení na 1×"
-          title="Obnovit zvětšení"
-        >
-          <ArrowClockwise size={14} weight="bold" />
-          <span>{Math.round(zoom * 100)} %</span>
-        </button>
-      {/if}
     </div>
   {/snippet}
 
-  <!-- ZONE-INPUT: Sub-Toolbar and Filters -->
-  {#snippet input()}
-    <div class="zone-input-flow">
-      <!-- 1. Sub-Toolbar: Model Switch (36 px) -->
-      <div class="subtoolbar-container">
-        <SegmentedControl
-          options={[
-            { id: 'rgb', label: 'RGB' },
-            { id: 'cmy', label: 'CMY' }
-          ]}
-          value={colorModel}
-          size="sm"
-          ariaLabel="Barevný model"
-          onChange={(newModel) => {
-            colorModel = newModel as ColorModel;
-          }}
-        />
-      </div>
+  {#snippet variants()}
+    <SegmentedControl
+      options={MODEL_OPTIONS}
+      value={colorModel}
+      size="sm"
+      ariaLabel="Barevný model"
+      onChange={(model) => {
+        colorModel = model;
+      }}
+    />
+  {/snippet}
 
-      <!-- 2. Channel Filter Switches (in the style of FlagsModule) -->
-      <div class="color-filter-group" role="group" aria-label="Kanály barevného filtru">
-        {#each CHANNELS[colorModel] as channel (channel.id)}
-          <button
-            type="button"
-            class="color-filter-btn"
-            class:is-active={channelsOn[channel.id]}
-            onclick={() => toggleChannel(channel.id)}
-            aria-pressed={channelsOn[channel.id]}
-            aria-label={channel.label}
-          >
-            <span
-              class="color-swatch"
-              style:background-color={channel.color}
-              style:border-color={channel.color}
-            ></span>
-            <span class="color-name">{channel.id.toUpperCase()}</span>
-          </button>
-        {/each}
-      </div>
-    </div>
+  <!-- ZONE-INPUT: channel toggles -->
+  {#snippet input()}
+    <Chassis columns={3} keyHeight="42px">
+      {#each CHANNELS[colorModel] as channel (channel.id)}
+        <Keycap
+          selected={channelsOn[channel.id]}
+          title={channel.label}
+          ariaLabel="{channel.label}: {channelsOn[channel.id] ? 'zapnuto' : 'vypnuto'}"
+          onPress={() => toggleChannel(channel.id)}
+        >
+          <span class="channel-key">
+            <span class="channel-swatch" style:background-color={channel.color}></span>
+            <span class="channel-name">{channel.id.toUpperCase()}</span>
+          </span>
+        </Keycap>
+      {/each}
+    </Chassis>
   {/snippet}
 
   <!-- REFERENCE CHEAT SHEET -->
@@ -231,13 +247,11 @@
 </ModuleShell>
 
 <style>
-  /* Viewport Zone */
   .canvas-viewport {
     flex: 1;
     width: 100%;
     height: 100%;
-    min-height: var(--output-min-height);
-    background-color: #000000;
+    background-color: var(--color-bg-canvas);
     position: relative;
     overflow: hidden;
     display: flex;
@@ -267,128 +281,23 @@
     height: auto;
     object-fit: contain;
     display: block;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
   }
 
-
-
-
-
-
-  .reset-zoom-btn {
-    position: absolute;
-    top: var(--space-sm);
-    right: var(--space-sm);
-    display: inline-flex;
+  /* The swatch is content; on/off is the Keycap's own fill and ring */
+  .channel-key {
+    display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: var(--radius-xs);
-    background-color: rgba(20, 20, 20, 0.85);
-    border: 1px solid var(--color-border-subtle);
-    color: var(--color-text-primary);
-    font-size: calc(11px * var(--font-scale));
-    font-weight: 600;
-    backdrop-filter: blur(8px);
-    cursor: pointer;
-    z-index: 10;
-  }
-
-  .reset-zoom-btn:active {
-    background-color: var(--color-surface-active);
-  }
-
-  /* Zone Input Flow */
-  .zone-input-flow {
-    display: flex;
-    flex-direction: column;
-    gap: var(--zone-input-gap);
-    width: 100%;
-  }
-
-  .subtoolbar-container {
-    height: var(--subtoolbar-height, 36px);
-    min-height: var(--subtoolbar-height, 36px);
-    overflow: hidden;
-    width: 100%;
-    display: flex;
-  }
-
-
-
-  .color-filter-group {
-    width: 100%;
-    height: 36px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    background-color: #000000;
-    padding: 2px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border-subtle);
-    box-sizing: border-box;
-  }
-
-  /* Tactile Filter Button in Samuel design system */
-  .color-filter-btn {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    height: 100%;
-    background-color: var(--color-surface-2);
-    border: none;
-    border-radius: 2px;
-    padding: 0 6px;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s ease, box-shadow 0.08s ease;
-    touch-action: manipulation;
-    box-sizing: border-box;
-    cursor: pointer;
-  }
-
-  .color-filter-btn:active {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  }
-
-
-  /* Swatch: filled circle when ON, hollow ring when OFF */
-  .color-swatch {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid;
-    box-sizing: border-box;
-    transition: background-color 0.15s ease, box-shadow 0.12s ease;
-    flex-shrink: 0;
-  }
-
-  .color-filter-btn.is-active .color-swatch {
-    box-shadow: 0 0 4px rgba(255, 255, 255, 0.25);
-  }
-
-  .color-filter-btn:not(.is-active) .color-swatch {
-    background-color: transparent !important;
-  }
-
-  .color-name {
-    font-family: var(--font-condensed);
-    font-size: calc(13px * var(--font-scale));
-    font-weight: 700;
-    letter-spacing: 0.3px;
+    gap: 0.3em;
+    font-family: var(--font-mono);
+    font-size: min(var(--key-m), 60cqh);
+    font-weight: 800;
     line-height: 1;
-    transition: color 0.12s ease;
   }
 
-  .color-filter-btn.is-active .color-name {
-    color: var(--color-text-primary);
-  }
-
-  .color-filter-btn:not(.is-active) .color-name {
-    color: var(--color-text-secondary);
+  .channel-swatch {
+    width: 0.6em;
+    height: 0.6em;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 </style>

@@ -12,15 +12,35 @@
   ];
 
   const help: RefHelpData = {
+    purpose: [
+      'Námořní signální vlajky mají pro každé písmeno abecedy vlastní vlajku. Nástroj z klepnutých vlajek skládá text a pod každé písmeno napíše jméno vlajky (Alfa, Bravo…).'
+    ],
+    howTo: [
+      'Podívejte se, jaké barvy vlajka má, a zapněte je v řádku nad vlajkami. Plné zůstanou jen vlajky, které mají všechny zvolené barvy, ostatní ztmavnou. Ze zbylých klepněte na tu se stejným vzorem.'
+    ],
+    example: {
+      title: 'Příklad: OK',
+      steps: [
+        { action: 'Klepněte na Žlutá a Červená v řádku nad vlajkami.', result: 'Plné zůstanou jen O, R, Y a Z, lišta hlásí „Filtr: 4 vlajky“.' },
+        { action: 'Klepněte na vlajku O (červený a žlutý trojúhelník).', result: 'Ve výstupu je O a pod ním Oscar. Filtr zůstává zapnutý.' },
+        { action: 'Klepněte na Zpět (vpravo dole).', result: 'Filtr se zruší, O ve výstupu zůstane.' },
+        { action: 'Zapněte Žlutá a Modrá a klepněte na vlajku K (žlutá a modrá půlka).', result: 'Výstup ukazuje OK. Na záložce Podklad je totéž jako `OK`.' }
+      ]
+    },
     controls: [
-      ['Barvy dole', 'nechají jen vlajky, které mají všechny zvolené barvy'],
-      ['Klepnutí na vlajku', 'vloží písmeno'],
-      ['Backspace', 'nejdřív zruší filtr barev, pak maže text'],
-      ['Rušit filtr po zadání', 'v menu: filtr se po každé vlajce vynuluje']
+      ['Řádek barev: Bílá | Černá | Červená | Modrá | Žlutá', 'Zapíná a vypíná barvy filtru. Lišta ukazuje, kolik vlajek zbývá.'],
+      ['Vlajky', 'Klepnutím přidáte písmeno. Ztmavlé vlajky jdou vložit také.'],
+      ['Mezera (uprostřed dole)', 'Vloží mezeru.'],
+      ['Zpět (vpravo dole)', 'Se zapnutým filtrem ho zruší (ukazuje ✕), jinak smaže poslední písmeno.'],
+      ['Koš (vlevo dole)', 'Podržením smaže text i filtr.'],
+      ['Záložka Podklad', 'Text přímo písmeny, mezera je mezera. Znak bez vlajky (číslice, diakritika) zůstane v textu a označí se.'],
+      ['Menu → Rušit filtr po zadání', 'Po každé vložené vlajce filtr vypne. Výchozí je vypnuto.'],
+      ['Menu → Lodička', 'Ukáže nebo skryje dekoraci v rohu vlajek.']
     ],
     pitfalls: [
-      ['Filtr barev', 'hledí jen na přítomnost barvy, ne na tvar ani rozmístění'],
-      ['Číslice', 'klávesnice má jen písmena. Číselné praporce jsou v záložce Číslice.']
+      ['Filtr nechal vlajky s jiným vzorem?', 'Filtr porovnává jen barvy, ne tvar ani rozmístění. Mezi zbylými vlajkami vyberte podle obrázku.'],
+      ['Lišta hlásí „Filtr: 0 vlajek“?', 'Žádná písmenná vlajka nemá všechny zvolené barvy. Ubírejte barvy, nebo jde o číselný praporec.'],
+      ['V šifře jsou číselné praporce?', 'Klávesnice má jen písmena. Praporec najděte v taháku v záložce Číslice; na záložce Podklad číslici dopsat můžete, zůstane ale označená.']
     ]
   };
 

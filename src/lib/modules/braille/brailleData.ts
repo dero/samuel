@@ -25,15 +25,6 @@ export function maskToUnicode(mask: number): string {
   return String.fromCharCode(0x2800 + (mask & 0x3f));
 }
 
-export function unicodeToMask(char: string): number {
-  if (!char) return 0;
-  const code = char.charCodeAt(0);
-  if (code >= 0x2800 && code <= 0x283f) {
-    return code - 0x2800;
-  }
-  return 0;
-}
-
 function entry(
   char: string,
   dots: number[],

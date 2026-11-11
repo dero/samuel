@@ -1,5 +1,6 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
+  import type { ModuleBarConfig } from '../../components/layout/ModuleBar.svelte';
   import SimpleKeyboard from '../../components/ui/SimpleKeyboard.svelte';
   import FactArticleViewer from './FactArticleViewer.svelte';
   import {
@@ -9,384 +10,241 @@
     getArticleSnippet,
     type FactArticle
   } from './factsService';
+  import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
-  import { BookOpen, CaretRight, X, MagnifyingGlass } from 'phosphor-svelte';
+  import { CaretRight } from 'phosphor-svelte';
 
-  // Load articles once
   const allArticles = loadFactArticles();
+  const articlesById = new Map(allArticles.map((a) => [a.id, a]));
 
   let searchQuery = $state('');
-  let selectedArticle = $state<FactArticle | null>(null);
-  let listContainer = $state<HTMLDivElement | null>(null);
+  let listEl = $state<HTMLDivElement | null>(null);
 
+  const hasQuery = $derived(searchQuery.trim() !== '');
   const filteredArticles = $derived(searchFacts(searchQuery, allArticles));
 
+  function formatTopicCount(n: number): string {
+    if (n === 1) return '1 téma';
+    return n >= 2 && n <= 4 ? `${n} témata` : `${n} témat`;
+  }
+
+  const bar = $derived<ModuleBarConfig>({
+    empty: !hasQuery,
+    hint: 'Pište, co hledáte.',
+    status: hasQuery
+      ? `Nalezeno ${filteredArticles.length} z ${allArticles.length}`
+      : formatTopicCount(allArticles.length)
+  });
+
+  // A changed query starts the list from the top
   $effect(() => {
-    // Whenever searchQuery changes, scroll list immediately back to the top
-    if (searchQuery !== undefined && listContainer) {
-      listContainer.scrollTop = 0;
-    }
+    void searchQuery;
+    if (listEl) listEl.scrollTop = 0;
   });
 
   function handleChar(char: string) {
     searchQuery += char;
-    listContainer?.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   function handleBackspace() {
-    if (searchQuery.length > 0) {
-      searchQuery = searchQuery.slice(0, -1);
-      listContainer?.scrollTo({ top: 0, behavior: 'instant' });
-    }
+    searchQuery = searchQuery.slice(0, -1);
   }
 
   function handleClear() {
     searchQuery = '';
-    listContainer?.scrollTo({ top: 0, behavior: 'instant' });
   }
 
-  function handleSelectArticle(article: FactArticle) {
+  function openArticle(article: FactArticle) {
     settings.vibrate(20);
-    selectedArticle = article;
-  }
-
-  function handleReset() {
-    searchQuery = '';
-    selectedArticle = null;
-    listContainer?.scrollTo({ top: 0, behavior: 'instant' });
+    navigation.openDetail(article.id);
   }
 </script>
 
 <ModuleShell
   title="Fakta"
-  layoutMode="fullscreen-input"
-  onReset={handleReset}
+  {bar}
+  detailTitle={(id) => articlesById.get(id)?.title ?? 'Fakta'}
 >
+  {#snippet output()}
+    <div class="facts-output" bind:this={listEl}>
+      {#if filteredArticles.length === 0}
+        <div class="empty-state">
+          <span class="empty-query font-mono">„{searchQuery}“</span>
+          <span class="empty-msg">Žádné téma neodpovídá.</span>
+          <span class="empty-tip">Dotaz vymažete podržením koše.</span>
+        </div>
+      {:else}
+        <div class="topic-list">
+          {#each filteredArticles as article (article.id)}
+            <button
+              type="button"
+              class="topic-card"
+              onclick={() => openArticle(article)}
+              aria-label="Zobrazit {article.title}"
+            >
+              <span class="card-body">
+                <span class="card-category">{article.category}</span>
+                <span class="card-title">
+                  {#each highlightMatches(article.title, searchQuery) as seg}
+                    {#if seg.isMatch}<mark>{seg.text}</mark>{:else}{seg.text}{/if}
+                  {/each}
+                </span>
+                <span class="card-preview">
+                  {#each highlightMatches(getArticleSnippet(article, searchQuery), searchQuery) as seg}
+                    {#if seg.isMatch}<mark>{seg.text}</mark>{:else}{seg.text}{/if}
+                  {/each}
+                </span>
+              </span>
+              <span class="card-arrow" aria-hidden="true">
+                <CaretRight size={16} />
+              </span>
+            </button>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/snippet}
+
   {#snippet input()}
-    {#if selectedArticle}
-      <FactArticleViewer
-        article={selectedArticle}
-        onBack={() => (selectedArticle = null)}
-      />
+    <SimpleKeyboard
+      query={searchQuery}
+      placeholder="Hledat téma…"
+      hasInput={searchQuery.length > 0}
+      onChar={handleChar}
+      onBackspace={handleBackspace}
+      onClear={handleClear}
+    />
+  {/snippet}
+
+  {#snippet detail(id: string)}
+    {@const article = articlesById.get(id)}
+    {#if article}
+      <FactArticleViewer {article} />
     {:else}
-      <div class="facts-browser" data-allow-copy>
-        <!-- Top Status Bar: Subtle status indicator (not an input field) -->
-        <header class="facts-status-bar">
-          <div class="status-left">
-            <MagnifyingGlass size={13} color="var(--color-text-secondary)" />
-            {#if searchQuery}
-              <span class="status-prefix text-muted">Filtr:</span>
-              <span class="status-query font-mono">{searchQuery}</span>
-            {:else}
-              <span class="status-idle text-muted">Přehled témat</span>
-            {/if}
-          </div>
-
-          <div class="status-right">
-            <span class="status-count text-muted font-mono">
-              {#if searchQuery}
-                {filteredArticles.length} / {allArticles.length}
-              {:else}
-                {allArticles.length} {allArticles.length === 1 ? 'téma' : allArticles.length < 5 ? 'témata' : 'témat'}
-              {/if}
-            </span>
-            {#if searchQuery}
-              <button
-                type="button"
-                class="status-clear-btn"
-                onclick={handleClear}
-                aria-label="Vymazat dotaz"
-                title="Vymazat dotaz"
-              >
-                <X size={12} weight="bold" />
-              </button>
-            {/if}
-          </div>
-        </header>
-
-        <!-- Middle: Scrollable Fact Articles List with Matched Substring Highlighting -->
-        <div class="facts-list-zone" bind:this={listContainer}>
-          {#if filteredArticles.length === 0}
-            <div class="empty-state">
-              <span class="empty-query font-mono">„{searchQuery}“</span>
-              <span class="empty-msg">Nenalezen žádný odpovídající přehled</span>
-              <button
-                type="button"
-                class="empty-clear-btn"
-                onclick={handleClear}
-              >
-                Vymazat hledání
-              </button>
-            </div>
-          {:else}
-            <div class="articles-grid">
-              {#each filteredArticles as article (article.id)}
-                <button
-                  type="button"
-                  class="article-card"
-                  onclick={() => handleSelectArticle(article)}
-                  aria-label="Zobrazit {article.title}"
-                >
-                  <div class="card-left">
-                    <div class="card-category-row">
-                      <BookOpen size={11} weight="bold" class="category-icon" />
-                      <span class="card-category">{article.category}</span>
-                    </div>
-                    <span class="card-title">
-                      {#each highlightMatches(article.title, searchQuery) as seg}
-                        {#if seg.isMatch}
-                          <mark class="match-highlight">{seg.text}</mark>
-                        {:else}
-                          {seg.text}
-                        {/if}
-                      {/each}
-                    </span>
-                    <span class="card-preview text-muted">
-                      {#each highlightMatches(getArticleSnippet(article, searchQuery), searchQuery) as seg}
-                        {#if seg.isMatch}
-                          <mark class="match-highlight">{seg.text}</mark>
-                        {:else}
-                          {seg.text}
-                        {/if}
-                      {/each}
-                    </span>
-                  </div>
-
-                  <div class="card-right">
-                    <CaretRight size={16} class="card-arrow" />
-                  </div>
-                </button>
-              {/each}
-            </div>
-          {/if}
-        </div>
-
-        <!-- Bottom: In-App QWERTY Keyboard (Tight to bottom, no extra gap) -->
-        <div class="facts-keyboard-wrap">
-          <SimpleKeyboard
-            hasInput={searchQuery.length > 0}
-            onChar={handleChar}
-            onBackspace={handleBackspace}
-            onClear={handleClear}
-          />
-        </div>
-      </div>
+      <p class="missing-article">Téma nebylo nalezeno.</p>
     {/if}
   {/snippet}
 </ModuleShell>
 
 <style>
-  .facts-browser {
+  .facts-output {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-    background-color: var(--color-bg-canvas);
-    color: var(--color-text-primary);
-  }
-
-  /* Subtle status bar (not a fake input field) */
-  .facts-status-bar {
-    flex-shrink: 0;
-    height: 32px;
-    padding: 0 var(--space-sm);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: var(--color-surface-1);
-    border-bottom: 1px solid var(--color-border-subtle);
-    font-size: calc(12px * var(--font-scale));
-  }
-
-  .status-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-
-  .status-prefix {
-    font-size: calc(11px * var(--font-scale));
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-
-  .status-query {
-    font-size: calc(13px * var(--font-scale));
-    font-weight: 700;
-    color: var(--color-accent-primary);
-    letter-spacing: 0.5px;
-  }
-
-  .status-idle {
-    font-size: calc(11.5px * var(--font-scale));
-    font-weight: 500;
-  }
-
-  .status-right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-
-  .status-count {
-    font-size: calc(11px * var(--font-scale));
-    font-weight: 600;
-  }
-
-  .status-clear-btn {
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-full, 9999px);
-    color: var(--color-text-secondary);
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    line-height: 1;
-  }
-
-  .status-clear-btn:active {
-    color: var(--color-text-primary);
-    background-color: var(--color-surface-active);
-  }
-
-  .facts-list-zone {
-    flex: 1;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: var(--space-xs) var(--space-sm);
     -webkit-overflow-scrolling: touch;
   }
 
-  .articles-grid {
+  .topic-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding-bottom: var(--space-xs);
+    gap: var(--space-xs);
   }
 
-  .article-card {
+  .topic-card {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-sm);
-    padding: 9px 12px;
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
     background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     text-align: left;
-    cursor: pointer;
-    transition: background-color 0.12s, border-color 0.12s;
-    touch-action: manipulation;
+    box-sizing: border-box;
+    transition: background-color 0.12s ease;
   }
 
-  .article-card:active {
+  .topic-card:active {
     background-color: var(--color-surface-active);
   }
 
-  .card-left {
+  .card-body {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    min-width: 0;
-    flex: 1;
-  }
-
-  .card-category-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--color-accent-primary);
   }
 
   .card-category {
-    font-size: calc(10px * var(--font-scale));
+    font-size: var(--text-xs);
     font-weight: 700;
-    text-transform: uppercase;
     letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
   }
 
   .card-title {
-    font-size: calc(14px * var(--font-scale));
+    font-size: var(--text-base);
     font-weight: 700;
-    color: var(--color-text-primary);
     line-height: 1.25;
+    color: var(--color-text-primary);
   }
 
   .card-preview {
-    font-size: calc(11.5px * var(--font-scale));
-    line-height: 1.35;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
+    font-size: var(--text-xs);
+    line-height: 1.35;
+    color: var(--color-text-secondary);
     word-break: break-word;
   }
 
-  .card-right {
+  .card-arrow {
     flex-shrink: 0;
-    color: var(--color-text-secondary);
+    display: flex;
+    color: var(--color-text-muted);
   }
 
-  /* Substring match highlight (yellow background with high contrast) */
-  :global(mark.match-highlight) {
-    background-color: rgba(234, 179, 8, 0.3);
-    color: #fef08a;
+  /* A match is marked by a filled box and weight, not by colour alone */
+  mark {
+    padding: 0 1px;
     border-radius: 2px;
-    padding: 0 2px;
+    background-color: var(--color-accent-primary-subtle);
+    color: var(--color-accent-primary);
     font-weight: 800;
   }
 
   .empty-state {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--space-xl) var(--space-md);
-    text-align: center;
     gap: var(--space-xs);
+    padding: var(--space-md);
+    text-align: center;
   }
 
   .empty-query {
-    font-size: calc(16px * var(--font-scale));
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--text-base);
     font-weight: 700;
-    color: var(--color-accent-primary);
+    color: var(--color-text-primary);
   }
 
   .empty-msg {
-    font-size: calc(13px * var(--font-scale));
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
   }
 
-  .empty-clear-btn {
-    margin-top: var(--space-sm);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-    font-size: calc(12px * var(--font-scale));
-    font-weight: 600;
-    padding: 6px 14px;
-    cursor: pointer;
+  .empty-tip {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
   }
 
-  .empty-clear-btn:active {
-    background-color: var(--color-surface-active);
-  }
-
-  /* Keyboard wrapper: hugs the keyboard, zero excess vertical space */
-  .facts-keyboard-wrap {
-    flex-shrink: 0;
-    padding: 2px 2px calc(2px + env(safe-area-inset-bottom, 0px)) 2px;
-    background-color: #000000;
-    border-top: 1px solid var(--color-border-subtle);
+  .missing-article {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
   }
 </style>

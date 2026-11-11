@@ -104,7 +104,7 @@
         >
           <div class="mode-left">
             <div class="mode-icon-box">
-              <span class="font-mono" style="font-weight: 800; font-size: calc(15px * var(--font-scale));">Ř</span>
+              <span class="font-mono mode-glyph">Ř</span>
             </div>
             <div class="mode-info">
               <div class="mode-name">
@@ -136,7 +136,7 @@
         >
           <div class="mode-left">
             <div class="mode-icon-box">
-              <span class="font-mono" style="font-weight: 800; font-size: calc(15px * var(--font-scale));">Ř+</span>
+              <span class="font-mono mode-glyph">Ř+</span>
             </div>
             <div class="mode-info">
               <div class="mode-name">
@@ -281,15 +281,20 @@
     width: 32px;
     height: 32px;
     border-radius: var(--radius-sm);
-    background-color: rgba(0, 210, 255, 0.12);
-    color: var(--color-accent-primary);
+    background-color: var(--color-surface-3);
+    color: var(--color-text-primary);
+  }
+
+  .mode-glyph {
+    font-size: var(--text-base);
+    font-weight: 800;
   }
 
   .base-badge {
     font-family: var(--font-mono, monospace);
     font-size: var(--text-base);
     font-weight: 700;
-    color: var(--color-accent-primary);
+    color: var(--color-text-primary);
     min-width: 28px;
     text-align: right;
   }
@@ -312,7 +317,7 @@
   }
 
   .mode-desc.is-warning {
-    color: var(--color-accent-warning, #f59e0b);
+    color: var(--color-accent-warning);
     font-weight: 500;
   }
 
@@ -324,22 +329,23 @@
 
   .disabled-icon {
     display: inline-block;
-    font-size: calc(11px * var(--font-scale));
+    font-size: var(--text-xs);
     margin-left: var(--space-2xs);
     vertical-align: middle;
     line-height: 1;
   }
 
   .mode-row:disabled {
-    opacity: 0.55;
     cursor: not-allowed;
-    background-color: var(--color-surface-1);
-    border-color: var(--color-border-subtle);
+  }
+
+  .mode-row:disabled > * {
+    opacity: 0.55;
   }
 
   .disabled-tag {
     display: inline-block;
-    font-size: calc(10px * var(--font-scale));
+    font-size: var(--text-xs);
     font-weight: 700;
     text-transform: uppercase;
     color: var(--color-text-muted);

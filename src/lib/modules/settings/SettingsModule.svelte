@@ -181,21 +181,22 @@
   <div class="settings-container">
     <!-- 1. Aktualizace (Na samém vrcholu) -->
     <section class="card update-card">
-      <div class="card-header-row">
-        <div>
+      <!-- The status sits on the title line; the description gets the full width under it -->
+      <div>
+        <div class="card-header-row">
           <h2 class="card-title">Aktualizace</h2>
-          <p class="card-desc">Aplikace i data fungují offline.</p>
+          {#if statusBadge}
+            <span class="badge-status {statusBadge.kind}">
+              {#if statusBadge.kind === 'online'}
+                <CheckCircle size={14} weight="fill" />
+              {:else if statusBadge.kind === 'update'}
+                <RocketLaunch size={14} weight="fill" />
+              {/if}
+              <span>{statusBadge.label}</span>
+            </span>
+          {/if}
         </div>
-        {#if statusBadge}
-          <span class="badge-status {statusBadge.kind}">
-            {#if statusBadge.kind === 'online'}
-              <CheckCircle size={14} weight="fill" />
-            {:else if statusBadge.kind === 'update'}
-              <RocketLaunch size={14} weight="fill" />
-            {/if}
-            <span>{statusBadge.label}</span>
-          </span>
-        {/if}
+        <p class="card-desc">Aplikace i data fungují offline.</p>
       </div>
 
       <!-- Verze: u dostupné aktualizace rovnou i nová verze -->
@@ -427,7 +428,7 @@
     background-color: var(--color-surface-1);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
-    padding: 16px;
+    padding: var(--space-lg);
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -435,9 +436,10 @@
 
   .card-header-row {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: var(--space-md);
+    min-height: 28px;
   }
 
   .card-title {
@@ -581,10 +583,11 @@
     cursor: not-allowed;
   }
 
+  /* Baseline: with a second value line (the new version) the label stays on the first */
   .sys-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
     gap: var(--space-md);
     font-size: var(--text-sm);
     color: var(--color-text-secondary);

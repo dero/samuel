@@ -181,24 +181,21 @@
     cursor: pointer;
     touch-action: manipulation;
     color: var(--color-text-muted);
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.12s, box-shadow 0.08s;
+    transition: background-color 0.12s;
     user-select: none;
     -webkit-user-select: none;
   }
 
   .boat-card:active {
     background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: none;
   }
 
+  /* Out of the flow: the drawing fits the 2×2 corner instead of stretching the key rows */
   .boat-svg {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    max-height: 100%;
     display: block;
     opacity: 0.85;
   }

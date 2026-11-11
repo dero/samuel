@@ -2,30 +2,32 @@
   import { onDestroy } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import SemaphoreReference from './SemaphoreReference.svelte';
-  import HoldToAction from '../../components/ui/HoldToAction.svelte';
+  import KeypadBottomRow from '../../components/ui/KeypadBottomRow.svelte';
   import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
-  import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
-  import NonStandardSettingsBanner from '../../components/ui/NonStandardSettingsBanner.svelte';
+  import InterlinearText, { type InterlinearToken } from '../../components/ui/InterlinearText.svelte';
   import {
     SEMAPHORE_DIRECTIONS,
     type SemaphoreEntry
   } from './semaphoreData';
   import {
-    applySemaphoreEntry,
     decodePair,
+    decodeSemaphoreFields,
+    directionToArm,
+    dirsToField,
     previewSemaphoreEntry,
+    type DecodedSemaphoreField,
     type SemaphoreDecodeOptions
   } from './semaphoreSolver';
+  import { parseNotation, serializeNotation } from '../../utils/notation';
   import { settings } from '../../state/settings.svelte';
-  import { toast } from '../../state/toast.svelte';
   import { createModuleState } from '../../state/moduleState.svelte';
 
   const { state: modState, reset: resetState } = createModuleState('semaphore', {
-    input: '',
+    fields: [] as string[],
     mirror: false,
-    num_mode: false,
     auto_insert: true
   });
 
@@ -33,9 +35,6 @@
   let activeDirs = $state<number[]>([]);
   let committedFade = $state<boolean>(false);
   let fadeTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  // DOM elements
-  let wheelContainerEl = $state<HTMLDivElement | null>(null);
 
   // Drag interaction state
   let isPointerDown = false;
@@ -46,31 +45,46 @@
     mirrorX: modState.mirror
   });
 
+  const decoded = $derived(decodeSemaphoreFields(modState.fields, decodeOptions));
+
   // Decoded character for currently selected pair of directions
   let currentEntry = $derived<SemaphoreEntry | null>(
     activeDirs.length === 2 ? decodePair(activeDirs[0], activeDirs[1], decodeOptions) : null
   );
 
-  let currentChar = $derived<string>(previewSemaphoreEntry(currentEntry, modState.num_mode));
+  let currentChar = $derived<string>(previewSemaphoreEntry(currentEntry, decoded.numMode));
 
-  const nonStandardCount = $derived(modState.mirror ? 1 : 0);
+  const isDrafting = $derived(activeDirs.length > 0 && !committedFade);
 
-  /** Applies a signal by the standard rules (numerals after `#`, Omyl erases). */
-  function applyEntry(entry: SemaphoreEntry) {
-    const next = applySemaphoreEntry({ text: modState.input, numMode: modState.num_mode }, entry);
-    modState.input = next.text;
-    modState.num_mode = next.numMode;
+  function toToken({ field, symbol, kind, erased }: DecodedSemaphoreField): InterlinearToken {
+    if (kind === 'space' && !erased) return { primary: symbol, isSpace: true };
+    if (kind === 'invalid' && !erased) {
+      return { primary: symbol, secondary: field, isError: true, errorText: `Neznámá dvojice „${field}“` };
+    }
+    const classes = [kind === 'control' ? 'token-space' : '', erased ? 'token-erased' : ''];
+    return { primary: symbol, secondary: field, className: classes.join(' ').trim() || undefined };
   }
 
-  function resetSettingsToDefaults() {
-    modState.mirror = false;
-    toast.show('Výchozí nastavení obnoveno', { type: 'success' });
-  }
+  const tokens = $derived(decoded.items.map(toToken));
 
-  function triggerHaptic(type: 'tap' | 'commit' | 'clear' = 'tap') {
+  const pendingToken = $derived.by<InterlinearToken | null>(() => {
+    if (!isDrafting) return null;
+    if (activeDirs.length === 1) {
+      return { primary: '…', secondary: String(directionToArm(activeDirs[0])), isPending: true };
+    }
+    return {
+      primary: currentChar || '?',
+      secondary: dirsToField(activeDirs[0], activeDirs[1]),
+      isPending: true,
+      isError: !currentEntry
+    };
+  });
+
+  const hasContent = $derived(modState.fields.length > 0 || activeDirs.length > 0);
+
+  function triggerHaptic(type: 'tap' | 'commit' = 'tap') {
     if (type === 'tap') settings.vibrate(15);
-    else if (type === 'commit') settings.vibrate([15, 30, 15]);
-    else if (type === 'clear') settings.vibrate(25);
+    else settings.vibrate([15, 30, 15]);
   }
 
   function clearFadeTimer() {
@@ -79,6 +93,22 @@
       fadeTimeout = null;
     }
     committedFade = false;
+  }
+
+  function appendField(field: string) {
+    modState.fields = [...modState.fields, field];
+  }
+
+  /** Writes the two active arms to the notation and lets the sign fade out. */
+  function commitPair(a: number, b: number) {
+    appendField(dirsToField(a, b));
+    activeDirs = [a, b];
+    committedFade = true;
+    if (fadeTimeout) clearTimeout(fadeTimeout);
+    fadeTimeout = setTimeout(() => {
+      activeDirs = [];
+      committedFade = false;
+    }, 380);
   }
 
   // Direction toggle / drag logic with auto-insert and fade-out animation
@@ -98,39 +128,20 @@
         activeDirs = activeDirs.filter((d) => d !== dirIdx);
         triggerHaptic('tap');
       }
-    } else {
-      if (activeDirs.length === 0) {
-        activeDirs = [dirIdx];
-        triggerHaptic('tap');
-      } else if (activeDirs.length === 1) {
-        const firstDir = activeDirs[0];
-        if (modState.auto_insert) {
-          // Instant decode and commit on 2nd arm, with visual fade-out of the complete sign
-          const entry = decodePair(firstDir, dirIdx, decodeOptions);
-          if (entry) {
-            applyEntry(entry);
-            triggerHaptic('commit');
-            activeDirs = [firstDir, dirIdx];
-            committedFade = true;
-            if (fadeTimeout) clearTimeout(fadeTimeout);
-            fadeTimeout = setTimeout(() => {
-              activeDirs = [];
-              committedFade = false;
-            }, 380);
-          } else {
-            // Unrecognized pair - keep both selected
-            activeDirs = [firstDir, dirIdx];
-            triggerHaptic('tap');
-          }
-        } else {
-          activeDirs = [firstDir, dirIdx];
-          triggerHaptic('tap');
-        }
+    } else if (activeDirs.length === 1) {
+      const firstDir = activeDirs[0];
+      if (modState.auto_insert && decodePair(firstDir, dirIdx, decodeOptions)) {
+        // Instant decode and commit on 2nd arm, with visual fade-out of the complete sign
+        commitPair(firstDir, dirIdx);
+        triggerHaptic('commit');
       } else {
-        // Already had 2 directions, start fresh with new direction
-        activeDirs = [dirIdx];
+        activeDirs = [firstDir, dirIdx];
         triggerHaptic('tap');
       }
+    } else {
+      // Nothing selected yet, or already 2 directions: start fresh with the new one
+      activeDirs = [dirIdx];
+      triggerHaptic('tap');
     }
   }
 
@@ -147,6 +158,7 @@
   }
 
   function handlePointerDown(e: PointerEvent) {
+    e.preventDefault();
     isPointerDown = true;
     lastInteractedDir = null;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -175,50 +187,39 @@
     }
   }
 
-  function handlePointerCancel(e: PointerEvent) {
+  function handlePointerCancel() {
     isPointerDown = false;
     lastInteractedDir = null;
   }
 
   function commitChar() {
     if (!currentEntry || committedFade) return;
-    applyEntry(currentEntry);
-    committedFade = true;
-    if (fadeTimeout) clearTimeout(fadeTimeout);
-    fadeTimeout = setTimeout(() => {
-      activeDirs = [];
-      committedFade = false;
-    }, 380);
+    commitPair(activeDirs[0], activeDirs[1]);
   }
 
   function handleSpace() {
     clearFadeTimer();
-    if (currentEntry) {
-      applyEntry(currentEntry);
-    }
-    modState.input += ' ';
     activeDirs = [];
+    appendField('');
   }
 
   function handleBackspace() {
+    const hadDraft = isDrafting;
     clearFadeTimer();
-    if (activeDirs.length > 0) {
-      // Cancel active arm selection without touching text
-      activeDirs = [];
-    } else if (modState.input.length > 0) {
-      modState.input = modState.input.slice(0, -1);
-    }
+    activeDirs = [];
+    if (!hadDraft) modState.fields = modState.fields.slice(0, -1);
   }
 
   function handleClearAll() {
     clearFadeTimer();
-    modState.input = '';
-    modState.num_mode = false;
+    modState.fields = [];
     activeDirs = [];
   }
 
   function handleReset() {
-    handleClearAll();
+    clearFadeTimer();
+    activeDirs = [];
+    resetState();
   }
 
   onDestroy(() => {
@@ -238,20 +239,44 @@
   });
 
   function getPotentialChar(firstDir: number, secondDir: number): string {
-    return previewSemaphoreEntry(decodePair(firstDir, secondDir, decodeOptions), modState.num_mode);
+    return previewSemaphoreEntry(decodePair(firstDir, secondDir, decodeOptions), decoded.numMode);
   }
 </script>
 
 <ModuleShell
-  hasWarning={nonStandardCount > 0}
+  hasWarning={modState.mirror}
   onReset={handleReset}
+  podklad={{
+    kind: 'text',
+    required: false,
+    empty: modState.fields.length === 0,
+    title: 'Zápis',
+    description: 'Dvojice ramen 1–8 od „dolů“ po směru hodin, čárka dělí znaky.',
+    example: '12,23,34,57',
+    placeholder: 'Např. 12,23,34,57',
+    autocapitalize: 'none',
+    value: serializeNotation(modState.fields),
+    onSave: (val) => {
+      // A half-entered sign belongs to the notation that was just replaced
+      clearFadeTimer();
+      activeDirs = [];
+      modState.fields = parseNotation(val);
+    }
+  }}
+  bar={{
+    empty: !hasContent,
+    hint: 'Zvolte 2 pozice nebo spojte tahem.',
+    // The mirror is a non-standard setting: only the Menu dot shows it (DESIGN_SYSTEM §5)
+    status: decoded.numMode ? 'Číslice, zpět signálem J' : undefined,
+    charCount: decoded.text.replace(/\s/g, '').length + (pendingToken ? 1 : 0)
+  }}
 >
   {#snippet output()}
-    <TranslationCard
-      text={modState.input}
-      pendingText={modState.num_mode ? '#' : ''}
-      emptyHint="Zvolte 2 pozice nebo spojte tahem."
-    />
+    <TranslationCard text={decoded.text} {hasContent}>
+      {#snippet children()}
+        <InterlinearText {tokens} {pendingToken} scalePrimaryBy="primary" />
+      {/snippet}
+    </TranslationCard>
   {/snippet}
 
   {#snippet input()}
@@ -259,7 +284,6 @@
       <!-- 8-directional Circular Dial -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
-        bind:this={wheelContainerEl}
         class="semaphore-wheel-container"
         role="group"
         aria-label="Kruhový volič semaforu"
@@ -337,50 +361,42 @@
         </div>
       </div>
 
-      <!-- Utility Row: Slide to Clear, Space/Commit and Smart Backspace (1fr 1.3fr 1fr) -->
-      <div class="keypad-utility-row-3col">
-        <HoldToAction
-          disabled={!modState.input && activeDirs.length === 0}
-          onAction={handleClearAll}
-          ariaLabel="Vymazat celý text podržením"
-        />
-
-        <SpaceCommitButton
-          pendingChar={currentChar}
-          onSpace={handleSpace}
-          onCommit={commitChar}
-        />
-
-        <BackspaceButton
-          disabled={!modState.input && activeDirs.length === 0}
-          hasActiveSelection={activeDirs.length > 0}
-          cancelLabel="Zrušit ramena"
-          cancelTitle="Zrušit výběr ramen"
-          onAction={handleBackspace}
-        />
-      </div>
+      <KeypadBottomRow
+        clearDisabled={!hasContent}
+        backspaceDisabled={!hasContent}
+        clearLabel="Vymazat celý zápis podržením"
+        hasActiveSelection={isDrafting}
+        cancelTitle="Zrušit výběr ramen"
+        onClear={handleClearAll}
+        onBackspace={handleBackspace}
+      >
+        {#snippet middle()}
+          <SpaceCommitButton
+            pendingChar={committedFade ? '' : currentChar}
+            onSpace={handleSpace}
+            onCommit={commitChar}
+          />
+        {/snippet}
+      </KeypadBottomRow>
     </div>
   {/snippet}
 
   {#snippet menuOptions()}
-    <NonStandardSettingsBanner
-      count={nonStandardCount}
-      onResetDefaults={resetSettingsToDefaults}
-    />
-
-    <OptionRow
-      label="Okamžité vkládání"
-      hint="Znak se vloží hned po zvolení obou ramen."
-      checked={modState.auto_insert}
-      onChange={(v) => (modState.auto_insert = v)}
-    />
-    <OptionRow
-      label="Pohled vysílajícího"
-      hint="Prohodí levou a pravou stranu."
-      checked={modState.mirror}
-      isNonStandard={modState.mirror}
-      onChange={(v) => (modState.mirror = v)}
-    />
+    <MenuGroup>
+      <OptionRow
+        label="Okamžité vkládání"
+        hint="Znak se vloží hned po zvolení obou ramen."
+        checked={modState.auto_insert}
+        onChange={(v) => (modState.auto_insert = v)}
+      />
+      <OptionRow
+        label="Pohled vysílajícího"
+        hint="Prohodí levou a pravou stranu."
+        checked={modState.mirror}
+        isNonStandard={modState.mirror}
+        onChange={(v) => (modState.mirror = v)}
+      />
+    </MenuGroup>
   {/snippet}
 
   {#snippet reference()}
@@ -398,6 +414,15 @@
     flex-shrink: 0;
   }
 
+  /* A signal erased by a later Omyl stays in the notation, struck out */
+  :global(.interlinear-cell.token-erased) {
+    opacity: 0.45;
+  }
+
+  :global(.interlinear-cell.token-erased .cell-primary) {
+    text-decoration: line-through;
+  }
+
   /* Semaphore Circular Dial Container - 100% width aligned */
   .semaphore-wheel-container {
     width: 100%;
@@ -412,21 +437,25 @@
   .semaphore-wheel-card {
     position: relative;
     width: 100%;
-    background: transparent;
-    border: none;
-    box-shadow: none;
     box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 0;
   }
 
-  /* Strict 1:1 square dial ensures exact circle */
+  /* Strict 1:1 square dial ensures exact circle. The last term applies only on short
+     screens, where the panel has already taken the output down to its minimum. */
   .dial-square {
     position: relative;
-    width: 100%;
-    max-width: min(100%, 360px);
+    width: min(
+      100%,
+      360px,
+      calc(
+        100dvh - var(--header-height) - var(--output-min-height) - var(--status-bar-height)
+          - var(--zone-input-offset) - var(--zone-input-gap) - var(--utility-row-height)
+          - var(--space-md) - env(safe-area-inset-bottom, 0px)
+      )
+    );
     height: auto;
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
@@ -444,7 +473,7 @@
   .svg-beam-fade {
     stroke-width: 4.5;
     stroke-linecap: round;
-    filter: drop-shadow(0 0 6px rgba(0, 210, 255, 0.6));
+    filter: drop-shadow(0 0 6px var(--color-accent-primary-glow));
     animation: beamAppear 0.15s ease-out;
   }
 
@@ -454,7 +483,7 @@
     stroke-width: 4.5;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.9));
+    filter: drop-shadow(0 0 8px var(--color-accent-primary));
     animation: beamConnect 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -489,6 +518,10 @@
 
   /* 8 Direction Circular Buttons */
   .wheel-dir-btn {
+    --dir-sunken-shadow:
+      inset 0 3px 6px rgba(0, 0, 0, 0.95),
+      inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
+      inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
     position: absolute;
     transform: translate(-50%, -50%);
     width: 60px;
@@ -503,10 +536,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 
-      inset 0 3px 6px rgba(0, 0, 0, 0.95),
-      inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
-      inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
+    box-shadow: var(--dir-sunken-shadow);
     transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
     box-sizing: border-box;
     z-index: 2;
@@ -519,9 +549,9 @@
 
   .dir-hint {
     font-family: var(--font-condensed);
-    font-size: calc(24px * var(--font-scale));
+    font-size: var(--key-m);
     font-weight: 800;
-    color: rgba(255, 255, 255, 0.42);
+    color: var(--color-text-muted);
     line-height: 1;
     pointer-events: none;
     user-select: none;
@@ -542,8 +572,8 @@
 
   .wheel-dir-btn.is-active {
     background-color: var(--color-accent-primary);
-    border-color: #ffffff;
-    box-shadow: 
+    border-color: var(--color-text-primary);
+    box-shadow:
       0 0 18px var(--color-accent-primary-glow),
       inset 0 0 6px rgba(255, 255, 255, 0.6);
   }
@@ -553,23 +583,15 @@
   }
 
   @keyframes buttonFadeOut {
-    0% {
+    0%, 25% {
       background-color: var(--color-accent-primary);
-      border-color: #ffffff;
-      box-shadow: 0 0 24px rgba(0, 210, 255, 1);
-    }
-    25% {
-      background-color: var(--color-accent-primary);
-      border-color: #ffffff;
-      box-shadow: 0 0 20px rgba(0, 210, 255, 0.9);
+      border-color: var(--color-text-primary);
+      box-shadow: 0 0 24px var(--color-accent-primary);
     }
     100% {
       background-color: var(--color-surface-sunken);
       border-color: var(--color-border-sunken);
-      box-shadow: 
-        inset 0 3px 6px rgba(0, 0, 0, 0.95),
-        inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
-        inset 0 -1.5px 1px rgba(255, 255, 255, 0.08);
+      box-shadow: var(--dir-sunken-shadow);
     }
   }
 </style>

@@ -26,31 +26,32 @@ export type ModuleId =
   | 'settings'
   | 'help';
 
-export type SubView = 'none' | 'menu' | 'ref';
+/** What the module shows: its interaction ('none'), a lower-panel tab, or the cheat sheet. */
+/** `detail` is one item of a Přehled module over the whole area (a Fakta article), named by `navigation.detailId`. */
+export type SubView = 'none' | 'podklad' | 'menu' | 'tahak' | 'detail';
 
 export type ModuleGroupId = 'coding' | 'text' | 'realia' | 'puzzles' | 'drawing' | 'app';
 
 export interface ModuleGroup {
   id: ModuleGroupId;
   name: string;
-  color: string;
 }
 
-/** Launcher groups in display order. Color is a CSS variable reference. */
+/** Categories are not shown any more; their names stay as search words ("kódování" finds Morse). */
 export const MODULE_GROUPS: ModuleGroup[] = [
-  { id: 'coding', name: 'Kódování', color: 'var(--color-group-coding)' },
-  { id: 'text', name: 'Text', color: 'var(--color-group-text)' },
-  { id: 'realia', name: 'Reálie', color: 'var(--color-group-realia)' },
-  { id: 'puzzles', name: 'Rébusy', color: 'var(--color-group-puzzles)' },
-  { id: 'drawing', name: 'Kreslení', color: 'var(--color-group-drawing)' },
-  { id: 'app', name: 'Aplikace', color: 'var(--color-group-app)' }
+  { id: 'coding', name: 'Kódování' },
+  { id: 'text', name: 'Text' },
+  { id: 'realia', name: 'Reálie' },
+  { id: 'puzzles', name: 'Rébusy' },
+  { id: 'drawing', name: 'Kreslení' },
+  { id: 'app', name: 'Aplikace' }
 ];
 
 export interface ModuleMeta {
   id: ModuleId;
   name: string;
   icon: string;
-  /** Launcher group (block with a colored side label). */
+  /** Category, only as a search word in the launcher. */
   group: ModuleGroupId;
   hasAlphabet?: boolean;
   isSystem?: boolean;
@@ -137,13 +138,21 @@ export interface ModuleShortcut {
   /** Where it leads, shown under the name (e.g. "v Číslech"). */
   via: string;
   keywords: string[];
-  preset: NumbersPreset;
+  preset: ShortcutPreset;
 }
 
+/** Čísla: the source and target system (a base, Roman numerals, or letters). */
 export interface NumbersPreset {
-  source: number;
-  target: 'char';
+  source: number | 'roman';
+  target: number | 'char';
 }
+
+/** Kříže: which cross opens. */
+export interface CrossPreset {
+  crossType: 'large-polish' | 'small-polish';
+}
+
+export type ShortcutPreset = NumbersPreset | CrossPreset;
 
 export const MODULE_SHORTCUTS: ModuleShortcut[] = [
   {
@@ -165,5 +174,25 @@ export const MODULE_SHORTCUTS: ModuleShortcut[] = [
     via: 'v Číslech',
     keywords: ['ternárka', 'ternární', 'tern', 'trojková soustava'],
     preset: { source: 3, target: 'char' }
+  },
+  {
+    id: 'roman',
+    name: 'Římská čísla',
+    icon: 'roman',
+    group: 'coding',
+    target: 'numbers',
+    via: 'v Číslech',
+    keywords: ['římské číslice', 'roman', 'latinská čísla'],
+    preset: { source: 'roman', target: 10 }
+  },
+  {
+    id: 'polak',
+    name: 'Polák',
+    icon: 'hash',
+    group: 'coding',
+    target: 'cross',
+    via: 'v Křížích',
+    keywords: ['polský kříž', 'velký kříž'],
+    preset: { crossType: 'large-polish' }
   }
 ];

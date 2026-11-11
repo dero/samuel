@@ -1,5 +1,7 @@
 <script lang="ts">
   import { Lightning, Stop } from 'phosphor-svelte';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
   import { chessState } from './chessState.svelte';
   import { toCzechSan } from './chessData';
   import { settings } from '../../state/settings.svelte';
@@ -9,50 +11,32 @@
   let strip = $derived(chessState.strip);
   let solver = $derived(chessState.solverHere);
   let running = $derived(chessState.solver?.status === 'running');
-
-  /** One muted line next to the solver results: what is running, or what is (not) proven. */
-  let statusText = $derived.by(() => {
-    if (!solver) return '';
-    const report = solver.report;
-    if (solver.status === 'running') {
-      if (report?.result) return `Ověřuji kratší: mat v ${solver.depth}…`;
-      if (solver.phase === 'checks') return `Zkouším šachy: mat v ${solver.depth}…`;
-      return `Hledám mat v ${solver.depth}… ${solver.done}/${solver.total}`;
-    }
-    if (!report) return '';
-    const limit = report.timedOut ? ' · limit 60 s' : '';
-    if (!report.result) {
-      return (report.ruledOut ? `Mat do ${report.ruledOut} není` : 'Mat nenalezen') + limit;
-    }
-    return report.shortest ? '' : `Kratší mat neověřen${limit}`;
-  });
+  let solutions = $derived(chessState.gameOver ? null : solver?.report?.result ?? null);
+  let sideLabel = $derived(chessState.turn === 'w' ? 'Bílý' : 'Černý');
 
   // Keep the current move (or the newest solver chip) in view.
   $effect(() => {
     const _cursor = chessState.cursor;
     const _solver = solver?.status;
     if (!stripEl) return;
-    const active = stripEl.querySelector<HTMLElement>('.chip.active, .chip.solution, .chip.status');
+    const active = stripEl.querySelector<HTMLElement>('.chip.active, .chip.solution');
     active?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   });
 
-  function tap(e: PointerEvent, action: () => void) {
-    e.preventDefault();
-    settings.vibrate(30);
-    action();
+  function jump(index: number) {
+    settings.vibrate(20);
+    chessState.jumpTo(index);
   }
 </script>
 
-<div class="rules-chassis">
+<div class="rules-panel">
   <div class="strip" bind:this={stripEl} data-allow-copy>
     <button
       type="button"
       class="chip"
       class:active={chessState.cursor === strip.base}
-      onclick={() => {
-        settings.vibrate(30);
-        chessState.jumpTo(strip.base);
-      }}
+      aria-current={chessState.cursor === strip.base ? 'step' : undefined}
+      onclick={() => jump(strip.base)}
     >
       Start
     </button>
@@ -62,99 +46,83 @@
         type="button"
         class="chip move"
         class:active={chessState.cursor === item.index}
-        onclick={() => {
-          settings.vibrate(30);
-          chessState.jumpTo(item.index);
-        }}
+        aria-current={chessState.cursor === item.index ? 'step' : undefined}
+        onclick={() => jump(item.index)}
       >
         {item.label}
       </button>
     {/each}
 
-    {#if chessState.gameOver}
-      <span class="chip status">{chessState.gameOver === 'mate' ? 'Mat' : 'Pat'}</span>
-    {:else if solver}
-      {#if solver.report?.result}
-        {@const result = solver.report.result}
-        {#each result.solutions as s (s.from + s.to + (s.promotion ?? ''))}
-          <button
-            type="button"
-            class="chip solution"
-            onclick={() => {
-              settings.vibrate(30);
-              chessState.playSolution(s.line);
-            }}
-          >
-            Mat {result.depth}: {s.line.map((m) => toCzechSan(m.san)).join(' ')}
-          </button>
-        {/each}
-      {/if}
-      {#if statusText}
-        <span class="chip status muted">{statusText}</span>
-      {/if}
+    {#if solutions}
+      {#each solutions.solutions as s (s.from + s.to + (s.promotion ?? ''))}
+        <button
+          type="button"
+          class="chip solution"
+          onclick={() => {
+            settings.vibrate(20);
+            chessState.playSolution(s.line);
+          }}
+        >
+          Mat {solutions.depth}: {s.line.map((m) => toCzechSan(m.san)).join(' ')}
+        </button>
+      {/each}
     {:else if strip.items.length === 0}
       <span class="strip-hint">Tahy se zapisují sem</span>
     {/if}
   </div>
 
-  <div class="controls">
-    <button
-      type="button"
-      class="keycap turn-key"
-      aria-label="Přepnout stranu na tahu"
-      onpointerdown={(e) => tap(e, () => chessState.toggleTurn())}
+  <Chassis columns={2} keyHeight="40px">
+    <Keycap
+      ariaLabel="Na tahu {sideLabel.toLowerCase()}, přepnout stranu"
+      onPress={() => chessState.toggleTurn()}
     >
-      <span class="turn-dot" class:black={chessState.turn === 'b'}></span>
-      <span class="turn-text">
-        <span class="turn-caption">na tahu</span>
-        <span class="key-label">{chessState.turn === 'w' ? 'Bílý' : 'Černý'}</span>
+      <span class="key-body">
+        <span class="turn-dot" class:black={chessState.turn === 'b'}></span>
+        <span class="turn-text">
+          <span class="turn-caption">na tahu</span>
+          <span class="key-text">{sideLabel}</span>
+        </span>
       </span>
-    </button>
+    </Keycap>
 
-    <button
-      type="button"
-      class="keycap solve-key"
-      class:running
+    <Keycap
+      selected={running}
       disabled={!running && !!chessState.gameOver}
-      onpointerdown={(e) => tap(e, () => chessState.solve())}
+      ariaLabel={running ? 'Zrušit hledání matu' : 'Hledat nejkratší mat'}
+      onPress={() => chessState.solve()}
     >
-      <span class="solve-inner">
+      <span class="key-body">
         {#if running}
           <Stop size={16} weight="fill" />
-          <span class="key-label">Zrušit</span>
+          <span class="key-text">Zrušit</span>
         {:else}
           <Lightning size={16} weight="fill" />
-          <span class="key-label">Řešit</span>
+          <span class="key-text">Řešit</span>
         {/if}
       </span>
-    </button>
-  </div>
+    </Keycap>
+  </Chassis>
 </div>
 
 <style>
-  .rules-chassis {
-    display: grid;
-    grid-template-rows: repeat(2, 40px);
-    gap: 2px;
-    padding: 2px;
-    background-color: #000000;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+  .rules-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zone-input-gap);
     user-select: none;
     -webkit-user-select: none;
   }
 
+  /* Flat strip of the game: it browses positions, it does not enter them. */
   .strip {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 0 4px;
+    gap: var(--space-xs);
+    /* With the key row below, as tall as the piece tray: switching modes keeps the board size */
+    height: calc(var(--control-min-height) + 2px);
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
-    background-color: var(--color-surface-sunken);
-    border-radius: 2px;
   }
 
   .strip::-webkit-scrollbar {
@@ -163,11 +131,11 @@
 
   .chip {
     flex: 0 0 auto;
-    height: 30px;
+    height: var(--control-min-height);
     padding: 0 10px;
     display: inline-flex;
     align-items: center;
-    border: none;
+    border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-xs);
     background-color: var(--color-surface-2);
     color: var(--color-text-secondary);
@@ -175,32 +143,27 @@
     font-size: var(--text-sm);
     font-weight: 600;
     white-space: nowrap;
+    box-sizing: border-box;
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
+  .chip:active {
+    background-color: var(--color-surface-active);
+  }
+
   .chip.active {
     background-color: var(--color-accent-primary-subtle);
+    border-color: var(--color-accent-primary);
     color: var(--color-accent-primary);
     box-shadow: inset 0 0 0 1px var(--color-accent-primary);
   }
 
   .chip.solution {
     background-color: var(--color-accent-success-subtle);
+    border-color: var(--color-accent-success);
     color: var(--color-accent-success);
-    box-shadow: inset 0 0 0 1px var(--color-accent-success);
-  }
-
-  .chip.status {
-    cursor: default;
-    color: var(--color-accent-warning);
-    background: transparent;
-  }
-
-  .chip.status.muted {
-    color: var(--color-text-muted);
-    font-family: var(--font-sans);
   }
 
   .strip-hint {
@@ -211,42 +174,17 @@
     white-space: nowrap;
   }
 
-  .controls {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 2px;
-  }
-
-  .keycap {
-    position: relative;
+  .key-body {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 0 6px;
-    background-color: var(--color-surface-2);
-    border: none;
-    border-radius: 2px;
-    color: var(--color-text-primary);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    touch-action: none;
-    -webkit-tap-highlight-color: transparent;
+    gap: var(--space-sm);
+    min-width: 0;
+    max-width: 100%;
+    padding: 0 var(--space-xs);
   }
 
-  .keycap:active:not(:disabled) {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  }
-
-  .keycap:disabled .solve-inner {
-    opacity: 0.48;
-  }
-
-  .key-label {
-    font-size: min(var(--text-sm), 3.8vw);
+  .key-text {
+    font-size: var(--key-s);
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
@@ -262,11 +200,12 @@
   }
 
   .turn-caption {
-    font-size: min(var(--text-2xs), 3vw);
-    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
     white-space: nowrap;
   }
 
+  /* The side to move in its piece colour (content, not a status) */
   .turn-dot {
     flex: 0 0 auto;
     width: 14px;
@@ -279,20 +218,5 @@
   .turn-dot.black {
     background-color: #000000;
     box-shadow: 0 0 0 1.5px var(--color-text-secondary);
-  }
-
-  .solve-key {
-    color: var(--color-accent-success);
-  }
-
-  .solve-key.running {
-    color: var(--color-accent-warning);
-  }
-
-  .solve-inner {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
   }
 </style>

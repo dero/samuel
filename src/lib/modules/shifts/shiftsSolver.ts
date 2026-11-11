@@ -161,6 +161,24 @@ export function parseKey(keyText: string, alphabetLetters: string[]): KeyToken[]
   return keyTokens;
 }
 
+/**
+ * Bar status listing the numeric shift of each key token (`Posuny klíče: 10, 14, 3`),
+ * cut with an ellipsis so it fits the bar.
+ */
+export function describeKeyShifts(prefix: string, keyTokens: KeyToken[], maxLength = 38): string {
+  const shifts = keyTokens.map((t) => String(t.shiftVal));
+  const full = `${prefix} ${shifts.join(', ')}`;
+  if (full.length <= maxLength) return full;
+
+  let text = prefix;
+  for (let i = 0; i < shifts.length; i++) {
+    const next = `${text}${i === 0 ? ' ' : ', '}${shifts[i]}`;
+    if (next.length + 1 > maxLength) break;
+    text = next;
+  }
+  return `${text}…`;
+}
+
 export interface VigenereResult {
   text: string;
   keyStream: string;

@@ -1,61 +1,49 @@
 <script lang="ts">
-  import { MODULE_GROUPS } from '../../types';
+  import { untrack } from 'svelte';
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
   import { versionService } from '../../services/versionService.svelte';
   import {
     launcher,
     LAUNCHER_ENTRIES,
-    matchesSearch,
+    rankEntries,
     normalizeSearch,
-    type LauncherEntry
+    type LauncherEntry,
+    type RankedEntry
   } from '../../state/launcher.svelte';
-  import BottomSheet from '../ui/BottomSheet.svelte';
+  import { MODULES } from '../../types';
   import ModuleIcon from '../ui/ModuleIcon.svelte';
-  import { SquaresFour, MagnifyingGlass } from 'phosphor-svelte';
+  import ScrollArea from '../ui/ScrollArea.svelte';
+  import {
+    X,
+    MagnifyingGlass,
+    Question,
+    GearSix,
+    ClockCounterClockwise,
+    KeyReturn
+  } from 'phosphor-svelte';
 
-  const COLUMNS = 4;
+  /**
+   * The launcher is a page of its own (`#/moduly`): browse an alphabetical grid of every tool,
+   * or search, which swaps the grid for a ranked list whose best hit sits right at the field.
+   * Built for many more tools than fit one screen: no categories, no colours, no fillers.
+   */
+
+  const SYSTEM_IDS = new Set(MODULES.filter((m) => m.isSystem).map((m) => m.id as string));
+
+  // Modules and shortcuts in one alphabetical flow; Nápověda and Nastavení sit by the search
+  const gridEntries = LAUNCHER_ENTRIES.filter((e) => !SYSTEM_IDS.has(e.id)).sort((a, b) =>
+    a.name.localeCompare(b.name, 'cs')
+  );
 
   let query = $state('');
   let searchFocused = $state(false);
   let searchEl = $state<HTMLInputElement | null>(null);
-  let listEl = $state<HTMLDivElement | null>(null);
+  let gridViewport = $state<HTMLDivElement | null>(null);
 
-  const isSearching = $derived(searchFocused || query.trim() !== '');
+  const hasQuery = $derived(query.trim() !== '');
 
-  // Fades at the list edges say "more tiles this way", even when a row ends flush with the edge
-  let fadeTop = $state(false);
-  let fadeBottom = $state(false);
-
-  function updateFades() {
-    if (!listEl) return;
-    const { scrollTop, scrollHeight, clientHeight } = listEl;
-    fadeTop = scrollTop > 2;
-    fadeBottom = scrollTop + clientHeight < scrollHeight - 2;
-  }
-
-  $effect(() => {
-    if (!listEl) return;
-    const observer = new ResizeObserver(updateFades);
-    observer.observe(listEl);
-    if (listEl.firstElementChild) observer.observe(listEl.firstElementChild);
-    updateFades();
-    return () => observer.disconnect();
-  });
-
-  // Filter out: tiles keep their place, non-matching ones (and empty groups) disappear
-  const matches = $derived(LAUNCHER_ENTRIES.filter((e) => matchesSearch(e, query)));
-
-  // One block per group (in group order), entries sorted alphabetically (Czech) inside
-  const groupBlocks = $derived(
-    MODULE_GROUPS.map((group) => {
-      const entries = matches
-        .filter((e) => e.group === group.id)
-        .sort((a, b) => a.name.localeCompare(b.name, 'cs'));
-      const fillers = (COLUMNS - (entries.length % COLUMNS)) % COLUMNS;
-      return { group, entries, fillers };
-    }).filter((block) => block.entries.length > 0)
-  );
+  const ranked = $derived<RankedEntry[]>(rankEntries(LAUNCHER_ENTRIES, query, launcher.recent));
 
   // Most recent first, without the tile you are in (switching back and forth stays one tap)
   const recentEntries = $derived(
@@ -63,407 +51,568 @@
       .filter((id) => id !== navigation.activeEntryId)
       .map((id) => LAUNCHER_ENTRIES.find((e) => e.id === id))
       .filter((e): e is LauncherEntry => !!e)
-      .slice(0, COLUMNS)
   );
 
-  // Fresh launcher on every open: empty query, list from the top
+  // Rows above the field: search hits, or every recent entry while the empty field has focus.
+  // Listed best last, so the best one is nearest the thumb and the field.
+  const rows = $derived<RankedEntry[]>(
+    hasQuery
+      ? [...ranked].reverse()
+      : searchFocused
+        ? recentEntries.map((entry) => ({ entry, score: 0 })).reverse()
+        : []
+  );
+  const showRows = $derived(hasQuery || (searchFocused && recentEntries.length > 0));
+  const enterTarget = $derived(hasQuery ? ranked[0]?.entry : undefined);
+
+  // Fresh launcher on every open: empty query, grid from the top. Only the opening counts:
+  // the grid unmounting while the player searches must not clear the query.
   $effect(() => {
-    if (navigation.isLauncherOpen) {
+    if (!navigation.isLauncherOpen) return;
+    untrack(() => {
       query = '';
-      if (listEl) listEl.scrollTop = 0;
-    }
+      if (gridViewport) gridViewport.scrollTop = 0;
+    });
   });
 
-  function groupColor(entry: LauncherEntry) {
-    return MODULE_GROUPS.find((g) => g.id === entry.group)?.color;
-  }
+  // Follows the visual viewport, so the search field stays above an overlaying keyboard (iOS)
+  let viewportHeight = $state<number | null>(null);
+  let viewportTop = $state(0);
+  $effect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport || !navigation.isLauncherOpen) return;
+    const update = () => {
+      viewportHeight = viewport.height;
+      viewportTop = viewport.offsetTop;
+    };
+    update();
+    viewport.addEventListener('resize', update);
+    viewport.addEventListener('scroll', update);
+    return () => {
+      viewport.removeEventListener('resize', update);
+      viewport.removeEventListener('scroll', update);
+    };
+  });
 
-  function handleSelect(entry: LauncherEntry) {
+  function open(entry: LauncherEntry) {
     settings.vibrate(20);
     searchEl?.blur();
     launcher.record(entry.id);
-    if (entry.shortcut) {
-      navigation.openShortcut(entry.shortcut);
-    } else {
-      navigation.openModule(entry.target);
-    }
+    if (entry.shortcut) navigation.openShortcut(entry.shortcut);
+    else navigation.openModule(entry.target);
+  }
+
+  function openSystem(id: 'help' | 'settings') {
+    settings.vibrate(20);
+    navigation.openModule(id);
   }
 
   function handleSearchKeydown(e: KeyboardEvent) {
     if (e.key !== 'Enter') return;
     e.preventDefault();
-    // A tile named by the query beats one matched only by an alias ("trojk" → Trojkovka, not Čísla)
-    const shown = groupBlocks.flatMap((b) => b.entries);
-    const q = normalizeSearch(query);
-    const best = shown.find((entry) => normalizeSearch(entry.name).startsWith(q)) ?? shown[0];
-    if (best) handleSelect(best);
+    if (enterTarget) open(enterTarget);
+  }
+
+  // The alias part that matched, split so the typed beginnings can be bold
+  function reasonParts(reason: string): { text: string; hit: boolean }[] {
+    const queryWords = normalizeSearch(query).split(/\s+/).filter(Boolean);
+    return reason.split(/(\s+)/).flatMap((word) => {
+      const length = queryWords
+        .filter((q) => normalizeSearch(word).startsWith(q))
+        .reduce((max, q) => Math.max(max, q.length), 0);
+      return length > 0
+        ? [
+            { text: word.slice(0, length), hit: true },
+            { text: word.slice(length), hit: false }
+          ]
+        : [{ text: word, hit: false }];
+    });
   }
 </script>
 
-{#snippet tile(entry: LauncherEntry)}
-  <button
-    type="button"
-    class="module-btn"
-    class:is-active={navigation.activeEntryId === entry.id}
-    style:--group-color={groupColor(entry)}
-    onclick={() => handleSelect(entry)}
+{#if navigation.isLauncherOpen}
+  <div
+    class="launcher"
+    role="dialog"
+    aria-label="Nástroje"
+    style:height={viewportHeight ? `${viewportHeight}px` : undefined}
+    style:top={viewportTop ? `${viewportTop}px` : undefined}
   >
-    <span class="icon">
-      <ModuleIcon id={entry.icon} weight="duotone" />
-    </span>
-    <span class="name">{entry.name}</span>
-    {#if entry.shortcut}
-      <span class="via">{entry.shortcut.via}</span>
-    {/if}
-    {#if entry.id === 'settings' && versionService.state.updateAvailable}
-      <span class="update-dot" title="K dispozici je aktualizace"></span>
-    {/if}
-  </button>
-{/snippet}
+    <header class="launcher-head">
+      <button
+        type="button"
+        class="head-close"
+        aria-label="Zavřít výběr nástrojů"
+        onclick={() => {
+          settings.vibrate(20);
+          navigation.closeLauncher();
+        }}
+      >
+        <X size={22} weight="bold" />
+      </button>
+      <h2 class="head-title">Nástroje</h2>
+    </header>
 
-<BottomSheet
-  open={navigation.isLauncherOpen}
-  title="Výběr pomůcky"
-  icon={SquaresFour}
-  onClose={() => navigation.closeLauncher()}
-  maxWidth="540px"
-  maxHeight="80dvh"
-  height="80dvh"
-  padding={false}
-  scrollable={false}
->
-  <div class="launcher">
-    <div class="list-frame" class:fade-top={fadeTop} class:fade-bottom={fadeBottom}>
-      <div class="launcher-list" bind:this={listEl} onscroll={updateFades}>
-        <div class="launcher-groups" class:is-searching={isSearching}>
-          {#each groupBlocks as { group, entries, fillers } (group.id)}
-            <section class="group-block" style:--group-color={group.color} aria-label={group.name}>
-              <div class="group-label" aria-hidden="true">
-                <span class="group-label-text">{group.name}</span>
-              </div>
-              <div class="modules-grid">
-                {#each entries as entry (entry.id)}
-                  {@render tile(entry)}
-                {/each}
-                {#each Array(fillers) as _}
-                  <div class="grid-filler" aria-hidden="true"></div>
-                {/each}
-              </div>
-            </section>
-          {:else}
-            <p class="no-results">Nic nenalezeno. Zkuste začátek názvu, např. „bin“.</p>
-          {/each}
-        </div>
+    {#if showRows}
+      <!-- Search: a ranked list, best at the bottom right by the field -->
+      <div class="rows-zone">
+        <ScrollArea outset="var(--space-md)">
+          <!-- Keeps focus in the field: a blur would hide the recent rows before the tap lands -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div class="rows" onpointerdown={(e) => e.preventDefault()}>
+            {#each rows as { entry, reason } (entry.id)}
+              {@const isTarget = entry === enterTarget}
+              <button type="button" class="row" class:is-target={isTarget} onclick={() => open(entry)}>
+                <span class="row-icon"><ModuleIcon id={entry.icon} weight="duotone" /></span>
+                <span class="row-name">
+                  {entry.name}
+                  {#if entry.shortcut}<span class="row-via">{entry.shortcut.via}</span>{/if}
+                </span>
+                {#if reason}
+                  <span class="row-reason">
+                    {#each reasonParts(reason) as part, i (i)}{#if part.hit}<b>{part.text}</b>{:else}{part.text}{/if}{/each}
+                  </span>
+                {/if}
+                {#if isTarget}
+                  <span class="row-enter" aria-label="Otevře se klávesou Enter"><KeyReturn size={16} weight="bold" /></span>
+                {/if}
+              </button>
+            {:else}
+              <p class="no-results">Nic nenalezeno. Zkuste začátek názvu, např. „bin“.</p>
+            {/each}
+          </div>
+        </ScrollArea>
       </div>
-    </div>
+    {:else}
+      <!-- Browse: every tool, alphabetically -->
+      <div class="grid-zone">
+        <ScrollArea outset="var(--space-md)" bind:viewport={gridViewport}>
+          <div class="grid">
+            {#each gridEntries as entry (entry.id)}
+              <button
+                type="button"
+                class="tile"
+                class:is-active={navigation.activeEntryId === entry.id}
+                onclick={() => open(entry)}
+              >
+                <span class="tile-icon"><ModuleIcon id={entry.icon} weight="duotone" /></span>
+                <span class="tile-name">{entry.name}</span>
+                {#if entry.shortcut}
+                  <span class="tile-via">{entry.shortcut.via}</span>
+                {/if}
+              </button>
+            {/each}
+          </div>
+        </ScrollArea>
+      </div>
+    {/if}
 
-    <!-- Thumb zone: recent tiles and the search field -->
-    <div class="launcher-footer">
-      {#if !isSearching && recentEntries.length > 0}
-        <section class="group-block recent-block" aria-label="Nedávné">
-          <div class="group-label recent-label" aria-hidden="true">
-            <span class="group-label-text">Nedávné</span>
-          </div>
-          <div class="modules-grid">
+    <footer class="launcher-foot">
+      {#if !showRows && recentEntries.length > 0}
+        <div class="recent" aria-label="Nedávné">
+          <span class="recent-icon" aria-hidden="true"><ClockCounterClockwise size={18} weight="bold" /></span>
+          <div class="recent-chips">
             {#each recentEntries as entry (entry.id)}
-              {@render tile(entry)}
-            {/each}
-            {#each Array(COLUMNS - recentEntries.length) as _}
-              <div class="grid-filler" aria-hidden="true"></div>
+              <button type="button" class="chip" onclick={() => open(entry)}>
+                <span class="chip-icon"><ModuleIcon id={entry.icon} weight="duotone" /></span>
+                <span>{entry.name}</span>
+              </button>
             {/each}
           </div>
-        </section>
+        </div>
       {/if}
 
-      <label class="search-row">
-        <MagnifyingGlass size={18} weight="bold" />
-        <input
-          bind:this={searchEl}
-          bind:value={query}
-          type="search"
-          class="search-input"
-          placeholder="Hledej modul…"
-          aria-label="Hledat modul"
-          enterkeyhint="go"
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-          onfocus={() => (searchFocused = true)}
-          onblur={() => (searchFocused = false)}
-          onkeydown={handleSearchKeydown}
-        />
-      </label>
-    </div>
+      <div class="search-line">
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="search-row" onclick={() => searchEl?.focus()}>
+          <MagnifyingGlass size={18} weight="bold" />
+          <input
+            bind:this={searchEl}
+            bind:value={query}
+            type="search"
+            class="search-input"
+            placeholder="Hledej nástroj…"
+            aria-label="Hledat nástroj"
+            enterkeyhint="go"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            onfocus={() => (searchFocused = true)}
+            onblur={() => (searchFocused = false)}
+            onkeydown={handleSearchKeydown}
+          />
+          {#if showRows}
+            <!-- Back to the grid: clears the query and lets the keyboard go -->
+            <button
+              type="button"
+              class="search-clear"
+              aria-label="Zpět na všechny nástroje"
+              onpointerdown={(e) => e.preventDefault()}
+              onclick={(e) => {
+                e.stopPropagation();
+                settings.vibrate(20);
+                query = '';
+                searchEl?.blur();
+              }}
+            >
+              <X size={18} weight="bold" />
+            </button>
+          {/if}
+        </div>
+        <button type="button" class="icon-btn" aria-label="Nápověda" onclick={() => openSystem('help')}>
+          <Question size={20} weight="bold" />
+        </button>
+        <button type="button" class="icon-btn" aria-label="Nastavení" onclick={() => openSystem('settings')}>
+          <GearSix size={20} weight="bold" />
+          {#if versionService.state.updateAvailable}
+            <span class="update-dot" title="K dispozici je aktualizace"></span>
+          {/if}
+        </button>
+      </div>
+    </footer>
   </div>
-</BottomSheet>
+{/if}
 
 <style>
   .launcher {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .list-frame {
-    position: relative;
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .list-frame::before,
-  .list-frame::after {
-    content: '';
-    position: absolute;
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    height: 40px;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0;
-    transition: opacity 0.15s ease;
+    height: 100dvh;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-bg-canvas);
   }
 
-  .list-frame::before {
-    top: 0;
-    height: 24px;
-    background: linear-gradient(to bottom, var(--color-surface-1), transparent);
+  .launcher-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    height: var(--header-height);
+    padding: 0 var(--space-md) 0 var(--space-xs);
+    border-bottom: 1px solid var(--color-border-subtle);
   }
 
-  .list-frame::after {
-    bottom: 0;
-    background: linear-gradient(to top, var(--color-surface-1), transparent);
+  .head-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
   }
 
-  .list-frame.fade-top::before,
-  .list-frame.fade-bottom::after {
-    opacity: 1;
+  .head-title {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
   }
 
-  .launcher-list {
-    flex: 1;
+  .grid-zone,
+  .rows-zone {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
     min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+    padding: 0 var(--space-md);
   }
 
-  .launcher-groups {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    background-color: var(--color-border-subtle);
+  /* Browse */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: var(--space-xs);
+    padding: var(--space-md) 0;
   }
 
-  /* While searching, the few results sit right above the field (and the keyboard) */
-  .launcher-groups.is-searching {
-    margin-top: auto;
-  }
-
-  .launcher-footer {
-    flex-shrink: 0;
+  .tile {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md) max(var(--space-md), env(safe-area-inset-bottom, 0px));
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 64px;
+    padding: var(--space-sm) 2px;
     background-color: var(--color-surface-1);
-    border-top: 1px solid var(--color-border-subtle);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    cursor: pointer;
   }
 
-  .recent-block {
-    background-color: var(--color-border-subtle);
-    border-radius: var(--radius-sm);
+  .tile:active {
+    background-color: var(--color-surface-active);
+  }
+
+  .tile.is-active {
+    border-color: var(--color-accent-primary);
+    box-shadow: inset 0 0 0 1px var(--color-accent-primary);
+  }
+
+  .tile-icon {
+    display: flex;
+    font-size: 24px;
+    color: var(--color-text-secondary);
+  }
+
+  .tile-name {
+    max-width: 100%;
     overflow: hidden;
+    font-size: min(var(--text-xs), 3.4vw);
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tile-via {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: min(var(--text-xs), 3vw);
+    color: var(--color-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Search rows: pushed to the bottom, the best one last */
+  .rows {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--space-xs);
+    padding: var(--space-md) 0 var(--space-xs);
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: 40px;
+    padding: 0 var(--space-sm);
+    background-color: var(--color-surface-1);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .row:active {
+    background-color: var(--color-surface-active);
+  }
+
+  .row.is-target {
+    background-color: var(--color-accent-primary-subtle);
+    border-color: var(--color-accent-primary);
+  }
+
+  .row-icon {
+    flex: none;
+    display: flex;
+    font-size: 20px;
+    color: var(--color-text-secondary);
+  }
+
+  .row-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row-via {
+    margin-left: var(--space-xs);
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
+
+  .row-reason {
+    flex: none;
+    max-width: 50%;
+    overflow: hidden;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row-reason b {
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  .row-enter {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-accent-primary);
   }
 
   .no-results {
     margin: 0;
-    padding: var(--space-lg) var(--space-md);
-    background-color: var(--color-surface-1);
-    color: var(--color-text-secondary);
+    padding: var(--space-md) var(--space-sm);
     font-size: var(--text-sm);
-    text-align: center;
+    color: var(--color-text-secondary);
   }
 
-  .search-row {
+  /* Thumb zone */
+  .launcher-foot {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--color-border-subtle);
+    background-color: var(--color-surface-1);
+  }
+
+  .recent {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    height: var(--tap-min-size);
-    padding: 0 var(--space-md);
+    min-width: 0;
+  }
+
+  .recent-icon {
+    flex: none;
+    display: flex;
+    color: var(--color-text-muted);
+  }
+
+  .recent-chips {
+    flex: 1;
+    display: flex;
+    gap: var(--space-xs);
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior: contain;
+  }
+
+  .recent-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: var(--control-min-height);
+    padding: 0 var(--space-sm);
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .chip:active {
+    background-color: var(--color-surface-active);
+  }
+
+  .chip-icon {
+    display: flex;
+    font-size: 16px;
     color: var(--color-text-secondary);
-    box-sizing: border-box;
-    transition: border-color 0.12s ease;
+  }
+
+  .search-line {
+    display: flex;
+    gap: var(--space-xs);
+  }
+
+  .search-row {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-width: 0;
+    height: 44px;
+    padding: 0 var(--space-md);
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
   }
 
   .search-row:focus-within {
     border-color: var(--color-border-focus);
   }
 
+  .search-clear {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin-right: calc(-1 * var(--space-sm));
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+  }
+
+  /* The field's own clear button would duplicate ours */
+  .search-input::-webkit-search-cancel-button {
+    display: none;
+  }
+
   .search-input {
     flex: 1;
     min-width: 0;
-    height: 100%;
-    padding: 0;
     background: transparent;
     border: none;
-    border-radius: 0;
+    outline: none;
     color: var(--color-text-primary);
-    font-family: var(--font-sans);
     font-size: var(--text-base);
   }
 
-  .search-input:focus {
-    outline: none;
-  }
-
-  .search-input::placeholder {
-    color: var(--color-text-muted);
-  }
-
-  .group-block {
-    display: flex;
-    gap: 1px;
-  }
-
-  /* Vertical group name, read bottom-to-top like a book spine */
-  .group-label {
-    flex: none;
-    width: calc(20px * var(--font-scale));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background-color: var(--group-color);
-  }
-
-  /* Recent tiles are not a category: neutral spine, tiles keep their own group colors */
-  .recent-label {
-    background-color: var(--color-surface-3);
-  }
-
-  .recent-label .group-label-text {
-    color: var(--color-text-secondary);
-  }
-
-  .group-label-text {
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    max-height: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: var(--font-condensed);
-    font-size: var(--text-xs);
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    color: var(--color-text-inverse);
-  }
-
-  .modules-grid {
-    flex: 1;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1px;
-  }
-
-  .module-btn,
-  .grid-filler {
+  .icon-btn {
     position: relative;
+    flex: none;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--space-sm) 2px;
-    background-color: var(--color-surface-1);
-    border: none;
-    border-radius: 0;
-    gap: 5px;
-    min-height: 68px;
-    box-sizing: border-box;
-  }
-
-  .grid-filler {
-    background-color: var(--color-surface-sunken);
-  }
-
-  .module-btn {
-    transition: background-color 0.12s ease;
-    touch-action: manipulation;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  @media (hover: hover) {
-    .module-btn:hover {
-      background-color: var(--color-surface-2);
-    }
-  }
-
-  .module-btn:active {
-    background-color: var(--color-surface-active);
-  }
-
-  /* Active module in its group color (primary accent stays for in-module controls) */
-  .module-btn.is-active {
+    width: 44px;
+    height: 44px;
     background-color: var(--color-surface-2);
-    background-color: color-mix(in srgb, var(--group-color) 14%, var(--color-surface-1));
-    box-shadow: inset 0 0 0 1px var(--group-color);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
   }
 
-  .module-btn.is-active .name {
-    color: var(--group-color);
-    font-weight: 700;
+  .icon-btn:active {
+    background-color: var(--color-surface-active);
   }
 
   .update-dot {
     position: absolute;
     top: 6px;
-    right: 8px;
+    right: 6px;
     width: 8px;
     height: 8px;
-    border-radius: 50%;
-    background-color: var(--color-accent-primary);
-    box-shadow: 0 0 6px var(--color-accent-primary);
-  }
-
-  .icon {
-    font-size: calc(24px * var(--font-scale));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--group-color);
-  }
-
-  .name {
-    font-family: var(--font-condensed);
-    font-size: var(--text-xs);
-    font-weight: 500;
-    letter-spacing: 0.05px;
-    text-align: center;
-    line-height: 1.15;
-    color: var(--color-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 98%;
-  }
-
-  /* Shortcut tiles: where they lead, under the name */
-  .via {
-    margin-top: -4px;
-    font-family: var(--font-condensed);
-    font-size: min(calc(10px * var(--font-scale)), 3.2vw);
-    line-height: 1.1;
-    color: var(--color-text-muted);
-    white-space: nowrap;
+    border-radius: var(--radius-full);
+    background-color: var(--color-accent-warning);
   }
 </style>

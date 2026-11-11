@@ -21,15 +21,48 @@
       id: 'free',
       label: 'Volně',
       help: {
+        howTo: [
+          'Figury kladete ze zásobníku pod šachovnicí a přesouváte je kamkoli, pravidla se nehlídají. Tak opíšete diagram ze šifry.'
+        ],
+        example: {
+          title: 'Příklad: mat na poslední řadě',
+          steps: [
+            { action: 'Podržte Koš (vlevo dole).', result: 'Šachovnice je prázdná.' },
+            {
+              action: 'V zásobníku klepněte na bílého krále a pak na pole g1, potom na bílou věž a na a1.',
+              result: 'Figury stojí na šachovnici. Klávesa poslední figury zůstane vybraná jako razítko.'
+            },
+            {
+              action: 'Klepněte na černého pěšce a pak na pole f7, g7 a h7.',
+              result: 'Razítko položí pěšce na každé klepnuté pole. Lišta hlásí Chybí černý král.'
+            },
+            {
+              action: 'Přetáhněte černého krále ze zásobníku na g8.',
+              result: 'Lišta ukazuje Na tahu bílý, pozici jde hrát. Pokračujte příkladem v Pravidlech.'
+            }
+          ]
+        },
         controls: [
-          ['Tažení ze zásobníku', 'položí figuru na pole'],
-          ['Ťuk na figuru v zásobníku', 'razítko: každé ťuknutí na pole ji položí'],
-          ['Razítko na stejnou figuru', 'sebere ji'],
-          ['Guma', 'razítko, které maže'],
-          ['Tažení figury', 'kamkoli, bez pravidel; přes zásobník = odebrat'],
-          ['Ťuk na figuru, pak na pole', 'přesun bez tažení'],
-          ['Výchozí', 'základní postavení'],
-          ['Tečky', 'kam figura dosáhne → menu Nápověda tahů']
+          [
+            'Klepnutí na figuru v zásobníku',
+            'Udělá z ní razítko: každé klepnutí na pole ji tam položí, na stejnou figuru ji sebere. Druhé klepnutí na klávesu razítko vypne.'
+          ],
+          ['Tažení ze zásobníku', 'Položí jednu figuru na pole, kde ji pustíte.'],
+          ['Guma (vedle bílých figur)', 'Razítko, které figury maže.'],
+          ['Výchozí (vedle černých figur)', 'Postaví základní postavení.'],
+          ['Klepnutí na figuru, pak na pole', 'Přesune ji kamkoli, bez pravidel. Jde to i tažením.'],
+          ['Tažení figury do zásobníku', 'Odebere ji ze šachovnice (Pustit = odebrat).'],
+          ['Menu → Nápověda tahů', 'Tečkami ukáže, kam vybraná figura dosáhne.']
+        ],
+        pitfalls: [
+          [
+            'Klepnutí na figuru ji sebralo nebo položilo jinou?',
+            'Je zapnuté razítko, jeho klávesa v zásobníku svítí. Klepněte na ni znovu, razítko se vypne a figury půjde zase přesouvat.'
+          ],
+          [
+            'Lišta hlásí Chybí černý král nebo Pěšec na krajní řadě?',
+            'Ve Volně to nevadí, jen taková pozice nejde hrát v Pravidlech. Doplňte krále, nebo pěšce posuňte.'
+          ]
         ]
       }
     },
@@ -37,40 +70,106 @@
       id: 'rules',
       label: 'Pravidla',
       help: {
+        howTo: [
+          'Hrají se jen platné tahy a strany se střídají. Lišta hlásí, kdo je na tahu, šach, mat i průběh hledání. Řešit najde nejkratší mat strany na tahu.'
+        ],
+        example: {
+          title: 'Příklad: najít mat',
+          steps: [
+            {
+              action: 'S pozicí z příkladu ve Volně klepněte v řádku variant na Pravidla.',
+              result: 'Místo zásobníku je řádek tahů se štítkem Start a pod ním klávesy na tahu a Řešit.'
+            },
+            {
+              action: 'Klepněte na Řešit.',
+              result: 'Lišta hlásí Nalezen mat v 1. Zelená šipka vede z a1 na a8 a v řádku tahů svítí štítek Mat 1: Va8#.'
+            },
+            {
+              action: 'Klepněte na zelený štítek.',
+              result: 'Věž přejede na a8, v řádku tahů přibude `1. Va8#` a lišta hlásí Mat, vyhrál bílý.'
+            },
+            {
+              action: 'Klepněte na Zpět (vpravo dole), pak na věž a na pole a8.',
+              result: 'Tah zahrajete i ručně. Tečky po klepnutí na věž ukazují, kam smí.'
+            }
+          ]
+        },
         controls: [
-          ['Tahy', 'jen legální, strany se střídají'],
-          ['Proměna', 'výběr figury nad polem'],
-          ['Lišta tahů', 'ťuk = skok na pozici'],
-          ['na tahu', 'přepne stranu'],
-          ['Řešit', 'hledá nejkratší mat, dokud ho nenajde (max. 60 s)'],
-          ['Pořadí', 'všechny maty do 2 → jen šachy do 12 → ověření kratšího'],
-          ['Zrušit', 'zastaví hledání, nalezené zůstane'],
-          ['Zelená varianta', 'ťuk = zahraje celou až do matu, `Zpět` krokuje']
+          [
+            'Klepnutí na figuru, pak na pole',
+            'Zahraje tah, jde to i tažením. Táhne jen strana na tahu a jen platné tahy, kam figura smí, ukazují tečky.'
+          ],
+          ['Proměna pěšce', 'Nad polem se nabídne dáma, věž, střelec a jezdec. Klepnutí jinam na šachovnici tah zruší.'],
+          ['Řádek tahů (nad klávesami)', 'Tahy partie od štítku Start. Klepnutí na tah skočí na jeho pozici.'],
+          ['na tahu (vlevo)', 'Přepne stranu, která je na tahu.'],
+          [
+            'Řešit (vpravo)',
+            'Hledá nejkratší mat strany na tahu, nejdéle 60 s. Během hledání se změní na Zrušit, které hledání zastaví.'
+          ],
+          ['Zelený štítek Mat (v řádku tahů)', 'Zahraje celou matovou variantu, Zpět ji krokuje zpátky.']
         ],
         pitfalls: [
-          ['Pravidla nejdou zapnout', 'toast řekne proč, např. chybí král'],
-          ['Obrana ve variantě', 'nejdelší odpor; jiné obrany vedou k matu stejně nebo dřív'],
-          ['Mat přes šachy (od 3 tahů)', 'tichý klíčový tah stejné délky se už nehledá'],
-          ['Kratší mat neověřen', 'limit vypršel; řešení platí, jen nemusí být nejkratší'],
-          ['Rošáda nejde', 'král a věž musí stát na výchozích polích'],
-          ['Tah v minulosti', 'nový tah smaže pozdější tahy']
+          [
+            'Pravidla nejdou zapnout?',
+            'Pozice se nedá hrát a toast řekne proč, třeba Chybí černý král. Opravte ji ve Volně.'
+          ],
+          ['V úloze táhne černý?', 'Klepněte na klávesu na tahu, aby ukazovala Černý, a teprve pak na Řešit.'],
+          [
+            'Lišta hlásí kratší neověřen?',
+            'Hledání narazilo na limit 60 s. Nalezený mat platí, jen nemusí být nejkratší.'
+          ],
+          [
+            'Řešení začíná šachem, ale úloha čeká tichý tah?',
+            'Od matu ve 3 tazích hledá Řešit nejdřív šachy a tichý úvodní tah stejné délky už nezkouší. Kratší mat vyloučí, pokud stihne limit.'
+          ],
+          [
+            'Rošáda nejde?',
+            'Král a věž musí stát na výchozích polích. U pozice postavené ve Volně se právo na rošádu odvodí z postavení.'
+          ],
+          [
+            'Tah uprostřed partie smazal její konec?',
+            'Nový tah ze starší pozice nahradí všechny pozdější. Partii jen procházejte řádkem tahů nebo tlačítky Zpět a Vpřed.'
+          ]
         ]
       }
     }
   ];
 
   const help: RefHelpData = {
+    purpose: [
+      'Šachová úloha v šifře bývá diagram, zápis partie nebo FEN. Nástroj pozici postaví, zahraje tahy podle pravidel a najde nejkratší mat.'
+    ],
+    howTo: [
+      'Diagram postavte ve Volně, partii nebo FEN napište na záložku Podklad. V Pravidlech pak pozici hrajete a necháte hledat mat.'
+    ],
     controls: [
-      ['Volně / Pravidla', 'lišta nad zásobníkem'],
-      ['Zpět / Vpřed', 'každý krok vč. vymazání; podržet = rychle'],
-      ['Koš (podržet)', 'prázdná šachovnice'],
-      ['Pozice nebo partie', 'ikona podkladu v hlavičce: FEN nebo tahy, česky i anglicky'],
-      ['Kopírovat', 'v podkladu zkopíruje FEN aktuální pozice'],
-      ['Otočit šachovnici', 'černý dole → menu']
+      ['Řádek variant: Volně | Pravidla', 'Volně staví pozici bez pravidel, Pravidla hrají platné tahy a hledají mat.'],
+      ['Zpět a Vpřed (vpravo dole)', 'Krok v historii, i přes vyprázdnění šachovnice. Podržením běží rychle.'],
+      [
+        'Koš (vlevo dole)',
+        'Podržením vyprázdní šachovnici, smaže neplatné části zápisu a přepne na Volně. Zpět vrátí pozici i zápis.'
+      ],
+      [
+        'Záložka Podklad',
+        'Pozice ve FEN, nebo tahy česky i anglicky: `1. e4 e5 2. Jf3`. Za FEN mohou následovat tahy z té pozice. Šachovnice se mění už při psaní a tahy přepnou na Pravidla. Co změníte na šachovnici, Podklad přepíše.'
+      ],
+      ['Menu → Otočit šachovnici', 'Černý bude dole. Na záložce Menu pak svítí tečka.'],
+      ['Menu → Souřadnice', 'Písmena a–h a čísla 1–8 na okraji šachovnice.'],
+      ['Menu → Reset nástroje', 'Základní postavení a výchozí volby Menu. Volně nebo Pravidla zůstane.']
     ],
     pitfalls: [
-      ['Partie od diagramu', 'tahy navazují na šachovnici, pokud je ze základní pozice nejde zahrát'],
-      ['Tečka na ikoně podkladu', 'pozice se nedá hrát (chybí král…), Pravidla nepůjdou zapnout']
+      [
+        'Partie z Podkladu začíná jinde, než čekáte?',
+        'Tahy se hrají ze základního postavení. Když tam zahrát nejdou, navážou na pozici na šachovnici. Chcete-li jistotu, napište před tahy FEN výchozí pozice.'
+      ],
+      [
+        'Lišta hlásí Neplatné části zápisu?',
+        'Kus textu nejde přečíst ani zahrát. Zůstane na konci zápisu na záložce Podklad, kde je pod textem napsané proč. Opravte ho tam, nebo ho smaže Koš.'
+      ],
+      [
+        'Na záložce Podklad svítí tečka?',
+        'Zápis má neplatný kus, nebo pozici nejde hrát (chybí král, pěšec na krajní řadě). Důvod je napsaný pod textem na záložce Podklad.'
+      ]
     ]
   };
 </script>

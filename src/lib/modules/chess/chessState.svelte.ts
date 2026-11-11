@@ -6,32 +6,33 @@ import {
   START_FEN,
   EMPTY_FEN,
   type Board,
+  type Color,
   type PieceChar,
   buildFen,
   inferCastling,
-  normalizeFen,
   parseFen,
   pieceColor,
   positionProblem,
   pseudoTargets,
   squareIndex,
   squareName,
-  toCzechSan,
-  tokenizeMoves
+  toCzechSan
 } from './chessData';
+import {
+  chessNotationAt,
+  parseChessNotation,
+  playMoves,
+  runBase,
+  sameOrphans,
+  type ChessNotation,
+  type ChessSnapshot
+} from './chessNotation';
 import { settings } from '../../state/settings.svelte';
 import { toast } from '../../state/toast.svelte';
+import { localSettingsService } from '../../services/localSettingsService';
 
 export type ChessMode = 'free' | 'rules';
 export type TrayTool = PieceChar | 'erase';
-
-/** One step of the undo history. `san` marks a legal move played in the rules mode. */
-export interface ChessSnapshot {
-  fen: string;
-  san?: string;
-  from?: number;
-  to?: number;
-}
 
 export interface DragState {
   piece: PieceChar;
@@ -62,10 +63,21 @@ export interface StripItem {
   label: string;
 }
 
-const STORAGE_KEY = 'samuel_module_chess_v1';
+/** One stretch of podklad editing: every keystroke is read again against the same start. */
+interface EditSession {
+  history: ChessSnapshot[];
+  cursor: number;
+  /** The board a typed game may continue. */
+  altBase: string;
+}
+
+const modSettings = localSettingsService.forModule('chess');
+const LEGACY_STORAGE_KEY = 'samuel_module_chess_v1';
 const MAX_HISTORY = 300;
 const STORED_HISTORY = 200;
 const DRAG_THRESHOLD = 6;
+
+const sideName = (color: Color) => (color === 'w' ? 'bílý' : 'černý');
 
 class ChessModuleState {
   history = $state<ChessSnapshot[]>([{ fen: START_FEN }]);
@@ -74,6 +86,12 @@ class ChessModuleState {
   flipped = $state(false);
   showCoords = $state(true);
   showHints = $state(true);
+
+  /** Podklad text exactly as typed, while the board still shows its result. */
+  rawText = $state<string | null>(null);
+  private rawAltBase: string | null = null;
+  private rawParse = $state.raw<ChessNotation | null>(null);
+  private session: EditSession | null = null;
 
   // --- Ephemeral interaction state ---
   armed = $state<TrayTool | null>(null);
@@ -95,8 +113,14 @@ class ChessModuleState {
   parts = $derived(parseFen(this.current.fen));
   board = $derived(this.parts.board);
   turn = $derived(this.parts.turn);
+  isEmpty = $derived(!this.board.some(Boolean));
   canUndo = $derived(this.cursor > 0);
   canRedo = $derived(this.cursor < this.history.length - 1);
+
+  /** The podklad text: as typed, or written from the board once the board changed it. */
+  notation = $derived(this.rawText ?? chessNotationAt(this.history, this.cursor));
+  /** Pieces of the text the board cannot show. */
+  orphans = $derived(this.current.orphans ?? []);
 
   /** chess.js game of the current position; only in the rules mode (position is valid there). */
   game = $derived.by(() => {
@@ -139,8 +163,7 @@ class ChessModuleState {
 
   /** Moves around the cursor: from the last non-move snapshot up to the end of that run. */
   strip = $derived.by((): { base: number; items: StripItem[] } => {
-    let base = this.cursor;
-    while (base > 0 && this.history[base].san) base--;
+    const base = runBase(this.history, this.cursor);
     let end = base;
     while (end + 1 < this.history.length && this.history[end + 1].san) end++;
 
@@ -162,6 +185,34 @@ class ChessModuleState {
   /** Solver output belongs to the position it was computed for. */
   solverHere = $derived(this.solver && this.solver.fen === this.current.fen ? this.solver : null);
 
+  /** What keeps the board from showing the whole text (bar warning). */
+  notationWarning = $derived.by(() => {
+    if (this.orphans.length) return `Neplatné části zápisu: ${this.orphans.length}`;
+    return this.rawParse?.structural ?? null;
+  });
+
+  /** Why the podklad needs a look: its text first, then a position that cannot be played. */
+  attention = $derived.by(() => {
+    if (this.rawParse?.problem) return this.rawParse.problem;
+    if (this.orphans.length) return `Nejde přečíst: ${this.orphans.join(' ')}`;
+    if (this.rawParse?.structural) return this.rawParse.structural;
+    // An empty board is a deliberate start; a half-built one that cannot be played needs a look
+    return this.isEmpty ? null : positionProblem(this.current.fen);
+  });
+
+  /** Bar status: the side to move, check or the end of the game, or the mate search. */
+  status = $derived.by(() => {
+    if (this.mode === 'free') {
+      return (this.isEmpty ? null : positionProblem(this.current.fen)) ?? `Na tahu ${sideName(this.turn)}`;
+    }
+    if (this.gameOver === 'mate') return `Mat, vyhrál ${sideName(this.turn === 'w' ? 'b' : 'w')}`;
+    if (this.gameOver === 'stalemate') return 'Pat, remíza';
+    return (
+      solverStatus(this.solverHere) ??
+      `Na tahu ${sideName(this.turn)}${this.checkSquare !== null ? ', šach' : ''}`
+    );
+  });
+
   constructor() {
     this.loadFromStorage();
   }
@@ -169,56 +220,77 @@ class ChessModuleState {
   // ─── Persistence ─────────────────────────────────────────
 
   private loadFromStorage() {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      if (Array.isArray(data.history) && data.history.length) {
-        this.history = data.history.filter((s: ChessSnapshot) => typeof s?.fen === 'string');
-        this.cursor = Math.min(Math.max(0, Number(data.cursor) || 0), this.history.length - 1);
+    migrateLegacyStorage();
+    const history = modSettings.getJSON<ChessSnapshot[]>('history', []);
+    if (Array.isArray(history)) {
+      const valid = history.filter((s) => typeof s?.fen === 'string');
+      if (valid.length) {
+        this.history = valid;
+        this.cursor = Math.min(Math.max(0, modSettings.getNumber('cursor', 0)), valid.length - 1);
       }
-      if (data.mode === 'rules' && !positionProblem(this.current.fen)) this.mode = 'rules';
-      if (typeof data.flipped === 'boolean') this.flipped = data.flipped;
-      if (typeof data.showCoords === 'boolean') this.showCoords = data.showCoords;
-      if (typeof data.showHints === 'boolean') this.showHints = data.showHints;
-    } catch (e) {
-      console.warn('Failed to load chess state from storage:', e);
+    }
+    if (modSettings.getString('mode', 'free') === 'rules' && !positionProblem(this.current.fen)) {
+      this.mode = 'rules';
+    }
+    this.flipped = modSettings.getBoolean('flipped', false);
+    this.showCoords = modSettings.getBoolean('show_coords', true);
+    this.showHints = modSettings.getBoolean('show_hints', true);
+
+    // The typed text survives a reload as long as the board still shows its result
+    const rawText = modSettings.get<string | null>('raw_text', null);
+    if (typeof rawText === 'string' && this.cursor === this.history.length - 1) {
+      const altBase = modSettings.get<string | null>('raw_alt_base', null);
+      const parsed = parseChessNotation(rawText, altBase);
+      if (parsed.snaps[parsed.snaps.length - 1].fen === this.current.fen) {
+        this.rawText = rawText;
+        this.rawAltBase = altBase;
+        this.rawParse = parsed;
+      }
     }
   }
 
   saveToStorage() {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      const drop = Math.max(0, this.history.length - STORED_HISTORY);
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          history: this.history.slice(drop),
-          cursor: Math.max(0, this.cursor - drop),
-          mode: this.mode,
-          flipped: this.flipped,
-          showCoords: this.showCoords,
-          showHints: this.showHints
-        })
-      );
-    } catch {}
+    const drop = Math.max(0, this.history.length - STORED_HISTORY);
+    modSettings.update({
+      history: this.history.slice(drop),
+      cursor: Math.max(0, this.cursor - drop),
+      mode: this.mode,
+      flipped: this.flipped,
+      show_coords: this.showCoords,
+      show_hints: this.showHints,
+      raw_text: this.rawText,
+      raw_alt_base: this.rawAltBase
+    });
   }
 
   // ─── History ─────────────────────────────────────────────
 
+  /** A change made on the board: the podklad text is written from the board from now on. */
   private push(...snaps: ChessSnapshot[]) {
+    // Pieces of the text the board cannot show stay with every later position
+    const inherited = this.current.orphans;
     let history = this.history.slice(0, this.cursor + 1);
     for (const snap of snaps) {
-      if (snap.fen === history[history.length - 1]?.fen && !snap.san) continue;
-      history.push(snap);
+      const next: ChessSnapshot = { ...snap, orphans: snap.orphans ?? inherited };
+      if (!next.orphans?.length) delete next.orphans;
+      const last = history[history.length - 1];
+      if (next.fen === last?.fen && !next.san && sameOrphans(next.orphans, last.orphans)) continue;
+      history.push(next);
     }
     if (history.length > MAX_HISTORY) history = history.slice(-MAX_HISTORY);
     this.history = history;
     this.cursor = history.length - 1;
     this.selected = null;
     this.pendingPromotion = null;
+    this.endEditSession();
     this.saveToStorage();
+  }
+
+  private endEditSession() {
+    this.session = null;
+    this.rawText = null;
+    this.rawAltBase = null;
+    this.rawParse = null;
   }
 
   private pushBoard(board: Board, from?: number, to?: number) {
@@ -237,6 +309,7 @@ class ChessModuleState {
     this.cursor = index;
     this.selected = null;
     this.pendingPromotion = null;
+    this.endEditSession();
     if (this.mode === 'rules' && positionProblem(this.current.fen)) {
       this.mode = 'free';
       toast.show('Pozice neplatí, režim Volně', 'info');
@@ -287,60 +360,72 @@ class ChessModuleState {
     this.saveToStorage();
   }
 
+  /** Empties the board and drops the unreadable text with it; Zpět brings both back. */
   clearBoard() {
     this.armed = null;
-    this.loadPosition(EMPTY_FEN);
-  }
-
-  resetModule() {
-    this.cancelSolve();
-    this.solver = null;
-    this.history = [{ fen: START_FEN }];
-    this.cursor = 0;
+    this.push({ fen: EMPTY_FEN, orphans: [] });
     this.mode = 'free';
-    this.armed = null;
-    this.selected = null;
-    this.pendingPromotion = null;
     this.saveToStorage();
   }
 
-  /** Pasted text: a FEN (also placement only) or a game in Czech / English notation. */
-  importText(text: string) {
-    if (!text.trim()) return;
-    const fen = normalizeFen(text);
-    if (fen) {
-      this.loadPosition(fen);
-      toast.show('Pozice načtena', 'success');
-      return;
-    }
-
-    const tokens = tokenizeMoves(text);
-    if (!tokens.length) {
-      toast.show('Zápis nerozpoznán', 'warning');
-      return;
-    }
-
-    // Games usually start from the initial position; moves continuing the board are accepted too.
-    const bases = [START_FEN];
-    if (!positionProblem(this.current.fen)) bases.push(this.current.fen);
-    let best: { base: string; snaps: ChessSnapshot[] } = { base: START_FEN, snaps: [] };
-    for (const base of bases) {
-      const snaps = playMoves(base, tokens);
-      if (snaps.length > best.snaps.length) best = { base, snaps };
-    }
-
-    if (!best.snaps.length) {
-      toast.show('Tahy nejdou zahrát', 'warning');
-      return;
-    }
-    this.mode = 'rules';
+  /** Data and Menu options back to defaults; the chosen mode is a variant and stays. */
+  resetModule() {
+    this.cancelSolve();
+    this.solver = null;
+    this.endEditSession();
+    this.history = [{ fen: START_FEN }];
+    this.cursor = 0;
     this.armed = null;
-    this.push({ fen: best.base }, ...best.snaps);
-    if (best.snaps.length < tokens.length) {
-      toast.show(`Stop u tahu ${tokens[best.snaps.length]}`.slice(0, 30), 'warning');
-    } else {
-      toast.show(`Načteno ${best.snaps.length} tahů`, 'success');
+    this.selected = null;
+    this.pendingPromotion = null;
+    this.flipped = false;
+    this.showCoords = true;
+    this.showHints = true;
+    this.saveToStorage();
+  }
+
+  /**
+   * Podklad edit, called on every keystroke: the board shows the text at once. All edits
+   * of one stretch replace each other, so typing does not pile up undo steps.
+   */
+  importNotation(text: string) {
+    if (!this.session) {
+      this.session = {
+        history: this.history,
+        cursor: this.cursor,
+        altBase: this.rawText !== null && this.rawAltBase ? this.rawAltBase : this.current.fen
+      };
     }
+    const { history: origin, cursor: anchor, altBase } = this.session;
+    const parsed = parseChessNotation(text, altBase);
+    const [first, ...moves] = parsed.snaps;
+
+    let history: ChessSnapshot[];
+    const base = runBase(origin, anchor);
+    if (moves.length && first.fen === origin[base].fen) {
+      // The text rewrites the game on the board: like a move played in the past, it replaces it
+      history = [...origin.slice(0, base), ...parsed.snaps];
+    } else {
+      history = origin.slice(0, anchor + 1);
+      const last = history[history.length - 1];
+      const unchanged = first.fen === last.fen && (moves.length > 0 || sameOrphans(first.orphans, last.orphans));
+      history.push(...(unchanged ? moves : parsed.snaps));
+    }
+    if (history.length > MAX_HISTORY) history = history.slice(-MAX_HISTORY);
+
+    this.history = history;
+    this.cursor = history.length - 1;
+    this.selected = null;
+    this.pendingPromotion = null;
+    this.rawText = text;
+    this.rawAltBase = altBase;
+    this.rawParse = parsed;
+    if (moves.length && this.mode !== 'rules') {
+      this.mode = 'rules';
+      this.armed = null;
+    }
+    if (this.mode === 'rules' && positionProblem(this.current.fen)) this.mode = 'free';
+    this.saveToStorage();
   }
 
   // ─── Editing primitives ──────────────────────────────────
@@ -479,7 +564,8 @@ class ChessModuleState {
 
   /**
    * Starts a press on a square or a tray key. Moving past a small threshold turns it
-   * into a drag of the piece; releasing without movement counts as a tap.
+   * into a drag of the piece; releasing without movement counts as a tap. A tray key
+   * is a Keycap that already vibrated on the press.
    */
   press(e: PointerEvent, source: number | 'tray', tool?: TrayTool) {
     if (e.button > 0) return;
@@ -521,7 +607,7 @@ class ChessModuleState {
       if (!dragging) {
         if (!draggable || Math.hypot(ev.clientX - startX, ev.clientY - startY) < DRAG_THRESHOLD) return;
         dragging = true;
-        settings.vibrate(30);
+        if (source !== 'tray') settings.vibrate(30);
         this.pendingPromotion = null;
         this.drag = {
           piece: piece!,
@@ -545,9 +631,12 @@ class ChessModuleState {
 
       if (!dragging) {
         if (cancelled) return;
-        settings.vibrate(30);
-        if (source === 'tray') this.tapTray(tool!);
-        else this.tapSquare(source);
+        if (source === 'tray') {
+          this.tapTray(tool!);
+        } else {
+          settings.vibrate(30);
+          this.tapSquare(source);
+        }
         return;
       }
       update(ev);
@@ -639,23 +728,42 @@ class ChessModuleState {
   }
 }
 
-function playMoves(baseFen: string, moves: (string | MateMove)[]): ChessSnapshot[] {
-  const game = new Chess(baseFen);
-  const snaps: ChessSnapshot[] = [];
-  for (const token of moves) {
-    try {
-      const move = game.move(token);
-      snaps.push({
-        fen: game.fen(),
-        san: move.san,
-        from: squareIndex(move.from),
-        to: squareIndex(move.to)
-      });
-    } catch {
-      break;
-    }
+/** What the mate search is doing, or what it found or ruled out (bar status, ≤ 38 chars). */
+function solverStatus(solver: SolverState | null): string | null {
+  if (!solver) return null;
+  const report = solver.report;
+  if (solver.status === 'running') {
+    if (report?.result) return `Ověřuji kratší: mat v ${solver.depth}…`;
+    if (solver.phase === 'checks') return `Zkouším šachy: mat v ${solver.depth}…`;
+    return `Hledám mat v ${solver.depth}… ${solver.done}/${solver.total}`;
   }
-  return snaps;
+  if (!report) return null;
+  const limit = report.timedOut ? ' · limit 60 s' : '';
+  if (!report.result) return (report.ruledOut ? `Mat do ${report.ruledOut} není` : 'Mat nenalezen') + limit;
+  const { depth, solutions } = report.result;
+  if (!report.shortest) return `Mat v ${depth}, kratší neověřen${limit}`;
+  return `Nalezen mat v ${depth}${solutions.length > 1 ? ` · ${solutions.length} řešení` : ''}`;
+}
+
+/** One-time move of the old own localStorage key into the module settings. */
+function migrateLegacyStorage() {
+  if (typeof localStorage === 'undefined' || modSettings.has('history')) return;
+  try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    modSettings.update({
+      history: data.history,
+      cursor: data.cursor,
+      mode: data.mode,
+      flipped: data.flipped,
+      show_coords: data.showCoords,
+      show_hints: data.showHints
+    });
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch (e) {
+    console.warn('Failed to move chess state from the old storage key:', e);
+  }
 }
 
 export const chessState = new ChessModuleState();

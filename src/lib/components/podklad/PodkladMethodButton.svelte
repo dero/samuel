@@ -1,26 +1,17 @@
 <script lang="ts">
-  import { PencilSimple, Camera, ImageSquare } from 'phosphor-svelte';
-  import { settings } from '../../state/settings.svelte';
+  import { Camera, ImageSquare } from 'phosphor-svelte';
+  import Keycap from '../ui/Keycap.svelte';
   import type { PodkladMethod } from '../../state/podklad.svelte';
 
+  /** One way to bring an image in, as a key of the Podklad bottom row. */
   interface Props {
     method: PodkladMethod;
-    onWrite?: () => void;
     onFile?: (file: File) => void;
   }
 
-  let { method, onWrite, onFile }: Props = $props();
+  let { method, onFile }: Props = $props();
 
   let fileInputEl = $state<HTMLInputElement | null>(null);
-
-  function handleClick() {
-    settings.vibrate(20);
-    if (method.id === 'write') {
-      onWrite?.();
-    } else {
-      fileInputEl?.click();
-    }
-  }
 
   function handleFileChange(e: Event) {
     const input = e.target as HTMLInputElement;
@@ -30,20 +21,16 @@
   }
 </script>
 
-<button type="button" class="method-btn" onclick={handleClick}>
-  <span class="method-icon">
-    {#if method.id === 'write'}
-      <PencilSimple size={20} weight="bold" />
-    {:else if method.id === 'camera'}
-      <Camera size={20} weight="bold" />
+<div class="method-key">
+  <!-- The file picker needs a finished tap, hence pressOn="click" -->
+  <Keycap pressOn="click" sublabel={method.label} onPress={() => fileInputEl?.click()}>
+    {#if method.id === 'camera'}
+      <Camera size={16} weight="bold" />
     {:else}
-      <ImageSquare size={20} weight="bold" />
+      <ImageSquare size={16} weight="bold" />
     {/if}
-  </span>
-  <span class="method-label">{method.label}</span>
-</button>
+  </Keycap>
 
-{#if method.id !== 'write'}
   <input
     bind:this={fileInputEl}
     type="file"
@@ -52,42 +39,11 @@
     class="hidden-file-input"
     onchange={handleFileChange}
   />
-{/if}
+</div>
 
 <style>
-  .method-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    width: 100%;
-    height: var(--tap-min-size);
-    padding: 0 var(--space-md);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-    font-size: var(--text-sm);
-    font-weight: 700;
-    text-align: left;
-    box-sizing: border-box;
-    transition: background-color 0.12s ease;
-  }
-
-  .method-btn:active {
-    background-color: var(--color-surface-active);
-  }
-
-  .method-icon {
-    display: flex;
-    color: var(--color-accent-primary);
-    flex-shrink: 0;
-  }
-
-  .method-label {
+  .method-key {
     min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .hidden-file-input {

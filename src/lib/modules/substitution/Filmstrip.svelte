@@ -53,8 +53,9 @@
       onAction={onResetAll}
       disabled={!hasAnyMapping}
       variant="icon-only"
-      label="Resetovat vše"
-      ariaLabel="Resetovat všechna přiřazení"
+      label="Zrušit přiřazení"
+      ariaLabel="Podržte pro zrušení všech přiřazení"
+      tapWarning="Podržte pro zrušení přiřazení"
       class="filmstrip-reset-btn"
     />
   </div>
@@ -74,30 +75,22 @@
             type="button"
             class="filmstrip-card"
             class:is-selected={isSelected}
-            class:is-mapped={isMapped}
             class:not-in-text={!isPresent}
-            class:is-disabled={!canSelect}
             disabled={!canSelect}
             data-letter={letter}
             onclick={() => handleCellClick(letter)}
-            aria-label="Písmeno {letter}, přiřazeno: {isMapped ? mapping[letter] : 'nepřiřazeno'}"
+            aria-label="Znak {letter}, přiřazeno: {isMapped ? mapping[letter] : 'nic'}"
             aria-pressed={isSelected}
           >
-            <!-- Top: Cipher character (uppercase) -->
-            <div class="card-cipher-char font-mono">
-              {letter}
-            </div>
-
-            <!-- Divider -->
-            <div class="card-divider"></div>
-
-            <!-- Bottom: Target character (uppercase if mapped, lowercase gray if not) -->
-            <div
-              class="card-target-char font-mono"
-              class:target-unmapped={!isMapped}
-            >
-              {targetChar}
-            </div>
+            <span class="card-body">
+              <!-- Top: cipher character -->
+              <span class="card-cipher-char font-mono">{letter}</span>
+              <span class="card-divider"></span>
+              <!-- Bottom: assigned letter in capitals, the cipher letter in lowercase while unassigned -->
+              <span class="card-target-char font-mono" class:target-unmapped={!isMapped}>
+                {targetChar}
+              </span>
+            </span>
           </button>
         </div>
       {/each}
@@ -109,7 +102,8 @@
   .filmstrip-container {
     width: 100%;
     height: 56px;
-    background-color: #000000;
+    flex-shrink: 0;
+    background-color: var(--color-bg-canvas);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-subtle);
     overflow: hidden;
@@ -121,7 +115,7 @@
   }
 
   .filmstrip-reset-slot {
-    background-color: #000000;
+    background-color: var(--color-bg-canvas);
     padding: 2px 4px 2px 2px;
     border-right: 1px solid var(--color-border-subtle);
     display: flex;
@@ -129,6 +123,13 @@
     justify-content: center;
     flex-shrink: 0;
     z-index: 2;
+  }
+
+  /* Reaches into HoldToAction only for its size: the reset matches the cards' height */
+  .filmstrip-reset-slot :global(.filmstrip-reset-btn) {
+    width: 40px;
+    height: 48px;
+    flex-shrink: 0;
   }
 
   .filmstrip-scroll-area {
@@ -154,17 +155,7 @@
 
   .filmstrip-scroll-area::-webkit-scrollbar-thumb {
     background-color: var(--color-border-subtle);
-    border-radius: 9999px;
-  }
-
-  :global(.filmstrip-reset-btn) {
-    width: 40px !important;
-    height: 48px !important;
-    border-radius: var(--radius-xs) !important;
-    background-color: var(--color-surface-2) !important;
-    border: 1px solid rgba(239, 68, 68, 0.3) !important;
-    color: var(--color-accent-danger) !important;
-    flex-shrink: 0;
+    border-radius: var(--radius-full);
   }
 
   .filmstrip-cards-track {
@@ -182,9 +173,9 @@
     flex-shrink: 0;
   }
 
+  /* Flat selection cards: choosing a cipher letter is not the main input */
   .filmstrip-card {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 36px;
@@ -197,36 +188,44 @@
     position: relative;
     cursor: pointer;
     touch-action: manipulation;
-    transition: border-color 0.12s ease, background-color 0.12s ease, opacity 0.12s ease;
+    transition: border-color 0.12s ease, background-color 0.12s ease;
   }
 
   .filmstrip-card:active:not(:disabled) {
     background-color: var(--color-surface-active);
   }
 
-  .filmstrip-card.not-in-text {
-    opacity: 0.35;
-  }
-
-  .filmstrip-card.is-disabled {
-    opacity: 0.2;
+  .filmstrip-card:disabled {
     cursor: not-allowed;
-    pointer-events: none;
-  }
-
-  .filmstrip-card.is-mapped {
-    border-color: rgba(16, 185, 129, 0.35);
   }
 
   .filmstrip-card.is-selected {
     border-color: var(--color-accent-primary);
-    background-color: var(--color-surface-active);
+    background-color: var(--color-accent-primary-subtle);
     box-shadow: inset 0 0 0 1px var(--color-accent-primary);
-    opacity: 1 !important;
+  }
+
+  /* Disabled and absent letters keep their surface; only the content dims */
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .not-in-text .card-body {
+    opacity: 0.4;
+  }
+
+  .filmstrip-card:disabled .card-body {
+    opacity: 0.25;
+  }
+
+  .filmstrip-card.is-selected .card-body {
+    opacity: 1;
   }
 
   .card-cipher-char {
-    font-size: calc(13px * var(--font-scale));
+    font-size: var(--text-sm);
     font-weight: 700;
     line-height: 1.1;
     color: var(--color-text-primary);
@@ -240,16 +239,14 @@
   }
 
   .card-target-char {
-    font-size: calc(13px * var(--font-scale));
+    font-size: var(--text-sm);
     font-weight: 700;
     line-height: 1.1;
     color: var(--color-text-primary);
   }
 
   .card-target-char.target-unmapped {
-    font-size: calc(12px * var(--font-scale));
     font-weight: 500;
-    color: var(--color-text-secondary);
-    opacity: 0.65;
+    color: var(--color-text-muted);
   }
 </style>

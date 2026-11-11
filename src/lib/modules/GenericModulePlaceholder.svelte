@@ -25,7 +25,7 @@
   {#snippet output()}
     <TranslationCard
       text={dummyText}
-      placeholder="Zatím žádný vstup. Modul bude implementován v dalším kroku."
+      placeholder="Zatím žádný vstup. Nástroj bude implementován v dalším kroku."
     />
   {/snippet}
 
@@ -44,7 +44,7 @@
   {/snippet}
 
   {#snippet reference()}
-    <RefLayout help={{ controls: ['Modul je ve vývoji, reference přibude s ním.'] }} />
+    <RefLayout help={{ controls: ['Nástroj je ve vývoji, reference přibude s ním.'] }} />
   {/snippet}
 </ModuleShell>
 

@@ -2,13 +2,56 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
   import SimpleKeyboard from '../../components/ui/SimpleKeyboard.svelte';
-  import EmptyHint from '../../components/ui/EmptyHint.svelte';
+  import type { ModuleBarConfig } from '../../components/layout/ModuleBar.svelte';
+  import { CalendarDot } from 'phosphor-svelte';
   import CalendarDetailCard from './CalendarDetailCard.svelte';
   import CalendarMatrix from './CalendarMatrix.svelte';
   import CalendarCalculator from './CalendarCalculator.svelte';
   import CalendarSearchList from './CalendarSearchList.svelte';
   import CalendarReference from './CalendarReference.svelte';
   import { calendarState, type CalendarFlavour } from './calendarState.svelte';
+  import { isLeapYear } from './calendarData';
+
+  const todayYear = $derived(calendarState.today.year);
+  const todayMonth = $derived(calendarState.today.month);
+  const todayDay = $derived(calendarState.today.day);
+
+  $effect(() => {
+    const refresh = () => calendarState.refreshToday();
+    document.addEventListener('visibilitychange', refresh);
+    return () => document.removeEventListener('visibilitychange', refresh);
+  });
+
+  const isOnToday = $derived(
+    calendarState.year === todayYear &&
+      calendarState.month === todayMonth &&
+      calendarState.day === todayDay
+  );
+
+  const bar = $derived.by<ModuleBarConfig>(() => {
+    if (calendarState.activeFlavour === 'calendar') {
+      return {
+        status: isLeapYear(calendarState.year) ? 'Přestupný rok, 366 dní' : 'Běžný rok, 365 dní',
+        action: {
+          label: 'Dnes',
+          icon: CalendarDot,
+          disabled: isOnToday,
+          onClick: () => {
+            calendarState.refreshToday();
+            calendarState.setToday();
+          }
+        }
+      };
+    }
+    if (calendarState.activeFlavour === 'search') {
+      return {
+        hint: 'Datum 133 = 13. 3., jméno, pořadí dne.',
+        empty: !calendarState.searchQuery,
+        status: `Nalezeno ${calendarState.searchMatches.length}`
+      };
+    }
+    return {};
+  });
 
   const flavourOptions: SegmentOption<CalendarFlavour>[] = [
     { id: 'calendar', label: 'Kalendář' },
@@ -22,10 +65,6 @@
 
   function handleDateSelect(y: number, m: number, d: number) {
     calendarState.selectDate(y, m, d);
-  }
-
-  function handleYearChange(y: number) {
-    calendarState.setYear(y);
   }
 
   function handleLetter(char: string) {
@@ -45,6 +84,7 @@
   title="Kalendář"
   hasAlphabet={false}
   layoutMode="default"
+  {bar}
   onReset={() => calendarState.resetModule()}
 >
   <!-- ZONE-OUTPUT: Dynamic per Flavour -->
@@ -55,18 +95,12 @@
           <CalendarDetailCard detail={calendarState.currentDayDetail} variant="compact" />
         </div>
       {:else if calendarState.activeFlavour === 'search'}
-        {#if !calendarState.searchQuery}
-          <div class="search-empty-container">
-            <EmptyHint
-              text="Datum (133 = 13. 3.), jméno nebo pořadí dne v roce"
-            />
-          </div>
-        {:else if calendarState.searchMatches.length === 0}
+        {#if calendarState.searchQuery && calendarState.searchMatches.length === 0}
           <div class="no-matches-box">
             <span class="no-matches-query">„{calendarState.searchQuery}“</span>
             <span class="no-matches-msg">Nic nenalezeno</span>
           </div>
-        {:else}
+        {:else if calendarState.searchQuery}
           <!-- Simplified search results list with toggleable accordion day card -->
           <CalendarSearchList
             matches={calendarState.searchMatches}
@@ -82,43 +116,39 @@
     </div>
   {/snippet}
 
-  <!-- ZONE-INPUT: Subtoolbar + Stage + Keypad -->
-  {#snippet input()}
-    <div class="zone-input-flow">
-      <!-- 1. Sub-Toolbar (36px fixed) -->
-      <div class="subtoolbar-container">
-        <SegmentedControl
-          options={flavourOptions}
-          value={calendarState.activeFlavour}
-          onChange={handleFlavourChange}
-          size="sm"
-        />
-      </div>
-
-      <!-- 2. Active Stage per Flavour -->
-      {#if calendarState.activeFlavour === 'calendar'}
-        <CalendarMatrix
-          year={calendarState.year}
-          month={calendarState.month}
-          day={calendarState.day}
-          onSelect={handleDateSelect}
-          onYearChange={handleYearChange}
-        />
-      {:else if calendarState.activeFlavour === 'search'}
-        <SimpleKeyboard
-          includeNumbers={true}
-          hasInput={!!calendarState.searchQuery}
-          onChar={handleLetter}
-          onBackspace={handleBackspace}
-          onClear={handleClearSearch}
-        />
-      {:else if calendarState.activeFlavour === 'calc'}
-        <CalendarCalculator view="input" />
-      {/if}
-    </div>
+  {#snippet variants()}
+    <SegmentedControl
+      options={flavourOptions}
+      value={calendarState.activeFlavour}
+      onChange={handleFlavourChange}
+      size="sm"
+    />
   {/snippet}
 
-  <!-- Reference Modal Content -->
+  <!-- ZONE-INPUT: Active stage per flavour -->
+  {#snippet input()}
+    {#if calendarState.activeFlavour === 'calendar'}
+      <CalendarMatrix
+        year={calendarState.year}
+        month={calendarState.month}
+        day={calendarState.day}
+        onSelect={handleDateSelect}
+      />
+    {:else if calendarState.activeFlavour === 'search'}
+      <SimpleKeyboard
+        query={calendarState.searchQuery}
+        placeholder="Datum, jméno, pořadí dne…"
+        includeNumbers={true}
+        hasInput={!!calendarState.searchQuery}
+        onChar={handleLetter}
+        onBackspace={handleBackspace}
+        onClear={handleClearSearch}
+      />
+    {:else if calendarState.activeFlavour === 'calc'}
+      <CalendarCalculator view="input" />
+    {/if}
+  {/snippet}
+
   {#snippet reference()}
     <CalendarReference />
   {/snippet}
@@ -131,7 +161,7 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
-    min-height: var(--output-min-height, 84px);
+    min-height: 0;
     overflow: hidden;
     position: relative;
     box-sizing: border-box;
@@ -159,14 +189,6 @@
     overscroll-behavior: contain;
   }
 
-  .search-empty-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-  }
-
   .no-matches-box {
     flex: 1;
     display: flex;
@@ -174,17 +196,17 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    color: var(--color-text-muted, #666666);
+    color: var(--color-text-muted);
   }
 
   .no-matches-query {
-    font-size: var(--text-base, 16px);
+    font-size: var(--text-base);
     font-weight: 700;
-    font-family: var(--font-mono, monospace);
-    color: var(--color-text-secondary, #9e9e9e);
+    font-family: var(--font-mono);
+    color: var(--color-text-secondary);
   }
 
   .no-matches-msg {
-    font-size: var(--text-xs, 12px);
+    font-size: var(--text-xs);
   }
 </style>

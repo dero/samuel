@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { tick } from 'svelte';
   import { copyToClipboard } from '../../utils/clipboard';
   import { settings } from '../../state/settings.svelte';
   import EmptyHint from './EmptyHint.svelte';
@@ -36,14 +35,16 @@
   const displayHint = $derived(emptyHint || emptyTitle || '');
 
   $effect(() => {
-    // When text or pendingText changes, auto-scroll to the bottom of the container
-    if (hasContent && textEl) {
-      tick().then(() => {
-        if (textEl) {
-          textEl.scrollTop = textEl.scrollHeight;
-        }
-      });
-    }
+    // Keep the newest character in view; children may grow without `text` changing
+    const el = textEl;
+    if (!el) return;
+    const scrollToEnd = () => {
+      el.scrollTop = el.scrollHeight;
+    };
+    scrollToEnd();
+    const observer = new MutationObserver(scrollToEnd);
+    observer.observe(el, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
   });
 
   async function handleCopy() {

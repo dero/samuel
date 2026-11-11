@@ -14,19 +14,20 @@
   {#each items as item, i (i)}
     <li class="ref-list-item">
       {#if typeof item === 'string'}
-        <RefText text={item} />
+        <span class="ref-full"><RefText text={item} /></span>
       {:else}
-        <span class="ref-term"><RefText text={item[0]} />:</span>
-        <RefText text={item[1]} />
+        <span class="ref-term"><RefText text={item[0]} /></span>
+        <span class="ref-value"><RefText text={item[1]} /></span>
       {/if}
     </li>
   {/each}
 </ul>
 
 <style>
+  /* Two aligned columns: terms under each other, values under each other */
   .ref-list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: fit-content(45%) minmax(0, 1fr);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -36,7 +37,9 @@
   }
 
   .ref-list-item {
-    padding: 7px var(--space-sm);
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
     font-size: var(--text-sm);
     line-height: 1.45;
     color: var(--color-text-secondary);
@@ -51,9 +54,21 @@
     background-color: rgba(255, 255, 255, 0.025);
   }
 
+  .ref-term,
+  .ref-value,
+  .ref-full {
+    padding: 10px var(--space-md);
+    min-width: 0;
+  }
+
   .ref-term {
     font-weight: 700;
     color: var(--color-text-primary);
+    border-right: 1px solid var(--color-border-subtle);
+  }
+
+  .ref-full {
+    grid-column: 1 / -1;
   }
 
   .ref-list.is-warn {

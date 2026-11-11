@@ -1,11 +1,11 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
-  import StatusBar from '../../components/ui/StatusBar.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
+  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
   import MonogramsView from './MonogramsView.svelte';
   import FrequencyReference from './FrequencyReference.svelte';
   import IocDetailModal from './IocDetailModal.svelte';
-  import FrequencyToolbar from './FrequencyToolbar.svelte';
   import { analyzeFrequency, type FrequencyOptions } from './frequencySolver';
   import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
@@ -42,14 +42,27 @@
     return analyzeFrequency(rawText, analysisOptions);
   });
 
+  const SORT_OPTIONS: SegmentOption<'freq' | 'alpha'>[] = [
+    { id: 'freq', label: 'Četnost ▾' },
+    { id: 'alpha', label: 'Abecedně' }
+  ];
+
+  const IOC_LABELS = {
+    mono: { label: 'Přirozený text', tone: 'success' },
+    poly: { label: 'Polyalfabetická', tone: 'accent' },
+    high: { label: 'Repetitivní', tone: 'warning' },
+    low: { label: 'Méně dat', tone: 'neutral' }
+  } as const;
+
+  const iocLabel = $derived(IOC_LABELS[analysis.ioc.classification]);
+
   // Actions
   function handleReset() {
-    settings.vibrate(35);
     rawText = '';
     removeDiacritics = false;
     removeSymbols = true;
     sortBy = 'freq';
-    toast.show('Modul frekvence resetován', { type: 'success' });
+    toast.show('Nástroj resetován', { type: 'success' });
   }
 </script>
 
@@ -63,56 +76,34 @@
     empty: !rawText.trim(),
     title: 'Šifrový text',
     description: 'Spočítá četnost písmen a podle indexu koincidence odhadne typ šifry.',
+    format: 'Šifrový text, mezery a interpunkce nevadí.',
     example: 'WKLV LV D VHFUHW',
     value: rawText,
     onSave: (val) => {
       rawText = val;
     }
   }}
+  bar={{
+    empty: !rawText.trim(),
+    hint: 'Vložte šifrový text.',
+    status: `${analysis.totalChars} zn. · ${analysis.uniqueChars} různých`,
+    action: rawText.trim()
+      ? {
+          label: iocLabel.label,
+          tone: iocLabel.tone,
+          icon: Info,
+          title: 'Vysvětlení a hodnota Indexu koincidence',
+          onClick: () => {
+            showIocModal = true;
+          }
+        }
+      : undefined
+  }}
 >
-  <!-- TOP ZONE: Output (Letter frequency histogram and status bar) -->
+  <!-- TOP ZONE: Output (Letter frequency histogram) -->
   {#snippet output()}
     <div class="freq-output-stage">
       {#if rawText.trim()}
-        <!-- Active Analysis: Simplified 1-line status bar -->
-        <StatusBar
-          onclick={() => {
-            settings.vibrate(15);
-            showIocModal = true;
-          }}
-          title="Klepnutím zobrazit vysvětlení a hodnotu Indexu koincidence"
-          ariaLabel="Klepnutím zobrazit vysvětlení a hodnotu Indexu koincidence"
-        >
-          {#snippet left()}
-            <span class="status-counts font-mono">
-              {analysis.totalChars} znaků • {analysis.uniqueChars} různých
-            </span>
-          {/snippet}
-
-          {#snippet right()}
-            <span class="status-badge-wrap">
-              <span
-                class="nature-pill font-mono"
-                class:nature-mono={analysis.ioc.classification === 'mono'}
-                class:nature-poly={analysis.ioc.classification === 'poly'}
-                class:nature-high={analysis.ioc.classification === 'high'}
-                class:nature-low={analysis.ioc.classification === 'low'}
-              >
-                {#if analysis.ioc.classification === 'mono'}
-                  ✓ Přirozený text
-                {:else if analysis.ioc.classification === 'poly'}
-                  ~ Polyalfabetická
-                {:else if analysis.ioc.classification === 'high'}
-                  ! Repetitivní
-                {:else}
-                  Méně dat
-                {/if}
-              </span>
-              <Info size={14} weight="bold" class="status-info-icon" />
-            </span>
-          {/snippet}
-        </StatusBar>
-
         <!-- Scrollable Letter Histogram -->
         <div class="histogram-wrapper">
           {#if analysis.monograms.length === 0}
@@ -131,20 +122,21 @@
     </div>
   {/snippet}
 
-  <!-- BOTTOM ZONE: Sub-toolbar & Input controls -->
-  {#snippet input()}
-    <FrequencyToolbar
-      {sortBy}
-      onSortChange={(s) => {
+  {#snippet variants()}
+    <SegmentedControl
+      options={SORT_OPTIONS}
+      value={sortBy}
+      size="sm"
+      onChange={(s) => {
         sortBy = s;
       }}
+      ariaLabel="Řazení frekvenční analýzy"
     />
   {/snippet}
 
   <!-- Contextual Menu Options -->
   {#snippet menuOptions()}
-    <div class="menu-group">
-      <div class="menu-group-title">Analýza</div>
+    <MenuGroup title="Analýza">
       <OptionRow
         label="Ignorovat diakritiku"
         hint="Č → C, Á → A…"
@@ -162,7 +154,7 @@
           removeSymbols = val;
         }}
       />
-    </div>
+    </MenuGroup>
   {/snippet}
 
   <!-- Reference Modal -->
@@ -191,61 +183,6 @@
     position: relative;
   }
 
-  .status-counts {
-    font-size: calc(11px * var(--font-scale));
-    font-weight: 700;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .status-badge-wrap {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    flex-shrink: 0;
-  }
-
-  .nature-pill {
-    font-size: calc(10.5px * var(--font-scale));
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 4px;
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    color: var(--color-text-primary);
-    white-space: nowrap;
-  }
-
-  .nature-mono {
-    border-color: rgba(16, 185, 129, 0.45);
-    background-color: rgba(16, 185, 129, 0.12);
-    color: #34d399;
-  }
-
-  .nature-poly {
-    border-color: rgba(59, 130, 246, 0.45);
-    background-color: rgba(59, 130, 246, 0.12);
-    color: #60a5fa;
-  }
-
-  .nature-high {
-    border-color: rgba(245, 158, 11, 0.45);
-    background-color: rgba(245, 158, 11, 0.12);
-    color: #fbbf24;
-  }
-
-  .nature-low {
-    border-color: var(--color-border-subtle);
-    color: var(--color-text-muted);
-  }
-
-  :global(.status-info-icon) {
-    color: var(--color-text-muted);
-    opacity: 0.8;
-  }
-
   .histogram-wrapper {
     flex: 1;
     min-height: 0;
@@ -265,20 +202,4 @@
     line-height: 1.4;
   }
 
-  /* Menu groups */
-  .menu-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-
-  .menu-group-title {
-    font-size: calc(11px * var(--font-scale));
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    margin-bottom: 2px;
-  }
 </style>

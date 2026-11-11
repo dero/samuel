@@ -125,32 +125,6 @@ export function inferCastling(board: Board): string {
   return rights || '-';
 }
 
-/** Placement-only FEN (as copied from many diagrams) is completed with sensible defaults. */
-export function normalizeFen(input: string): string | null {
-  const fields = input.trim().split(/\s+/);
-  const placement = fields[0] ?? '';
-  const ranks = placement.split('/');
-  if (ranks.length !== 8) return null;
-  for (const rank of ranks) {
-    if (!/^[KQRBNPkqrbnp1-8]+$/.test(rank)) return null;
-    let width = 0;
-    for (const ch of rank) width += /\d/.test(ch) ? Number(ch) : 1;
-    if (width !== 8) return null;
-  }
-  const board = parseFen(placement).board;
-  const turn: Color = fields[1] === 'b' ? 'b' : 'w';
-  const castling = fields[2] && /^(-|[KQkq]{1,4})$/.test(fields[2]) ? fields[2] : inferCastling(board);
-  const ep = fields[3] && /^(-|[a-h][36])$/.test(fields[3]) ? fields[3] : '-';
-  return buildFen({
-    board,
-    turn,
-    castling,
-    ep,
-    halfmove: Number(fields[4]) || 0,
-    fullmove: Math.max(1, Number(fields[5]) || 1)
-  });
-}
-
 // ─── Validation for the rules mode ─────────────────────────
 
 /** Returns a short Czech reason (fits a toast) why the position cannot be played, or null. */
@@ -265,28 +239,8 @@ export function pseudoTargets(board: Board, from: number): number[] {
 // ─── Notation ──────────────────────────────────────────────
 
 const TO_CZECH: Record<string, string> = { Q: 'D', R: 'V', B: 'S', N: 'J' };
-const FROM_CZECH: Record<string, string> = { D: 'Q', V: 'R', S: 'B', J: 'N' };
 
 /** chess.js SAN → Czech SAN (`Nf3` → `Jf3`, `e8=Q` → `e8=D`). */
 export function toCzechSan(san: string): string {
   return san.replace(/[QRBN]/g, (ch) => TO_CZECH[ch]);
-}
-
-/**
- * Splits a pasted game into SAN tokens chess.js understands. Czech and English
- * piece letters only overlap in `K`, so both are accepted without a switch.
- */
-export function tokenizeMoves(text: string): string[] {
-  const cleaned = text
-    .replace(/\[[^\]]*\]/g, ' ') // PGN headers
-    .replace(/\{[^}]*\}/g, ' ') // comments
-    .replace(/\([^)]*\)/g, ' ') // variations
-    .replace(/\$\d+/g, ' ') // NAGs
-    .replace(/0-0-0/g, 'O-O-O')
-    .replace(/0-0/g, 'O-O');
-  return cleaned
-    .split(/\s+/)
-    .map((t) => t.replace(/^\d+\.+/, '').replace(/[!?]+$/, ''))
-    .filter((t) => t && !/^(1-0|0-1|1\/2-1\/2|\*|\d+\.*)$/.test(t))
-    .map((t) => t.replace(/[DVSJ]/g, (ch) => FROM_CZECH[ch]));
 }

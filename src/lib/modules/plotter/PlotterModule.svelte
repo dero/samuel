@@ -1,5 +1,9 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
+  import type { ModuleBarConfig } from '../../components/layout/ModuleBar.svelte';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import NonStandardSettingsBanner from '../../components/ui/NonStandardSettingsBanner.svelte';
   import TurtleCanvas from '../turtle/TurtleCanvas.svelte';
@@ -16,78 +20,136 @@
     ArrowDownRight,
     MapPin
   } from 'phosphor-svelte';
-  import type { TurtleState } from '../turtle/turtleTypes';
-  import { createInitialState, stepDirection, togglePen, addMarker, undo } from '../turtle/turtleEngine';
-  import { settings } from '../../state/settings.svelte';
+  import {
+    PLOTTER_DIRECTIONS,
+    parsePlotterField,
+    replayPlotter,
+    type CompassDirection
+  } from './plotterEngine';
+  import {
+    appendPress,
+    removeLastPress,
+    countSteps,
+    describeDrawing,
+    invalidAttention,
+    type DrawingCommand
+  } from '../turtle/drawingNotation';
+  import { parseNotation, serializeNotation } from '../../utils/notation';
   import { toast } from '../../state/toast.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
 
   const modSettings = localSettingsService.forModule('plotter');
 
-  // Configuration & Persistent State
+  const NOTATION_EXAMPLE = 'S3,V,JV,T,Z,M';
+
+  const DIRECTION_ICONS: Record<string, typeof ArrowUp> = {
+    SZ: ArrowUpLeft,
+    S: ArrowUp,
+    SV: ArrowUpRight,
+    Z: ArrowLeft,
+    V: ArrowRight,
+    JZ: ArrowDownLeft,
+    J: ArrowDown,
+    JV: ArrowDownRight
+  };
+
+  // The 3 × 3 pad: four directions, the marker in the centre, four directions
+  const TOP_DIRECTIONS = PLOTTER_DIRECTIONS.slice(0, 4);
+  const BOTTOM_DIRECTIONS = PLOTTER_DIRECTIONS.slice(4);
+
+  // The notation is the data: the drawing is replayed from it
+  let fields = $state.raw<string[]>(modSettings.getJSON<string[]>('fields', []));
   let showDashes = $state<boolean>(modSettings.getBoolean('show_dashes', true));
   let showGrid = $state<boolean>(modSettings.getBoolean('show_grid', true));
 
-  // Persistence effect
   $effect(() => {
+    modSettings.setJSON('fields', fields);
     modSettings.update({
       show_dashes: showDashes,
       show_grid: showGrid
     });
   });
 
-  // Active plotter state (shares the turtle engine; heading = last step direction)
-  let plotterState = $state<TurtleState>(createInitialState(0));
+  const commands = $derived(fields.map(parsePlotterField));
+  const invalidPieces = $derived(fields.filter((_, i) => commands[i] === null));
+  const drawing = $derived(replayPlotter(commands));
+  const canUndo = $derived(commands.some((cmd) => cmd !== null));
 
-  // Non-standard settings indicator
+  const bar = $derived<ModuleBarConfig>({
+    empty: fields.length === 0,
+    hint: 'Kreslete klepnutím na světovou stranu.',
+    status: describeDrawing(countSteps(commands), drawing.markers.length),
+    warning: invalidPieces.length > 0 ? `Neplatné části zápisu: ${invalidPieces.length}` : null
+  });
+
   const nonStandardCount = $derived((!showDashes ? 1 : 0) + (!showGrid ? 1 : 0));
 
-  function resetToDefaults() {
-    showDashes = true;
-    showGrid = true;
-    toast.show('Výchozí nastavení obnoveno', { type: 'success' });
-  }
-
-  function handleDirection(dx: number, dy: number, heading: number) {
-    settings.vibrate(20);
-    plotterState = stepDirection(plotterState, dx, dy, heading);
-  }
-
-  function handleAddMarker() {
-    settings.vibrate(25);
-    plotterState = addMarker(plotterState);
-  }
-
-  function handleTogglePen() {
-    settings.vibrate(20);
-    plotterState = togglePen(plotterState);
+  function press(cmd: DrawingCommand) {
+    fields = appendPress(fields, cmd, parsePlotterField);
   }
 
   function handleUndo() {
-    plotterState = undo(plotterState);
+    fields = removeLastPress(fields, parsePlotterField);
   }
 
   function handleClearAll() {
-    plotterState = createInitialState(0);
-    toast.show('Plátno vymazáno', { type: 'success' });
+    fields = [];
+  }
+
+  function resetDisplayDefaults() {
+    showDashes = true;
+    showGrid = true;
+  }
+
+  function handleReset() {
+    handleClearAll();
+    resetDisplayDefaults();
   }
 </script>
 
+{#snippet directionKey(dir: CompassDirection)}
+  {@const Icon = DIRECTION_ICONS[dir.code]}
+  <Keycap
+    sublabel={dir.code}
+    title="{dir.name} ({dir.code})"
+    ariaLabel={dir.name}
+    onPress={() => press({ kind: 'move', code: dir.code, count: 1 })}
+  >
+    <Icon size={22} weight="bold" />
+  </Keycap>
+{/snippet}
+
 <ModuleShell
-  title="Plotr"
-  hasAlphabet={false}
   hasWarning={nonStandardCount > 0}
-  onReset={handleClearAll}
+  onReset={handleReset}
+  podklad={{
+    kind: 'text',
+    required: false,
+    empty: fields.length === 0,
+    title: 'Zápis',
+    description:
+      'Světové strany S, SV, V, JV, J, JZ, Z, SZ, T pero, M značka; číslo za směrem je počet kroků.',
+    example: NOTATION_EXAMPLE,
+    placeholder: `Např. ${NOTATION_EXAMPLE}`,
+    autocapitalize: 'characters',
+    attention: invalidAttention(invalidPieces),
+    value: serializeNotation(fields),
+    onSave: (val) => {
+      fields = parseNotation(val);
+    }
+  }}
+  {bar}
 >
   {#snippet menuOptions()}
     <NonStandardSettingsBanner
       count={nonStandardCount}
-      onResetDefaults={resetToDefaults}
+      onResetDefaults={() => {
+        resetDisplayDefaults();
+        toast.show('Výchozí nastavení obnoveno', { type: 'success' });
+      }}
     />
 
-    <div class="menu-group">
-      <div class="menu-group-title">Zobrazení</div>
-
+    <MenuGroup title="Zobrazení">
       <OptionRow
         label="Zobrazit přejezdy perem"
         hint="Čárkovaná stopa při zvednutém peru"
@@ -103,7 +165,7 @@
         isNonStandard={!showGrid}
         onChange={(v) => (showGrid = v)}
       />
-    </div>
+    </MenuGroup>
   {/snippet}
 
   {#snippet reference()}
@@ -111,151 +173,36 @@
   {/snippet}
 
   {#snippet output()}
-    <TurtleCanvas state={plotterState} {showDashes} {showGrid} />
+    <TurtleCanvas state={drawing} {showDashes} {showGrid} />
   {/snippet}
 
   {#snippet input()}
-    <div class="zone-input-flow">
-      <!-- 1. Keypad Stage: 3×3 D-pad -->
-      <div class="plotter-chassis">
-        <div class="dpad-grid">
-          <!-- Row 1 -->
-          <button
-            type="button"
-            class="keycap dpad-key"
-            onpointerdown={(e) => {
-              e.preventDefault();
-              handleDirection(-1, 1, 315);
-            }}
-            title="Severozápad (SZ)"
-            aria-label="Severozápad"
-          >
-            <ArrowUpLeft size={18} weight="bold" />
-            <span class="key-label">SZ</span>
-          </button>
+    <div class="plotter-keypad">
+      <Chassis columns={3} keyHeight="52px">
+        {#each TOP_DIRECTIONS as dir (dir.code)}
+          {@render directionKey(dir)}
+        {/each}
 
-          <button
-            type="button"
-            class="keycap dpad-key"
-            onpointerdown={(e) => {
-              e.preventDefault();
-              handleDirection(0, 1, 0);
-            }}
-            title="Sever (S)"
-            aria-label="Sever"
-          >
-            <ArrowUp size={18} weight="bold" />
-            <span class="key-label">S</span>
-          </button>
+        <Keycap
+          sublabel="Značka {drawing.nextMarkerId}"
+          ariaLabel="Položit značku {drawing.nextMarkerId}"
+          haptic={25}
+          onPress={() => press({ kind: 'marker' })}
+        >
+          <MapPin size={22} weight="bold" />
+        </Keycap>
 
-          <button
-            type="button"
-            class="keycap dpad-key"
-            onpointerdown={(e) => {
-              e.preventDefault();
-              handleDirection(1, 1, 45);
-            }}
-            title="Severovýchod (SV)"
-            aria-label="Severovýchod"
-          >
-            <ArrowUpRight size={18} weight="bold" />
-            <span class="key-label">SV</span>
-          </button>
+        {#each BOTTOM_DIRECTIONS as dir (dir.code)}
+          {@render directionKey(dir)}
+        {/each}
+      </Chassis>
 
-          <!-- Row 2 -->
-          <button
-            type="button"
-            class="keycap dpad-key"
-            onpointerdown={(e) => {
-              e.preventDefault();
-              handleDirection(-1, 0, 270);
-            }}
-            title="Západ (Z)"
-            aria-label="Západ"
-          >
-            <ArrowLeft size={18} weight="bold" />
-            <span class="key-label">Z</span>
-          </button>
-
-          <!-- Center: Waypoint Marker -->
-          <button
-            type="button"
-            class="keycap dpad-key marker-keycap"
-            onpointerdown={(e) => {
-              e.preventDefault();
-              handleAddMarker();
-            }}
-            title="Položit značku {plotterState.nextMarkerId}"
-            aria-label="Položit značku {plotterState.nextMarkerId}"
-          >
-            <MapPin size={18} weight="fill" class="marker-pin-icon" />
-            <span class="key-label">Značka {plotterState.nextMarkerId}</span>
-          </button>
-
-          <button
-            type="button"
-            class="keycap dpad-key"
-            onpointerdown={(e) => {
-              e.preventDefault();
-              handleDirection(1, 0, 90);
-            }}
-            title="Východ (V)"
-            aria-label="Východ"
-          >
-            <ArrowRight size={18} weight="bold" />
-            <span class="key-label">V</span>
-          </button>
-
-          <!-- Row 3 -->
-          <button
-            type="button"
-            class="keycap dpad-key"
-            onpointerdown={(e) => {
-              e.preventDefault();
-              handleDirection(-1, -1, 225);
-            }}
-            title="Jihozápad (JZ)"
-            aria-label="Jihozápad"
-          >
-            <ArrowDownLeft size={18} weight="bold" />
-            <span class="key-label">JZ</span>
-          </button>
-
-          <button
-            type="button"
-            class="keycap dpad-key"
-            onpointerdown={(e) => {
-              e.preventDefault();
-              handleDirection(0, -1, 180);
-            }}
-            title="Jih (J)"
-            aria-label="Jih"
-          >
-            <ArrowDown size={18} weight="bold" />
-            <span class="key-label">J</span>
-          </button>
-
-          <button
-            type="button"
-            class="keycap dpad-key"
-            onpointerdown={(e) => {
-              e.preventDefault();
-              handleDirection(1, -1, 135);
-            }}
-            title="Jihovýchod (JV)"
-            aria-label="Jihovýchod"
-          >
-            <ArrowDownRight size={18} weight="bold" />
-            <span class="key-label">JV</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 2. Bottom Utility Row (42px fixed, 3 columns) -->
       <DrawingUtilityRow
-        state={plotterState}
+        penDown={drawing.penDown}
+        hasData={fields.length > 0}
+        {canUndo}
         onClear={handleClearAll}
-        onTogglePen={handleTogglePen}
+        onTogglePen={() => press({ kind: 'pen' })}
         onUndo={handleUndo}
       />
     </div>
@@ -263,82 +210,12 @@
 </ModuleShell>
 
 <style>
-  .zone-input-flow {
+  .plotter-keypad {
     display: flex;
     flex-direction: column;
-    gap: var(--zone-input-gap, 8px);
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .plotter-chassis {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 2px;
-    background-color: #000000;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    box-sizing: border-box;
+    gap: var(--zone-input-gap);
     width: 100%;
     user-select: none;
-    touch-action: none;
-  }
-
-  .dpad-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 38px);
-    gap: 2px;
-    width: 100%;
-  }
-
-  .keycap {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    background-color: var(--color-surface-2);
-    color: var(--color-text-primary);
-    border: none;
-    border-radius: 2px;
-    padding: 2px 4px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: background-color 70ms ease, box-shadow 70ms ease;
-  }
-
-  .keycap:active {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  }
-
-  .key-label {
-    font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    line-height: 1;
-    white-space: nowrap;
-  }
-
-  .menu-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-  .menu-group-title {
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    padding: var(--space-xs) 0;
-  }
-
-  :global(.marker-pin-icon) {
-    color: var(--color-accent-warning);
+    -webkit-user-select: none;
   }
 </style>

@@ -3,12 +3,13 @@
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import MorseReference from './MorseReference.svelte';
   import TelegraphWire, { type PulseEvent } from './TelegraphWire.svelte';
-  import HoldToAction from '../../components/ui/HoldToAction.svelte';
-  import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
-  import DominantButton from '../../components/ui/DominantButton.svelte';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
+  import KeypadBottomRow from '../../components/ui/KeypadBottomRow.svelte';
   import BottomSheet from '../../components/ui/BottomSheet.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
+  import MenuAction from '../../components/ui/MenuAction.svelte';
   import Badge from '../../components/ui/Badge.svelte';
   import InterlinearText, { type InterlinearToken } from '../../components/ui/InterlinearText.svelte';
   import {
@@ -16,6 +17,7 @@
     decodeMorseLetter,
     isMorsePrefix,
     getPermutations,
+    notationToRawMorse,
     splitRawMorse,
     toRawMorse,
     type BruteforceCandidate,
@@ -148,12 +150,10 @@
   }
 
   function handleBackspace() {
-    settings.vibrate(25);
     modState.input = modState.input.slice(0, -1);
   }
 
   function handleClear() {
-    settings.vibrate(30);
     modState.input = '';
     bruteforceResults = [];
     totalFoundCandidates = 0;
@@ -231,13 +231,40 @@
   }
 </script>
 
-<ModuleShell onReset={handleReset}>
+<ModuleShell
+  onReset={handleReset}
+  podklad={{
+    kind: 'text',
+    required: false,
+    empty: !modState.input,
+    title: 'Zápis',
+    description: 'Morseovka doslova: lomítko dělí znaky, dvě lomítka slova.',
+    example: '.-/-...//-.-.',
+    placeholder: 'Např. .-/-...//-.-.',
+    autocapitalize: 'none',
+    value: modState.input,
+    onSave: (val) => {
+      modState.input = notationToRawMorse(val);
+    }
+  }}
+  bar={{
+    empty: !modState.input,
+    hint: 'Tečka, čárka, lomítko dělí znaky.',
+    charCount: plainTextOutput.replace(/\s/g, '').length + (pendingInterlinearToken ? 1 : 0),
+    action: {
+      label: 'Bez mezer',
+      icon: Lightning,
+      title: 'Rozluštit kód bez mezer',
+      disabled: !isEligibleForBruteforce,
+      onClick: runBruteforce
+    }
+  }}
+>
   {#snippet output()}
     <TranslationCard
       text={plainTextOutput}
       pendingText={pendingInterlinearToken?.primary ?? ''}
       hasContent={!!modState.input}
-      emptyHint="Lomítko dělí písmena, dvě slova, tři STOP. Text bez mezer řeší tlačítko dole."
     >
       {#snippet children()}
         <InterlinearText
@@ -251,71 +278,20 @@
 
   {#snippet input()}
     <div class="keypad-zone" class:no-wire={!modState.show_wire}>
-      <!-- Sub-Toolbar: Permutations and Bruteforce solver -->
-      <div class="morse-subtoolbar">
-        <button
-          type="button"
-          class="morse-chip-btn"
-          class:active={isPermutationsOpen}
-          onclick={openPermutations}
-          disabled={!modState.input}
-          title="Zobrazit permutace a zrcadlení kódu"
-        >
-          <span class="floating-icon"><ArrowsLeftRight size={14} weight="bold" /></span>
-          <span>Permutace</span>
-        </button>
+      <Chassis columns={3} keyHeight="var(--dominant-key-height)">
+        <Keycap size="l" label="•" sublabel="Tečka" onPress={() => appendSymbol('.')} />
+        <Keycap size="l" label="—" sublabel="Čárka" onPress={() => appendSymbol('-')} />
+        <Keycap size="l" label="/" sublabel="Oddělovač" onPress={appendSlash} />
+      </Chassis>
 
-        <button
-          type="button"
-          class="morse-chip-btn"
-          class:active={isBruteforceOpen}
-          onclick={runBruteforce}
-          disabled={!modState.input || !isEligibleForBruteforce}
-          title="Rozluštit kód bez mezer"
-        >
-          <span class="floating-icon"><Lightning size={14} weight="duotone" /></span>
-          <span>Vyřešit bez mezer</span>
-        </button>
-      </div>
-
-      <!-- Big dominant keys: Tečka, Čárka, Oddělovač -->
-      <div class="keypad-dominant-3col">
-        <DominantButton
-          symbol="•"
-          name="Tečka"
-          variant="accent"
-          onClick={() => appendSymbol('.')}
-        />
-
-        <DominantButton
-          symbol="—"
-          name="Čárka"
-          variant="warning"
-          onClick={() => appendSymbol('-')}
-        />
-
-        <DominantButton
-          symbol="/"
-          name="Oddělovač"
-          variant="secondary"
-          onClick={appendSlash}
-        />
-      </div>
-
-      <!-- Utility Row: Slide to Clear and Backspace -->
-      <div class="keypad-utility-row">
-        <HoldToAction
-          disabled={!modState.input}
-          onAction={handleClear}
-          ariaLabel="Vymazat celý kód podržením"
-        />
-
-        <BackspaceButton
-          disabled={!modState.input}
-          title="Smazat poslední znak nebo oddělovač"
-          onAction={handleBackspace}
-        />
-      </div>
+      <KeypadBottomRow
+        clearDisabled={!modState.input}
+        backspaceDisabled={!modState.input}
+        clearLabel="Vymazat celý kód podržením"
+        backspaceTitle="Smazat poslední znak nebo oddělovač"
+        onClear={handleClear}
+        onBackspace={handleBackspace}
+      />
 
       <!-- Animated Telegraph Wire Decoration & Easter Egg -->
       {#if modState.show_wire}
@@ -325,6 +301,13 @@
   {/snippet}
 
   {#snippet menuOptions()}
+    <MenuAction
+      label="Permutace"
+      hint="Záměna symbolů, čtení pozpátku"
+      icon={ArrowsLeftRight}
+      disabled={!modState.input}
+      onClick={openPermutations}
+    />
     <OptionRow
       label="Telegrafní vedení"
       hint="Animace pod tlačítky"
@@ -436,57 +419,6 @@
     flex-direction: column;
     gap: var(--zone-input-gap);
     width: 100%;
-  }
-
-  .morse-subtoolbar {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-xs);
-    width: 100%;
-    height: var(--subtoolbar-height);
-    box-sizing: border-box;
-  }
-
-  .morse-chip-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    width: 100%;
-    height: 100%;
-    padding: 0 var(--space-sm);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-xs);
-    font-weight: 700;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .morse-chip-btn:active:not(:disabled),
-  .morse-chip-btn.active:not(:disabled) {
-    background-color: var(--color-surface-active);
-    color: var(--color-accent-primary);
-    border-color: var(--color-accent-primary);
-  }
-
-  .morse-chip-btn:disabled {
-    color: var(--color-text-muted);
-    background-color: var(--color-surface-1);
-    border-color: var(--color-border-subtle);
-    pointer-events: none;
-    cursor: default;
-  }
-
-  .floating-icon {
-    font-size: var(--text-sm);
-    display: flex;
-    align-items: center;
   }
 
   .empty-state, .loading-state {

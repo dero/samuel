@@ -1,38 +1,57 @@
 <script lang="ts">
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
+  import type { ModuleBarConfig } from '../../components/layout/ModuleBar.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
-  import HoldToAction from '../../components/ui/HoldToAction.svelte';
+  import InterlinearText, { type InterlinearToken } from '../../components/ui/InterlinearText.svelte';
+  import KeypadBottomRow from '../../components/ui/KeypadBottomRow.svelte';
   import SpaceCommitButton from '../../components/ui/SpaceCommitButton.svelte';
-  import BackspaceButton from '../../components/ui/BackspaceButton.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
+  import AlphabetSelect from '../../components/ui/AlphabetSelect.svelte';
+  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
+  import NonStandardAlphabetBanner from '../../components/ui/NonStandardAlphabetBanner.svelte';
   import InteractiveCross from './InteractiveCross.svelte';
   import CoordinateKeypad from './CoordinateKeypad.svelte';
   import CrossReference from './CrossReference.svelte';
   import {
     CROSS_TYPES,
+    LARGE_CROSS_AXES,
     type CrossType,
     type CrossTypeConfig
   } from './crossData';
-  import { coordinatesToChar } from './crossSolver';
+  import { fieldToChar } from './crossSolver';
   import { alphabet, type AlphabetLayout } from '../../state/alphabet.svelte';
-  import { settings } from '../../state/settings.svelte';
-  import { toast } from '../../state/toast.svelte';
+  import { createModuleState } from '../../state/moduleState.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
-  import { navigation } from '../../state/navigation.svelte';
-  import AlphabetSelect from '../../components/ui/AlphabetSelect.svelte';
-  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
-  import NonStandardAlphabetBanner from '../../components/ui/NonStandardAlphabetBanner.svelte';
+  import { launcher } from '../../state/launcher.svelte';
+  import { untrack } from 'svelte';
+  import { parseNotation, serializeNotation } from '../../utils/notation';
 
   const modSettings = localSettingsService.forModule('cross');
 
-  let inputLetters = $state<string>(modSettings.getString('text', ''));
-  let crossTypeId = $state<CrossType>(
-    (modSettings.getString('type', 'large-polish') as CrossType) || 'large-polish'
-  );
+  // Each cross has its own field list: the two notations cannot be read as each other
+  const { state: modState, reset: resetModState } = createModuleState('cross', {
+    type: 'large-polish' as CrossType,
+    fields_large: [] as string[],
+    fields_small: [] as string[]
+  });
 
   const crossSubmoduleOptions: SegmentOption<CrossType>[] = [
     { id: 'large-polish', label: 'Velký' },
     { id: 'small-polish', label: 'Pigpen' }
   ];
+
+  const TYPE_TEXTS: Record<CrossType, { hint: string; description: string; example: string }> = {
+    'large-polish': {
+      hint: 'Klepněte do kříže nebo na souřadnice.',
+      description: 'Řádek, sloupec a pozice, čárka dělí znaky.',
+      example: '111,132,231,212'
+    },
+    'small-polish': {
+      hint: 'Klepněte na písmeno v kříži.',
+      description: 'Tabulka 1–4 a pozice v ní, čárka dělí znaky.',
+      example: '11,18,26,21,22,43'
+    }
+  };
 
   // Per-tool alphabet configuration
   let toolAlphabetMap = $state<Record<string, string>>({
@@ -48,22 +67,17 @@
     modSettings.setString('alphabet:' + toolId, alphabetId);
   }
 
-  // Coordinate keypad state
-  let selectedAxis1 = $state<number | null>(null);
-  let selectedAxis2 = $state<number | null>(null);
-  let selectedAxis3 = $state<number | null>(null);
+  const NO_SELECTION: (number | null)[] = [null, null, null];
 
-  // Persistence
-  $effect(() => {
-    modSettings.update({
-      text: inputLetters,
-      type: crossTypeId
-    });
-  });
+  // Coordinate keypad state: row, column, position in any order
+  let selection = $state.raw<(number | null)[]>(NO_SELECTION);
 
   const activeConfig = $derived.by<CrossTypeConfig>(() => {
-    return CROSS_TYPES.find((c) => c.id === crossTypeId) ?? CROSS_TYPES[0];
+    return CROSS_TYPES.find((c) => c.id === modState.type) ?? CROSS_TYPES[0];
   });
+
+  const crossTypeId = $derived(activeConfig.id);
+  const typeTexts = $derived(TYPE_TEXTS[crossTypeId]);
 
   const currentAlphabetId = $derived<string>(
     toolAlphabetMap[crossTypeId] ?? activeConfig.defaultAlphabetId ?? 'english-26'
@@ -83,91 +97,126 @@
   const lettersForTool = (toolId: CrossType): string[] =>
     (alphabet.getLayout(toolAlphabetMap[toolId]) ?? alphabet.layouts[0]).letters;
 
-  const polishSelectedChar = $derived.by(() => {
-    if (selectedAxis1 !== null && selectedAxis2 !== null && selectedAxis3 !== null) {
-      return coordinatesToChar(
-        crossTypeId,
-        selectedAxis1,
-        selectedAxis2,
-        selectedAxis3,
-        activeLetters
-      );
-    }
-    return null;
+  const fieldsKey = $derived(crossTypeId === 'small-polish' ? 'fields_small' : 'fields_large');
+  const fields = $derived<string[]>(modState[fieldsKey]);
+  const decoded = $derived(
+    fields.map((field) => ({ field, char: fieldToChar(crossTypeId, field, activeLetters) }))
+  );
+
+  const hasSelection = $derived(selection.some((v) => v !== null));
+  const isEmpty = $derived(fields.length === 0 && !hasSelection);
+
+  const tokens = $derived<InterlinearToken[]>(
+    decoded.map(({ field, char }) => {
+      if (field === '') return { primary: '', isSpace: true };
+      if (char === null) {
+        return {
+          primary: '?',
+          secondary: field,
+          isError: true,
+          errorText: `Neplatné pole „${field}“`
+        };
+      }
+      if (char === ' ') return { primary: '␣', secondary: field, className: 'token-space' };
+      return { primary: char, secondary: field };
+    })
+  );
+
+  const pendingToken = $derived<InterlinearToken | null>(
+    hasSelection
+      ? { primary: '…', secondary: selection.map((v) => v ?? '·').join(''), isPending: true }
+      : null
+  );
+
+  const plainText = $derived(decoded.map(({ char }) => char ?? '?').join(''));
+
+  const bar = $derived<ModuleBarConfig>({
+    empty: isEmpty,
+    hint: typeTexts.hint,
+    charCount: decoded.filter(({ char }) => char !== ' ').length
   });
 
   let interactiveCrossComponent = $state<ReturnType<typeof InteractiveCross> | null>(null);
 
-  function handleDirectLetterSelect(char: string) {
-    inputLetters += char;
-    selectedAxis1 = null;
-    selectedAxis2 = null;
-    selectedAxis3 = null;
+  function setFields(next: string[]) {
+    modState[fieldsKey] = next;
   }
 
-  function handleCommitFromKeypad(char: string, a1: number, a2: number, a3: number | null) {
-    inputLetters += char;
-    interactiveCrossComponent?.flashCoordinate(a1, a2, a3 ?? 1);
+  function appendField(field: string) {
+    setFields([...fields, field]);
+    selection = NO_SELECTION;
   }
 
-  function handleSpace() {
-    inputLetters += ' ';
-    selectedAxis1 = null;
-    selectedAxis2 = null;
-    selectedAxis3 = null;
+  function handleAxisChange(next: (number | null)[]) {
+    const [row, col, pos] = next;
+    if (row !== null && col !== null && pos !== null) {
+      appendField(next.join(''));
+      interactiveCrossComponent?.flashCoordinate(row, col, pos);
+    } else {
+      selection = next;
+    }
   }
 
   function handleBackspace() {
-    if (selectedAxis1 !== null || selectedAxis2 !== null || selectedAxis3 !== null) {
-      selectedAxis1 = null;
-      selectedAxis2 = null;
-      selectedAxis3 = null;
-    } else if (inputLetters.length > 0) {
-      inputLetters = inputLetters.slice(0, -1);
+    if (hasSelection) {
+      selection = NO_SELECTION;
+    } else {
+      setFields(fields.slice(0, -1));
     }
   }
 
   function handleClearAll() {
-    settings.vibrate(35);
-    inputLetters = '';
-    selectedAxis1 = null;
-    selectedAxis2 = null;
-    selectedAxis3 = null;
+    setFields([]);
+    selection = NO_SELECTION;
   }
 
   function handleReset() {
-    handleClearAll();
+    const type = modState.type;
+    resetModState();
+    modState.type = type; // the chosen cross is not a setting to lose
+    selection = NO_SELECTION;
+    setToolAlphabet('large-polish', 'english-ch-27');
+    setToolAlphabet('small-polish', 'english-26');
   }
 
   function handleTypeChange(newType: CrossType) {
-    crossTypeId = newType;
-    selectedAxis1 = null;
-    selectedAxis2 = null;
-    selectedAxis3 = null;
+    modState.type = newType;
+    selection = NO_SELECTION;
   }
 
-  const emptyHint = $derived.by(() => {
-    switch (crossTypeId) {
-      case 'large-polish':
-        return 'Klepněte do kříže nebo zvolte souřadnice.';
-      case 'small-polish':
-        return 'Klepněte do kříže, tečku zvolte dole.';
-      default:
-        return 'Klepněte na znak.';
-    }
+  // A launcher shortcut (Polák) opens its cross; each cross keeps its own text, so nothing is lost
+  $effect(() => {
+    const preset = launcher.takePreset('cross');
+    if (!preset || !('crossType' in preset)) return;
+    untrack(() => {
+      if (modState.type !== preset.crossType) handleTypeChange(preset.crossType);
+    });
   });
 </script>
 
 <ModuleShell
-  title={activeConfig.name}
   hasWarning={isNonStandardAlphabet}
   onReset={handleReset}
+  podklad={{
+    kind: 'text',
+    required: false,
+    empty: fields.length === 0,
+    title: 'Zápis',
+    description: typeTexts.description,
+    example: typeTexts.example,
+    placeholder: `Např. ${typeTexts.example}`,
+    autocapitalize: 'none',
+    value: serializeNotation(fields),
+    onSave: (val) => {
+      selection = NO_SELECTION;
+      setFields(parseNotation(val));
+    }
+  }}
+  {bar}
 >
   {#snippet menuOptions()}
     {#if activeConfig.hasAlphabet}
-      <div class="menu-group">
-        <div class="menu-group-title">Abeceda</div>
-
+      <MenuGroup title="Abeceda">
         <NonStandardAlphabetBanner
           isWarning={isNonStandardAlphabet}
           description="Obvykle {activeConfig.defaultAlphabetId === 'english-ch-27'
@@ -179,7 +228,7 @@
           value={currentAlphabetId}
           onChange={(newId) => setToolAlphabet(crossTypeId, newId)}
         />
-      </div>
+      </MenuGroup>
     {/if}
   {/snippet}
 
@@ -192,123 +241,61 @@
   {/snippet}
 
   {#snippet output()}
-    <TranslationCard
-      text={inputLetters}
-      pendingText={polishSelectedChar ?? ''}
-      {emptyHint}
+    <TranslationCard text={plainText} hasContent={!isEmpty}>
+      {#snippet children()}
+        <InterlinearText {tokens} {pendingToken} scalePrimaryBy="primary" />
+      {/snippet}
+    </TranslationCard>
+  {/snippet}
+
+  {#snippet variants()}
+    <SegmentedControl
+      options={crossSubmoduleOptions}
+      value={crossTypeId}
+      size="sm"
+      ariaLabel="Varianta kříže"
+      onChange={handleTypeChange}
     />
   {/snippet}
 
   {#snippet input()}
-    <div class="zone-input-flow">
-      <!-- 1. Sub-Toolbar: Přepínač Velký vs Malý kříž (36px fixně) -->
-      <div class="subtoolbar-container">
-        <SegmentedControl
-          options={crossSubmoduleOptions}
-          value={crossTypeId}
-          size="sm"
-          ariaLabel="Varianta kříže"
-          onChange={handleTypeChange}
-        />
-      </div>
+    <div class="cross-zone">
+      <InteractiveCross
+        bind:this={interactiveCrossComponent}
+        crossType={crossTypeId}
+        letters={activeLetters}
+        selectedAxis1={selection[0]}
+        selectedAxis2={selection[1]}
+        selectedAxis3={selection[2]}
+        onFieldSelect={appendField}
+      />
 
-      <!-- 2. Vstupní zóna: Interaktivní kříž nebo souřadnicová klávesnice -->
-      <div class="cross-stage">
-        <InteractiveCross
-          bind:this={interactiveCrossComponent}
-          crossType={crossTypeId}
-          letters={activeLetters}
-          {selectedAxis1}
-          {selectedAxis2}
-          {selectedAxis3}
-          onLetterSelect={handleDirectLetterSelect}
-        />
+      {#if crossTypeId === 'large-polish'}
+        <CoordinateKeypad axes={LARGE_CROSS_AXES} selected={selection} onChange={handleAxisChange} />
+      {/if}
 
-        <div class="keypad-tray" class:is-hidden={crossTypeId !== 'large-polish'}>
-          <CoordinateKeypad
-            config={activeConfig}
-            letters={activeLetters}
-            {selectedAxis1}
-            {selectedAxis2}
-            {selectedAxis3}
-            onAxis1Change={(v) => (selectedAxis1 = v)}
-            onAxis2Change={(v) => (selectedAxis2 = v)}
-            onAxis3Change={(v) => (selectedAxis3 = v)}
-            onCommitLetter={handleCommitFromKeypad}
-          />
-        </div>
-      </div>
-
-      <!-- 3. Utilitní trojblok: Clear | Space/Commit | Backspace -->
-      <div class="keypad-utility-row-3col">
-        <HoldToAction
-          disabled={!inputLetters && !polishSelectedChar}
-          onAction={handleClearAll}
-          ariaLabel="Vymazat text podržením"
-        />
-
-        <SpaceCommitButton
-          pendingChar={polishSelectedChar}
-          disabled={false}
-          onSpace={handleSpace}
-          onCommit={() => {
-            if (polishSelectedChar) {
-              inputLetters += polishSelectedChar;
-              selectedAxis1 = null;
-              selectedAxis2 = null;
-              selectedAxis3 = null;
-            }
-          }}
-        />
-
-        <BackspaceButton
-          disabled={!inputLetters && !polishSelectedChar}
-          hasActiveSelection={!!polishSelectedChar}
-          onAction={handleBackspace}
-        />
-      </div>
+      <KeypadBottomRow
+        clearDisabled={isEmpty}
+        backspaceDisabled={isEmpty}
+        clearLabel="Vymazat text podržením"
+        hasActiveSelection={hasSelection}
+        cancelTitle="Zrušit výběr souřadnic"
+        onClear={handleClearAll}
+        onBackspace={handleBackspace}
+      >
+        {#snippet middle()}
+          <SpaceCommitButton onSpace={() => appendField('')} />
+        {/snippet}
+      </KeypadBottomRow>
     </div>
   {/snippet}
 </ModuleShell>
 
 <style>
-  .cross-stage {
+  .cross-zone {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 288px;
     gap: var(--zone-input-gap);
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  .keypad-tray {
     width: 100%;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
   }
-
-  .keypad-tray.is-hidden {
-    display: none !important;
-  }
-
-  .menu-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-  }
-
-  .menu-group-title {
-    font-size: var(--text-xs);
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-    letter-spacing: 0.5px;
-  }
-
 </style>

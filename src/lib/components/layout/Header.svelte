@@ -4,20 +4,50 @@
   import { versionService } from '../../services/versionService.svelte';
   import { podklad } from '../../state/podklad.svelte';
   import ModuleIcon from '../ui/ModuleIcon.svelte';
-  import { MODULE_GROUPS } from '../../types';
-  import { List, FileText, CaretDown, FlagBanner } from 'phosphor-svelte';
+  import type { SubView } from '../../types';
+  import { HandTap, FileText, SlidersHorizontal, CaretDown, FlagBanner } from 'phosphor-svelte';
 
   let active = $derived(navigation.activeModule);
   // Icon carries the launcher group color, so the module is recognizable across both
-  let groupColor = $derived(MODULE_GROUPS.find((g) => g.id === active?.group)?.color);
 
-  let podkladAttention = $derived(podklad.config?.attention ?? null);
-  let podkladLabel = $derived(
-    podklad.config
-      ? `Podklad: ${podklad.config.title}${podkladAttention ? ` (${podkladAttention})` : ''}`
-      : ''
-  );
+  interface Tab {
+    view: SubView;
+    label: string;
+    icon: any;
+    disabled?: boolean;
+    attention?: boolean;
+  }
+
+  const tabs = $derived.by<Tab[]>(() => {
+    if (active?.isSystem) return [];
+    const list: Tab[] = [
+      { view: 'none', label: 'Interakce', icon: HandTap, disabled: podklad.phaseActive }
+    ];
+    if (podklad.config) {
+      list.push({
+        view: 'podklad',
+        label: `Podklad: ${podklad.config.title}`,
+        icon: FileText,
+        attention: !!podklad.config.attention
+      });
+    }
+    if (navigation.hasMenu) {
+      list.push({
+        view: 'menu',
+        label: 'Menu',
+        icon: SlidersHorizontal,
+        attention: navigation.hasMenuWarning
+      });
+    }
+    return list.length > 1 ? list : [];
+  });
+
+  function selectTab(tab: Tab) {
+    settings.vibrate(20);
+    if (navigation.subView !== tab.view) navigation.openView(tab.view);
+  }
 </script>
+
 <header class="header">
   <div class="title-zone">
     <button
@@ -30,7 +60,7 @@
         navigation.toggleLauncher();
       }}
     >
-      <span class="module-icon" style:--group-color={groupColor}>
+      <span class="module-icon">
         {#if active}
           <ModuleIcon id={active.id} weight="duotone" />
         {:else}
@@ -42,54 +72,32 @@
     </button>
   </div>
 
-  <div class="header-actions">
-    {#if !active?.isSystem}
-      {#if podklad.config}
+  {#if tabs.length > 0}
+    <div class="tabs" role="tablist" aria-label="Pohled nástroje">
+      {#each tabs as tab (tab.view)}
+        {@const Icon = tab.icon}
+        {@const isActive = navigation.subView === tab.view}
         <button
           type="button"
-          class="header-btn"
-          class:is-active={podklad.active}
-          aria-label={podkladLabel}
-          aria-pressed={podklad.active}
-          title={podkladLabel}
-          onclick={() => {
-            settings.vibrate(20);
-            navigation.closeSubView();
-            podklad.toggle();
-          }}
+          class="tab"
+          class:is-active={isActive}
+          role="tab"
+          aria-selected={isActive}
+          aria-label={tab.label}
+          title={tab.label}
+          disabled={tab.disabled}
+          onclick={() => selectTab(tab)}
         >
-          <span class="icon-wrapper" data-podklad-icon>
-            <span class="icon"><FileText size={20} weight="duotone" /></span>
-            {#if podkladAttention}
+          <span class="tab-icon">
+            <Icon size={21} weight={isActive ? 'fill' : 'regular'} />
+            {#if tab.attention}
               <span class="warning-dot" aria-hidden="true"></span>
             {/if}
           </span>
         </button>
-      {/if}
-
-      {#if navigation.hasMenuButton}
-        <button
-          type="button"
-          class="header-btn"
-          class:has-warning={navigation.hasMenuWarning}
-          aria-label={navigation.hasMenuWarning ? `Nastavení modulu (${active?.name ?? ''} - upozornění)` : `Nastavení modulu (${active?.name ?? ''})`}
-          title={navigation.hasMenuWarning ? `Nastavení: ${active?.name ?? ''} (upozornění: nestandardní nastavení)` : `Nastavení: ${active?.name ?? ''}`}
-          onclick={() => {
-            settings.vibrate(20);
-            podklad.close();
-            navigation.toggleMenu();
-          }}
-        >
-          <span class="icon-wrapper">
-            <span class="icon"><List size={22} weight="bold" /></span>
-            {#if navigation.hasMenuWarning}
-              <span class="warning-dot" aria-hidden="true"></span>
-            {/if}
-          </span>
-        </button>
-      {/if}
-    {/if}
-  </div>
+      {/each}
+    </div>
+  {/if}
 
   {#if versionService.state.status === 'downloading_db'}
     <div class="db-sync-bar" title="Stahování slovníkové databáze ({versionService.state.progress}%)">
@@ -103,10 +111,10 @@
     height: var(--header-height);
     min-height: var(--header-height);
     background-color: var(--color-surface-1);
-    border-bottom: 1px solid var(--color-border-subtle);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-xs);
     padding: 0 var(--space-sm);
     z-index: 100;
     position: relative;
@@ -125,31 +133,32 @@
   .launcher-btn {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 6px;
     height: var(--tap-min-size);
-    padding: 0 var(--space-sm);
+    padding: 0 var(--space-xs);
     border-radius: var(--radius-sm);
     max-width: 100%;
     transition: background-color 0.12s ease;
   }
+
   .launcher-btn:active {
     background-color: var(--color-surface-active);
   }
 
   .module-icon {
-    font-size: calc(22px * var(--font-scale));
+    font-size: calc(20px * var(--font-scale));
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--group-color, var(--color-accent-primary));
+    color: var(--color-text-secondary);
     flex-shrink: 0;
   }
 
   .title-text {
     font-family: var(--font-condensed);
-    font-size: var(--text-xl);
+    /* Capped by width: "Substituce" must fit beside three tabs on 320 px */
+    font-size: min(var(--text-xl), 5.6vw);
     font-weight: 700;
-    letter-spacing: 0.3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -157,65 +166,68 @@
   }
 
   .chevron {
-    font-size: calc(14px * var(--font-scale));
-    color: var(--color-text-secondary);
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    color: var(--color-text-secondary);
   }
 
-  .header-actions {
+  .tabs {
+    flex: none;
     display: flex;
-    align-items: center;
     gap: 2px;
+    padding: 2px;
+    background-color: var(--color-bg-canvas);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-sm);
   }
 
-  .header-btn {
-    width: var(--tap-min-size);
-    height: var(--tap-min-size);
+  .tab {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-sm);
-    transition: background-color 0.12s ease;
+    width: 40px;
+    height: 38px;
+    border-radius: 3px;
+    background-color: var(--color-surface-3);
     color: var(--color-text-primary);
+    transition: background-color 0.12s ease;
   }
-  .header-btn:active {
+
+  .tab:active:not(:disabled) {
     background-color: var(--color-surface-active);
   }
 
-  /* Podklad phase or sheet showing: accent plus a ring, never color alone */
-  .header-btn.is-active {
+  /* Accent plus an underline and a filled icon: never color alone */
+  .tab.is-active {
+    background-color: var(--color-accent-primary-subtle);
+    box-shadow: inset 0 -2px 0 var(--color-accent-primary);
     color: var(--color-accent-primary);
-    background-color: rgba(0, 210, 255, 0.1);
-    box-shadow: inset 0 0 0 1px rgba(0, 210, 255, 0.45);
   }
 
-  .icon-wrapper {
+  .tab:disabled {
+    cursor: default;
+  }
+
+  .tab:disabled .tab-icon {
+    opacity: 0.48;
+  }
+
+  .tab-icon {
     position: relative;
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .warning-dot {
     position: absolute;
     top: -2px;
-    right: -2px;
+    right: -3px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background-color: var(--color-accent-warning);
-    box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
-    border: 1.5px solid var(--color-surface-1);
+    border: 1.5px solid var(--color-surface-3);
     pointer-events: none;
-  }
-
-  .icon {
-    font-size: calc(20px * var(--font-scale));
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .db-sync-bar {

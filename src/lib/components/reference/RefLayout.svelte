@@ -1,4 +1,5 @@
 <script lang="ts" generics="T extends string = string">
+  import ScrollArea from '../ui/ScrollArea.svelte';
   import SegmentedControl from '../ui/SegmentedControl.svelte';
   import RefHelp from './RefHelp.svelte';
   import type { RefHelpData, RefTab, RefTool } from './refTypes';
@@ -29,9 +30,11 @@
   let activeTab = $state<TabId>(initialTab());
 
   let options = $derived([...tabs, { id: HELP_TAB as TabId, label: 'Návod' }]);
-  let bodyEl = $state<HTMLDivElement>();
+  let bodyEl = $state<HTMLDivElement | null>(null);
 
-  let hasCommonHelp = $derived(!!(help.controls?.length || help.pitfalls?.length));
+  let hasCommonHelp = $derived(
+    !!(help.purpose?.length || help.howTo?.length || help.example || help.controls?.length || help.pitfalls?.length)
+  );
 
   function selectTab(id: TabId) {
     activeTab = id;
@@ -52,7 +55,8 @@
     </div>
   {/if}
 
-  <div class="ref-body" bind:this={bodyEl} data-allow-copy>
+  <ScrollArea outset="var(--space-lg)" bind:viewport={bodyEl}>
+  <div class="ref-body" data-allow-copy>
     {#if activeTab === HELP_TAB}
       {#if tools.length > 0}
         {#if hasCommonHelp}
@@ -79,6 +83,7 @@
       {@render content?.(activeTab as T)}
     {/if}
   </div>
+  </ScrollArea>
 </div>
 
 <style>
@@ -96,14 +101,9 @@
   }
 
   .ref-body {
-    flex: 1;
-    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-xl);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+    gap: var(--space-2xl);
     padding-bottom: var(--space-lg);
     color: var(--color-text-primary);
     -webkit-touch-callout: default;
@@ -173,9 +173,16 @@
 
   .ref-body :global(.ref-table th),
   .ref-body :global(.ref-table td) {
-    padding: 6px var(--space-sm);
+    padding: 10px var(--space-md);
     border-bottom: 1px solid var(--color-border-subtle);
+    border-right: 1px solid var(--color-border-subtle);
+    line-height: 1.45;
     vertical-align: middle;
+  }
+
+  .ref-body :global(.ref-table th:last-child),
+  .ref-body :global(.ref-table td:last-child) {
+    border-right: none;
   }
 
   .ref-body :global(.ref-table th) {
@@ -196,14 +203,14 @@
 
   .ref-body :global(.ref-table tr:has(+ tr.desc-row) td:not([rowspan])) {
     border-bottom: none;
-    padding-bottom: 2px;
+    padding-bottom: var(--space-xs);
   }
 
   .ref-body :global(.ref-table tr.desc-row td) {
     padding-top: 0;
-    padding-bottom: var(--space-sm);
-    font-size: var(--text-xs);
-    line-height: 1.4;
+    padding-bottom: var(--space-md);
+    font-size: var(--text-sm);
+    line-height: 1.45;
     color: var(--color-text-secondary);
     border-bottom: 1px solid var(--color-border-medium);
   }

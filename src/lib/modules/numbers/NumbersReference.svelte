@@ -51,22 +51,80 @@
   ] as const;
 
   const help: RefHelpData = {
+    purpose: [
+      'Převádí čísla mezi soustavami a na písmena: pořadí v abecedě (A = 1), kódy ASCII, binárku i římská čísla. Pod každým výsledkem ukáže, z čeho vznikl.'
+    ],
+    howTo: [
+      'Šifra nejčastěji zapisuje pořadí písmene v abecedě v nějaké soustavě. V řádku variant zvolte, z čeho převádíte (Z:) a na co (DO:). Při převodu čísla na znak se celý blok, třeba 5 bitů, vloží sám.'
+    ],
+    example: {
+      title: 'Příklad: AHOJ v binárce',
+      steps: [
+        {
+          action: 'Klepněte na Z: a zvolte Binární (BIN). DO: nechte na ZNAK.',
+          result: 'Klávesnice má jen `0` a `1`. Stejně nástroj otevře dlaždice Binárka v launcheru.'
+        },
+        {
+          action: 'Klepněte na `0`, `0`, `0`, `0` a `1`.',
+          result: 'Lišta počítá Blok 1/5 až 4/5 a po pátém bitu se samo vloží A.'
+        },
+        {
+          action: 'Stejně zadejte `01000`, `01111` a `01010`.',
+          result: 'Přibude H, O a J, pod každým písmenem zůstane jeho blok.'
+        },
+        {
+          action: 'Klepněte na šipky mezi Z: a DO:.',
+          result: 'Převod se obrátí: nahoře jsou bloky, pod nimi písmena a klávesnice nabídne abecedu.'
+        }
+      ]
+    },
     controls: [
-      ['`Z:` a `DO:`', 'lišta nad klávesnicí: vstup a výstup. Klepnutí zvolí znak, římská čísla nebo soustavu.'],
-      ['Šipky mezi nimi', 'prohodí vstup a výstup'],
-      ['Prostřední tlačítko', 'potvrdí číslo, bez čísla vloží mezeru'],
-      ['Číslo ➔ znak', 'v menu: znak se vloží sám po celém bloku, např. 5 bitů'],
-      ['Indexovat od nuly', 'v menu: A = 0'],
-      ['Režim ASCII', 'v menu: 65 = A'],
-      ['Abeceda', 'v menu, obvykle anglická (26)'],
-      ['Binárka, Trojkovka', 'odkazy v launcheru: otevřou Čísla s převodem 2 / 3 ➔ znak']
+      [
+        'Z: a DO: (v řádku variant)',
+        'Z čeho a na co převádíte: Písmeno, Římská kanonická, Římská volná (jen vstup) nebo soustava 2 až 16. Dokud je něco zadané, jiný druh vstupu nejde zvolit.'
+      ],
+      ['Šipky mezi Z: a DO:', 'Prohodí vstup a výstup i se zadanými čísly.'],
+      [
+        'Mezera (dole uprostřed)',
+        'Potvrdí rozepsané číslo, na tlačítku je vidět jeho výsledek. Bez čísla vloží mezeru.'
+      ],
+      [
+        'Zpět (vpravo dole)',
+        'Smaže poslední číslici. Hotové číslo znovu otevře bez poslední číslice, takže překlep nestojí celý blok.'
+      ],
+      ['Koš (vlevo dole)', 'Podržením smaže celý vstup.'],
+      [
+        'Záložka Podklad',
+        'Celý vstup jako text: čísla ve zvolené soustavě oddělená čárkou, prázdné pole je mezera (`00001,01000`).'
+      ],
+      [
+        'Menu → Číslo ➔ znak',
+        'Vloží znak sám, jakmile je blok celý: pro 26 písmen 5 bitů nebo 2 desítkové číslice. Vypnuté čeká na potvrzení.'
+      ],
+      ['Menu → Indexovat od nuly', 'A = 0 místo A = 1.'],
+      ['Menu → Režim ASCII', 'Čísla jsou kódy ASCII: `65` = A, `97` = a.']
     ],
     pitfalls: [
-      ['A = 0, nebo A = 1?', 'nedává-li text smysl → menu Indexovat od nuly (platí i pro Binárku a Trojkovku)'],
-      ['Čísla nad 26', 'nejspíš ASCII: `65` = A, `97` = a → menu Režim ASCII'],
-      ['Abeceda s CH', 'od I dál je vše o 1 vyšší'],
-      ['Bity', 'písmeno = 5 bitů (`00001` = A), ASCII = 7–8 bitů'],
-      ['`IIII`, `IC`, `IIX`', 'nekanonický zápis → vstup Římská volná']
+      [
+        'Jednomístné číslo se samo nevloží?',
+        'V desítkové soustavě má blok dvě číslice. Napište `08`, nebo číslo potvrďte tlačítkem dole uprostřed.'
+      ],
+      [
+        'Všechna písmena vycházejí o jedno vedle?',
+        'Šifra počítá A = 0. Zapněte Menu → Indexovat od nuly, platí i pro Binárku a Trojkovku.'
+      ],
+      [
+        'Čísla jsou větší než 26 nebo bloky mají 8 bitů?',
+        'Nejspíš jde o ASCII. Zapněte Menu → Režim ASCII; desítkový blok má pak 3 číslice, kratší kód potvrďte tlačítkem dole uprostřed.'
+      ],
+      [
+        'Písmena od I dál vycházejí o jedno vedle?',
+        'Šifra počítá CH jako písmeno. Zvolte Menu → Abeceda → Anglická + CH (27).'
+      ],
+      [
+        'Římské číslo jako `IIII` nebo `IC` nejde zadat?',
+        'Kanonický vstup takové tvary nepustí. Zvolte v Z: Římská volná.'
+      ]
     ]
   };
 </script>

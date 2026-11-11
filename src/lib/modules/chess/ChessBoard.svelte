@@ -129,7 +129,7 @@
       <svg class="arrows" viewBox="0 0 8 8" aria-hidden="true">
         <defs>
           <marker id="chess-arrow-head" viewBox="0 0 4 4" refX="2" refY="2" markerWidth="2.6" markerHeight="2.6" orient="auto">
-            <path d="M0,0 L4,2 L0,4 z" fill="var(--chess-arrow)" />
+            <path d="M0,0 L4,2 L0,4 z" fill="var(--color-accent-success)" />
           </marker>
         </defs>
         {#each arrows as a (a.key)}
@@ -140,7 +140,7 @@
             y1={a.y1}
             x2={a.x1 + (a.x2 - a.x1) * k}
             y2={a.y1 + (a.y2 - a.y1) * k}
-            stroke="var(--chess-arrow)"
+            stroke="var(--color-accent-success)"
             stroke-width="0.16"
             stroke-linecap="round"
             marker-end="url(#chess-arrow-head)"
@@ -209,10 +209,10 @@
     justify-content: center;
     overflow: hidden;
 
+    /* Board content colours: squares and the last-move highlight */
     --chess-light: #cfd5dc;
     --chess-dark: #8595a6;
     --chess-last: rgba(255, 214, 10, 0.42);
-    --chess-arrow: rgba(16, 185, 129, 0.85);
   }
 
   .board {
@@ -260,11 +260,16 @@
   }
 
   .square.check::before {
-    background: radial-gradient(circle, rgba(239, 68, 68, 0.95) 0%, rgba(239, 68, 68, 0.5) 45%, transparent 75%);
+    background: radial-gradient(
+      circle,
+      var(--color-accent-danger) 0%,
+      color-mix(in srgb, var(--color-accent-danger) 50%, transparent) 45%,
+      transparent 75%
+    );
   }
 
   .square.flash::before {
-    background-color: rgba(239, 68, 68, 0.55);
+    background-color: color-mix(in srgb, var(--color-accent-danger) 55%, transparent);
     animation: flash-out 0.38s ease-out forwards;
   }
 
@@ -279,7 +284,7 @@
   }
 
   .square.drop-target {
-    box-shadow: inset 0 0 0 3px #ffffff;
+    box-shadow: inset 0 0 0 3px var(--color-text-primary);
   }
 
   .piece {
@@ -304,7 +309,8 @@
   .coord {
     position: absolute;
     font-family: var(--font-sans);
-    font-size: calc(9px * var(--font-scale));
+    /* Part of the square geometry: capped by the square size */
+    font-size: min(var(--text-xs), calc(var(--sq) * 0.32));
     font-weight: 700;
     line-height: 1;
     pointer-events: none;
@@ -358,6 +364,7 @@
     inset: 0;
     width: 100%;
     height: 100%;
+    opacity: 0.85;
     pointer-events: none;
   }
 

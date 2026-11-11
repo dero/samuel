@@ -1,13 +1,7 @@
 import type { CrossType } from './crossData';
 
-export interface CrossCellItem {
-  char: string;
-  index: number;
-  axis1: number;
-  axis2: number;
-  axis3?: number;
-  label: string;
-}
+/** Letters in each small-cross table: two 3×3 grids and two X crosses. */
+const SMALL_TABLE_SIZES = [9, 9, 4, 4];
 
 /**
  * Calculates the letter index (0-based) in the alphabet array from coordinates.
@@ -26,67 +20,41 @@ export function coordinatesToIndex(
   }
 
   if (type === 'small-polish') {
-    // a1: Table (1..3), a2: Row (1..3), a3: Col (1..3)
-    if (a1 < 1 || a1 > 3 || a2 < 1 || a2 > 3 || a3 < 1 || a3 > 3) return null;
-    const tableOffset = (a1 - 1) * 9;
-    const cellIdx = (a2 - 1) * 3 + (a3 - 1);
-    return tableOffset + cellIdx;
+    // a1: Table (1..4), a2: Position inside the table
+    const size = SMALL_TABLE_SIZES[a1 - 1];
+    if (!size || a2 < 1 || a2 > size) return null;
+    return SMALL_TABLE_SIZES.slice(0, a1 - 1).reduce((sum, n) => sum + n, 0) + a2 - 1;
   }
 
   return null;
 }
 
-/**
- * Maps coordinates to a character given active letters list.
- */
-export function coordinatesToChar(
-  type: CrossType,
-  a1: number,
-  a2: number,
-  a3: number | null,
-  letters: string[]
-): string | null {
-  const validA3 = a3 ?? 1;
-  const idx = coordinatesToIndex(type, a1, a2, validA3);
-  if (idx === null) return null;
-
-  // Ad-hoc cipher rule: in 26-letter alphabet, 27th position in large polish cross is Space (' ')
-  if (type === 'large-polish' && letters.length === 26 && idx === 26) {
-    return ' ';
+/** Notation field of a small-cross letter: table digit + position inside the table. */
+export function smallIndexToField(index: number): string {
+  let position = index;
+  for (let table = 0; table < SMALL_TABLE_SIZES.length; table++) {
+    if (position < SMALL_TABLE_SIZES[table]) return `${table + 1}${position + 1}`;
+    position -= SMALL_TABLE_SIZES[table];
   }
-
-  if (idx < 0 || idx >= letters.length) return null;
-  return letters[idx] ?? null;
+  return '';
 }
 
 /**
- * Returns formatted coordinate preview label.
+ * Character of one notation field for the active letters: `''` is a space, `null` an invalid
+ * field. Large cross: row, column, position (`132`). Small cross: table, position (`26`).
  */
-export function formatCoordinatesPreview(
-  type: CrossType,
-  a1: number | null,
-  a2: number | null,
-  a3: number | null,
-  letters: string[]
-): { text: string; char: string | null } {
-  const parts: string[] = [];
+export function fieldToChar(type: CrossType, field: string, letters: string[]): string | null {
+  if (field === '') return ' ';
 
-  if (type === 'large-polish') {
-    if (a1 !== null) parts.push(`Ř: ${a1}`);
-    if (a2 !== null) parts.push(`S: ${a2}`);
-    if (a3 !== null) parts.push(`P: ${a3}`);
-  } else if (type === 'small-polish') {
-    if (a1 !== null) parts.push(`Tab: ${a1 === 1 ? 'I' : a1 === 2 ? 'II' : 'III'}`);
-    if (a2 !== null) parts.push(`Ř: ${a2}`);
-    if (a3 !== null) parts.push(`S: ${a3}`);
-  }
+  const pattern = type === 'large-polish' ? /^[1-3]{3}$/ : /^[1-4][1-9]$/;
+  if (!pattern.test(field)) return null;
 
-  const rawChar = a1 !== null && a2 !== null && a3 !== null
-    ? coordinatesToChar(type, a1, a2, a3, letters)
-    : null;
+  const [a1, a2, a3] = [...field].map(Number);
+  const idx = coordinatesToIndex(type, a1, a2, a3);
+  if (idx === null) return null;
 
-  return {
-    text: parts.join(' • '),
-    char: rawChar
-  };
+  // Ad-hoc cipher rule: in 26-letter alphabet, 27th position in large polish cross is Space (' ')
+  if (type === 'large-polish' && letters.length === 26 && idx === 26) return ' ';
+
+  return letters[idx] ?? null;
 }

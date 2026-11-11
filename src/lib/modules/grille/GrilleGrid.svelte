@@ -1,13 +1,10 @@
 <script lang="ts">
-  import {
-    getRequiredHolesCount,
-    isCenterCell,
-    getRotatedHolesForStep
-  } from './grilleSolver';
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import { isCenterCell, getRotatedHolesForStep } from './grilleSolver';
   import { ROTATION_COLORS } from './grilleData';
   import { settings } from '../../state/settings.svelte';
-  import { Trash } from 'phosphor-svelte';
 
+  /** The grille itself: the main input surface of the module, a tap toggles a hole. */
   interface Props {
     gridSize: number;
     gridMatrix: string[][];
@@ -15,7 +12,6 @@
     rotationCCW?: boolean;
     tapOrderReading?: boolean;
     onToggleHole: (r: number, c: number) => void;
-    onResetHoles: () => void;
   }
 
   let {
@@ -24,12 +20,8 @@
     holes,
     rotationCCW = false,
     tapOrderReading = false,
-    onToggleHole,
-    onResetHoles
+    onToggleHole
   }: Props = $props();
-
-  const requiredHoles = $derived(getRequiredHolesCount(gridSize));
-  const isComplete = $derived(holes.length === requiredHoles && requiredHoles > 0);
 
   interface CellOrbitState {
     step: number; // 0 = hole, 1 = 90°, 2 = 180°, 3 = 270°
@@ -63,11 +55,10 @@
     c: number;
     key: string;
     token: string;
-    isPadding: boolean;
     isCenter: boolean;
     isHole: boolean;
     isLocked: boolean;
-    stepColor: string | null;
+    stepColor: string | undefined;
     tapOrderIndex: number | null;
     ariaLabel: string;
   }
@@ -83,8 +74,6 @@
         const isLocked = orbitInfo ? !orbitInfo.isHole : false;
         const isCenter = isCenterCell(r, c, gridSize);
         const token = gridMatrix[r]?.[c] ?? '';
-        const isPadding = !token;
-        const stepColor = orbitInfo?.color ?? null;
 
         let tapOrderIndex: number | null = null;
         if (isHole) {
@@ -107,11 +96,10 @@
           c,
           key,
           token,
-          isPadding,
           isCenter,
           isHole,
           isLocked,
-          stepColor,
+          stepColor: orbitInfo?.color,
           tapOrderIndex,
           ariaLabel
         });
@@ -134,12 +122,8 @@
   }
 </script>
 
-<div class="grille-grid-stage">
-  <div
-    class="grille-chassis"
-    style:grid-template-columns="repeat({gridSize}, 1fr)"
-    style:grid-template-rows="repeat({gridSize}, 1fr)"
-  >
+<div class="grille-board">
+  <Chassis columns={gridSize}>
     {#each cellList as cell (cell.key)}
       <button
         type="button"
@@ -147,281 +131,143 @@
         class:is-hole={cell.isHole}
         class:is-locked={cell.isLocked}
         class:is-center={cell.isCenter}
-        class:is-padding={cell.isPadding}
-        style:--step-color={cell.stepColor ?? 'inherit'}
+        style:--step-color={cell.stepColor}
+        aria-pressed={cell.isHole}
         aria-disabled={cell.isLocked || cell.isCenter}
         aria-label={cell.ariaLabel}
         onpointerdown={(e) => handleCellPointerDown(e, cell.r, cell.c, cell.isLocked || cell.isCenter)}
       >
         {#if cell.isHole}
           {#if tapOrderReading && cell.tapOrderIndex !== null}
-            <span class="cell-hole-indicator cell-hole-number" aria-hidden="true">{cell.tapOrderIndex}</span>
+            <span class="cell-mark cell-hole-number" aria-hidden="true">{cell.tapOrderIndex}</span>
           {:else}
-            <span class="cell-hole-indicator" aria-hidden="true">◎</span>
+            <span class="cell-mark cell-hole-ring" aria-hidden="true">◎</span>
           {/if}
         {:else if cell.isLocked}
-          <span class="cell-locked-dot" aria-hidden="true">·</span>
+          <span class="cell-mark cell-locked-dot" aria-hidden="true">·</span>
         {:else if cell.isCenter}
-          <span class="cell-center-symbol" aria-hidden="true">✦</span>
+          <span class="cell-mark cell-center-symbol" aria-hidden="true">✦</span>
         {/if}
 
-        <span
-          class="cell-token font-mono"
-          class:single-char={cell.token.length <= 1}
-          class:multi-char={cell.token.length > 1}
-        >
-          {cell.token}
-        </span>
+        <span class="cell-token" class:is-multi={cell.token.length > 1}>{cell.token}</span>
       </button>
     {/each}
-  </div>
-
-  <!-- Counter and reset row -->
-  <div class="grille-counter-row">
-    <span
-      class="grille-counter-text"
-      class:is-complete={isComplete}
-    >
-      {holes.length} / {requiredHoles} otvorů
-    </span>
-
-    {#if holes.length > 0}
-      <button
-        type="button"
-        class="grille-clear-holes-btn"
-        onclick={() => {
-          settings.vibrate(25);
-          onResetHoles();
-        }}
-        title="Vymazat všechny otvory"
-        aria-label="Vymazat všechny otvory"
-      >
-        <Trash size={13} weight="bold" />
-        <span>Vymazat otvory</span>
-      </button>
-    {/if}
-  </div>
+  </Chassis>
 </div>
 
 <style>
-  .grille-grid-stage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    box-sizing: border-box;
-    gap: 4px;
-    touch-action: none;
+  /* Square, as wide as the panel allows but no taller than the panel budget minus the hold row */
+  .grille-board {
+    align-self: center;
+    width: min(
+      100%,
+      calc(var(--panel-max-height) - var(--zone-input-gap) - var(--utility-row-height))
+    );
     user-select: none;
     -webkit-user-select: none;
   }
 
-
-
-
-
-
-  /* Chassis matching Samuel design system */
-  .grille-chassis {
-    display: grid;
-    gap: 2px;
-    padding: 2px;
-    background-color: #000000;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    width: 100%;
-    max-width: 310px;
-    aspect-ratio: 1 / 1;
-    box-sizing: border-box;
-  }
-
+  /* Flat cells: not plastic keys, the grille keeps its own form */
   .grille-cell {
+    container-type: inline-size;
     position: relative;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: var(--color-surface-2);
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 1;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: none;
     border-radius: 2px;
+    background-color: var(--color-surface-3);
     color: var(--color-text-primary);
     cursor: pointer;
     touch-action: none;
-    padding: 0;
-    margin: 0;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    /* Zero transition delay for instant tactile feedback on touch */
-    transition: none;
+    box-sizing: border-box;
   }
 
   .grille-cell:active:not(.is-locked):not(.is-center) {
     background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
   }
 
-  /* Active hole (cutout with turquoise glow) */
+  /* Hole: fill and ring, plus a mark in the corner */
   .grille-cell.is-hole {
-    background-color: rgba(0, 210, 255, 0.18);
-    border-color: rgba(0, 210, 255, 0.6);
-    box-shadow:
-      0 0 8px rgba(0, 210, 255, 0.4),
-      inset 0 0 0 2px var(--color-accent-primary, #00d2ff),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    background-color: var(--color-accent-primary-subtle);
+    box-shadow: inset 0 0 0 2px var(--color-accent-primary);
+  }
+
+  .grille-cell.is-locked,
+  .grille-cell.is-center {
+    background-color: var(--color-surface-sunken);
+    cursor: not-allowed;
+  }
+
+  .cell-token {
+    max-width: 90%;
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: min(var(--key-m), 56cqw);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cell-token.is-multi {
+    font-size: min(var(--key-s), 36cqw);
+    letter-spacing: -1px;
   }
 
   .grille-cell.is-hole .cell-token {
-    color: #f59e0b; /* 0° rotation color (Amber) */
+    color: var(--step-color);
     font-weight: 800;
-  }
-
-  .cell-hole-indicator {
-    position: absolute;
-    top: 1.5px;
-    right: 2.5px;
-    font-size: calc(13px * var(--font-scale));
-    color: var(--color-accent-primary, #00d2ff);
-    line-height: 1;
-    font-weight: 900;
-    pointer-events: none;
-  }
-
-  /* Order number badge when tapOrderReading is true */
-  .cell-hole-indicator.cell-hole-number {
-    font-size: calc(10px * var(--font-scale));
-    font-family: var(--font-mono, monospace);
-    font-weight: 900;
-    background-color: var(--color-accent-primary, #00d2ff);
-    color: #000000;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    top: 2px;
-    right: 2px;
-    box-shadow: 0 0 4px rgba(0, 210, 255, 0.7);
-  }
-
-  /* Sunken locked cell (orbit companion) - deeply recessed slot matching Braille precedent */
-  .grille-cell.is-locked {
-    cursor: not-allowed;
-    background-color: var(--color-surface-sunken, #0a0a0a);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    box-shadow:
-      inset 0 3px 6px rgba(0, 0, 0, 0.95),
-      inset 0 1.5px 3px rgba(0, 0, 0, 0.9),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .grille-cell.is-locked .cell-token {
     color: var(--step-color);
     opacity: 0.65;
-    font-weight: 700;
+  }
+
+  .cell-mark {
+    position: absolute;
+    top: 1px;
+    right: 2px;
+    font-size: min(var(--text-xs), 30cqw);
+    font-weight: 900;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .cell-hole-ring {
+    color: var(--color-accent-primary);
+  }
+
+  /* Order badge when reading in tap order */
+  .cell-hole-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4em;
+    height: 1.4em;
+    border-radius: 0.7em;
+    background-color: var(--color-accent-primary);
+    color: var(--color-text-inverse);
+    font-family: var(--font-mono);
   }
 
   .cell-locked-dot {
-    position: absolute;
-    top: 0px;
-    right: 3px;
-    font-size: calc(15px * var(--font-scale));
+    top: 0;
+    font-size: min(var(--text-base), 50cqw);
     color: var(--step-color);
     opacity: 0.85;
-    line-height: 1;
-    font-weight: 900;
-    pointer-events: none;
-  }
-
-  /* Center cell for odd grids */
-  .grille-cell.is-center {
-    cursor: not-allowed;
-    background-color: var(--color-surface-sunken, #0a0a0a);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9);
   }
 
   .cell-center-symbol {
-    position: absolute;
-    top: 1.5px;
-    right: 2.5px;
-    font-size: calc(11px * var(--font-scale));
-    color: var(--color-accent-warning, #f59e0b);
-    line-height: 1;
     font-weight: 700;
-    pointer-events: none;
-  }
-
-  /* Padding cells with no data */
-  .grille-cell.is-padding .cell-token {
-    opacity: 0.15;
-  }
-
-  .font-mono {
-    font-family: var(--font-mono, monospace);
-  }
-
-  .cell-token {
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 90%;
-    /* Instant color transition */
-    transition: none;
-  }
-
-  .cell-token.single-char {
-    font-size: calc(clamp(13px, 3.5vw, 17px) * var(--font-scale));
-  }
-
-  .cell-token.multi-char {
-    font-size: calc(clamp(8.5px, 2.2vw, 11px) * var(--font-scale));
-    letter-spacing: -1px;
-  }
-
-  /* Counter bar */
-  .grille-counter-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 310px;
-    padding: 0 4px;
-    box-sizing: border-box;
-    min-height: 18px;
-  }
-
-  .grille-counter-text {
-    font-size: calc(11px * var(--font-scale));
-    font-weight: 700;
-    color: var(--color-text-secondary);
-    letter-spacing: 0.3px;
-  }
-
-  .grille-counter-text.is-complete {
-    color: var(--color-accent-success, #10b981);
-  }
-
-  .grille-clear-holes-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    background: transparent;
-    border: none;
     color: var(--color-text-muted);
-    font-size: calc(10px * var(--font-scale));
-    font-weight: 600;
-    cursor: pointer;
-    padding: 2px 4px;
-    border-radius: var(--radius-xs);
-    transition: color 0.1s ease;
-  }
-
-  .grille-clear-holes-btn:hover {
-    color: var(--color-accent-danger, #ef4444);
   }
 </style>

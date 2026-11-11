@@ -84,9 +84,27 @@ export interface RawMorseSegment {
  * Any number of separators is kept, so permuted input (separator = dot…) survives.
  */
 export function splitRawMorse(raw: string): RawMorseSegment[] {
-  return [...raw.matchAll(/[.-]+\/*|\/+/g)].map(([part]) => {
+  // Anything but `/` belongs to a code: a mistyped piece stays visible as an invalid letter
+  return [...raw.matchAll(/[^/]+\/*|\/+/g)].map(([part]) => {
     const code = part.replace(/\/+$/, '');
     return { code, sep: part.length - code.length };
+  });
+}
+
+/**
+ * Raw stream of the Podklad text, which is the keypad's own notation (`.-/-...//-.-.`).
+ * Only foreign forms are normalized: typographic dots and dashes, and spaces used as
+ * separators (`.- -... / -.-.`). Pieces it cannot read stay and show up as invalid letters.
+ */
+export function notationToRawMorse(text: string): string {
+  const normalized = text
+    .replace(/…/g, '...')
+    .replace(/[•*·]/g, '.')
+    .replace(/[—–_−]/g, '-')
+    .replace(/\|/g, '/');
+  return normalized.trimStart().replace(/[\s/]+/g, (gap) => {
+    const slashes = gap.replace(/\s/g, '').length;
+    return '/'.repeat(/\s/.test(gap) ? slashes + 1 : slashes);
   });
 }
 

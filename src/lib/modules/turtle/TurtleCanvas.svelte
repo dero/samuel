@@ -1,7 +1,5 @@
 <script lang="ts">
   import type { TurtleState } from './turtleTypes';
-  import EmptyHint from '../../components/ui/EmptyHint.svelte';
-  import { PencilSimple } from 'phosphor-svelte';
 
   interface Props {
     state: TurtleState;
@@ -38,14 +36,11 @@
     const spanY = maxY - minY;
     const effectiveSpan = Math.max(spanX, spanY, 3.5);
     const sidePadding = Math.max(1.0, effectiveSpan * 0.16);
-    // Dedicated top padding so the highest element or turtle heading never intersects the HUD pill
-    const topClearance = Math.max(1.6, effectiveSpan * 0.30);
 
     const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
 
-    const cartMinY = minY - sidePadding;
-    const cartMaxY = maxY + sidePadding + topClearance;
-    const contentHeight = Math.max(cartMaxY - cartMinY, 4);
+    const contentHeight = Math.max(spanY + sidePadding * 2, 4);
     const contentWidth = Math.max(spanX + sidePadding * 2, 4);
 
     const aspect =
@@ -65,8 +60,8 @@
     }
 
     const viewBoxX = cx - viewBoxWidth / 2;
-    const extraHeight = viewBoxHeight - contentHeight;
-    const viewBoxY = -(cartMaxY + extraHeight * 0.3);
+    // SVG y grows downwards, the drawing's y upwards
+    const viewBoxY = -(cy + viewBoxHeight / 2);
 
     const markerRadius = Math.max(0.38, effectiveSpan * 0.04);
 
@@ -80,15 +75,11 @@
     const rawRows = gMaxY - gMinY + 1;
     const rawCount = rawCols * rawRows;
 
+    // Coarser grid for bigger drawings: at most about 2 500 dots, steps 1, 2, 5, 10, 20, 50…
+    const MAX_DOTS = 2500;
     let gridStep = 1;
-    if (rawCount > 900) {
-      gridStep = 2;
-    }
-    if (rawCount > 3600) {
-      gridStep = 5;
-    }
-    if (rawCount > 15000) {
-      gridStep = 10;
+    for (let k = 0; rawCount / (gridStep * gridStep) > MAX_DOTS; k++) {
+      gridStep = [1, 2, 5][k % 3] * 10 ** Math.floor(k / 3);
     }
 
     const dotRadius =
@@ -119,10 +110,6 @@
     }
     return dots;
   });
-
-  const hasContent = $derived(
-    turtleState.segments.length > 0 || turtleState.markers.length > 0
-  );
 </script>
 
 <div
@@ -130,37 +117,6 @@
   bind:clientWidth={containerWidth}
   bind:clientHeight={containerHeight}
 >
-  <!-- HUD Badge -->
-  <div class="canvas-hud">
-    <div class="hud-pill">
-      <span class="hud-item heading-indicator">
-        <span class="heading-deg">{turtleState.heading}°</span>
-      </span>
-      <span class="hud-sep">•</span>
-      <span class="hud-item steps-indicator">
-        {turtleState.segments.length} {turtleState.segments.length === 1 ? 'krok' : turtleState.segments.length >= 2 && turtleState.segments.length <= 4 ? 'kroky' : 'kroků'}
-      </span>
-      {#if turtleState.markers.length > 0}
-        <span class="hud-sep">•</span>
-        <span class="hud-item marker-indicator">
-          📍 {turtleState.markers.length}
-        </span>
-      {/if}
-      <span class="hud-sep">•</span>
-      <span class="hud-item pen-indicator" class:is-pen-up={!turtleState.penDown}>
-        <span class="hud-pen-icon">
-          <PencilSimple size={12} weight="bold" />
-        </span>
-        {turtleState.penDown ? 'Kreslí' : 'Zvednuto'}
-      </span>
-    </div>
-  </div>
-
-  <EmptyHint
-    text="Kreslete tlačítky níže."
-    hidden={hasContent}
-  />
-
   <svg
     class="turtle-svg"
     viewBox={bounds.viewBox}
@@ -175,7 +131,7 @@
             cx={dot.x}
             cy={dot.y}
             r={bounds.dotRadius}
-            fill="rgba(255, 255, 255, 0.28)"
+            fill="var(--color-border-medium)"
           />
         {/each}
       </g>
@@ -190,8 +146,7 @@
             y1={-seg.from.y}
             x2={seg.to.x}
             y2={-seg.to.y}
-            class="pen-down-line"
-            stroke="var(--color-accent-primary)"
+            stroke="var(--color-text-primary)"
             stroke-width="2.75"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -203,8 +158,7 @@
             y1={-seg.from.y}
             x2={seg.to.x}
             y2={-seg.to.y}
-            class="pen-up-line"
-            stroke="rgba(255, 255, 255, 0.22)"
+            stroke="var(--color-border-medium)"
             stroke-width="1.5"
             stroke-dasharray="3 3"
             stroke-linecap="round"
@@ -214,17 +168,16 @@
       {/each}
     </g>
 
-    <!-- Start Indicator (Green Dot) -->
-    <g class="start-layer">
-      <circle
-        cx="0"
-        cy="0"
-        r={bounds.markerRadius * 0.45}
-        fill="var(--color-accent-success)"
-        stroke="#000000"
-        stroke-width="0.05"
-      />
-    </g>
+    <!-- Start: a hollow ring, told apart from the markers by shape -->
+    <circle
+      cx="0"
+      cy="0"
+      r={bounds.markerRadius * 0.45}
+      fill="var(--color-bg-canvas)"
+      stroke="var(--color-text-secondary)"
+      stroke-width="2"
+      vector-effect="non-scaling-stroke"
+    />
 
     <!-- Numbered Markers Layer -->
     <g class="markers-layer">
@@ -234,14 +187,14 @@
             cx="0"
             cy="0"
             r={bounds.markerRadius}
-            fill="var(--color-accent-warning)"
-            stroke="#000000"
+            fill="var(--drawing-marker)"
+            stroke="var(--color-bg-canvas)"
             stroke-width={bounds.markerRadius * 0.12}
           />
           <text
             x="0"
             y="0"
-            fill="#000000"
+            fill="var(--color-text-inverse)"
             font-size={bounds.markerRadius * 1.25}
             font-weight="900"
             font-family="var(--font-sans)"
@@ -259,7 +212,7 @@
       class="turtle-cursor"
       transform="translate({turtleState.position.x}, {-turtleState.position.y}) rotate({turtleState.heading})"
     >
-      <!-- Halo glow circle -->
+      <!-- Halo -->
       <circle
         cx="0"
         cy="0"
@@ -273,7 +226,7 @@
       <polygon
         points={`0,${-bounds.markerRadius * 1.3} ${bounds.markerRadius * 0.8},${bounds.markerRadius * 0.8} 0,${bounds.markerRadius * 0.35} ${-bounds.markerRadius * 0.8},${bounds.markerRadius * 0.8}`}
         fill="var(--color-accent-primary)"
-        stroke="#000000"
+        stroke="var(--color-bg-canvas)"
         stroke-width="0.06"
         stroke-linejoin="round"
       />
@@ -283,6 +236,8 @@
 
 <style>
   .turtle-canvas-wrapper {
+    /* Content colour: a marker is a found point of the drawing, not a status */
+    --drawing-marker: #ffd23f;
     position: relative;
     width: 100%;
     height: 100%;
@@ -302,72 +257,5 @@
     display: block;
     user-select: none;
     touch-action: none;
-  }
-
-  .canvas-hud {
-    position: absolute;
-    top: var(--space-xs);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    pointer-events: none;
-    max-width: calc(100% - 16px);
-  }
-
-  .hud-pill {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    background-color: rgba(18, 18, 18, 0.85);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-full);
-    padding: 3px 10px;
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    backdrop-filter: blur(8px);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .hud-item {
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-  }
-
-  .heading-deg {
-    font-family: var(--font-mono);
-    color: var(--color-accent-primary);
-    font-weight: 700;
-  }
-
-  .marker-indicator {
-    color: var(--color-accent-warning);
-    font-weight: 600;
-  }
-
-  .pen-indicator {
-    color: var(--color-accent-success);
-    font-weight: 600;
-  }
-
-  .pen-indicator.is-pen-up {
-    color: var(--color-text-muted);
-  }
-
-  .hud-pen-icon {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 3px;
-    transform: translateY(0.5px);
-  }
-
-  .hud-sep {
-    color: var(--color-border-medium);
-    opacity: 0.6;
-    font-size: calc(8px * var(--font-scale));
-  }
-
-  .pen-down-line {
-    filter: drop-shadow(0 0 2px var(--color-accent-primary-glow));
   }
 </style>

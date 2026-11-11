@@ -94,16 +94,17 @@
   .search-item-group {
     display: flex;
     flex-direction: column;
-    background-color: var(--color-surface-1, #121212);
-    border: 1px solid var(--color-border-subtle, #2a2a2a);
-    border-radius: var(--radius-sm, 6px);
+    background-color: var(--color-surface-1);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
     overflow: hidden;
     transition: border-color 0.12s ease;
     flex-shrink: 0;
   }
 
+  /* Open item: accent border plus the caret turning down and the row fill */
   .search-item-group.is-expanded {
-    border-color: var(--color-accent-primary, #00d2ff);
+    border-color: var(--color-accent-primary);
   }
 
   .search-item-row {
@@ -125,11 +126,11 @@
   }
 
   .search-item-row:active {
-    background-color: var(--color-surface-active, #333333);
+    background-color: var(--color-surface-active);
   }
 
   .search-item-row.is-active {
-    background-color: var(--color-surface-2, #1c1c1c);
+    background-color: var(--color-surface-2);
   }
 
   .row-content {
@@ -141,24 +142,23 @@
     overflow: hidden;
   }
 
+  /* Mono, so 7ch holds the longest date "28. 12." exactly */
   .row-date {
-    width: 58px;
-    min-width: 58px;
-    max-width: 58px;
-    font-size: var(--text-sm, 13px);
+    flex: none;
+    width: 7ch;
+    font-size: var(--text-sm);
     font-weight: 800;
-    font-family: var(--font-mono, monospace);
+    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
-    color: var(--color-accent-primary, #00d2ff);
+    color: var(--color-text-secondary);
     white-space: nowrap;
-    flex-shrink: 0;
     text-align: right;
   }
 
   .row-name {
-    font-size: var(--text-sm, 13px);
+    font-size: var(--text-sm);
     font-weight: 700;
-    color: var(--color-text-primary, #ffffff);
+    color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -174,24 +174,24 @@
   }
 
   .row-tag {
-    font-size: calc(10px * var(--font-scale));
-    font-family: var(--font-mono, monospace);
-    color: var(--color-text-muted, #666666);
-    background-color: var(--color-surface-2, #1c1c1c);
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    color: var(--color-text-muted);
+    background-color: var(--color-surface-2);
     padding: 1px 5px;
-    border-radius: var(--radius-xs, 4px);
+    border-radius: var(--radius-xs);
   }
 
   .chevron-icon {
     display: flex;
     align-items: center;
-    color: var(--color-text-secondary, #9e9e9e);
+    color: var(--color-text-secondary);
   }
 
   .expanded-detail-box {
     padding: 6px 8px 8px 8px;
-    background-color: var(--color-bg-canvas, #000000);
-    border-top: 1px solid var(--color-border-subtle, #2a2a2a);
+    background-color: var(--color-bg-canvas);
+    border-top: 1px solid var(--color-border-subtle);
     height: auto;
     min-height: 0;
     box-sizing: border-box;

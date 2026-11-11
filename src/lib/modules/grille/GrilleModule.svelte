@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
   import TranslationCard from '../../components/ui/TranslationCard.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import NonStandardSettingsBanner from '../../components/ui/NonStandardSettingsBanner.svelte';
   import GrilleGrid from './GrilleGrid.svelte';
@@ -15,15 +18,17 @@
     executeWriteMode
   } from './grilleSolver';
   import { ROTATION_COLORS } from './grilleData';
-  import { settings } from '../../state/settings.svelte';
   import { toast } from '../../state/toast.svelte';
+  import { navigation } from '../../state/navigation.svelte';
   import { localSettingsService } from '../../services/localSettingsService';
 
   const modSettings = localSettingsService.forModule('grille');
 
   // Core state
   let rawInput = $state<string>(modSettings.getString('raw_text', ''));
-  let holes = $state<string[]>(modSettings.getJSON<string[]>('holes', []));
+  // Holes as marked, with the grid size they were marked in
+  let storedHoles = $state<string[]>(modSettings.getJSON<string[]>('holes', []));
+  let holesSize = $state<number | null>(modSettings.get<number | null>('holes_size', null));
 
   // Configuration options (each can be non-standard)
   let tapOrderReading = $state<boolean>(modSettings.getBoolean('tap_order', false));
@@ -34,12 +39,23 @@
   $effect(() => {
     modSettings.update({
       raw_text: rawInput,
-      holes,
+      holes: storedHoles,
+      holes_size: holesSize,
       tap_order: tapOrderReading,
       rotation_ccw: rotationCCW,
       write_mode: writeMode
     });
   });
+
+  function countCells(n: number): string {
+    if (n === 1) return '1 buňka';
+    return n >= 2 && n <= 4 ? `${n} buňky` : `${n} buněk`;
+  }
+
+  function countHoles(n: number): string {
+    if (n === 1) return '1 otvor';
+    return n >= 2 && n <= 4 ? `${n} otvory` : `${n} otvorů`;
+  }
 
   // Derived grid tokens and size
   const tokens = $derived(parseGridInput(rawInput));
@@ -49,22 +65,41 @@
   // A table read row by row should fill the square exactly
   const fillAttention = $derived(
     !writeMode && hasData && tokens.length !== gridSize * gridSize
-      ? `${tokens.length} buněk, mřížka ${gridSize}×${gridSize} má ${gridSize * gridSize}`
+      ? `${countCells(tokens.length)}, mřížka ${gridSize}×${gridSize} má ${gridSize * gridSize}`
       : null
   );
 
-  // Reset holes when grid size changes or data is cleared
-  let prevGridSize = $state<number | null>(null);
+  // Data saved before the size was stored belongs to the grid it was loaded with
+  untrack(() => {
+    if (holesSize === null) holesSize = gridSize;
+  });
+
+  // The podklad is saved on every keystroke, so a typo can change the size for a moment.
+  // Holes only rest while the size differs and are dropped when the edit is settled.
+  const holes = $derived(hasData && holesSize === gridSize ? storedHoles : []);
+
+  function setHoles(next: string[]) {
+    storedHoles = next;
+    holesSize = gridSize;
+  }
+
+  function pruneHoles() {
+    if (storedHoles.length === 0 || (hasData && holesSize === gridSize)) return;
+    storedHoles = [];
+    holesSize = gridSize;
+    if (hasData) toast.show(`Otvory smazány, mřížka ${gridSize}×${gridSize}`, { type: 'info' });
+  }
+
+  untrack(pruneHoles);
+
+  // Leaving Podklad or Menu (any way) settles the edit
+  let previousView = untrack(() => navigation.subView);
   $effect(() => {
-    if (!hasData) {
-      holes = [];
-    } else if (prevGridSize !== null && gridSize !== prevGridSize) {
-      if (holes.length > 0) {
-        holes = [];
-        toast.show(`Mřížka přizpůsobena na ${gridSize}×${gridSize}`, { type: 'success' });
-      }
+    const view = navigation.subView;
+    if (view !== previousView && (previousView === 'podklad' || previousView === 'menu')) {
+      untrack(pruneHoles);
     }
-    prevGridSize = gridSize;
+    previousView = view;
   });
 
   // Write mode distribution simulation
@@ -133,25 +168,27 @@
   function handleToggleHole(r: number, c: number) {
     const key = `${r},${c}`;
     if (holes.includes(key)) {
-      holes = holes.filter((k) => k !== key);
+      setHoles(holes.filter((k) => k !== key));
     } else {
       if (holes.length >= requiredHoles) {
-        toast.show(`Maximum je ${requiredHoles} otvorů`, { type: 'warning' });
+        toast.show(`Maximum je ${countHoles(requiredHoles)}`, { type: 'warning' });
         return;
       }
-      holes = [...holes, key];
+      setHoles([...holes, key]);
     }
   }
 
-  function handleResetHoles() {
-    holes = [];
-    toast.show('Otvory vymazány', { type: 'success' });
+  function handleClearHoles() {
+    setHoles([]);
   }
 
-  function handleClearAll() {
-    settings.vibrate(35);
+  // Data and Menu options back to defaults
+  function handleReset() {
     rawInput = '';
-    holes = [];
+    storedHoles = [];
+    tapOrderReading = false;
+    rotationCCW = false;
+    writeMode = false;
   }
 </script>
 
@@ -159,7 +196,7 @@
   title="Mřížka"
   hasAlphabet={false}
   hasWarning={nonStandardCount > 0}
-  onReset={handleClearAll}
+  onReset={handleReset}
   podklad={{
     kind: 'grid',
     required: true,
@@ -176,15 +213,22 @@
       rawInput = val;
     }
   }}
+  bar={{
+    empty: !hasData || holes.length === 0,
+    hint: !hasData
+      ? writeMode
+        ? 'Vložte text k zašifrování.'
+        : 'Vložte tabulku znaků.'
+      : 'Klepnutím do mřížky označte otvory.',
+    status: `Otvory ${holes.length} z ${requiredHoles}`
+  }}
 >
   {#snippet menuOptions()}
-    <NonStandardSettingsBanner
-      count={nonStandardCount}
-      onResetDefaults={resetToDefaults}
-    />
-
-    <div class="menu-group">
-      <div class="menu-group-title">Šifra</div>
+    <MenuGroup title="Šifra">
+      <NonStandardSettingsBanner
+        count={nonStandardCount}
+        onResetDefaults={resetToDefaults}
+      />
 
       <OptionRow
         label="Číst v pořadí klepnutí"
@@ -209,7 +253,7 @@
         isNonStandard={writeMode}
         onChange={(v) => (writeMode = v)}
       />
-    </div>
+    </MenuGroup>
   {/snippet}
 
   {#snippet reference()}
@@ -217,35 +261,31 @@
   {/snippet}
 
   {#snippet output()}
-    <div class="grille-output-stage">
-      <TranslationCard
-        text={fullText}
-        emptyHint="Označte otvory v mřížce."
-      >
-        {#snippet children()}
-          {#if fullText}
-            {#if writeMode}
-              <span class="rotation-segment rotation-0">{rotationSegments[0]}</span>
-            {:else}
-              {#each rotationSegments as seg, i}
-                {#if seg}
-                  <span
-                    class="rotation-segment {ROTATION_COLORS[i].className}"
-                    title="Rotace {ROTATION_COLORS[i].label}"
-                  >
-                    {seg}
-                  </span>
-                {/if}
-              {/each}
+    <TranslationCard text={fullText}>
+      {#snippet children()}
+        {#if writeMode}
+          <span class="rotation-segment" style:color={ROTATION_COLORS[0].color}>
+            {rotationSegments[0]}
+          </span>
+        {:else}
+          {#each rotationSegments as seg, i (i)}
+            {#if seg}
+              <span
+                class="rotation-segment"
+                style:color={ROTATION_COLORS[i].color}
+                title="Rotace {ROTATION_COLORS[i].label}"
+              >
+                {seg}
+              </span>
             {/if}
-          {/if}
-        {/snippet}
-      </TranslationCard>
-    </div>
+          {/each}
+        {/if}
+      {/snippet}
+    </TranslationCard>
   {/snippet}
 
   {#snippet input()}
-    <div class="zone-input-flow">
+    <div class="grille-panel">
       <GrilleGrid
         {gridSize}
         {gridMatrix}
@@ -253,64 +293,31 @@
         {rotationCCW}
         {tapOrderReading}
         onToggleHole={handleToggleHole}
-        onResetHoles={handleResetHoles}
+      />
+
+      <HoldToAction
+        label="Vymazat otvory"
+        showLabel
+        confirmedLabel="Vymazáno"
+        ariaLabel="Podržte pro vymazání otvorů"
+        tapWarning="Podržte pro vymazání otvorů"
+        disabled={holes.length === 0}
+        onAction={handleClearHoles}
       />
     </div>
   {/snippet}
 </ModuleShell>
 
 <style>
-  .zone-input-flow {
+  .grille-panel {
     display: flex;
     flex-direction: column;
-    gap: var(--zone-input-gap, 8px);
+    gap: var(--zone-input-gap);
     width: 100%;
     box-sizing: border-box;
   }
 
-  .grille-output-stage {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
-    gap: 4px;
-    box-sizing: border-box;
-  }
-
-  /* Rotation colored segments inside TranslationCard */
   .rotation-segment {
     font-weight: 700;
-  }
-
-  .rotation-segment.rotation-0 {
-    color: #f59e0b;
-  }
-
-  .rotation-segment.rotation-1 {
-    color: #00d2ff;
-  }
-
-  .rotation-segment.rotation-2 {
-    color: #10b981;
-  }
-
-  .rotation-segment.rotation-3 {
-    color: #a78bfa;
-  }
-
-  .menu-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-
-  .menu-group-title {
-    font-size: calc(11px * var(--font-scale));
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    margin-bottom: 2px;
   }
 </style>

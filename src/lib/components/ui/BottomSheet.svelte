@@ -1,6 +1,7 @@
 <script lang="ts">
   import { X } from 'phosphor-svelte';
   import { settings } from '../../state/settings.svelte';
+  import ScrollArea from './ScrollArea.svelte';
 
   interface Props {
     open: boolean;
@@ -16,6 +17,8 @@
     onClose: () => void;
     children?: import('svelte').Snippet;
     headerActions?: import('svelte').Snippet;
+    /** Stays below the scrolled body, always in reach (a Potvrdit button). */
+    footer?: import('svelte').Snippet;
   }
 
   let {
@@ -31,7 +34,8 @@
     zIndex = 210,
     onClose,
     children,
-    headerActions
+    headerActions,
+    footer
   }: Props = $props();
 
   let isDragging = $state(false);
@@ -215,10 +219,24 @@
         class:has-padding={padding}
         data-allow-copy
       >
-        {#if children}
+        {#if scrollable}
+          <ScrollArea outset={padding ? 'var(--space-lg)' : '0px'}>
+            <div class="sheet-scroll-content">
+              {#if children}
+                {@render children()}
+              {/if}
+            </div>
+          </ScrollArea>
+        {:else if children}
           {@render children()}
         {/if}
       </div>
+
+      {#if footer}
+        <div class="sheet-footer">
+          {@render footer()}
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -390,15 +408,29 @@
     touch-action: pan-y;
   }
 
-  .sheet-body.is-scrollable {
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+  .sheet-body.has-padding {
+    padding: var(--space-lg);
+  }
+
+  /* The fades reach the sheet edges, so the vertical padding moves inside the scrolled content */
+  .sheet-body.is-scrollable.has-padding {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .sheet-scroll-content {
+    display: flex;
+    flex-direction: column;
     gap: var(--space-md);
   }
 
-  .sheet-body.has-padding {
-    padding: var(--space-lg);
+  .sheet-body.is-scrollable.has-padding .sheet-scroll-content {
+    padding: var(--space-lg) 0;
+  }
+
+  .sheet-footer {
+    flex: none;
+    padding: var(--space-sm) var(--space-lg) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--color-border-subtle);
   }
 </style>

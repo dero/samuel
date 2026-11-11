@@ -69,7 +69,7 @@
   /* size="sm": Standard Sub-Toolbar (36px fixed, zero overflow) */
   .segmented-control.size-sm {
     height: var(--subtoolbar-height, 36px);
-    padding: 2px;
+    padding: 1px; /* keeps the segments at the 32 px control minimum */
   }
 
   .segmented-control.size-sm .segment-btn {

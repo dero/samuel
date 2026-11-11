@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import type { CrossType } from './crossData';
-  import { coordinatesToIndex } from './crossSolver';
+  import { fieldToChar, smallIndexToField } from './crossSolver';
   import { settings } from '../../state/settings.svelte';
 
   interface Props {
@@ -10,7 +10,7 @@
     selectedAxis1: number | null;
     selectedAxis2: number | null;
     selectedAxis3: number | null;
-    onLetterSelect: (char: string) => void;
+    onFieldSelect: (field: string) => void;
   }
 
   let {
@@ -19,7 +19,7 @@
     selectedAxis1,
     selectedAxis2,
     selectedAxis3,
-    onLetterSelect
+    onFieldSelect
   }: Props = $props();
 
   const smallPolishLetters = $derived.by(() => {
@@ -34,7 +34,7 @@
   });
 
   let containerEl = $state<HTMLElement | null>(null);
-  let activePigpenChar = $state<string | null>(null);
+  let activeField = $state<string | null>(null);
   let pigpenClearTimeout: ReturnType<typeof setTimeout> | null = null;
 
   function clearPigpenTimeout() {
@@ -53,12 +53,12 @@
     const keyframes = cell instanceof SVGElement
       ? [
           { filter: 'none' },
-          { filter: 'drop-shadow(0 0 6px rgba(0, 210, 255, 0.6))', offset: 0.35 },
+          { filter: 'drop-shadow(0 0 6px var(--color-accent-primary-glow))', offset: 0.35 },
           { filter: 'none' }
         ]
       : [
           { borderColor: 'var(--color-text-secondary)', filter: 'none' },
-          { borderColor: 'var(--color-accent-primary)', filter: 'drop-shadow(0 0 6px rgba(0, 210, 255, 0.6))', offset: 0.35 },
+          { borderColor: 'var(--color-accent-primary)', filter: 'drop-shadow(0 0 6px var(--color-accent-primary-glow))', offset: 0.35 },
           { borderColor: 'var(--color-text-secondary)', filter: 'none' }
         ];
 
@@ -79,7 +79,7 @@
       if (btn) {
         btn.animate(
           [
-            { backgroundColor: 'var(--color-accent-primary)', color: '#000000', transform: 'scale(1.22)', boxShadow: '0 0 16px rgba(0, 210, 255, 0.9)' },
+            { backgroundColor: 'var(--color-accent-primary)', color: 'var(--color-text-inverse)', transform: 'scale(1.22)', boxShadow: '0 0 16px var(--color-accent-primary-glow)' },
             { backgroundColor: 'transparent', color: 'var(--color-text-primary)', transform: 'scale(1)', boxShadow: 'none' }
           ],
           { duration: 520, easing: 'ease-out' }
@@ -88,61 +88,39 @@
     }
   }
 
-  function handleLetterPointerDown(e: PointerEvent, char: string) {
+  function handleLetterPointerDown(e: PointerEvent, field: string) {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (!fieldToChar(crossType, field, letters)) return; // blank cell of a short alphabet
     e.preventDefault();
     settings.vibrate(18);
-    activePigpenChar = char;
+    activeField = field;
     clearPigpenTimeout();
     pigpenClearTimeout = setTimeout(() => {
-      activePigpenChar = null;
+      activeField = null;
     }, 140);
     triggerEnclosureAnimation(e.currentTarget as HTMLElement | SVGElement);
-    onLetterSelect(char);
+    onFieldSelect(field);
   }
 
   function handleLetterPointerUp() {
-    activePigpenChar = null;
+    activeField = null;
     clearPigpenTimeout();
   }
 
-  function handleLetterKeyDown(e: KeyboardEvent, char: string) {
+  function handleLetterKeyDown(e: KeyboardEvent, field: string) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
+      if (!fieldToChar(crossType, field, letters)) return;
       settings.vibrate(18);
-      onLetterSelect(char);
+      onFieldSelect(field);
     }
   }
 
   function isLetterHighlighted(a1: number, a2: number, a3: number): boolean {
-    if (crossType === 'large-polish') {
-      if (selectedAxis3 !== null) {
-        if (selectedAxis3 !== a3) return false;
-        if (selectedAxis1 !== null && selectedAxis1 !== a1) return false;
-        if (selectedAxis2 !== null && selectedAxis2 !== a2) return false;
-        return true;
-      }
-      return false;
-    }
-
-    if (crossType === 'small-polish') {
-      if (selectedAxis1 !== null && selectedAxis1 !== a1) return false;
-      if (selectedAxis2 !== null && selectedAxis2 !== a2) return false;
-      if (selectedAxis3 !== null && selectedAxis3 !== a3) return false;
-      return selectedAxis1 !== null || selectedAxis2 !== null || selectedAxis3 !== null;
-    }
-
-    return false;
-  }
-
-  function getPolishChar(a1: number, a2: number, a3: number): string {
-    const idx = coordinatesToIndex(crossType, a1, a2, a3);
-    if (idx === null) return '';
-    if (crossType === 'large-polish' && letters.length === 26 && idx === 26) {
-      return ' ';
-    }
-    if (idx < 0 || idx >= letters.length) return '';
-    return letters[idx] ?? '';
+    if (selectedAxis3 === null || selectedAxis3 !== a3) return false;
+    if (selectedAxis1 !== null && selectedAxis1 !== a1) return false;
+    if (selectedAxis2 !== null && selectedAxis2 !== a2) return false;
+    return true;
   }
 
   onDestroy(() => {
@@ -171,7 +149,8 @@
           data-col={c}
         >
           {#each [1, 2, 3] as p}
-            {@const char = getPolishChar(r, c, p)}
+            {@const field = `${r}${c}${p}`}
+            {@const char = fieldToChar('large-polish', field, letters) ?? ''}
             {@const isSelected = isLetterHighlighted(r, c, p)}
             {@const displaySymbol = char === ' ' ? '␣' : char}
             {#if char}
@@ -181,7 +160,7 @@
                 class="letter-btn"
                 class:is-highlighted={isSelected}
                 class:is-space-btn={char === ' '}
-                onpointerdown={(e) => handleLetterPointerDown(e, char)}
+                onpointerdown={(e) => handleLetterPointerDown(e, field)}
               >
                 <span class="char-symbol" class:is-space-symbol={char === ' '}>{displaySymbol}</span>
                 <span class="dot-indicator">
@@ -219,18 +198,19 @@
         {#each [0, 1, 2] as r}
           {#each [0, 1, 2] as c}
             {@const char = smallPolishLetters[r * 3 + c]}
+            {@const field = smallIndexToField(r * 3 + c)}
             {@const x = 4 + c * 48}
             {@const y = 4 + r * 48}
             {@const cx = x + 24}
             {@const cy = y + 24}
             <g
               class="pigpen-cell"
-              class:is-active={activePigpenChar === char}
+              class:is-active={activeField === field}
               role="button"
               tabindex="0"
               aria-label={`Písmeno ${char}`}
-              onpointerdown={(e) => handleLetterPointerDown(e, char)}
-              onkeydown={(e) => handleLetterKeyDown(e, char)}
+              onpointerdown={(e) => handleLetterPointerDown(e, field)}
+              onkeydown={(e) => handleLetterKeyDown(e, field)}
               oncontextmenu={(e) => e.preventDefault()}
             >
               <rect {x} {y} width="48" height="48" class="cell-hitarea" />
@@ -245,18 +225,19 @@
         {#each [0, 1, 2] as r}
           {#each [0, 1, 2] as c}
             {@const char = smallPolishLetters[9 + r * 3 + c]}
+            {@const field = smallIndexToField(9 + r * 3 + c)}
             {@const x = 164 + c * 48}
             {@const y = 4 + r * 48}
             {@const cx = x + 24}
             {@const cy = y + 24}
             <g
               class="pigpen-cell"
-              class:is-active={activePigpenChar === char}
+              class:is-active={activeField === field}
               role="button"
               tabindex="0"
               aria-label={`Písmeno ${char}`}
-              onpointerdown={(e) => handleLetterPointerDown(e, char)}
-              onkeydown={(e) => handleLetterKeyDown(e, char)}
+              onpointerdown={(e) => handleLetterPointerDown(e, field)}
+              onkeydown={(e) => handleLetterKeyDown(e, field)}
               oncontextmenu={(e) => e.preventDefault()}
             >
               <rect {x} {y} width="48" height="48" class="cell-hitarea" />
@@ -271,12 +252,12 @@
         <!-- 2x2 Šikmý kříž Col 1 (S–V, bez tečky) -->
         <g
           class="pigpen-cell"
-          class:is-active={activePigpenChar === smallPolishLetters[18]}
+          class:is-active={activeField === smallIndexToField(18)}
           role="button"
           tabindex="0"
           aria-label={`Písmeno ${smallPolishLetters[18]}`}
-          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[18])}
-          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[18])}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallIndexToField(18))}
+          onkeydown={(e) => handleLetterKeyDown(e, smallIndexToField(18))}
           oncontextmenu={(e) => e.preventDefault()}
         >
           <polygon points="28,164 124,164 76,212" class="cell-hitarea" />
@@ -287,12 +268,12 @@
 
         <g
           class="pigpen-cell"
-          class:is-active={activePigpenChar === smallPolishLetters[19]}
+          class:is-active={activeField === smallIndexToField(19)}
           role="button"
           tabindex="0"
           aria-label={`Písmeno ${smallPolishLetters[19]}`}
-          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[19])}
-          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[19])}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallIndexToField(19))}
+          onkeydown={(e) => handleLetterKeyDown(e, smallIndexToField(19))}
           oncontextmenu={(e) => e.preventDefault()}
         >
           <polygon points="28,164 76,212 28,260" class="cell-hitarea" />
@@ -303,12 +284,12 @@
 
         <g
           class="pigpen-cell"
-          class:is-active={activePigpenChar === smallPolishLetters[20]}
+          class:is-active={activeField === smallIndexToField(20)}
           role="button"
           tabindex="0"
           aria-label={`Písmeno ${smallPolishLetters[20]}`}
-          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[20])}
-          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[20])}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallIndexToField(20))}
+          onkeydown={(e) => handleLetterKeyDown(e, smallIndexToField(20))}
           oncontextmenu={(e) => e.preventDefault()}
         >
           <polygon points="124,164 76,212 124,260" class="cell-hitarea" />
@@ -319,12 +300,12 @@
 
         <g
           class="pigpen-cell"
-          class:is-active={activePigpenChar === smallPolishLetters[21]}
+          class:is-active={activeField === smallIndexToField(21)}
           role="button"
           tabindex="0"
           aria-label={`Písmeno ${smallPolishLetters[21]}`}
-          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[21])}
-          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[21])}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallIndexToField(21))}
+          onkeydown={(e) => handleLetterKeyDown(e, smallIndexToField(21))}
           oncontextmenu={(e) => e.preventDefault()}
         >
           <polygon points="28,260 76,212 124,260" class="cell-hitarea" />
@@ -336,12 +317,12 @@
         <!-- 2x2 Šikmý kříž Col 2 (W–Z, s tečkou) -->
         <g
           class="pigpen-cell"
-          class:is-active={activePigpenChar === smallPolishLetters[22]}
+          class:is-active={activeField === smallIndexToField(22)}
           role="button"
           tabindex="0"
           aria-label={`Písmeno ${smallPolishLetters[22]}`}
-          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[22])}
-          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[22])}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallIndexToField(22))}
+          onkeydown={(e) => handleLetterKeyDown(e, smallIndexToField(22))}
           oncontextmenu={(e) => e.preventDefault()}
         >
           <polygon points="188,164 284,164 236,212" class="cell-hitarea" />
@@ -353,12 +334,12 @@
 
         <g
           class="pigpen-cell"
-          class:is-active={activePigpenChar === smallPolishLetters[23]}
+          class:is-active={activeField === smallIndexToField(23)}
           role="button"
           tabindex="0"
           aria-label={`Písmeno ${smallPolishLetters[23]}`}
-          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[23])}
-          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[23])}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallIndexToField(23))}
+          onkeydown={(e) => handleLetterKeyDown(e, smallIndexToField(23))}
           oncontextmenu={(e) => e.preventDefault()}
         >
           <polygon points="188,164 236,212 188,260" class="cell-hitarea" />
@@ -370,12 +351,12 @@
 
         <g
           class="pigpen-cell"
-          class:is-active={activePigpenChar === smallPolishLetters[24]}
+          class:is-active={activeField === smallIndexToField(24)}
           role="button"
           tabindex="0"
           aria-label={`Písmeno ${smallPolishLetters[24]}`}
-          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[24])}
-          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[24])}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallIndexToField(24))}
+          onkeydown={(e) => handleLetterKeyDown(e, smallIndexToField(24))}
           oncontextmenu={(e) => e.preventDefault()}
         >
           <polygon points="284,164 236,212 284,260" class="cell-hitarea" />
@@ -387,12 +368,12 @@
 
         <g
           class="pigpen-cell"
-          class:is-active={activePigpenChar === smallPolishLetters[25]}
+          class:is-active={activeField === smallIndexToField(25)}
           role="button"
           tabindex="0"
           aria-label={`Písmeno ${smallPolishLetters[25]}`}
-          onpointerdown={(e) => handleLetterPointerDown(e, smallPolishLetters[25])}
-          onkeydown={(e) => handleLetterKeyDown(e, smallPolishLetters[25])}
+          onpointerdown={(e) => handleLetterPointerDown(e, smallIndexToField(25))}
+          onkeydown={(e) => handleLetterKeyDown(e, smallIndexToField(25))}
           oncontextmenu={(e) => e.preventDefault()}
         >
           <polygon points="188,260 236,212 284,260" class="cell-hitarea" />
@@ -444,7 +425,7 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 46px);
-    gap: 4px;
+    gap: 3px;
     width: 100%;
     background: transparent;
     margin: 0;
@@ -506,8 +487,8 @@
   }
 
   .letter-btn.is-highlighted {
-    background-color: rgba(0, 210, 255, 0.22);
-    border: 1px solid rgba(0, 210, 255, 0.55);
+    background-color: var(--color-accent-primary-subtle);
+    border: 1px solid var(--color-accent-primary);
     color: var(--color-text-primary);
     font-weight: 800;
     border-radius: var(--radius-xs);
@@ -518,7 +499,7 @@
   }
 
   .char-symbol {
-    font-size: var(--text-lg);
+    font-size: var(--text-base);
     font-weight: 700;
     font-family: var(--font-mono);
     line-height: 1;
@@ -526,7 +507,6 @@
 
   .char-symbol.is-space-symbol {
     color: var(--color-text-secondary);
-    font-size: var(--text-base);
   }
 
   .dot-indicator {
@@ -538,11 +518,11 @@
   }
 
   .dot {
-    font-size: calc(13px * var(--font-scale));
+    font-size: var(--text-sm);
     font-weight: 900;
     letter-spacing: -1px;
     line-height: 1;
-    color: var(--color-accent-primary);
+    color: var(--color-text-secondary);
   }
 
   .letter-placeholder {
@@ -606,7 +586,7 @@
   }
 
   .cell-char {
-    font-size: calc(16px * var(--font-scale));
+    font-size: var(--text-base);
     font-weight: 700;
     font-family: var(--font-mono);
     fill: var(--color-text-primary);
@@ -616,7 +596,7 @@
   }
 
   .cell-dot {
-    fill: var(--color-accent-primary);
+    fill: var(--color-text-primary);
     pointer-events: none;
   }
 

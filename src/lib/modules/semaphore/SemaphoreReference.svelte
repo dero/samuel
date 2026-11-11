@@ -28,23 +28,40 @@
   }));
 
   const help: RefHelpData = {
+    purpose: [
+      'Semafor je praporková abeceda: znak tvoří dvě ramena s praporky v osmi možných polohách. Nástroj převede polohy ramen na text a pod každým znakem ukáže čísla obou ramen.'
+    ],
+    howTo: [
+      'Na kruhu zvolte polohy obou ramen tak, jak signalistu vidíte. Po prvním rameni ukážou ostatní polohy, jaký znak by s ním vznikl. Signál `#` přepne na číslice (A–I a K jsou `1`–`9` a `0`), signál J vrátí písmena; mezitím lišta ukazuje „Číslice, zpět signálem J“.'
+    ],
+    example: {
+      title: 'Příklad: AHOJ',
+      steps: [
+        { action: 'Klepněte na spodní polohu kruhu.', result: 'Rameno svítí a ostatní polohy ukazují, co by s ním vzniklo: vlevo dole je A.' },
+        { action: 'Klepněte na polohu vlevo dole.', result: 'A se hned vloží, ve výstupu je A a pod ním `12`.' },
+        { action: 'Táhněte prstem z polohy vlevo dole na polohu vlevo.', result: 'Přibude H s čísly `23`.' },
+        { action: 'Klepněte na polohy vlevo a vlevo nahoře, pak nahoře a vpravo.', result: 'Výstup ukazuje AHOJ. Na záložce Podklad je totéž jako `12,23,34,57`.' }
+      ]
+    },
     controls: [
-      ['Volič', '2 pozice klepnutím, nebo jedním tahem'],
-      ['Prostřední tlačítko', 'mezera'],
-      ['Backspace', 'nejdřív zruší vybraná ramena, pak maže text'],
-      ['Okamžité vkládání', 'v menu: vypnuté = znak potvrdit tlačítkem'],
-      ['`#`', 'další písmena A–I, K se čtou jako číslice. Ve výstupu svítí `#`.'],
-      ['`J` po číslicích', 'zpět na písmena'],
-      ['Omyl', 'smaže předchozí znak']
+      ['Kruh poloh', 'Klepněte na polohy obou ramen, nebo je spojte jedním tahem přes střed. Klepnutí na zvolenou polohu ji zruší.'],
+      ['Mezera (uprostřed dole)', 'Vloží mezeru. Při vypnutém Okamžitém vkládání ukazuje zvolený znak a klepnutím ho vloží.'],
+      ['Zpět (vpravo dole)', 'Zruší zvolená ramena (ukazuje ✕), jinak smaže poslední signál.'],
+      ['Koš (vlevo dole)', 'Podržením smaže celý zápis.'],
+      ['Záložka Podklad', 'Celý zápis jako dvojice čísel ramen: `1` je dole, dál po směru hodinových ručiček až `8` vpravo dole. Čárka dělí znaky, prázdné pole je mezera, pořadí ve dvojici nerozhoduje.'],
+      ['Menu → Okamžité vkládání', 'Zapnuté (výchozí) vloží znak hned po druhém rameni. Vypnuté čeká na prostřední klávesu.'],
+      ['Menu → Pohled vysílajícího', 'Prohodí levou a pravou stranu. Zapnutou volbu připomíná tečka na záložce Menu.']
     ],
     pitfalls: [
-      ['Zrcadlově', 'reference je z pohledu příjemce. Zadání ze zad signalisty → menu Pohled vysílajícího.'],
-      ['Číslice bez `#`', 'zadat nejdřív signál `#`']
+      ['Vidíte signalistu zezadu, nebo zadání popisuje jeho pravou a levou ruku?', 'Zapněte Menu → Pohled vysílajícího. Kruh i tahák ukazují signalistu tak, jak ho vidí příjemce.'],
+      ['Místo číslic vychází písmena?', 'V šifře chybí signál `#` (nahoře a vpravo nahoře). Doplňte ho na záložce Podklad před číslice, ve výchozím pohledu je to `56`.'],
+      ['Písmena za číslem vycházejí jako číslice?', 'Chybí signál J (nahoře a vpravo), který číslice ukončí; mezera je neukončí. Doplňte ho na záložce Podklad za poslední číslici, ve výchozím pohledu je to `57`.'],
+      ['Ve výstupu je přeškrtnutý znak?', 'Šifra obsahuje signál Omyl (vpravo dole a vlevo nahoře), který ruší předchozí znak. Přeškrtnutý znak do textu nepatří.']
     ]
   };
 </script>
 
-{#snippet diagram(entry: SemaphoreEntry, special: boolean)}
+{#snippet diagram(entry: SemaphoreEntry)}
   <svg class="mini-diagram" viewBox="0 0 48 48" aria-hidden="true">
     {#each SVG_POINTS as pt (pt.index)}
       {#if !entry.pair.includes(pt.index)}
@@ -54,8 +71,8 @@
     <circle cx="24" cy="24" r="3" class="dot-center" />
     {#each entry.pair as armIdx (armIdx)}
       {@const pt = SVG_POINTS[armIdx]}
-      <line x1="24" y1="24" x2={pt.x} y2={pt.y} class="arm-active" class:special-arm={special} />
-      <circle cx={pt.x} cy={pt.y} r="4" class="dot-active" class:special-dot={special} />
+      <line x1="24" y1="24" x2={pt.x} y2={pt.y} class="arm-active" />
+      <circle cx={pt.x} cy={pt.y} r="4" class="dot-active" />
     {/each}
   </svg>
 {/snippet}
@@ -72,7 +89,7 @@
                 <span class="card-digit">/{entry.digit}</span>
               {/if}
             </div>
-            {@render diagram(entry, false)}
+            {@render diagram(entry)}
           </div>
         {/each}
       </div>
@@ -86,7 +103,7 @@
               <span class="card-char special-char">{label}</span>
               <span class="special-name">{name}</span>
             </div>
-            {@render diagram(entry, true)}
+            {@render diagram(entry)}
           </div>
         {/each}
       </div>
@@ -133,25 +150,24 @@
     font-family: var(--font-condensed);
     font-size: var(--text-xl);
     font-weight: 900;
-    color: #ffffff;
+    color: var(--color-text-primary);
     line-height: 1.1;
   }
 
   .card-digit {
     font-family: var(--font-mono);
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     font-weight: 700;
     color: var(--color-text-secondary);
   }
 
   .special-char {
-    font-size: calc(16px * var(--font-scale));
-    color: var(--color-accent-warning);
+    font-size: var(--text-base);
   }
 
   .special-name {
-    font-size: var(--text-2xs);
-    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
     line-height: 1.2;
     margin-top: 2px;
   }
@@ -163,11 +179,11 @@
   }
 
   .dot-inactive {
-    fill: rgba(255, 255, 255, 0.15);
+    fill: var(--color-border-subtle);
   }
 
   .dot-center {
-    fill: #ffffff;
+    fill: var(--color-text-primary);
   }
 
   .arm-active {
@@ -179,13 +195,4 @@
   .dot-active {
     fill: var(--color-accent-primary);
   }
-
-  .special-arm {
-    stroke: var(--color-accent-warning);
-  }
-
-  .special-dot {
-    fill: var(--color-accent-warning);
-  }
-
 </style>

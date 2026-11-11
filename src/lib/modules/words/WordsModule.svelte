@@ -3,7 +3,8 @@
   import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import TextEntrySheet from '../../components/ui/TextEntrySheet.svelte';
-  import StatusBar from '../../components/ui/StatusBar.svelte';
+  import HoldToAction from '../../components/ui/HoldToAction.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
   import WordsReference from './WordsReference.svelte';
   import {
     type WordsMode,
@@ -18,12 +19,10 @@
   import { onDestroy } from 'svelte';
   import {
     PencilSimple,
-    X,
     Database,
     DownloadSimple,
     SpinnerGap
   } from 'phosphor-svelte';
-  import EmptyHint from '../../components/ui/EmptyHint.svelte';
 
   const modSettings = localSettingsService.forModule('words');
 
@@ -71,12 +70,15 @@
     }
   });
 
+  // Data and Menu options back to defaults; the mode is the variant and stays
   function handleReset() {
-    settings.vibrate(25);
     query = '';
-    toast.show('Slovník vyčištěn', { type: 'success' });
+    ignoreDiacritics = true;
+    useRegex = false;
+    onlySubstantives = true;
+    includeProperNames = false;
+    includeRuian = true;
   }
-
 
   // DB worker search (shared, single-flight gated in dbClient)
   let results = $state<WordMatch[]>([]);
@@ -144,6 +146,16 @@
     }, 120);
   });
 
+  const dbReady = $derived(versionService.state.isDbInstalled);
+
+  const resultsStatus = $derived.by(() => {
+    if (isLoading) return 'Hledám…';
+    if (results.length === 0) return 'Nic nenalezeno';
+    if (hasMore || results.length >= 1000) return '1000+ výsledků';
+    if (results.length === 1) return '1 výsledek';
+    return results.length < 5 ? `${results.length} výsledky` : `${results.length} výsledků`;
+  });
+
   function handleWordClick(w: string) {
     settings.vibrate(35);
     activeCopiedWord = w;
@@ -176,6 +188,15 @@
   title="Slovník"
   hasAlphabet={false}
   onReset={handleReset}
+  bar={{
+    empty: dbReady && !query.trim(),
+    hint: activeSubmodule === 'mask'
+      ? 'Tečka je písmeno, hvězdička cokoli.'
+      : 'Zadejte písmena k přesmyčce.',
+    status: resultsStatus,
+    // A missing dictionary blocks every result: a warning, not a status
+    warning: dbReady ? searchError : 'Slovník není stažen'
+  }}
 >
   <!-- TOP ZONE: Output (Word results list or Empty State) -->
   {#snippet output()}
@@ -222,45 +243,7 @@
           </div>
         </div>
       {:else}
-        <!-- Contextual tooltip: seated directly above input zone, dissolves on input -->
-        <EmptyHint
-          text={activeSubmodule === 'mask'
-            ? 'Tečka = jedno písmeno, hvězdička = libovolně mnoho.'
-            : 'Zadejte písmena k přesmyčce.'}
-          hidden={!!query.trim()}
-        />
-
         {#if query.trim()}
-          <!-- Results Stage Header using universal StatusBar -->
-          <StatusBar>
-          {#snippet left()}
-            {#if isLoading}
-              <span class="loading-label font-mono">
-                <SpinnerGap size={13} weight="bold" class="spin-icon" />
-                <span>Hledám...</span>
-              </span>
-            {:else if searchError}
-              <span class="error-label font-mono">{searchError}</span>
-            {:else if results.length === 0}
-              <span class="font-mono">Nic nenalezeno</span>
-            {:else if hasMore || results.length >= 1000}
-              <span class="font-mono">1000+ výsledků</span>
-            {:else}
-              <span class="font-mono">
-                {results.length} {results.length === 1 ? 'výsledek' : results.length < 5 ? 'výsledky' : 'výsledků'}
-              </span>
-            {/if}
-          {/snippet}
-
-          {#snippet right()}
-            <span class="status-badge-wrap">
-              <span class="nature-pill font-mono">
-                {activeSubmodule === 'mask' ? 'Maska' : 'Přesmyčka'}
-              </span>
-            </span>
-          {/snippet}
-        </StatusBar>
-
         <div class="results-scroll-container" data-allow-contextmenu>
           {#each results as match, index (match.word)}
             <button
@@ -285,23 +268,21 @@
   </div>
   {/snippet}
 
-  <!-- BOTTOM ZONE: Sub-Toolbar & Single-line Input Trigger -->
-  {#snippet input()}
-    <div class="zone-input-flow">
-      <!-- 1. Sub-Toolbar: Mode selector (36 px) -->
-      <div class="subtoolbar-container">
-        <SegmentedControl
-          options={WORDS_SEGMENT_OPTIONS}
-          value={activeSubmodule}
-          size="sm"
-          onChange={(m) => {
-            activeSubmodule = m;
-          }}
-          ariaLabel="Režim slovníku"
-        />
-      </div>
+  {#snippet variants()}
+    <SegmentedControl
+      options={WORDS_SEGMENT_OPTIONS}
+      value={activeSubmodule}
+      size="sm"
+      onChange={(m) => {
+        activeSubmodule = m;
+      }}
+      ariaLabel="Režim slovníku"
+    />
+  {/snippet}
 
-      <!-- 2. Single-line Input Row (42 px) - Click opens TextEntrySheet -->
+  <!-- BOTTOM ZONE: Single-line Input Trigger -->
+  {#snippet input()}
+    <!-- Single-line Input Row (42 px) - Click opens TextEntrySheet -->
       <div class="input-row">
         <button
           type="button"
@@ -323,18 +304,16 @@
         </button>
 
         {#if query}
-          <button
-            type="button"
-            class="input-clear-btn"
-            onclick={() => {
-              settings.vibrate(15);
-              query = '';
-            }}
-            title="Vymazat dotaz"
-            aria-label="Vymazat dotaz"
-          >
-            <X size={15} weight="bold" />
-          </button>
+          <div class="input-clear-slot">
+            <HoldToAction
+              variant="icon-only"
+              onAction={() => {
+                query = '';
+              }}
+              ariaLabel="Podržte pro vymazání dotazu"
+              tapWarning="Podržte pro vymazání"
+            />
+          </div>
         {/if}
 
         <button
@@ -350,13 +329,11 @@
           <PencilSimple size={16} weight="bold" />
         </button>
       </div>
-    </div>
   {/snippet}
 
   <!-- Contextual Menu Options -->
   {#snippet menuOptions()}
-    <div class="menu-group">
-      <div class="menu-group-title">Slovník</div>
+    <MenuGroup title="Slovník">
       <OptionRow
         label="Pouze podstatná jména"
         hint="Bez sloves, přídavných jmen a tvarů"
@@ -381,10 +358,9 @@
           includeRuian = val;
         }}
       />
-    </div>
+    </MenuGroup>
 
-    <div class="menu-group">
-      <div class="menu-group-title">Hledání</div>
+    <MenuGroup title="Hledání">
       <OptionRow
         label="Ignorovat diakritiku"
         hint="kocka najde i kočka"
@@ -401,7 +377,7 @@
           useRegex = val;
         }}
       />
-    </div>
+    </MenuGroup>
   {/snippet}
 
   <!-- Reference Modal -->
@@ -545,34 +521,6 @@
   }
 
   /* Results Header & Status Bar Details */
-  .status-badge-wrap {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    flex-shrink: 0;
-  }
-
-  .nature-pill {
-    font-size: calc(10.5px * var(--font-scale));
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 4px;
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    color: var(--color-accent-primary);
-    white-space: nowrap;
-  }
-
-  .loading-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--color-accent-primary);
-  }
-
-  .error-label {
-    color: var(--color-accent-danger);
-  }
 
   .results-scroll-container {
     flex: 1;
@@ -670,21 +618,6 @@
   }
 
   /* Zone Input Flow */
-  .zone-input-flow {
-    display: flex;
-    flex-direction: column;
-    gap: var(--zone-input-gap, 8px);
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .subtoolbar-container {
-    height: 36px;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
 
   /* Single-line Input Row */
   .input-row {
@@ -739,24 +672,10 @@
     font-weight: 400;
   }
 
-  .input-clear-btn {
+  .input-clear-slot {
+    flex: 0 0 34px;
+    height: 34px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: transparent;
-    border: none;
-    color: var(--color-text-muted);
-    cursor: pointer;
-    border-radius: var(--radius-xs);
-    flex-shrink: 0;
-    transition: color 0.1s ease, background-color 0.1s ease;
-  }
-
-  .input-clear-btn:hover {
-    color: var(--color-text-primary);
-    background-color: var(--color-surface-3);
   }
 
   .input-sheet-btn {
@@ -782,30 +701,6 @@
   .input-sheet-btn:active {
     transform: scale(0.96);
   }
-
-  /* Context Menu Styles */
-  .menu-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    padding-bottom: var(--space-sm);
-    border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .menu-group:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .menu-group-title {
-    font-size: var(--text-xs);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--color-text-muted);
-    margin-bottom: 2px;
-  }
-
 
   /* Keyframe animations */
   @keyframes spin {

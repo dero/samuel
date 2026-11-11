@@ -1,206 +1,54 @@
 <script lang="ts">
+  import Chassis from '../../components/ui/Chassis.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
   import { BASE_CONFIGS } from './numbersData';
-  import { settings } from '../../state/settings.svelte';
 
   interface Props {
     base: number;
-    disabled?: boolean;
     onDigit: (digit: string) => void;
   }
 
-  let { base, disabled = false, onDigit }: Props = $props();
+  let { base, onDigit }: Props = $props();
 
   const config = $derived(BASE_CONFIGS[base] ?? BASE_CONFIGS[10]);
 
-  function handlePointerDown(digit: string, e: PointerEvent) {
-    if (disabled || e.button !== 0) return;
-    settings.vibrate(20);
-    onDigit(digit);
-  }
+  // Fewer digits get bigger keys; every layout fits the 308 px budget with the variants row
+  const layout = $derived.by(() => {
+    if (base === 2) return { columns: 2, keyHeight: '84px', size: 'l' as const };
+    if (base === 3) return { columns: 3, keyHeight: '76px', size: 'l' as const };
+    if (base <= 6) return { columns: base === 4 ? 2 : 3, keyHeight: '62px', size: 'm' as const };
+    if (base <= 9) return { columns: base === 9 ? 3 : 4, keyHeight: '56px', size: 'm' as const };
+    return { columns: base === 10 ? 3 : 4, keyHeight: '52px', size: 'm' as const };
+  });
+
+  // Decimal is a telephone pad with a wide 0, the other bases go in digit order
+  const isDecimal = $derived(base === 10);
+  const keys = $derived(isDecimal ? config.digits.slice(1) : config.digits);
+  const fillerSpan = $derived((layout.columns - (keys.length % layout.columns)) % layout.columns);
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-  class="numpad-container layout-base-{base}"
-  class:is-disabled={disabled}
-  oncontextmenu={(e) => e.preventDefault()}
->
-  {#if base === 10}
-    <!-- Decimal only: Standard Telephone Keypad (1-9, 0 centered) -->
-    <div class="grid-dec">
-      {#each ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as digit}
-        <button
-          type="button"
-          class="key-btn key-dec"
-          {disabled}
-          onpointerdown={(e) => handlePointerDown(digit, e)}
-        >
-          <span class="key-label">{digit}</span>
-        </button>
-      {/each}
-      <button
-        type="button"
-        class="key-btn key-dec key-zero"
-        {disabled}
-        onpointerdown={(e) => handlePointerDown('0', e)}
-      >
-        <span class="key-label">0</span>
-      </button>
+<Chassis columns={layout.columns} keyHeight={layout.keyHeight}>
+  {#each keys as digit (digit)}
+    <Keycap size={layout.size} label={digit} onPress={() => onDigit(digit)} />
+  {/each}
+
+  {#if isDecimal}
+    <div class="key-wide">
+      <Keycap size={layout.size} label="0" onPress={() => onDigit('0')} />
     </div>
-  {:else}
-    <!-- All other bases: Strict sequential order 0..9, A..F (only valid digits) -->
-    <div
-      class="grid-sequential"
-      class:cols-2={base === 2 || base === 4}
-      class:cols-3={base === 3 || base === 5 || base === 6 || base === 9}
-      class:cols-4={base === 7 || base === 8 || base >= 11}
-    >
-      {#each config.digits as digit}
-        {@const isAlpha = ['A', 'B', 'C', 'D', 'E', 'F'].includes(digit)}
-        <button
-          type="button"
-          class="key-btn"
-          class:key-bin={base === 2}
-          class:key-ter={base === 3}
-          class:key-medium={base >= 4 && base <= 6}
-          class:key-compact={base >= 7 && base <= 9}
-          class:key-hex={base >= 11}
-          class:key-alpha={isAlpha}
-          {disabled}
-          onpointerdown={(e) => handlePointerDown(digit, e)}
-        >
-          <span class="key-label">{digit}</span>
-        </button>
-      {/each}
-    </div>
+  {:else if fillerSpan > 0}
+    <div class="grid-filler" style:grid-column={`span ${fillerSpan}`} aria-hidden="true"></div>
   {/if}
-</div>
+</Chassis>
 
 <style>
-  .numpad-container {
-    width: 100%;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
+  .key-wide {
+    grid-column: 1 / -1;
   }
 
-  .key-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .grid-filler {
     background-color: var(--color-surface-2);
-    color: var(--color-text-primary);
-    border: none;
+    opacity: 0.35;
     border-radius: 2px;
-    cursor: pointer;
-    touch-action: none;
-    min-height: var(--tap-min-size);
-    font-family: var(--font-mono, monospace);
-    font-weight: 700;
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.08s ease, box-shadow 0.08s ease, color 0.08s ease;
-    box-sizing: border-box;
-  }
-
-  .key-btn:active:not(:disabled) {
-    background-color: var(--color-surface-active);
-    color: var(--color-accent-primary);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: none;
-  }
-
-  .key-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    background-color: var(--color-surface-2);
-    border-color: transparent;
-  }
-
-  .key-alpha {
-    color: var(--color-accent-primary);
-    background-color: rgba(0, 210, 255, 0.06);
-  }
-
-  /* Grid Layouts */
-
-  /* Sequential grid for bases other than 10 */
-  .grid-sequential {
-    display: grid;
-    gap: 2px;
-    padding: 2px;
-    width: 100%;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background-color: var(--color-bg-canvas);
-    border: 1px solid var(--color-border-subtle);
-    box-sizing: border-box;
-  }
-
-  .grid-sequential.cols-2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .grid-sequential.cols-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .grid-sequential.cols-4 {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2px;
-  }
-
-  /* Base 2: Binary */
-  .key-bin {
-    height: 84px;
-    font-size: calc(32px * var(--font-scale));
-  }
-
-  /* Base 3: Ternary */
-  .key-ter {
-    height: 76px;
-    font-size: calc(28px * var(--font-scale));
-  }
-
-  /* Medium keys (Bases 4, 5, 6) */
-  .key-medium {
-    height: 62px;
-    font-size: var(--text-xl);
-  }
-
-  /* Compact keys (Bases 7, 8, 9) */
-  .key-compact {
-    height: 56px;
-    font-size: var(--text-lg);
-  }
-
-  /* Hex keys (Bases 11..16) */
-  .key-hex {
-    height: 48px;
-    font-size: var(--text-lg);
-  }
-
-  /* Base 10: Telephone Numpad (3 cols) */
-  .grid-dec {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    padding: 2px;
-    width: 100%;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background-color: var(--color-bg-canvas);
-    border: 1px solid var(--color-border-subtle);
-    box-sizing: border-box;
-  }
-
-  .key-dec {
-    height: 52px;
-    font-size: var(--text-xl);
-  }
-
-  .key-zero {
-    grid-column: 1 / -1; /* Full-width bottom row */
   }
 </style>

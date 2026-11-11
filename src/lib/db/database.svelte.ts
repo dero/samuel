@@ -4,7 +4,7 @@
  * Historically this module owned an in-process sql.js instance loaded from a
  * CacheStorage buffer. It now simply forwards to `dbClient`, which talks to
  * the single long-lived DB worker (OPFS-backed SQLite). Kept as a separate
- * module so existing call sites (StatesModule, FlagDetailModal, versionService)
+ * module so existing call sites (StatesModule, FlagDetail, versionService)
  * don't need to change their import paths.
  */
 

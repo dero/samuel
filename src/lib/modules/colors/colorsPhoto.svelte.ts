@@ -8,8 +8,11 @@ class ColorsPhoto {
   source = $state.raw<ImageData | null>(null);
   /** Object URL of the original file, for the podklad sheet preview. */
   previewUrl = $state<string | null>(null);
+  /** Set synchronously, so the podklad is not "missing" while the photo decodes. */
+  loading = $state(false);
 
   async load(file: File) {
+    this.loading = true;
     const url = URL.createObjectURL(file);
     try {
       const img = await decodeImage(url);
@@ -28,6 +31,8 @@ class ColorsPhoto {
     } catch {
       URL.revokeObjectURL(url);
       toast.show('Fotku nelze načíst', { type: 'danger' });
+    } finally {
+      this.loading = false;
     }
   }
 

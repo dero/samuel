@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { nonogramState } from './nonogramState.svelte';
+  import { nonogramState, type ClueAxis } from './nonogramState.svelte';
+  import { isCluePiece } from './nonogramNotation';
   import { navigation } from '../../state/navigation.svelte';
   import { settings } from '../../state/settings.svelte';
 
@@ -15,50 +16,42 @@
 
   let tableRef: HTMLDivElement | null = $state(null);
 
+  interface CluePiece {
+    text: string;
+    invalid: boolean;
+    draft: boolean;
+  }
+
   function handleCornerClick() {
     settings.vibrate(20);
     navigation.openMenu();
   }
 
-  // Dynamically compute cell size:
-  // For small nonograms, large cells (up to 40px) fill the space nicely.
-  // For larger nonograms, base size of 22px provides room for 2-digit numbers (e.g. 15, 20),
-  // while PanZoomViewport scales the entire grid down seamlessly on reset so it always fits 100%.
+  function handleClueClick(type: ClueAxis, index: number) {
+    settings.vibrate(20);
+    nonogramState.selectClue(type, index);
+  }
+
+  // For small nonograms, large cells (up to 40px) fill the space nicely. For larger ones,
+  // 22px leaves room for 2-digit numbers and PanZoomViewport scales the board to fit.
   const cellSize = $derived.by(() => {
     const rawSize = Math.floor(Math.min(280 / width, 240 / height));
     return Math.max(22, Math.min(rawSize, 40));
   });
 
-  function handleColClueClick(c: number) {
-    nonogramState.selectClue('col', c);
+  function isSelected(type: ClueAxis, index: number): boolean {
+    return nonogramState.selected.type === type && nonogramState.selected.index === index;
   }
 
-  function handleRowClueClick(r: number) {
-    nonogramState.selectClue('row', r);
-  }
-
-  function getColCluesDisplay(c: number): string[] {
-    const list = [...(nonogramState.colClues[c] || [])];
-    if (
-      nonogramState.selected.type === 'col' &&
-      nonogramState.selected.index === c &&
-      nonogramState.draft
-    ) {
-      list.push(parseInt(nonogramState.draft, 10));
-    }
-    return list.length > 0 ? list.map(String) : ['·'];
-  }
-
-  function getRowCluesDisplay(r: number): string[] {
-    const list = [...(nonogramState.rowClues[r] || [])];
-    if (
-      nonogramState.selected.type === 'row' &&
-      nonogramState.selected.index === r &&
-      nonogramState.draft
-    ) {
-      list.push(parseInt(nonogramState.draft, 10));
-    }
-    return list.length > 0 ? list.map(String) : ['·'];
+  /** What the clue shows: its numbers, invalid pieces marked, the number being typed underlined. */
+  function cluePieces(type: ClueAxis, index: number): CluePiece[] {
+    const cell = (type === 'row' ? nonogramState.parsed.rows : nonogramState.parsed.cols)[index] ?? [];
+    const draft = isSelected(type, index) ? nonogramState.draft : null;
+    return cell.map((piece, i) => ({
+      text: piece || '∅',
+      invalid: !isCluePiece(piece),
+      draft: i === draft
+    }));
   }
 
   let lastClueKey = '';
@@ -80,120 +73,95 @@
   });
 </script>
 
-<div class="nonogram-board-wrapper">
-  <div bind:this={tableRef} class="nonogram-table">
-    <!-- Top-Left Corner: Dimensions info (interactive: opens dimensions menu) -->
-    <button
-      type="button"
-      class="corner-cell"
-      onclick={handleCornerClick}
-      title="Nastavit rozměry nonogramu (otevře menu)"
-      aria-label="Rozměry {width} × {height}. Klepnutím otevřete nastavení rozměrů"
-    >
-      <span class="dim-badge">{width}×{height}</span>
-    </button>
+{#snippet clueList(pieces: CluePiece[])}
+  {#each pieces as piece, i (i)}
+    <span class="clue-val" class:is-invalid={piece.invalid} class:is-draft={piece.draft}>{piece.text}</span>
+  {:else}
+    <span class="clue-val is-zero">0</span>
+  {/each}
+{/snippet}
 
-    <!-- Top-Right: Column Clues Headers -->
-    <div
-      class="col-headers"
-      style="grid-template-columns: repeat({width}, {cellSize}px);"
-    >
+<div bind:this={tableRef} class="nonogram-table">
+  <!-- Top-left corner: the size, opens the Menu with the steppers -->
+  <button
+    type="button"
+    class="corner-cell"
+    onclick={handleCornerClick}
+    title="Rozměry v Menu"
+    aria-label="Rozměry {width} × {height}. Klepnutím otevřete Menu"
+  >
+    <span class="dim-badge">{width}×{height}</span>
+  </button>
+
+  <div class="col-headers" style="grid-template-columns: repeat({width}, {cellSize}px);">
+    {#each Array(width) as _, c}
+      <button
+        type="button"
+        class="col-clue-btn"
+        class:is-selected={isSelected('col', c)}
+        style="width: {cellSize}px;"
+        data-clue-type="col"
+        data-clue-index={c}
+        onclick={() => handleClueClick('col', c)}
+        title="Sloupec {c + 1}"
+      >
+        <div class="col-clue-stack">
+          {@render clueList(cluePieces('col', c))}
+        </div>
+      </button>
+    {/each}
+  </div>
+
+  <div class="row-headers" style="grid-template-rows: repeat({height}, {cellSize}px);">
+    {#each Array(height) as _, r}
+      <button
+        type="button"
+        class="row-clue-btn"
+        class:is-selected={isSelected('row', r)}
+        style="height: {cellSize}px;"
+        data-clue-type="row"
+        data-clue-index={r}
+        onclick={() => handleClueClick('row', r)}
+        title="Řádek {r + 1}"
+      >
+        <div class="row-clue-line">
+          {@render clueList(cluePieces('row', r))}
+        </div>
+      </button>
+    {/each}
+  </div>
+
+  <div
+    class="cells-grid"
+    style="grid-template-columns: repeat({width}, {cellSize}px); grid-template-rows: repeat({height}, {cellSize}px);"
+  >
+    {#each Array(height) as _, r}
       {#each Array(width) as _, c}
-        {@const isSelected = nonogramState.selected.type === 'col' && nonogramState.selected.index === c}
-        {@const clues = getColCluesDisplay(c)}
-        <button
-          type="button"
-          class="col-clue-btn"
-          class:is-selected={isSelected}
-          style="width: {cellSize}px;"
-          data-clue-type="col"
-          data-clue-index={c}
-          onclick={() => handleColClueClick(c)}
-          title="Sloupec {c + 1}"
+        {@const solvedVal = nonogramState.solution?.[r]?.[c]}
+        <div
+          class="nonogram-cell"
+          class:is-filled={solvedVal === 1}
+          class:is-empty={solvedVal === 0}
+          class:is-highlighted={isSelected('col', c) || isSelected('row', r)}
+          style="width: {cellSize}px; height: {cellSize}px;"
         >
-          <div class="col-clue-stack">
-            {#each clues as cl}
-              <span class="clue-val">{cl}</span>
-            {/each}
-          </div>
-        </button>
+          {#if solvedVal === 0}
+            <span class="empty-dot">·</span>
+          {/if}
+        </div>
       {/each}
-    </div>
-
-    <!-- Bottom-Left: Row Clues Headers -->
-    <div
-      class="row-headers"
-      style="grid-template-rows: repeat({height}, {cellSize}px);"
-    >
-      {#each Array(height) as _, r}
-        {@const isSelected = nonogramState.selected.type === 'row' && nonogramState.selected.index === r}
-        {@const clues = getRowCluesDisplay(r)}
-        <button
-          type="button"
-          class="row-clue-btn"
-          class:is-selected={isSelected}
-          style="height: {cellSize}px;"
-          data-clue-type="row"
-          data-clue-index={r}
-          onclick={() => handleRowClueClick(r)}
-          title="Řádek {r + 1}"
-        >
-          <div class="row-clue-line">
-            {#each clues as cl}
-              <span class="clue-val">{cl}</span>
-            {/each}
-          </div>
-        </button>
-      {/each}
-    </div>
-
-    <!-- Bottom-Right: Main Cell Grid -->
-    <div
-      class="cells-grid"
-      style="grid-template-columns: repeat({width}, {cellSize}px); grid-template-rows: repeat({height}, {cellSize}px);"
-    >
-      {#each Array(height) as _, r}
-        {#each Array(width) as _, c}
-          {@const isColActive = nonogramState.selected.type === 'col' && nonogramState.selected.index === c}
-          {@const isRowActive = nonogramState.selected.type === 'row' && nonogramState.selected.index === r}
-          {@const solvedVal = nonogramState.solution?.[r]?.[c]}
-          {@const isFilled = solvedVal === 1}
-          {@const isEmpty = solvedVal === 0}
-
-          <div
-            class="nonogram-cell"
-            class:is-filled={isFilled}
-            class:is-empty={isEmpty}
-            class:is-highlighted={isColActive || isRowActive}
-            style="width: {cellSize}px; height: {cellSize}px;"
-          >
-            {#if isEmpty}
-              <span class="empty-dot">·</span>
-            {/if}
-          </div>
-        {/each}
-      {/each}
-    </div>
+    {/each}
   </div>
 </div>
 
 <style>
-  .nonogram-board-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 8px;
-  }
-
   .nonogram-table {
     display: grid;
     grid-template-columns: auto auto;
     grid-template-rows: auto auto;
-    background-color: #000000;
-    border: 2.5px solid rgba(255, 255, 255, 0.7);
+    background-color: var(--color-bg-canvas);
+    border: 2px solid var(--color-border-strong);
     border-radius: var(--radius-xs);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.85);
     overflow: hidden;
   }
 
@@ -206,8 +174,8 @@
     padding: 4px;
     background-color: var(--color-surface-sunken);
     border: none;
-    border-right: 2px solid rgba(255, 255, 255, 0.65);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.65);
+    border-right: 2px solid var(--color-border-strong);
+    border-bottom: 2px solid var(--color-border-strong);
     min-width: 48px;
     min-height: 44px;
     box-sizing: border-box;
@@ -217,25 +185,15 @@
     user-select: none;
   }
 
-  .corner-cell:hover {
-    background-color: var(--color-surface-2);
-  }
-
   .corner-cell:active {
     background-color: var(--color-surface-active);
   }
 
-  .corner-cell:hover .dim-badge,
-  .corner-cell:active .dim-badge {
-    color: var(--color-accent-primary);
-  }
-
   .dim-badge {
-    font-size: calc(11px * var(--font-scale));
-    font-family: var(--font-mono, monospace);
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
     font-weight: 700;
     color: var(--color-text-secondary);
-    transition: color 0.12s ease;
   }
 
   .col-headers {
@@ -243,32 +201,43 @@
     grid-row: 1;
     display: grid;
     background-color: var(--color-surface-1);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.65);
+    border-bottom: 2px solid var(--color-border-strong);
+  }
+
+  .col-clue-btn,
+  .row-clue-btn {
+    display: flex;
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background-color 0.1s;
+    box-sizing: border-box;
   }
 
   .col-clue-btn {
     padding: 4px 1px;
-    display: flex;
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
-    background: transparent;
-    border: none;
-    border-right: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: background-color 0.1s;
+    border-right: 1px solid var(--color-border-subtle);
     min-height: 44px;
-    box-sizing: border-box;
   }
 
-  .col-clue-btn.is-selected {
-    background-color: rgba(0, 210, 255, 0.22) !important;
-    color: var(--color-accent-primary) !important;
-    outline: 2px solid var(--color-accent-primary);
-    outline-offset: -2px;
-    z-index: 2;
+  .row-clue-btn {
+    padding: 1px 6px;
+    align-items: center;
+    justify-content: flex-end;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  /* Fill and ring: the selection is never shown by colour alone */
+  .col-clue-btn.is-selected,
+  .row-clue-btn.is-selected {
+    background-color: var(--color-accent-primary-subtle);
+    color: var(--color-accent-primary);
+    box-shadow: inset 0 0 0 2px var(--color-accent-primary);
   }
 
   .col-clue-stack {
@@ -283,31 +252,8 @@
     grid-row: 2;
     display: grid;
     background-color: var(--color-surface-1);
-    border-right: 2px solid rgba(255, 255, 255, 0.65);
+    border-right: 2px solid var(--color-border-strong);
     min-width: 48px;
-  }
-
-  .row-clue-btn {
-    padding: 1px 6px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: background-color 0.1s;
-    box-sizing: border-box;
-  }
-
-  .row-clue-btn.is-selected {
-    background-color: rgba(0, 210, 255, 0.22) !important;
-    color: var(--color-accent-primary) !important;
-    outline: 2px solid var(--color-accent-primary);
-    outline-offset: -2px;
-    z-index: 2;
   }
 
   .row-clue-line {
@@ -317,10 +263,24 @@
   }
 
   .clue-val {
-    font-family: var(--font-mono, monospace);
-    font-size: calc(11px * var(--font-scale));
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
     font-weight: 700;
     line-height: 1;
+  }
+
+  .clue-val.is-zero {
+    color: var(--color-text-muted);
+  }
+
+  .clue-val.is-draft {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .clue-val.is-invalid {
+    color: var(--color-accent-warning);
+    text-decoration: underline wavy;
   }
 
   .cells-grid {
@@ -335,27 +295,28 @@
     align-items: center;
     justify-content: center;
     background-color: var(--color-surface-1);
-    border-right: 1px solid rgba(255, 255, 255, 0.12);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-right: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--color-border-subtle);
     transition: background-color 0.15s ease;
     box-sizing: border-box;
   }
 
   .nonogram-cell.is-highlighted {
-    background-color: rgba(0, 210, 255, 0.05);
-  }
-
-  .nonogram-cell.is-filled {
-    background-color: #ffffff !important;
+    background-color: var(--color-accent-primary-subtle);
   }
 
   .nonogram-cell.is-empty {
     background-color: var(--color-surface-sunken);
   }
 
+  /* The solution's black squares, drawn light on the dark board */
+  .nonogram-cell.is-filled {
+    background-color: var(--color-text-primary);
+  }
+
   .empty-dot {
     color: var(--color-text-muted);
-    font-size: calc(14px * var(--font-scale));
+    font-size: var(--text-sm);
     font-weight: 700;
     user-select: none;
     line-height: 1;

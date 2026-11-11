@@ -87,7 +87,7 @@
 
 <button
   type="button"
-  class="key-btn roman-egg-btn"
+  class="roman-egg-btn"
   class:is-collapsing={templeState === 'collapsing'}
   class:is-collapsed={templeState === 'collapsed'}
   class:is-rebuilding={templeState === 'rebuilding'}
@@ -147,19 +147,15 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 58px;
+    height: var(--key-height);
     background-color: var(--color-surface-2);
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
     border: none;
     border-radius: 2px;
     cursor: pointer;
     touch-action: none;
-    min-height: var(--tap-min-size);
-    font-family: var(--font-mono, monospace);
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    transition: background-color 0.08s ease, box-shadow 0.08s ease;
+    font-family: var(--font-mono);
+    transition: background-color 0.08s ease;
     box-sizing: border-box;
     padding: var(--space-2xs) 0;
     user-select: none;
@@ -175,9 +171,9 @@
   }
 
   .key-subval {
-    font-size: var(--text-2xs);
+    font-size: var(--text-xs);
     font-weight: 600;
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
     line-height: 1;
     margin-top: 3px;
     letter-spacing: 0.5px;
@@ -186,8 +182,6 @@
 
   .roman-egg-btn:active:not(.is-collapsing):not(.is-collapsed):not(.is-rebuilding) {
     background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-    transform: none;
   }
 
   /* Earthquake animation */

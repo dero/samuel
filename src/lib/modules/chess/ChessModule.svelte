@@ -1,145 +1,153 @@
 <script lang="ts">
   import { ArrowUUpLeft, ArrowUUpRight } from 'phosphor-svelte';
   import ModuleShell from '../../components/layout/ModuleShell.svelte';
-  import SegmentedControl from '../../components/ui/SegmentedControl.svelte';
-  import HoldToAction from '../../components/ui/HoldToAction.svelte';
+  import SegmentedControl, { type SegmentOption } from '../../components/ui/SegmentedControl.svelte';
+  import SplitBottomRow from '../../components/ui/SplitBottomRow.svelte';
+  import Keycap from '../../components/ui/Keycap.svelte';
+  import MenuGroup from '../../components/ui/MenuGroup.svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
   import ChessBoard from './ChessBoard.svelte';
   import PieceTray from './PieceTray.svelte';
   import RulesPanel from './RulesPanel.svelte';
   import ChessReference from './ChessReference.svelte';
   import { chessState, type ChessMode } from './chessState.svelte';
-  import { positionProblem } from './chessData';
-  import { settings } from '../../state/settings.svelte';
 
-  const modeOptions: { id: ChessMode; label: string }[] = [
+  const modeOptions: SegmentOption<ChessMode>[] = [
     { id: 'free', label: 'Volně' },
     { id: 'rules', label: 'Pravidla' }
   ];
 
-  // An empty board is a deliberate start; a half-built one that cannot be played needs a look
-  const positionAttention = $derived(
-    chessState.parts.board.some(Boolean) ? positionProblem(chessState.current.fen) : null
-  );
-
-  // Stop a running search and drop a stuck drag when the module closes.
-  $effect(() => {
-    return () => {
-      chessState.cancelSolve();
-      chessState.drag = null;
-    };
-  });
-
   // ─── Undo / redo with auto-repeat while held ─────────────
 
   let repeatTimer: ReturnType<typeof setTimeout> | null = null;
+  // A pointer is down on the history keys; a keyboard press steps once
+  let pointerHeld = false;
 
   function stopRepeat() {
+    pointerHeld = false;
     if (repeatTimer) clearTimeout(repeatTimer);
     repeatTimer = null;
   }
 
-  function startRepeat(e: PointerEvent, step: () => void, enabled: boolean) {
-    e.preventDefault();
-    if (!enabled) return;
-    settings.vibrate(30);
+  // The Keycap vibrated on the press; the repeated steps stay silent
+  function stepAndRepeat(step: () => void, canStep: () => boolean) {
     step();
-    stopRepeat();
+    if (repeatTimer) clearTimeout(repeatTimer);
+    repeatTimer = null;
+    if (!pointerHeld) return;
     const tick = (delay: number) => {
       repeatTimer = setTimeout(() => {
+        if (!canStep()) return stopRepeat();
         step();
         tick(80);
       }, delay);
     };
     tick(420);
   }
+
+  // Stop a running search, a repeat and a stuck drag when the module closes.
+  $effect(() => {
+    return () => {
+      stopRepeat();
+      chessState.cancelSolve();
+      chessState.drag = null;
+    };
+  });
 </script>
 
 <svelte:window onpointerup={stopRepeat} onpointercancel={stopRepeat} onblur={stopRepeat} />
 
 <ModuleShell
   title="Šachy"
+  hasWarning={chessState.flipped}
   onReset={() => chessState.resetModule()}
   podklad={{
     kind: 'position',
     required: false,
-    empty: false,
+    empty: !chessState.notation,
     title: 'Pozice nebo partie',
     description: 'FEN, nebo tahy česky i anglicky.',
-    placeholder: 'FEN, nebo tahy: 1. e4 e5 2. Jf3 Jc6 …',
+    placeholder: 'Např. 1. e4 e5 2. Jf3 Jc6',
+    format: 'Tahy česky i anglicky, nebo pozice ve FEN.',
     autocapitalize: 'none',
-    copyable: true,
-    attention: positionAttention,
-    value: chessState.current.fen,
-    onSave: (val) => {
-      const text = val.trim();
-      if (text && text !== chessState.current.fen) chessState.importText(text);
-    }
+    attention: chessState.attention,
+    value: chessState.notation,
+    onSave: (val) => chessState.importNotation(val)
+  }}
+  bar={{
+    empty: chessState.isEmpty,
+    hint: 'Položte figury, nebo zvolte Výchozí.',
+    warning: chessState.notationWarning,
+    status: chessState.status
   }}
 >
   {#snippet output()}
     <ChessBoard />
   {/snippet}
 
-  {#snippet input()}
-    <div class="zone-input-flow">
-      <div class="subtoolbar-container">
-        <SegmentedControl
-          size="sm"
-          options={modeOptions}
-          value={chessState.mode}
-          ariaLabel="Režim šachovnice"
-          onChange={(id) => chessState.setMode(id)}
-        />
-      </div>
+  {#snippet variants()}
+    <SegmentedControl
+      size="sm"
+      options={modeOptions}
+      value={chessState.mode}
+      ariaLabel="Režim šachovnice"
+      onChange={(id) => chessState.setMode(id)}
+    />
+  {/snippet}
 
+  {#snippet input()}
+    <div class="chess-input">
       {#if chessState.mode === 'free'}
         <PieceTray />
       {:else}
         <RulesPanel />
       {/if}
 
-      <div class="keypad-utility-row-3col history-row">
-        <HoldToAction
-          onAction={() => chessState.clearBoard()}
-          ariaLabel="Vyprázdnit šachovnici podržením"
+      <!-- Bottom row 1+2: [Vyprázdnit] [Zpět | Vpřed], the pair walks the game in reading order -->
+      <div
+        class="history-row"
+        onpointerdowncapture={(e) => {
+          if (e.pointerType !== 'mouse' || e.button === 0) pointerHeld = true;
+        }}
+      >
+        <SplitBottomRow
+          clearDisabled={chessState.isEmpty && chessState.orphans.length === 0}
+          onClear={() => chessState.clearBoard()}
+          clearAriaLabel="Vyprázdnit šachovnici podržením"
           tapWarning="Podržte pro prázdnou šachovnici"
-        />
-
-        <button
-          type="button"
-          class="utility-btn history-btn"
+        >
+          {#snippet pair()}
+        <Keycap
+          ariaLabel="Zpět"
+          title="Zpět, podržením rychle"
           disabled={!chessState.canUndo}
-          aria-label="Zpět"
-          onpointerdown={(e) => startRepeat(e, () => chessState.undo(), chessState.canUndo)}
-          onpointerleave={stopRepeat}
+          onPress={() => stepAndRepeat(() => chessState.undo(), () => chessState.canUndo)}
         >
-          <span class="btn-inner">
+          <span class="history-key">
             <ArrowUUpLeft size={18} weight="bold" />
-            <span class="btn-label">Zpět</span>
+            <span class="history-label">Zpět</span>
           </span>
-        </button>
+        </Keycap>
 
-        <button
-          type="button"
-          class="utility-btn history-btn"
+        <Keycap
+          ariaLabel="Vpřed"
+          title="Vpřed, podržením rychle"
           disabled={!chessState.canRedo}
-          aria-label="Vpřed"
-          onpointerdown={(e) => startRepeat(e, () => chessState.redo(), chessState.canRedo)}
-          onpointerleave={stopRepeat}
+          onPress={() => stepAndRepeat(() => chessState.redo(), () => chessState.canRedo)}
         >
-          <span class="btn-inner">
+          <span class="history-key">
             <ArrowUUpRight size={18} weight="bold" />
-            <span class="btn-label">Vpřed</span>
+            <span class="history-label">Vpřed</span>
           </span>
-        </button>
+        </Keycap>
+          {/snippet}
+        </SplitBottomRow>
       </div>
     </div>
   {/snippet}
 
   {#snippet menuOptions()}
-    <div class="menu-group">
-      <div class="menu-group-title">Šachovnice</div>
+    <MenuGroup title="Šachovnice">
       <OptionRow
         label="Otočit šachovnici"
         hint="Černý dole"
@@ -168,7 +176,7 @@
           chessState.saveToStorage();
         }}
       />
-    </div>
+    </MenuGroup>
   {/snippet}
 
   {#snippet reference()}
@@ -177,61 +185,25 @@
 </ModuleShell>
 
 <style>
-  /* Undo and redo are a symmetric pair, unlike the usual wide Space key in the middle. */
-  .history-row {
-    grid-template-columns: 1fr 1.2fr 1.2fr;
-  }
-
-  .history-btn {
-    background-color: var(--color-surface-2);
-    color: var(--color-text-primary);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    touch-action: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .history-btn:active:not(:disabled) {
-    background-color: var(--color-surface-active);
-    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.7);
-  }
-
-  .history-btn:disabled {
-    cursor: not-allowed;
-  }
-
-  .btn-inner {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .history-btn:disabled .btn-inner {
-    opacity: 0.48;
-  }
-
-  .btn-label {
-    font-size: var(--text-sm);
-    font-weight: 600;
-  }
-
-  .menu-group {
+  .chess-input {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-    background-color: var(--color-surface-1);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
+    gap: var(--zone-input-gap);
+    width: 100%;
   }
 
-  .menu-group-title {
-    font-size: calc(13px * var(--font-scale));
+  .history-row {
+    width: 100%;
+  }
+
+  .history-key {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .history-label {
+    font-size: var(--key-s);
     font-weight: 700;
-    color: var(--color-text-primary);
   }
-
-
 </style>
