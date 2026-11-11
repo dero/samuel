@@ -177,12 +177,12 @@ export const MODULE_SHORTCUTS: ModuleShortcut[] = [
   },
   {
     id: 'roman',
-    name: 'Římská čísla',
+    name: 'Římská',
     icon: 'roman',
     group: 'coding',
     target: 'numbers',
     via: 'v Číslech',
-    keywords: ['římské číslice', 'roman', 'latinská čísla'],
+    keywords: ['římská čísla', 'římské číslice', 'roman', 'latinská čísla'],
     preset: { source: 'roman', target: 10 }
   },
   {

@@ -18,7 +18,8 @@
     CheckCircle,
     DownloadSimple,
     ShieldCheck,
-    ShieldWarning
+    ShieldWarning,
+    CaretDown
   } from 'phosphor-svelte';
   import OptionRow from '../../components/ui/OptionRow.svelte';
 
@@ -106,11 +107,76 @@
       : null
   );
 
+  /**
+   * Versioned parts of the app, one row each. Everyday use only needs "current or not";
+   * exact versions live under Diagnostika. New parts (map, OCR…) add a row here.
+   */
+  type PartState = 'ok' | 'update' | 'missing' | 'busy' | 'unknown';
+  interface VersionedPart {
+    id: string;
+    name: string;
+    detail?: string;
+    state: PartState;
+    actionLabel: string;
+    onDownload: () => void;
+    onCancel?: () => void;
+  }
+
+  let parts = $derived.by<VersionedPart[]>(() => {
+    const checked = vs.lastCheck === 'ok';
+    const app: VersionedPart = {
+      id: 'app',
+      name: 'Aplikace',
+      state:
+        vs.status === 'downloading_app'
+          ? 'busy'
+          : vs.appUpdateAvailable
+            ? 'update'
+            : checked
+              ? 'ok'
+              : 'unknown',
+      actionLabel: 'Aktualizovat aplikaci',
+      onDownload: handleUpdateAppOnly
+    };
+    const db: VersionedPart = {
+      id: 'db',
+      name: 'Slovník',
+      detail: versionService.formattedDbSize,
+      state:
+        vs.status === 'downloading_db'
+          ? 'busy'
+          : !vs.isDbInstalled
+            ? 'missing'
+            : vs.dbUpdateAvailable
+              ? 'update'
+              : checked
+                ? 'ok'
+                : 'unknown',
+      actionLabel: vs.isDbInstalled ? 'Aktualizovat slovník' : 'Stáhnout slovník',
+      onDownload: handleDownloadDbManual,
+      onCancel: () => versionService.cancelDownload()
+    };
+    return [app, db];
+  });
+
+  async function handleUpdateAppOnly() {
+    try {
+      settings.vibrate(30);
+      await versionService.updateApp();
+    } catch (err: any) {
+      toast.show(`Chyba aktualizace: ${err?.message || 'Neznámá chyba'}`, { type: 'danger' });
+    }
+  }
+
+  let showDiagnostics = $state(false);
+
   async function handleDownloadDbManual() {
     try {
       settings.vibrate(20);
-      toast.show('Stahuji slovník…', { type: 'info' });
-      if (await versionService.downloadDb()) toast.show('Slovník stažen', { type: 'success' });
+      const wasInstalled = vs.isDbInstalled;
+      if (await versionService.downloadDb()) {
+        toast.show(wasInstalled ? 'Slovník aktualizován' : 'Slovník stažen', { type: 'success' });
+      }
     } catch (err: any) {
       toast.show(`Chyba: ${err?.message || 'Nepodařilo se stáhnout'}`, { type: 'danger' });
     }
@@ -196,27 +262,44 @@
         <p class="card-desc">Aplikace i data fungují offline.</p>
       </div>
 
-      <!-- Verze: u dostupné aktualizace rovnou i nová verze -->
-      <div class="version-box">
-        <div class="sys-row">
-          <span>Verze aplikace</span>
-          <span class="version-values">
-            <span class="version-badge">{formattedAppVersion}</span>
-            {#if newAppVersion}
-              <span class="version-new">nová {newAppVersion}</span>
+      <!-- One row per versioned part: current ✓, or a download key that updates just that part -->
+      <ul class="parts-list">
+        {#each parts as part (part.id)}
+          <li class="part-row">
+            <span class="part-name">
+              {part.name}
+              {#if part.detail}<span class="part-detail">{part.detail}</span>{/if}
+            </span>
+            {#if part.state === 'busy'}
+              <span class="part-progress">
+                <SpinnerGap size={16} class="spin" />
+                {vs.progress} %
+              </span>
+              {#if part.onCancel && vs.status === 'downloading_db'}
+                <button type="button" class="part-cancel" onclick={part.onCancel}>Zrušit</button>
+              {/if}
+            {:else if part.state === 'update' || part.state === 'missing'}
+              <button
+                type="button"
+                class="part-download"
+                aria-label={part.actionLabel}
+                title={part.actionLabel}
+                disabled={versionService.isBusy}
+                onclick={part.onDownload}
+              >
+                <DownloadSimple size={18} weight="bold" />
+                {#if part.state === 'missing'}<span>Stáhnout</span>{/if}
+              </button>
+            {:else if part.state === 'ok'}
+              <span class="part-ok" role="img" aria-label="Aktuální" title="Aktuální">
+                <CheckCircle size={22} weight="fill" />
+              </span>
+            {:else}
+              <span class="part-unknown" title="Neověřeno">neověřeno</span>
             {/if}
-          </span>
-        </div>
-        <div class="sys-row">
-          <span>Slovník</span>
-          <span class="version-values">
-            <span class="version-badge">{formattedDbVersion}</span>
-            {#if newDbVersion}
-              <span class="version-new">nový {newDbVersion}</span>
-            {/if}
-          </span>
-        </div>
-      </div>
+          </li>
+        {/each}
+      </ul>
 
       {#if vs.error}
         <div class="update-error-banner">
@@ -224,7 +307,7 @@
         </div>
       {/if}
 
-      <!-- Jedno tlačítko, které se mění na místě: Zkontrolovat → Aktualizovat → Stahuji -->
+      <!-- Jedno tlačítko, které se mění na místě: Zkontrolovat → Aktualizovat vše → Stahuji -->
       <div class="update-actions-cluster">
         {#if vs.updateAvailable}
           <button class="update-action-btn" disabled={versionService.isBusy} onclick={handleApplyUpdate}>
@@ -233,14 +316,9 @@
               <span>Stahuji ({vs.progress} %)…</span>
             {:else}
               <RocketLaunch size={16} weight="bold" />
-              <span>{vs.error ? 'Zkusit znovu' : 'Aktualizovat'}</span>
+              <span>{vs.error ? 'Zkusit znovu' : 'Aktualizovat vše'}</span>
             {/if}
           </button>
-          {#if vs.status === 'downloading_db' && vs.dbUpdateAvailable}
-            <button type="button" class="cancel-inline-btn" onclick={() => versionService.cancelDownload()}>
-              Zrušit
-            </button>
-          {/if}
         {:else}
           <button class="secondary-btn flex-1" disabled={versionService.isBusy} onclick={handleCheckUpdates}>
             {#if vs.status === 'checking'}
@@ -254,33 +332,7 @@
         {/if}
       </div>
 
-      <!-- Slovník: stažení / smazání -->
-      {#if !vs.isDbInstalled}
-        <div class="db-actions-row">
-          <button
-            class="secondary-btn flex-1"
-            disabled={versionService.isBusy}
-            onclick={handleDownloadDbManual}
-          >
-            {#if vs.status === 'downloading_db'}
-              <SpinnerGap size={16} class="spin" />
-              <span>Stahuji slovník ({vs.progress} %)…</span>
-            {:else}
-              <DownloadSimple size={16} weight="bold" />
-              <span>Stáhnout slovník ({versionService.formattedDbSize})</span>
-            {/if}
-          </button>
-          {#if vs.status === 'downloading_db'}
-            <button
-              type="button"
-              class="cancel-inline-btn"
-              onclick={() => versionService.cancelDownload()}
-            >
-              Zrušit
-            </button>
-          {/if}
-        </div>
-      {:else}
+      {#if vs.isDbInstalled}
         <HoldToAction
           onAction={handleDeleteDbManual}
           disabled={versionService.isBusy}
@@ -291,6 +343,40 @@
           holdDuration={600}
           variant="outline"
         />
+      {/if}
+
+      <!-- Exact versions only on demand: for bug reports, not everyday use -->
+      <button
+        type="button"
+        class="diag-toggle"
+        aria-expanded={showDiagnostics}
+        onclick={() => {
+          settings.vibrate(15);
+          showDiagnostics = !showDiagnostics;
+        }}
+      >
+        <span>Diagnostika</span>
+        <span class="diag-caret" class:is-open={showDiagnostics}><CaretDown size={14} weight="bold" /></span>
+      </button>
+      {#if showDiagnostics}
+        <dl class="diag-box">
+          <dt>Aplikace</dt>
+          <dd>{vs.appVersion} · {formattedAppVersion}</dd>
+          {#if newAppVersion}
+            <dt>Aplikace na serveru</dt>
+            <dd class="is-new">{vs.remoteVersion?.appVersion} · {newAppVersion}</dd>
+          {/if}
+          <dt>Slovník</dt>
+          <dd>
+            {formattedDbVersion}{#if vs.dbMeta?.dbHash} · {vs.dbMeta.dbHash}{/if}
+          </dd>
+          {#if newDbVersion}
+            <dt>Slovník na serveru</dt>
+            <dd class="is-new">{newDbVersion}{#if vs.remoteVersion?.dbHash} · {vs.remoteVersion.dbHash}{/if}</dd>
+          {/if}
+          <dt>Poslední kontrola</dt>
+          <dd>{vs.lastCheck === 'ok' ? 'Server odpověděl' : vs.lastCheck === 'failed' ? 'Server nedostupný' : 'Neproběhla'}</dd>
+        </dl>
       {/if}
     </section>
 
@@ -478,25 +564,173 @@
     border: 1px solid var(--color-border-subtle);
   }
 
-  .version-values {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-  }
 
-  .version-new {
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    font-weight: 700;
-    color: var(--color-accent-primary);
-  }
 
   .version-badge {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: 600;
     color: var(--color-text-primary);
+  }
+
+  /* Versioned parts: one box with hairlines like the alphabet list, status in one column */
+  .parts-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .part-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: 44px;
+    padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-md);
+  }
+
+  .part-row + .part-row {
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .part-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .part-detail {
+    margin-left: var(--space-xs);
+    font-size: var(--text-xs);
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
+
+  .part-ok {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    color: var(--color-accent-success);
+  }
+
+  .part-unknown {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    padding-right: var(--space-xs);
+  }
+
+  .part-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-accent-primary);
+  }
+
+  .part-download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 40px;
+    height: var(--control-min-height);
+    padding: 0 var(--space-sm);
+    background-color: var(--color-accent-primary-subtle);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    color: var(--color-accent-primary);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .part-download:active:not(:disabled) {
+    background-color: var(--color-surface-active);
+  }
+
+  .part-download:disabled > :global(*) {
+    opacity: 0.5;
+  }
+
+  .part-cancel {
+    height: var(--control-min-height);
+    padding: 0 var(--space-sm);
+    background-color: var(--color-surface-1);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-danger, #ef4444);
+    cursor: pointer;
+  }
+
+  .diag-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--control-min-height);
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+  }
+
+  .diag-caret {
+    display: flex;
+    transition: transform 0.15s ease;
+  }
+
+  .diag-caret.is-open {
+    transform: rotate(180deg);
+  }
+
+  /* Label above value: long timestamps and hashes never share a line with the label */
+  .diag-box {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+
+  .diag-box dt {
+    margin-top: var(--space-sm);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .diag-box dt:first-child {
+    margin-top: 0;
+  }
+
+  .diag-box dd {
+    margin: 0;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  .diag-box dd.is-new {
+    color: var(--color-accent-primary);
   }
 
   .update-action-btn {
@@ -552,7 +786,6 @@
     cursor: not-allowed;
   }
 
-  /* Baseline: with a second value line (the new version) the label stays on the first */
   .sys-row {
     display: flex;
     justify-content: space-between;
@@ -562,8 +795,7 @@
     color: var(--color-text-secondary);
   }
 
-  .update-actions-cluster,
-  .db-actions-row {
+  .update-actions-cluster {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -574,21 +806,7 @@
     flex: 1;
   }
 
-  .cancel-inline-btn {
-    padding: 10px 14px;
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-text-danger, #ef4444);
-    cursor: pointer;
-    white-space: nowrap;
-  }
 
-  .cancel-inline-btn:active {
-    background-color: var(--color-surface-active);
-  }
 
   .update-error-banner {
     padding: 8px 12px;

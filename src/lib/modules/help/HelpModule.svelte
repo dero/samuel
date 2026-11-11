@@ -1,6 +1,13 @@
 <script lang="ts">
   import { APP_NAME } from '../../constants';
-  import { ArrowUp, List, FileText } from 'phosphor-svelte';
+  import {
+    ArrowUp,
+    HandTap,
+    FileText,
+    SlidersHorizontal,
+    BookOpen,
+    GearSix
+  } from 'phosphor-svelte';
 </script>
 
 <div class="help-scroll">
@@ -8,25 +15,60 @@
     <section class="start-card">
       <span class="start-arrow"><ArrowUp size={22} weight="bold" /></span>
       <div>
-        <h1 class="start-title">Začněte klepnutím na ikonu nebo název nahoře</h1>
-        <p class="start-desc">Otevře se výběr pomůcek seřazených do barevných skupin. Dole jde hledat i podle přezdívky („bin“, „pigpen“) a nad polem jsou naposledy použité.</p>
+        <h1 class="start-title">Začněte klepnutím na název nahoře</h1>
+        <p class="start-desc">
+          Otevřou se Nástroje: všechny pomůcky podle abecedy. Rychlejší je psát do pole dole, najde
+          i přezdívky („bin“, „pigpen“). Nad polem jsou naposledy použité.
+        </p>
       </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Obrazovka nástroje</h2>
+      <ul class="help-list">
+        <li><strong>Nahoře výsledek,</strong> dole zadávání.</li>
+        <li>
+          <strong>Lišta</strong> mezi nimi radí další krok nebo ukazuje stav. Oranžová hlásí, co brání
+          výsledku.
+        </li>
+        <li>
+          <strong>Tahák</strong> <span class="inline-icon"><BookOpen size={14} weight="duotone" /></span>
+          vpravo v liště: tabulky a Návod k nástroji.
+        </li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Záložky vpravo nahoře</h2>
+      <ul class="help-list">
+        <li>
+          <strong>Interakce</strong> <span class="inline-icon"><HandTap size={14} weight="bold" /></span>
+          klávesy nástroje.
+        </li>
+        <li>
+          <strong>Podklad</strong> <span class="inline-icon"><FileText size={14} weight="bold" /></span>
+          zadání jako text nebo fotka. Text jde psát i vzít ze schránky, klávesy upravují totéž.
+        </li>
+        <li>
+          <strong>Menu</strong>
+          <span class="inline-icon"><SlidersHorizontal size={14} weight="bold" /></span> volby nástroje
+          a Reset nástroje.
+        </li>
+        <li><strong>Tečka</strong> na záložce znamená, že tam něco chce pozornost.</li>
+      </ul>
     </section>
 
     <section class="card">
       <h2 class="card-title">Ovládání</h2>
       <ul class="help-list">
+        <li><strong>Smazat vše</strong> se drží, Zpět stačí klepnout.</li>
+        <li><strong>Kopírování:</strong> klepnutím na výsledek.</li>
         <li>
-          <strong>Menu</strong> <span class="inline-icon"><List size={14} weight="bold" /></span> tahák a návod, volby pomůcky, abeceda a vyčištění.
+          <strong>Tlačítko Zpět</strong> v telefonu vrací o krok: záložky, tahák, Nástroje.
         </li>
         <li>
-          <strong>Podklad</strong> <span class="inline-icon"><FileText size={14} weight="duotone" /></span> vložený text nebo fotka: upravit, vyměnit, smazat.
-        </li>
-        <li>
-          <strong>Kopírování:</strong> klepnutím na výsledek.
-        </li>
-        <li>
-          <strong>Zpět:</strong> systémové tlačítko zavře menu, tahák i výběr pomůcek.
+          <strong>Nastavení</strong> <span class="inline-icon"><GearSix size={14} weight="bold" /></span>
+          vedle hledání: aktualizace, offline slovník, abecedy, vibrace.
         </li>
       </ul>
     </section>
@@ -53,7 +95,6 @@
     gap: var(--space-lg);
   }
 
-
   .subtitle {
     font-size: var(--text-xs);
     color: var(--color-text-secondary);
@@ -79,7 +120,7 @@
   }
 
   .start-title {
-    font-size: var(--text-lg);
+    font-size: var(--text-base);
     font-weight: 700;
     line-height: 1.3;
     margin: 0 0 4px 0;
@@ -105,7 +146,7 @@
     font-size: var(--text-base);
     font-weight: 700;
     margin: 0;
-    color: var(--color-accent-primary);
+    color: var(--color-text-primary);
   }
 
   .help-list {
@@ -118,9 +159,6 @@
     line-height: 1.5;
   }
 
-
-
-
   .inline-icon {
     display: inline-flex;
     align-items: center;
@@ -128,5 +166,4 @@
     margin: 0 2px;
     color: var(--color-accent-primary);
   }
-
 </style>

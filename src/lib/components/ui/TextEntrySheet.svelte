@@ -105,11 +105,12 @@
       draftText = draftText.replace(/\s+/g, '');
     }
     const nextPos = Math.min(start + text.length, draftText.length);
+    // Quick-char buttons never take focus (preventDefault on press), so the OS
+    // keyboard stays open; only restore the caret after Svelte writes the value.
     setTimeout(() => {
-      if (textareaEl) {
-        textareaEl.focus();
-        textareaEl.setSelectionRange(nextPos, nextPos);
-      }
+      if (!textareaEl) return;
+      if (document.activeElement !== textareaEl) textareaEl.focus();
+      textareaEl.setSelectionRange(nextPos, nextPos);
     }, 0);
   }
 
@@ -183,6 +184,9 @@
           <button
             type="button"
             class="quick-char-btn"
+            tabindex="-1"
+            onpointerdown={(e) => e.preventDefault()}
+            onmousedown={(e) => e.preventDefault()}
             onclick={() => handleQuickInsert(char)}
           >
             <span class="char-symbol font-mono">{char}</span>

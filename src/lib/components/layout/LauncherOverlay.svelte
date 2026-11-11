@@ -156,7 +156,7 @@
     {#if showRows}
       <!-- Search: a ranked list, best at the bottom right by the field -->
       <div class="rows-zone">
-        <ScrollArea outset="var(--space-md)">
+        <ScrollArea outset="var(--launcher-gutter)">
           <!-- Keeps focus in the field: a blur would hide the recent rows before the tap lands -->
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div class="rows" onpointerdown={(e) => e.preventDefault()}>
@@ -186,7 +186,7 @@
     {:else}
       <!-- Browse: every tool, alphabetically -->
       <div class="grid-zone">
-        <ScrollArea outset="var(--space-md)" bind:viewport={gridViewport}>
+        <ScrollArea outset="var(--launcher-gutter)" bind:viewport={gridViewport}>
           <div class="grid">
             {#each gridEntries as entry (entry.id)}
               <button
@@ -276,6 +276,9 @@
 
 <style>
   .launcher {
+    /* One side margin for grid, rows and the thumb zone, so tiles line up with the search
+       field and the scroll thumb (in the right margin) keeps clear of the tiles */
+    --launcher-gutter: var(--space-lg);
     position: fixed;
     top: 0;
     left: 0;
@@ -322,7 +325,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 0 var(--space-md);
+    padding: 0 var(--launcher-gutter);
   }
 
   /* Browse */
@@ -476,7 +479,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+    padding: var(--space-sm) var(--launcher-gutter) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--color-border-subtle);
     background-color: var(--color-surface-1);
   }

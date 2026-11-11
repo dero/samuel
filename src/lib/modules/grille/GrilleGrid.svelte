@@ -156,12 +156,26 @@
 </div>
 
 <style>
-  /* Square, as wide as the panel allows but no taller than the panel budget minus the hold row */
+  /*
+   * Square. Full panel width whenever the output above still fits three lines of the result
+   * (TranslationCard: 29 px × 1.35 plus its own and the output zone's padding); otherwise
+   * at least the standard panel budget minus the hold row, as on 320 × 540.
+   * Screen height = 100dvh minus the iOS insets, the shell's fixed rows and the hold row.
+   */
   .grille-board {
+    --grille-output-3-lines: calc(3 * 29px * 1.35 + 2 * var(--space-2xs) + 2 * var(--space-sm));
+    --grille-fixed-rows: calc(
+      var(--header-height) + var(--status-bar-height) + var(--zone-input-offset) +
+        var(--zone-input-gap) + var(--utility-row-height) + var(--space-md) +
+        env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+    );
     align-self: center;
     width: min(
       100%,
-      calc(var(--panel-max-height) - var(--zone-input-gap) - var(--utility-row-height))
+      max(
+        calc(var(--panel-max-height) - var(--zone-input-gap) - var(--utility-row-height)),
+        calc(100dvh - var(--grille-fixed-rows) - var(--grille-output-3-lines))
+      )
     );
     user-select: none;
     -webkit-user-select: none;
