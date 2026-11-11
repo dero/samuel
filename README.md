@@ -91,3 +91,21 @@ yarn benchmark:morse --all --misses
 # Diagnostika konkrétní tajenky
 yarn benchmark:morse --target "NAM PRED BATERIEMI ZELENA BUDKA"
 ```
+
+---
+
+## Licence
+
+Zdrojový kód aplikace je šířen pod licencí [MIT](LICENSE), © 2026 Jaroslav „Dero“ Polakovič.
+
+Licence MIT se **nevztahuje na data třetích stran** ve složce `data/` ani na z nich sestavenou slovníkovou databázi `public/words.db`. Ta se řídí licencemi svých zdrojů:
+
+| Data | Zdroj | Licence |
+| --- | --- | --- |
+| `data/cs_substantives.csv` (podstatná a vlastní jména) | [MorfFlex CZ 2.0](http://hdl.handle.net/11234/1-3186), ÚFAL MFF UK | [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) – pouze nekomerční užití, odvozená díla pod stejnou licencí |
+| `data/cs_all.csv` (tvary slov s frekvencemi) | Frekvenční seznamy [Českého národního korpusu](https://www.korpus.cz/) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `data/RUIAN/*.csv` (obce, ulice, katastrální území) | [RÚIAN](https://cuzk.gov.cz/ruian/), ČÚZK | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+
+Protože `public/words.db` obsahuje data z MorfFlex CZ 2.0, platí pro databázi jako celek podmínky CC BY-NC-SA 4.0 (zejména zákaz komerčního užití).
+
+Ostatní data (`puzzle_words.json`, `solutions.json`, `world_flags.json`) jsou součástí projektu a spadají pod licenci MIT.
