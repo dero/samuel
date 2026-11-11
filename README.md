@@ -1,25 +1,31 @@
 # Samuel – Šifrovací pomůcky
 
-Moderní, rychlá a **100% offline-first** PWA (Progressive Web Application) pro luštění šifrovaček v terénu i v týmovém štábu (TMOU, Bedna, Sendvič, Matrix, Svíčky apod.).
+Kapesní sada nástrojů pro luštění šifrovaček. Běží v prohlížeči, dá se nainstalovat do telefonu jako aplikace a po prvním stažení funguje i bez signálu.
 
-Aplikace přináší multiplatformní podporu (iOS, Android, desktop), okamžitou odezvu bez závislosti na internetu a specializované nástroje navržené přímo pro šifrovací hry.
+**Aplikace: [samuel.dero.cz](https://samuel.dero.cz)**
 
 ---
 
 ## Klíčové vlastnosti
 
-- **100% Offline-first architektura:** Plná funkčnost bez signálu v lese či horách díky Service Workeru a klientské SQLite databázi běžící přímo v prohlížeči přes WebAssembly (`sql.js`) s perzistencí v IndexedDB.
-- **Morseovka s inteligentním solverem:**
-  - Dedikovaná rychlá klávesnice (`.`, `-`, `/`) a paralelní zobrazení variant (inverze, reverz, prohození oddělovačů).
-  - **Auto-bruteforce solver bez mezer:** Kombinuje vyhledávání v DAG grafu slovníku, frekvenční vážení z Českého národního korpusu, bodování šifrových klíčových slov a místopisných názvů z RÚIAN a 4-gramový jazykový model češtiny s backoffem pro neznámá slova.
-- **Slovník & přesmyčky:** Vyhledávání podle délky a křížovkářské masky (`.`, `*`), anagramový solver s bleskovou odezvou, podpora regulárních výrazů a volitelná filtrace podstatných a vlastních jmen.
-- **Rozsáhlá offline databáze slov (1,8 milionu záznamů pod 100 MB):**
-  - Sjednocená optimalizovaná tabulka s 26bitovým písmenným indexem a metadaty.
-  - Podstatná jména a vlastní jména z ÚFAL MorfFlex 2.0 a ČNK.
-  - Všechny tvary slov z ČNK s frekvencemi výskytu.
-  - RÚIAN (databáze ulic, obcí a katastrálních území ČR).
-  - Speciální šifrový slovník (`puzzle_words`).
-- **Ergonomie do terénu:** Tmavé schéma šetřící baterii v noci, rychlý launcher modulů (klávesa `/` nebo tlačítko v hlavičce) a optimalizované zobrazení pro mobily i tablety.
+- **Funguje offline.** Celá aplikace i slovník se uloží do telefonu, takže v lese, v horách i v metru funguje stejně jako doma.
+- **Přes dvacet nástrojů na jednom místě.** Kódování (Morse, Braille, Semafor, Vlajky, Polybius, Kříže, Mobil, Čísla), práce s textem (Posuny, Substituce, Frekvence, Mřížka, Slovník), rébusy (Sudoku, Nonogram, Šachy), kreslení (Želva, Plotr) a reálie (Státy, Kalendář, Barvy, Chemie, Fakta). Nástroj najdeš hledáním v launcheru, stačí napsat třeba „tečky“ nebo „praporky“.
+- **Zadávání prstem.** Každý nástroj má vlastní klávesnici přímo pro svou šifru: tečky a čárky, body Braillu, ramena semaforu. Pod výstupem rovnou vidíš i varianty (pozpátku, s prohozenými značkami apod.), takže je nemusíš zkoušet jednu po druhé.
+- **Chytré luštění.** Morseovka bez mezer se sama rozdělí na nejpravděpodobnější česká slova. Slovník hledá podle masky, délky i přesmyček v téměř dvou milionech českých slov, jmen a místních názvů.
+- **Podklad.** Když už šifru máš v textu nebo na fotce, nemusíš ji vyťukávat. Vložíš ji do záložky Podklad (napíšeš, vložíš ze schránky nebo vyfotíš) a nástroj, který to umí, s ní rovnou pracuje.
+- **Tahák a návod u každého nástroje.** Ikona knížky na liště otevře přehledovou tabulku (abecedu, kódy) a krátký návod, jak nástroj ovládat.
+- **Do terénu.** Černé tmavé schéma šetří baterii a nesvítí v noci, haptická odezva potvrzuje stisky. Aplikace funguje na mobilu, tabletu i počítači.
+
+---
+
+## Instalace do telefonu
+
+Otevři [samuel.dero.cz](https://samuel.dero.cz) a přidej si aplikaci na plochu:
+
+- **iPhone (Safari):** tlačítko Sdílet → **Přidat na plochu**.
+- **Android (Chrome):** nabídka ⋮ → **Instalovat aplikaci** (případně **Přidat na plochu**).
+
+Při prvním spuštění si aplikace stáhne data. Potom už internet nepotřebuje a o nových verzích dá vědět sama.
 
 ---
 
