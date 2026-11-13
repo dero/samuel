@@ -43,6 +43,7 @@
     draggingNodeId: string | null;
     hoveredNodeId: string | null;
     onNodePointerDown: (e: PointerEvent, node: CubeNode) => void;
+    onBackgroundPointerDown?: () => void;
   }
 
   let {
@@ -60,7 +61,8 @@
     pulseAnim = null,
     draggingNodeId,
     hoveredNodeId,
-    onNodePointerDown
+    onNodePointerDown,
+    onBackgroundPointerDown
   }: Props = $props();
 
   let svgEl = $state<SVGSVGElement | null>(null);
@@ -330,10 +332,22 @@
     }
     return bestId;
   }
+
+  function handleCanvasPointerDown(e: PointerEvent) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if ((e.target as Element | null)?.closest('.cube-node, .layer-cell')) return;
+    onBackgroundPointerDown?.();
+  }
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={canvasEl} class="cube-canvas" class:is-edit-mode={editMode} oncontextmenu={(e) => e.preventDefault()}>
+<div
+  bind:this={canvasEl}
+  class="cube-canvas"
+  class:is-edit-mode={editMode}
+  onpointerdown={handleCanvasPointerDown}
+  oncontextmenu={(e) => e.preventDefault()}
+>
   {#if viewMode === 'wireframe'}
     <svg
       bind:this={svgEl}
