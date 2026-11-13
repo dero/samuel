@@ -43,8 +43,16 @@
   let startY = 0;
   let startTime = 0;
 
+  let backdropPointerDown = false;
+
+  function handleBackdropPointerDown(e: PointerEvent) {
+    backdropPointerDown = e.target === e.currentTarget;
+  }
+
   function handleBackdropClick(e: MouseEvent) {
-    if (e.target === e.currentTarget) {
+    const startedOnBackdrop = backdropPointerDown;
+    backdropPointerDown = false;
+    if (startedOnBackdrop && e.target === e.currentTarget) {
       settings.vibrate(15);
       onClose();
     }
@@ -180,7 +188,13 @@
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div use:portal class="sheet-backdrop" style:z-index={zIndex} onclick={handleBackdropClick}>
+  <div
+    use:portal
+    class="sheet-backdrop"
+    style:z-index={zIndex}
+    onpointerdown={handleBackdropPointerDown}
+    onclick={handleBackdropClick}
+  >
     <div
       class="sheet-panel"
       style:max-width={maxWidth}
@@ -263,7 +277,6 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    touch-action: none;
     overscroll-behavior: none;
   }
 

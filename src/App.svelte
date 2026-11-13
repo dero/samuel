@@ -11,6 +11,7 @@
   import FlagsModule from './lib/modules/flags/FlagsModule.svelte';
   import StatesModule from './lib/modules/states/StatesModule.svelte';
   import CrossModule from './lib/modules/cross/CrossModule.svelte';
+  import CubeModule from './lib/modules/cube/CubeModule.svelte';
   import PolybiusModule from './lib/modules/polybius/PolybiusModule.svelte';
   import MobileModule from './lib/modules/mobile/MobileModule.svelte';
   import NumbersModule from './lib/modules/numbers/NumbersModule.svelte';
@@ -98,6 +99,8 @@
       <StatesModule />
     {:else if navigation.activeModuleId === 'cross'}
       <CrossModule />
+    {:else if navigation.activeModuleId === 'cube'}
+      <CubeModule />
     {:else if navigation.activeModuleId === 'polybius'}
       <PolybiusModule />
     {:else if navigation.activeModuleId === 'mobile'}

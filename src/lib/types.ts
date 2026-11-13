@@ -5,6 +5,7 @@ export type ModuleId =
   | 'flags'
   | 'states'
   | 'cross'
+  | 'cube'
   | 'polybius'
   | 'mobile'
   | 'numbers'
@@ -66,6 +67,7 @@ export const MODULES: ModuleMeta[] = [
   { id: 'flags', name: 'Vlajky', icon: 'FlagCheckered', group: 'coding' },
   { id: 'states', name: 'Státy', icon: 'GlobeSimple', group: 'realia', hasReference: false, hasMenu: false },
   { id: 'cross', name: 'Kříže', icon: 'Hash', group: 'coding', hasAlphabet: true },
+  { id: 'cube', name: 'Krychle', icon: 'Cube', group: 'coding', hasAlphabet: true },
   { id: 'polybius', name: 'Polybius', icon: 'GridFour', group: 'coding', hasAlphabet: true },
   { id: 'mobile', name: 'Mobil', icon: 'DeviceMobile', group: 'coding' },
   { id: 'numbers', name: 'Čísla', icon: 'Calculator', group: 'coding', hasAlphabet: true },
@@ -95,6 +97,7 @@ export const MODULE_KEYWORDS: Partial<Record<ModuleId, string[]>> = {
   flags: ['námořní vlajky', 'signální vlajky'],
   states: ['země', 'státní vlajky', 'hlavní města'],
   cross: ['polský kříž', 'pigpen', 'zednářská šifra', 'kříž'],
+  cube: ['kostka', '3d', 'vrstvy', 'vrcholy', 'hrany', 'stěny', 'polský kříž'],
   polybius: ['polybiův čtverec', 'souřadnice', 'tabulka 5x5'],
   mobile: ['sms', 't9', 'telefon', 'klávesnice telefonu'],
   numbers: [
