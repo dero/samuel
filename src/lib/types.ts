@@ -19,6 +19,7 @@ export type ModuleId =
   | 'grille'
   | 'turtle'
   | 'plotter'
+  | 'graph'
   | 'words'
   | 'calendar'
   | 'facts'
@@ -80,6 +81,7 @@ export const MODULES: ModuleMeta[] = [
   { id: 'grille', name: 'Mřížka', icon: 'SquaresFour', group: 'text' },
   { id: 'turtle', name: 'Želva', icon: 'Path', group: 'drawing' },
   { id: 'plotter', name: 'Plotr', icon: 'Compass', group: 'drawing' },
+  { id: 'graph', name: 'Graf', icon: 'Graph', group: 'drawing' },
   { id: 'words', name: 'Slovník', icon: 'BookOpen', group: 'text' },
   { id: 'calendar', name: 'Kalendář', icon: 'CalendarBlank', group: 'realia', hasMenu: false },
   { id: 'facts', name: 'Fakta', icon: 'Lightbulb', group: 'realia', hasReference: false, hasMenu: false },
@@ -124,6 +126,7 @@ export const MODULE_KEYWORDS: Partial<Record<ModuleId, string[]>> = {
   grille: ['otočná mřížka', 'fleissner', 'grille', 'transpozice'],
   turtle: ['želví grafika', 'kreslení', 'logo'],
   plotter: ['souřadnice', 'kreslení', 'graf'],
+  graph: ['uzly', 'hrany', 'orientovaný', 'síť', 'vztahy', 'vazby', 'strom', 'cesta'],
   words: ['slova', 'maska', 'přesmyčka', 'anagram', 'doplňovačka'],
   calendar: ['datum', 'den v týdnu', 'svátky'],
   colors: ['rgb', 'cmy', 'barevný filtr', 'brýle'],

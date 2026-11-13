@@ -551,6 +551,17 @@
     }
   }
 
+  function handleCanvasBackgroundPointerDown() {
+    if (inspectedNodeId !== null) {
+      settings.vibrate(12);
+      inspectedNodeId = null;
+    }
+    if (editMode && (selectedEditNodeId !== null || selectedTrayChar !== null)) {
+      settings.vibrate(12);
+      clearEditSelection();
+    }
+  }
+
   function handleChipPointerDown(e: PointerEvent, char: string) {
     if (!editMode) return;
     startDragTracking(e, { kind: 'tray', char });
@@ -765,6 +776,7 @@
       draggingNodeId={activeDrag?.source.kind === 'node' ? activeDrag.source.nodeId : null}
       hoveredNodeId={activeDrag?.hoveredNodeId ?? null}
       onNodePointerDown={handleNodePointerDown}
+      onBackgroundPointerDown={handleCanvasBackgroundPointerDown}
     />
   {/snippet}
 

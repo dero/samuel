@@ -25,6 +25,7 @@
   import GrilleModule from './lib/modules/grille/GrilleModule.svelte';
   import TurtleModule from './lib/modules/turtle/TurtleModule.svelte';
   import PlotterModule from './lib/modules/plotter/PlotterModule.svelte';
+  import GraphModule from './lib/modules/graph/GraphModule.svelte';
   import CalendarModule from './lib/modules/calendar/CalendarModule.svelte';
   import FactsModule from './lib/modules/facts/FactsModule.svelte';
   import ColorsModule from './lib/modules/colors/ColorsModule.svelte';
@@ -127,6 +128,8 @@
       <TurtleModule />
     {:else if navigation.activeModuleId === 'plotter'}
       <PlotterModule />
+    {:else if navigation.activeModuleId === 'graph'}
+      <GraphModule />
     {:else if navigation.activeModuleId === 'calendar'}
       <CalendarModule />
     {:else if navigation.activeModuleId === 'facts'}
