@@ -2,8 +2,12 @@
   export interface ModuleBarAction {
     label: string;
     icon?: any;
+    iconOnly?: boolean;
+    selected?: boolean;
+    alwaysVisible?: boolean;
     tone?: 'neutral' | 'accent' | 'success' | 'warning';
     disabled?: boolean;
+    ariaLabel?: string;
     title?: string;
     onClick: () => void;
   }
@@ -17,6 +21,7 @@
     charCount?: number;
     warning?: string | null;
     action?: ModuleBarAction;
+    actions?: ModuleBarAction[];
   }
 
   function formatCharCount(n: number): string {
@@ -51,8 +56,11 @@
     config.warning ? 'warning' : config.empty ? 'off' : 'on'
   );
 
-  // A hint needs the whole bar; an empty module has nothing to act on yet
-  const action = $derived(isHint ? undefined : config.action);
+  // A hint needs the whole bar unless an action explicitly stays visible
+  const actions = $derived.by(() => {
+    const list = config.actions ?? (config.action ? [config.action] : []);
+    return isHint ? list.filter((a) => a.alwaysVisible) : list;
+  });
   const tahakOpen = $derived(navigation.subView === 'tahak');
 </script>
 
@@ -66,22 +74,26 @@
     <span class="bar-lamp lamp-{lamp}" aria-hidden="true"></span>
     <span class="bar-text" class:is-warning={lamp === 'warning'} class:is-hint={isHint}>{text}</span>
 
-    {#if action}
-      {@const Icon = action.icon}
+    {#each actions as act, idx (idx)}
+      {@const Icon = act.icon}
       <Keycap
         compact
         pressOn="click"
-        class="bar-key tone-{action.tone ?? 'neutral'}"
-        disabled={action.disabled}
-        title={action.title}
-        onPress={action.onClick}
+        class="bar-key tone-{act.tone ?? 'neutral'}{act.iconOnly ? ' is-icon-only' : !Icon ? ' is-compact-label' : ''}"
+        selected={act.selected ?? false}
+        disabled={act.disabled}
+        ariaLabel={act.ariaLabel ?? (act.iconOnly ? act.label : undefined)}
+        title={act.title ?? (act.iconOnly ? act.label : undefined)}
+        onPress={act.onClick}
       >
         {#if Icon}
-          <Icon size={14} weight="bold" />
+          <Icon size={15} weight={act.selected ? 'fill' : 'bold'} />
         {/if}
-        <span>{action.label}</span>
+        {#if !act.iconOnly}
+          <span>{act.label}</span>
+        {/if}
       </Keycap>
-    {/if}
+    {/each}
 
     {#if hasTahak}
       <Keycap
@@ -174,9 +186,17 @@
     color: var(--color-accent-warning);
   }
 
-  .bar-display :global(.keycap.bar-book) {
-    width: 36px;
+  .bar-display :global(.keycap.bar-book),
+  .bar-display :global(.keycap.is-icon-only) {
+    width: 30px;
     padding: 0;
+  }
+
+  .bar-display :global(.keycap.is-compact-label) {
+    min-width: 32px;
+    padding: 0 6px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
   }
 
   .bar-display :global(.keycap.tone-accent) {
