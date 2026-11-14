@@ -153,7 +153,9 @@
     font-family: var(--font-mono);
     font-size: 0.92em;
     color: var(--color-text-primary);
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
   }
 
   /* ── Shared reference tables (DESIGN_SYSTEM §3: Tabulky) ── */
