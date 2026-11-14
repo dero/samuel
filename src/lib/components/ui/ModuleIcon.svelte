@@ -30,6 +30,8 @@
     Atom,
     Binary,
     NumberSquareThree,
+    NumberSquareSeven,
+    Monitor,
     Bank
   } from 'phosphor-svelte';
   import type { Component } from 'svelte';
@@ -56,6 +58,7 @@
     // Module IDs
     morse: Broadcast,
     braille: DotsSixVertical,
+    displays: Monitor,
     semaphore: FlagBanner,
     flags: FlagCheckered,
     states: GlobeSimple,
@@ -86,9 +89,11 @@
     // Launcher shortcuts
     binary: Binary,
     ternary: NumberSquareThree,
+    'seven-segment': NumberSquareSeven,
     roman: Bank,
 
     // Phosphor Name aliases
+    monitor: Monitor,
     atom: Atom,
     broadcast: Broadcast,
     dotssixvertical: DotsSixVertical,

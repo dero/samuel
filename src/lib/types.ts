@@ -1,6 +1,7 @@
 export type ModuleId =
   | 'morse'
   | 'braille'
+  | 'displays'
   | 'semaphore'
   | 'flags'
   | 'states'
@@ -64,6 +65,7 @@ export interface ModuleMeta {
 export const MODULES: ModuleMeta[] = [
   { id: 'morse', name: 'Morse', icon: 'Broadcast', group: 'coding' },
   { id: 'braille', name: 'Braille', icon: 'DotsSixVertical', group: 'coding' },
+  { id: 'displays', name: 'Displeje', icon: 'Monitor', group: 'coding' },
   { id: 'semaphore', name: 'Semafor', icon: 'FlagBanner', group: 'coding' },
   { id: 'flags', name: 'Vlajky', icon: 'FlagCheckered', group: 'coding' },
   { id: 'states', name: 'Státy', icon: 'GlobeSimple', group: 'realia', hasReference: false, hasMenu: false },
@@ -95,6 +97,16 @@ export const MODULES: ModuleMeta[] = [
 export const MODULE_KEYWORDS: Partial<Record<ModuleId, string[]>> = {
   morse: ['morseovka', 'tečky', 'čárky', 'telegraf'],
   braille: ['braillovo písmo', 'slepecké písmo', 'body'],
+  displays: [
+    'sedmisegment',
+    '7-segment',
+    '14-segment',
+    '16-segment',
+    'segmenty',
+    'segmentový displej',
+    'digitálky',
+    'led displej'
+  ],
   semaphore: ['praporky', 'praporková abeceda'],
   flags: ['námořní vlajky', 'signální vlajky'],
   states: ['země', 'státní vlajky', 'hlavní města'],
@@ -158,7 +170,12 @@ export interface CrossPreset {
   crossType: 'large-polish' | 'small-polish';
 }
 
-export type ShortcutPreset = NumbersPreset | CrossPreset;
+/** Displeje: which segment display opens. */
+export interface DisplaysPreset {
+  displayType: '7seg' | '14seg' | '16seg';
+}
+
+export type ShortcutPreset = NumbersPreset | CrossPreset | DisplaysPreset;
 
 export const MODULE_SHORTCUTS: ModuleShortcut[] = [
   {
@@ -200,5 +217,15 @@ export const MODULE_SHORTCUTS: ModuleShortcut[] = [
     via: 'v Křížích',
     keywords: ['polský kříž', 'velký kříž'],
     preset: { crossType: 'large-polish' }
+  },
+  {
+    id: 'seven-segment',
+    name: '7segment',
+    icon: 'seven-segment',
+    group: 'coding',
+    target: 'displays',
+    via: 'v Displejích',
+    keywords: ['7-segment', '7 segment', 'sedmisegmentový', 'displej', '1-7', 'abcdefg', 'digitálky'],
+    preset: { displayType: '7seg' }
   }
 ];
